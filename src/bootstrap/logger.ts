@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import winston from "winston";
 
-const { combine, timestamp, printf } = winston.format;
+const { combine, timestamp, printf, uncolorize } = winston.format;
 const logDir = path.resolve(`${process.env.BASE_DIR}/logs`);
 const fileLogFormat = printf(info => {
     return `[ ${info.timestamp} ]\t${info.level}: ${info.message}`;
@@ -19,7 +19,7 @@ if (!fs.existsSync(logDir)) {
 
 // Transport objects
 const consoleLogger = new winston.transports.Console({
-    format: winston.format.cli(),
+    format: combine(winston.format.cli()),
 });
 
 const errorLogger  = new winston.transports.File({
@@ -32,7 +32,7 @@ const combinedLogger = new winston.transports.File({
     filename: `${logDir}/server-combined.log`,
     level: "info",
     eol: "\r\n",
-    format: combine(timestamp({format: timestampFormat}), fileLogFormat),
+    format: combine(timestamp({format: timestampFormat}), uncolorize(), fileLogFormat),
 });
 
 const exceptionHandler = new winston.transports.File({
