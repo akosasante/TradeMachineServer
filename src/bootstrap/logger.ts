@@ -13,7 +13,7 @@ const errorFileLogFormat = printf(info => {
 });
 const timestampFormat = "YYYY-MM-DD hh:mm:ss A";
 
-if (!fs.existsSync(logDir)) {
+if (process.env.NODE_ENV !== "test" && !fs.existsSync(logDir)) {
     fs.mkdirSync(logDir);
 }
 
