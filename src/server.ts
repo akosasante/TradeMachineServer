@@ -10,7 +10,9 @@ const server: Promise<Server> = initApp().then(app => {
     });
     srv.on("close", () => {
         logger.debug("closing server");
-        redisClient.quit();
+        if (process.env.NODE_ENV !== "test") {
+            redisClient.quit();
+        }
         logger.debug("bye!");
     });
     return srv;

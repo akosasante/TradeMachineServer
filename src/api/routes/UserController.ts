@@ -1,7 +1,11 @@
-import { Body, Delete, Get, JsonController, Param, Post, Put } from "routing-controllers";
+import { Authorized, Body, CurrentUser, Delete, Get, JsonController, Param, Post, Put } from "routing-controllers";
+import util from "util";
+import logger from "../../bootstrap/logger";
+import User, { Role } from "../../models/user";
 
 @JsonController("/users")
 export default class UserController {
+    @Authorized(Role.ADMIN)
     @Get("/")
     public async getAll() {
         return await "getting all users";
@@ -9,7 +13,8 @@ export default class UserController {
     }
 
     @Get("/:id")
-    public async getOne(@Param("id") id: any) {
+    public async getOne(@Param("id") id: number, @CurrentUser() user?: User) {
+        logger.debug(`user available: ${util.inspect(user)}`);
         return await `get user with id: ${id}`;
     }
 
@@ -24,7 +29,8 @@ export default class UserController {
     }
 
     @Delete("/:id")
-    public async deleteUser(@Param("id") id: any) {
+    public async deleteUser(@CurrentUser({required: true}) user: User, @Param("id") id: any) {
+        logger.debug(`user delte available: ${util.inspect(user)}`);
         return await `deleting user with id ${id}`;
     }
 }

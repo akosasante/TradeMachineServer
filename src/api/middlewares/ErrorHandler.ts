@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { ExpressErrorMiddlewareInterface, Middleware } from "routing-controllers";
+import { ExpressErrorMiddlewareInterface, HttpError, Middleware } from "routing-controllers";
 import util from "util";
 import logger from "../../bootstrap/logger";
 
@@ -10,6 +10,9 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
         if (response.headersSent) {
             logger.error("headers already sent, passing to next");
             return next(error);
+        } else if (error instanceof HttpError) {
+            logger.error(`HTTP Error: ${error.message}`);
+            return next();
         } else {
             const errorKind = util.inspect(Object.getPrototypeOf(error));
             logger.error(`Unknown Error: ${errorKind}`);

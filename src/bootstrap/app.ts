@@ -1,7 +1,13 @@
 import { Express } from "express";
+import passport = require("passport");
 import "reflect-metadata";
-import { useExpressServer } from "routing-controllers";
+import { Action, useExpressServer } from "routing-controllers";
+import { Role } from "../models/user";
+import { authorizationChecker, currentUserChecker } from "./auth";
 import app from "./express";
+import logger from "./logger";
+
+export const PassportAuth = passport;
 
 export default async function(): Promise<Express> {
     // Register routes and some global auth middlewares
@@ -13,6 +19,8 @@ export default async function(): Promise<Express> {
         controllers: [`${__dirname}/../api/routes/**`],
         defaultErrorHandler: false,
         middlewares: [`${__dirname}/../api/middlewares/**`],
+        authorizationChecker,
+        currentUserChecker,
     });
     return app;
 }

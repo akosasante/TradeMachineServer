@@ -3,12 +3,18 @@ import { Server } from "http";
 import "jest";
 import path from "path";
 import request from "supertest";
+import util from "util";
+import { redisClient } from "../../../src/bootstrap/express";
+import logger from "../../../src/bootstrap/logger";
+import User from "../../../src/models/user";
 import server from "../../../src/server";
 
 dotenvConfig({path: path.resolve(__dirname, "../.env")});
 
 describe("User endpoints", () => {
     let app: Server;
+    let loggedIn: request.SuperTest<request.Test>;
+
     const testMessages = {
         get: () => "getting all users",
         getOne: (id: number) => `get user with id: ${id}`,
@@ -16,29 +22,37 @@ describe("User endpoints", () => {
         update: (user: User) => `updating user with id ${user.id}, looks like: ${user}`,
         delete: (id: number) => `deleting user with id ${id}`,
     };
-    interface User {
-        id: number;
-        name: string;
-        email: string;
-    }
-    const testUser: User = {
+    const testUser: User = new User({
         id: 1,
         name: "Testkosua Testsante",
-        email: "test@example.com",
-    };
+        email: "admin@example.com",
+    });
 
     beforeAll(async () => {
         app = await server;
+        loggedIn = request.agent(app);
+        await loggedIn
+            .post("/auth/login")
+            .send(testUser)
+            .expect(200);
     });
     afterAll(async () => {
-        // app.close();
+        redisClient.quit();
     });
+
     describe("Get all users", () => {
-        it("should return successfully", async () => {
-            const res = await request(app)
+        it("should return unauthorized error if not logged in", async () => {
+            await request(app)
+                .get("/users")
+                .expect(404);
+        });
+        it("should return successfully if logged in", async () => {
+            const res = await loggedIn
                 .get("/users")
                 .expect(200);
+
             expect(res.body).toEqual(testMessages.get());
+            logger.debug(util.inspect(res));
         });
     });
     describe("Get user by id", () => {
@@ -55,6 +69,7 @@ describe("User endpoints", () => {
                 .post("/users")
                 .send(testUser)
                 .expect(200);
+            logger.debug(util.inspect(res.body));
             expect(res.body).toEqual(testMessages.create(testUser));
         });
     });
