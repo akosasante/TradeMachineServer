@@ -1,8 +1,6 @@
 import { Request } from "express";
-import { Controller, Get, JsonController, Post, Req, Session, UseAfter, UseBefore } from "routing-controllers";
-import util from "util";
+import { Controller, Post, Req, Session, UseBefore } from "routing-controllers";
 import { deserializeUser } from "../../bootstrap/auth";
-import logger from "../../bootstrap/logger";
 import User from "../../models/user";
 import { LoginHandler } from "../middlewares/AuthenticationHandler";
 
@@ -11,7 +9,8 @@ export default class AuthController {
     @Post("/login")
     @UseBefore(LoginHandler)
     public async login(@Req() request: Request, @Session() session: any): Promise<User> {
-        return await deserializeUser(session.user);
+        const user = await deserializeUser(session.user);
+        return user.publicUser;
     }
 
     // @Post("/logout")

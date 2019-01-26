@@ -1,8 +1,6 @@
-import { NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import { get } from "lodash";
 import { ExpressMiddlewareInterface, UnauthorizedError } from "routing-controllers";
-import util from "util";
-import { PassportAuth } from "../../bootstrap/app";
 import { serializeUser, signInAuthentication } from "../../bootstrap/auth";
 import logger from "../../bootstrap/logger";
 import User from "../../models/user";
@@ -16,7 +14,7 @@ export class LoginHandler implements ExpressMiddlewareInterface {
             if (err || !user) {
                 return next(new UnauthorizedError(err ? err.message : "User could not be authenticated."));
             } else {
-                request.session.user = await serializeUser(user);
+                request.session!.user = await serializeUser(user);
                 return next();
             }
         });

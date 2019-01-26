@@ -26,3 +26,6 @@ node_modules
 
 # Optional npm cache directory
 .npm
+
+# Ignore migrations for now
+db/migrations

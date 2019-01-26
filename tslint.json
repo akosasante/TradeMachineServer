@@ -79,5 +79,10 @@
             }
         ]
     },
-    "rulesDirectory": []
+    "rulesDirectory": [],
+    "linterOptions": {
+        "exclude": [
+            "src/db/migrations/*.ts"
+        ]
+    }
 }

@@ -1,15 +1,14 @@
 import { Express } from "express";
-import passport = require("passport");
 import "reflect-metadata";
-import { Action, useExpressServer } from "routing-controllers";
-import { Role } from "../models/user";
+import { useExpressServer } from "routing-controllers";
 import { authorizationChecker, currentUserChecker } from "./auth";
+import initializeDb from "./db";
 import app from "./express";
-import logger from "./logger";
-
-export const PassportAuth = passport;
 
 export default async function(): Promise<Express> {
+    // Set up db
+    await initializeDb(process.env.NODE_ENV === "development");
+
     // Register routes and some global auth middlewares
     useExpressServer(app, {
         cors: {

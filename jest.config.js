@@ -68,6 +68,7 @@ module.exports = {
         "ts-jest": {
             diagnostics: {
                 warnOnly: true,
+                pathRegex: /\.test\.ts/
             }
         }
     },

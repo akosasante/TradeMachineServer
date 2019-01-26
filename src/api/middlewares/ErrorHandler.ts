@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { ExpressErrorMiddlewareInterface, HttpError, Middleware } from "routing-controllers";
+import { QueryFailedError } from "typeorm";
+import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import util from "util";
 import logger from "../../bootstrap/logger";
 
@@ -12,11 +14,20 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
             return next(error);
         } else if (error instanceof HttpError) {
             logger.error(`HTTP Error: ${error.message}`);
-            return next();
+            response.status(error.httpCode).json(this.cleanErrorObject(error));
+        } else if (error instanceof EntityNotFoundError) {
+             logger.error(`Database Error: ${error.message}`);
+             response.status(404).json(this.cleanErrorObject(error));
+        } else if (error instanceof QueryFailedError) {
+            logger.error(`Database Error: ${error.message}`);
+            response.status(400).json(this.cleanErrorObject(error));
         } else {
             const errorKind = util.inspect(Object.getPrototypeOf(error));
             logger.error(`Unknown Error: ${errorKind}`);
             response.status(500).json(error);
         }
+    }
+    private cleanErrorObject(error: Error) {
+        return {message: error.message || "", stack: error.stack || {}};
     }
 }

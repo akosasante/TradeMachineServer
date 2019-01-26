@@ -1,5 +1,6 @@
 import { get } from "lodash";
 import { Action } from "routing-controllers";
+import util from "util";
 import UserDAO from "../DAO/user";
 import User, { Role } from "../models/user";
 import logger from "./logger";
@@ -41,8 +42,7 @@ export async function signInAuthentication(email: string, password: string,
         logger.debug("sign in strategy");
         const userDAO = new UserDAO();
         const user = await userDAO.findUser({email});
-        // const validPassword = await user.isPasswordMatching(password);
-        const validPassword = true;
+        const validPassword = await user.isPasswordMatching(password);
         if (user && validPassword) {
             return done(undefined, user);
         } else if (!validPassword) {
@@ -60,8 +60,8 @@ export async function signInAuthentication(email: string, password: string,
 export async function authorizationChecker(action: Action, roles: Role[]): Promise<boolean> {
     logger.debug("checking roles");
     const user = await getUserFromAction(action);
-    const userHasRole = roles.find(role => user.roles.includes(role));
-    return (user && (!roles.length || !!userHasRole || user.roles.includes(Role.ADMIN)));
+    const userHasRole = roles.some(role => user.hasRole(role));
+    return (user && (!roles.length || userHasRole || user.isAdmin()));
 }
 
 export async function currentUserChecker(action: Action) {
