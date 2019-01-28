@@ -84,4 +84,8 @@ export default class User {
     public hasRole(role: Role): boolean {
         return (this.roles || []).includes(role);
     }
+
+    public parse(): Partial<User> {
+        return Object.assign({}, this);
+    }
 }

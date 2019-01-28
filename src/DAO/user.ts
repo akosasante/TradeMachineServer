@@ -1,5 +1,7 @@
-import { getConnection, Repository } from "typeorm";
+import {DeleteResult, getConnection, Repository} from "typeorm";
 import User from "../models/user";
+import logger from "../bootstrap/logger";
+import util from "util";
 
 export default class UserDAO {
     private userDb: Repository<User>;
@@ -25,5 +27,14 @@ export default class UserDAO {
         // Currently doesn't seem to be necessary
         const user = new User(userObj);
         return await this.userDb.save(user);
+    }
+
+    public async updateUser(id: number, userObj: Partial<User>): Promise<User> {
+        const updateResult = await this.userDb.update({id}, userObj);
+        return await this.getUserById(id);
+    }
+
+    public async deleteUser(id: number): Promise<DeleteResult> {
+        return await this.userDb.delete({id});
     }
 }

@@ -14,15 +14,15 @@ export default class UserController {
 
     @Authorized(Role.ADMIN)
     @Get("/")
-    public async getAll() {
-        logger.debug("geta ll users endpoint");
+    public async getAll(): Promise<Partial<User>> {
+        logger.debug("get all users endpoint");
         const users = await this.dao.getAllUsers();
         logger.debug(`got ${users.length} users`);
         return users.map(user => user.publicUser);
     }
 
     @Get("/:id")
-    public async getOne(@Param("id") id: number, @CurrentUser() currentUser?: User) {
+    public async getOne(@Param("id") id: number, @CurrentUser() currentUser?: User): Promise<Partial<User>> {
         logger.debug("get one user endpoint");
         const user = await this.dao.getUserById(id);
         logger.debug(`got user: ${user}`);
@@ -30,7 +30,7 @@ export default class UserController {
     }
 
     @Post("/")
-    public async createUser(@Body() userObj: Partial<User>) {
+    public async createUser(@Body() userObj: Partial<User>): Promise<Partial<User>> {
         logger.debug("create user endpoint");
         const user = await this.dao.createUser(userObj);
         logger.debug(`created user: ${user}`);
@@ -38,13 +38,18 @@ export default class UserController {
     }
 
     @Put("/:id")
-    public async updateUser(@Param("id") id: any, @Body() user: any) {
-        return await `updating user with id ${id}, looks like: ${user}`;
+    public async updateUser(@Param("id") id: number, @Body() userObj: any): Promise<Partial<User>> {
+        logger.debug("update user endpoint");
+        const user = await this.dao.updateUser(id, userObj);
+        logger.debug(`updated user: ${user}`);
+        return user.publicUser;
     }
 
     @Delete("/:id")
-    public async deleteUser(@CurrentUser({required: true}) user: User, @Param("id") id: any) {
-        logger.debug(`user delete available: ${util.inspect(user)}`);
-        return await `deleting user with id ${id}`;
+    public async deleteUser(@CurrentUser({required: true}) user: User, @Param("id") id: number) {
+        logger.debug("delete user endpoint");
+        const result = await this.dao.deleteUser(id);
+        logger.debug(`delete successful: ${util.inspect(result)}`);
+        return await {deleteResult: !!result.raw[1], id};
     }
 }
