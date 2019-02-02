@@ -1,9 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { get } from "lodash";
 import { ExpressMiddlewareInterface, UnauthorizedError } from "routing-controllers";
-import { serializeUser, signInAuthentication } from "../../bootstrap/auth";
+import util from "util";
+import { serializeUser, signInAuthentication, signUpAuthentication } from "../../bootstrap/auth";
 import logger from "../../bootstrap/logger";
 import User from "../../models/user";
+// tslint:disable:max-classes-per-file
 
 export class LoginHandler implements ExpressMiddlewareInterface {
     public async use(request: Request, response: Response, next: NextFunction) {
@@ -18,20 +20,23 @@ export class LoginHandler implements ExpressMiddlewareInterface {
                 return next();
             }
         });
-        // const email = get(request, "body")
-        // if (PassportAuth) {
-        //     const authenticate = (cb: any) => PassportAuth.authenticate("local_sign_in", cb);
-        //     return authenticate((err: Error, user: User, info: any) => {
-        //         if (err || !user) {
-        //             return next (new UnauthorizedError(info.message));
-        //         }
-        //         if (request.session) {
-        //             request.session.user = user;
-        //         }
-        //         return next();
-        //     })(request, response, next);
-        // } else {
-        //     throw new Error("Could not initialize authenticator");
-        // }
+    }
+}
+
+export class RegisterHandler implements ExpressMiddlewareInterface {
+    public async use(request: Request, response: Response, next: NextFunction) {
+        logger.debug("IN REGISTER HANDLER");
+        const email = get(request, "body.email");
+        const password = get(request, "body.password");
+        return signUpAuthentication(email, password, async (err?: Error, user?: User) => {
+            if (err) {
+                return next(err);
+            } else if (!user) {
+                return next(new Error("For some reason could not register user"));
+            } else {
+                request.session!.user = await serializeUser(user);
+                return next();
+            }
+        });
     }
 }

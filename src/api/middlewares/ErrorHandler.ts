@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { ExpressErrorMiddlewareInterface, HttpError, Middleware } from "routing-controllers";
 import { QueryFailedError } from "typeorm";
+import { EntityColumnNotFound } from "typeorm/error/EntityColumnNotFound";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import util from "util";
 import logger from "../../bootstrap/logger";
@@ -18,7 +19,7 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
         } else if (error instanceof EntityNotFoundError) {
              logger.error(`Database Error: ${error.message}`);
              response.status(404).json(this.cleanErrorObject(error));
-        } else if (error instanceof QueryFailedError) {
+        } else if (error instanceof QueryFailedError || error instanceof EntityColumnNotFound) {
             logger.error(`Database Error: ${error.message}`);
             response.status(400).json(this.cleanErrorObject(error));
         } else {
