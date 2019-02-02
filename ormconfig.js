@@ -10,16 +10,23 @@ const commonOpts = {
         entitiesDir: "src/models",
         migrationsDir: "src/db/migrations",
         subscribersDir: "src/db/subscribers"
-    }
+    },
+    username: process.env.PG_USER,
+    password: process.env.PG_PASSWORD,
+    database: process.env.PG_DB,
 };
 
 module.exports = [
     {
         ...commonOpts,
-        name: process.env.NODE_ENV,
-        username: process.env.PG_USER,
-        password: process.env.PG_PASSWORD,
-        database: process.env.PG_DB,
+        name: "development",
         schema: "dev"
+    },
+    {
+        ...commonOpts,
+        name: "test",
+        schema: "test",
+        synchronize: true,
+        dropSchema: true,
     }
 ];

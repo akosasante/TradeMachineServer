@@ -1,11 +1,11 @@
 import { mocked } from "ts-jest/utils";
+import { Error } from "tslint/lib/error";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import util from "util";
 import UserController from "../../../src/api/routes/UserController";
 import logger from "../../../src/bootstrap/logger";
 import UserDAO from "../../../src/DAO/user";
 import User from "../../../src/models/user";
-import {Error} from "tslint/lib/error";
 
 jest.mock("../../../src/DAO/user");
 const mockedUserDAO = mocked(UserDAO);
@@ -67,7 +67,7 @@ describe("UserController", () => {
             expect(mockedUserDAO).toHaveBeenCalledTimes(1);
         });
 
-        it("should get a user by id", async () => {
+        it("should return a user by id without its password", async () => {
             const res = await userController.getOne(testUser.id!, loggedInUser);
             // Testing that the UserDAO class was instantiated
             expect(mockedUserDAO).toHaveBeenCalledTimes(1);
@@ -101,13 +101,14 @@ describe("UserController", () => {
             expect(mockedUserDAO).toHaveBeenCalledTimes(1);
         });
 
-        it("should get a user by id", async () => {
+        it("should create a user and ignore the password here", async () => {
+            const { password, ...passwordRemoved } = testUser.parse();
             const res = await userController.createUser(testUser.parse());
             // Testing that the UserDAO class was instantiated
             expect(mockedUserDAO).toHaveBeenCalledTimes(1);
             // Testing that the correct dao function is called and with the correct params
             expect(mockCreateUser).toHaveBeenCalledTimes(1);
-            expect(mockCreateUser).toHaveBeenCalledWith(testUser.parse());
+            expect(mockCreateUser).toHaveBeenCalledWith(passwordRemoved);
             // Testing that the return value from the controller method is as expected
             expect(res).toEqual(testUser.publicUser);
         });
@@ -136,7 +137,7 @@ describe("UserController", () => {
             expect(mockedUserDAO).toHaveBeenCalledTimes(1);
         });
 
-        it("should get a user by id", async () => {
+        it("should return updated user with the given id", async () => {
             const res = await userController.updateUser(testUser.id!, testUser.parse());
             // Testing that the UserDAO class was instantiated
             expect(mockedUserDAO).toHaveBeenCalledTimes(1);
@@ -171,7 +172,7 @@ describe("UserController", () => {
             expect(mockedUserDAO).toHaveBeenCalledTimes(1);
         });
 
-        it("should get a user by id", async () => {
+        it("should delete a user by id", async () => {
             const res = await userController.deleteUser(loggedInUser, testUser.id!);
             // Testing that the UserDAO class was instantiated
             expect(mockedUserDAO).toHaveBeenCalledTimes(1);

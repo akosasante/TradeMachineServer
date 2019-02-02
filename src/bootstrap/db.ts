@@ -12,9 +12,11 @@ export default async function initializeDb(logQueries: boolean = false) {
             ...connectionConfig,
             logger: logQueries ? new CustomQueryLogger(logger) : undefined,
         });
+        return connection;
     } catch (error) {
         logger.error("Error while initializing db connection.");
-        logger.error(error);
+        logger.error(util.inspect(error));
         logger.error(util.inspect(connection));
+        throw error;
     }
 }

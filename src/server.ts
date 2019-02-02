@@ -16,6 +16,10 @@ const server: Promise<Server> = initApp().then(app => {
         logger.debug("bye!");
     });
     return srv;
-});
+})
+    .catch(err => {
+        logger.error(`fatal error when starting server: ${err}`);
+        return process.exit(99);
+    });
 
 export default server;

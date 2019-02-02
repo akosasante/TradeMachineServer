@@ -1,13 +1,17 @@
-import {DeleteResult, getConnection, Repository} from "typeorm";
-import User from "../models/user";
-import logger from "../bootstrap/logger";
+import { DeleteResult, getConnection, Repository } from "typeorm";
 import util from "util";
+import logger from "../bootstrap/logger";
+import User from "../models/user";
 
 export default class UserDAO {
     private userDb: Repository<User>;
     // constructor(private userDb: Repository<User>) {}
     constructor() {
         this.userDb = getConnection(process.env.NODE_ENV).getRepository("User");
+        // const connection = getConnection(process.env.NODE_ENV);
+        // logger.debug(connection);
+        // this.userDb = connection.getRepository("User");
+        // logger.debug(this.userDb);
     }
 
     public async getAllUsers(): Promise<User[]> {
@@ -18,8 +22,12 @@ export default class UserDAO {
         return await this.userDb.findOneOrFail(id);
     }
 
-    public async findUser(query: Partial<User>): Promise<User> {
-        return await this.userDb.findOneOrFail({ where: query });
+    public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User|undefined> {
+        if (failIfNotFound) {
+            return await this.userDb.findOneOrFail({where: query});
+        } else {
+            return await this.userDb.findOne({where: query});
+        }
     }
 
     public async createUser(userObj: Partial<User>): Promise<User> {
@@ -31,10 +39,12 @@ export default class UserDAO {
 
     public async updateUser(id: number, userObj: Partial<User>): Promise<User> {
         const updateResult = await this.userDb.update({id}, userObj);
+        logger.debug(util.inspect(updateResult));
         return await this.getUserById(id);
     }
 
     public async deleteUser(id: number): Promise<DeleteResult> {
-        return await this.userDb.delete({id});
+        await this.getUserById(id);
+        return await this.userDb.delete(id);
     }
 }

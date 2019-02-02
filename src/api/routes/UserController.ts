@@ -14,7 +14,7 @@ export default class UserController {
 
     @Authorized(Role.ADMIN)
     @Get("/")
-    public async getAll(): Promise<Partial<User>> {
+    public async getAll(): Promise<User[]> {
         logger.debug("get all users endpoint");
         const users = await this.dao.getAllUsers();
         logger.debug(`got ${users.length} users`);
@@ -22,7 +22,7 @@ export default class UserController {
     }
 
     @Get("/:id")
-    public async getOne(@Param("id") id: number, @CurrentUser() currentUser?: User): Promise<Partial<User>> {
+    public async getOne(@Param("id") id: number, @CurrentUser() currentUser?: User): Promise<User> {
         logger.debug("get one user endpoint");
         const user = await this.dao.getUserById(id);
         logger.debug(`got user: ${user}`);
@@ -30,15 +30,16 @@ export default class UserController {
     }
 
     @Post("/")
-    public async createUser(@Body() userObj: Partial<User>): Promise<Partial<User>> {
+    public async createUser(@Body() userObj: Partial<User>): Promise<User> {
         logger.debug("create user endpoint");
-        const user = await this.dao.createUser(userObj);
+        const { password, ...userRest } = userObj;
+        const user = await this.dao.createUser(userRest);
         logger.debug(`created user: ${user}`);
         return user.publicUser;
     }
 
     @Put("/:id")
-    public async updateUser(@Param("id") id: number, @Body() userObj: any): Promise<Partial<User>> {
+    public async updateUser(@Param("id") id: number, @Body() userObj: any): Promise<User> {
         logger.debug("update user endpoint");
         const user = await this.dao.updateUser(id, userObj);
         logger.debug(`updated user: ${user}`);
