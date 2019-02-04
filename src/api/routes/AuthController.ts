@@ -10,7 +10,7 @@ export default class AuthController {
     @Post("/login")
     @UseBefore(LoginHandler)
     public async login(@Req() request: Request, @Session() session: any): Promise<User> {
-        // TODO: Maybe extract desrialization to a usebefore middleware
+        // TODO: Maybe extract deserialization to a usebefore middleware
         const user = await deserializeUser(session.user);
         return user!.publicUser;
     }
@@ -26,18 +26,21 @@ export default class AuthController {
     public async logout(@Req() request: Request, @Session() session: any) {
         return new Promise((resolve, reject) => {
             if (session && session.user && request.session) {
-                delete session.user;
+                const sessionUserWas = session.user;
                 request.session.destroy(err => {
                     if (err) {
                         logger.error("Error destroying session");
                         reject(err);
+                    } else {
+                        delete session.user;
+                        logger.debug(`Destroying user session for userId#${sessionUserWas}`);
+                        resolve(true);
                     }
-                    logger.debug(`Destroying user session for userId#${session.user}`);
-                    resolve(true);
                 });
             } else {
                 // Assumedly, there's nothing to log out of. We're all good.
                 // I don't think it's necessary to throw an error here
+                logger.debug("Resolving empty session logout");
                 resolve(true);
             }
         });
