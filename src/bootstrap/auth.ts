@@ -2,6 +2,7 @@ import { get } from "lodash";
 import { Action, UnauthorizedError } from "routing-controllers";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import util from "util";
+import { ConflictError } from "../api/middlewares/ErrorHandler";
 import UserDAO from "../DAO/user";
 import User, { Role } from "../models/user";
 import logger from "./logger";
@@ -26,15 +27,17 @@ export async function signUpAuthentication(email: string, password: string,
         const userDAO = new UserDAO();
         const user = await userDAO.findUser({email}, false);
         if (!user) {
+            logger.debug("no existing user with that email");
             const hashedPass = await User.generateHashedPassword(password);
-            const newUser = await userDAO.createUser({email, password: hashedPass});
+            const newUser = await userDAO.createUser({email, password: hashedPass, lastLoggedIn: new Date()});
             return done(undefined, newUser);
         } else if (user && !user.password) {
+            logger.debug("user found with unset password");
             const hashedPass = await User.generateHashedPassword(password);
-            const updatedUser = await userDAO.updateUser(user.id!, {password: hashedPass});
+            const updatedUser = await userDAO.updateUser(user.id!, {password: hashedPass, lastLoggedIn: new Date()});
             return done(undefined, updatedUser);
         } else {
-            return done(new Error("Email already in use and signed up."));
+            return done(new ConflictError("Email already in use and signed up."));
         }
     } catch (error) {
         logger.error("Error in sign-up strategy");
@@ -49,9 +52,11 @@ export async function signInAuthentication(email: string, password: string,
         logger.debug("sign in strategy");
         const userDAO = new UserDAO();
         // Will throw EntityNotFoundError if user is not found
-        const user = await userDAO.findUser({email});
+        let user = await userDAO.findUser({email});
         const validPassword = await user!.isPasswordMatching(password);
         if (user && validPassword) {
+            logger.debug("updating user last logged in");
+            user = await userDAO.updateUser(user.id!, { lastLoggedIn: new Date() });
             return done(undefined, user);
         } else if (!validPassword) {
             return done(new Error("Incorrect password"));

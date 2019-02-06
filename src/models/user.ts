@@ -19,8 +19,9 @@ export enum Role {
 @Entity()
 @Unique(["email"])
 export default class User {
-    public get publicUser(): Pick<this, Exclude<keyof this, "password">> {
-        const { password, ...user } = this;
+    public get publicUser(): Pick<User, Exclude<keyof User, "password">> {
+        const user = new User(this);
+        user.password = undefined;
         return user;
     }
 
@@ -63,8 +64,14 @@ export default class User {
     @Column({ type: "enum", enum: Role, array: true, default: [Role.OWNER]})
     public roles?: Role[];
 
+    @Column({nullable: true})
+    public lastLoggedIn?: Date;
+
+    public hasPassword?: boolean;
+
     constructor(userObj: Partial<User> = {}) {
         Object.assign(this, userObj);
+        this.hasPassword = !!this.password;
     }
 
     // @BeforeInsert()
@@ -94,7 +101,7 @@ export default class User {
         return Object.assign({}, this);
     }
 
-    public equals(other: User, excludes: Excludes = {id: true, password: true}): boolean {
+    public equals(other: User, excludes: Excludes = {id: true, password: true, lastLoggedIn: true}): boolean {
         const includes = Object.keys(excludes).filter((excludesKey: keyof Excludes) =>
             !excludes[excludesKey]) as Array<keyof User>;
         const props = ["email", "name", "username"].concat(includes) as Array<keyof User>;

@@ -1,4 +1,6 @@
 import { Request } from "express";
+import "jest";
+import "jest-extended";
 import * as routingControllers from "routing-controllers";
 import util from "util";
 import AuthController from "../../../src/api/routes/AuthController";
@@ -38,29 +40,29 @@ describe("AuthController", () => {
 
     describe("logout method", () => {
         it("should resolve the promise and destroy the session if logout is successful", async () => {
-            mockReq.session.destroy = jest.fn(cb => {
+            mockReq.session!.destroy = jest.fn(cb => {
                 return cb();
             });
             expect(mockSess).toEqual({ user: 1 });
             const res = authController.logout(mockReq, mockSess);
             await expect(res).resolves.toBeTrue();
-            expect(mockReq.session.destroy).toHaveBeenCalledTimes(1);
+            expect(mockReq.session!.destroy).toHaveBeenCalledTimes(1);
             expect(mockSess).toBeEmpty();
         });
         it("should resolve the promise if there is no userId on the session", async () => {
             mockSess = {};
-            mockReq.session.destroy = jest.fn(cb => {
+            mockReq.session!.destroy = jest.fn(cb => {
                 return cb();
             });
             const res = authController.logout(mockReq, mockSess);
             await expect(res).resolves.toBeTrue();
-            expect(mockReq.session.destroy).toHaveBeenCalledTimes(0);
+            expect(mockReq.session!.destroy).toHaveBeenCalledTimes(0);
             // Reset mockSess for following tests
             mockSess = { user: 1 };
         });
         it("should reject the promise if destroying the request session fails somehow", async () => {
             const err = new Error("Failed to destroy request session");
-            mockReq.session.destroy = jest.fn(cb => {
+            mockReq.session!.destroy = jest.fn(cb => {
                 return cb(err);
             });
             const res = authController.logout(mockReq, mockSess);

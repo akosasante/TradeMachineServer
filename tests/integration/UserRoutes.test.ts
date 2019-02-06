@@ -144,6 +144,7 @@ describe("User API endpoints", () => {
         it("should return a single public user if logged in, no matter the role (OWNER)", async () => {
             ownerLoggedIn = request.agent(app);
             const ownerRes = await makeLoggedInRequest(ownerLoggedIn, ownerUser, loggedInGetOne(1));
+            logger.debug(util.inspect(ownerRes));
             expect(ownerRes.status).toBe(200);
             expect(adminUser.equals(ownerRes.body)).toBeTrue();
         });
@@ -204,7 +205,6 @@ describe("User API endpoints", () => {
             ownerLoggedIn = request.agent(app);
             const ownerRes = await makeLoggedInRequest(ownerLoggedIn, ownerUser, loggedInDelete(1000));
             expect(ownerRes.status).toBe(404);
-            logger.debug(ownerRes.body);
         });
         it("should throw a 401 Unauthorized error if not logged in", async () => {
             await request(app)

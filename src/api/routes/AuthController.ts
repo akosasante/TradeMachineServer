@@ -1,7 +1,9 @@
 import { Request } from "express";
 import { Controller, Post, Req, Session, UseBefore } from "routing-controllers";
+import util from "util";
 import { deserializeUser } from "../../bootstrap/auth";
 import logger from "../../bootstrap/logger";
+import UserDAO from "../../DAO/user";
 import User from "../../models/user";
 import { LoginHandler, RegisterHandler } from "../middlewares/AuthenticationHandler";
 
@@ -25,15 +27,16 @@ export default class AuthController {
     @Post("/logout")
     public async logout(@Req() request: Request, @Session() session: any) {
         return new Promise((resolve, reject) => {
+            const userDAO = new UserDAO();
             if (session && session.user && request.session) {
-                const sessionUserWas = session.user;
-                request.session.destroy(err => {
+                request.session.destroy(async err => {
                     if (err) {
                         logger.error("Error destroying session");
                         reject(err);
                     } else {
+                        logger.debug(`Destroying user session for userId#${session.user}`);
+                        await userDAO.updateUser(session.user, { lastLoggedIn: new Date() });
                         delete session.user;
-                        logger.debug(`Destroying user session for userId#${sessionUserWas}`);
                         resolve(true);
                     }
                 });

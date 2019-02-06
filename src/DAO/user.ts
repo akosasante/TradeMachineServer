@@ -15,26 +15,30 @@ export default class UserDAO {
     }
 
     public async getAllUsers(): Promise<User[]> {
-        return await this.userDb.find();
+        const dbUsers = await this.userDb.find();
+        return dbUsers.map(user => new User(user));
     }
 
     public async getUserById(id: number): Promise<User> {
-        return await this.userDb.findOneOrFail(id);
+        const dbUser = await this.userDb.findOneOrFail(id);
+        return new User(dbUser);
     }
 
     public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User|undefined> {
         if (failIfNotFound) {
-            return await this.userDb.findOneOrFail({where: query});
+            const dbUser = await this.userDb.findOneOrFail({where: query});
+            return new User(dbUser);
         } else {
-            return await this.userDb.findOne({where: query});
+            const dbUser = await this.userDb.findOne({where: query});
+            return dbUser ? new User(dbUser) : undefined;
         }
     }
 
     public async createUser(userObj: Partial<User>): Promise<User> {
         // TODO: Perhaps some custom validation that the db can't be responsible for?
         // Currently doesn't seem to be necessary
-        const user = new User(userObj);
-        return await this.userDb.save(user);
+        const dbUser = await this.userDb.save(userObj);
+        return new User(dbUser);
     }
 
     public async updateUser(id: number, userObj: Partial<User>): Promise<User> {
@@ -44,7 +48,7 @@ export default class UserDAO {
     }
 
     public async deleteUser(id: number): Promise<DeleteResult> {
-        await this.getUserById(id);
+        await this.getUserById(id); // This should throw error if the id does not exist
         return await this.userDb.delete(id);
     }
 }

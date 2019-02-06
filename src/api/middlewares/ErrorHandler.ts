@@ -5,6 +5,7 @@ import { EntityColumnNotFound } from "typeorm/error/EntityColumnNotFound";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import util from "util";
 import logger from "../../bootstrap/logger";
+// tslint:disable:max-classes-per-file
 
 @Middleware({type: "after"})
 export default class CustomErrorHandler implements ExpressErrorMiddlewareInterface {
@@ -30,5 +31,11 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
     }
     private cleanErrorObject(error: Error) {
         return {message: error.message || "", stack: error.stack || {}};
+    }
+}
+
+export class ConflictError extends HttpError {
+    constructor(msg: string) {
+        super(409, msg || "Conflict Found In Request");
     }
 }

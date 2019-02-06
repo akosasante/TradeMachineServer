@@ -1,3 +1,5 @@
+import "jest";
+import "jest-extended";
 import { mocked } from "ts-jest/utils";
 import { Error } from "tslint/lib/error";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
