@@ -2,11 +2,14 @@ import { Request } from "express";
 import "jest";
 import "jest-extended";
 import * as routingControllers from "routing-controllers";
-import util from "util";
-import AuthController from "../../../src/api/routes/AuthController";
-import { deserializeUser } from "../../../src/bootstrap/auth";
-import logger from "../../../src/bootstrap/logger";
-import User from "../../../src/models/user";
+import * as typeorm from "typeorm";
+import AuthController from "../../../../src/api/routes/AuthController";
+import { deserializeUser } from "../../../../src/bootstrap/auth";
+import User from "../../../../src/models/user";
+import mockUserDb from "../../mocks/mockUserDb";
+
+jest.spyOn(typeorm, "getConnection")
+    .mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
 
 describe("AuthController", () => {
     let authController: AuthController;

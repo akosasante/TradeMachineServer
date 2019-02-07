@@ -3,7 +3,8 @@ import { Server } from "http";
 import "jest";
 import path from "path";
 import request from "supertest";
-import server from "../src/server";
+import { redisClient } from "../../src/bootstrap/express";
+import server from "../../src/server";
 
 dotenvConfig({path: path.resolve(__dirname, "../.env")});
 
@@ -13,7 +14,7 @@ describe("GET /random-url", () => {
         app = await server;
     });
     afterAll(async () => {
-        // app.close();
+        await redisClient.quit();
     });
     it("should return 404", done => {
         request(app)

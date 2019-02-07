@@ -36,7 +36,6 @@ describe("Auth API endpoints", () => {
                 .post("/auth/signup")
                 .send(testUserObj)
                 .expect(200);
-            logger.debug(util.inspect(res.body));
             expect(testUser.equals(res.body)).toBeTrue();
             expect(res.body).not.toHaveProperty("password");
             expect(res.body.hasPassword).toBeTrue();

@@ -3,13 +3,11 @@ import "jest-extended";
 import { mocked } from "ts-jest/utils";
 import { Error } from "tslint/lib/error";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
-import util from "util";
-import UserController from "../../../src/api/routes/UserController";
-import logger from "../../../src/bootstrap/logger";
-import UserDAO from "../../../src/DAO/user";
-import User from "../../../src/models/user";
+import UserController from "../../../../src/api/routes/UserController";
+import UserDAO from "../../../../src/DAO/user";
+import User from "../../../../src/models/user";
 
-jest.mock("../../../src/DAO/user");
+jest.mock("../../../../src/DAO/user");
 const mockedUserDAO = mocked(UserDAO);
 
 describe("UserController", () => {
@@ -112,7 +110,7 @@ describe("UserController", () => {
             expect(mockCreateUser).toHaveBeenCalledTimes(1);
             expect(mockCreateUser).toHaveBeenCalledWith(passwordRemoved);
             // Testing that the return value from the controller method is as expected
-            expect(res).toEqual(testUser.publicUser);
+            expect(res).toEqual((new User(passwordRemoved)).publicUser);
         });
         it("should throw an error", async () => {
             await expect(userController.createUser({namez: "invalid"} as Partial<User>))

@@ -12,7 +12,7 @@ export default class AuthController {
     @Post("/login")
     @UseBefore(LoginHandler)
     public async login(@Req() request: Request, @Session() session: any): Promise<User> {
-        // TODO: Maybe extract deserialization to a usebefore middleware
+        // TODO: Maybe extract deserialization to a usebefore api.middleware
         const user = await deserializeUser(session.user);
         return user!.publicUser;
     }
@@ -27,13 +27,13 @@ export default class AuthController {
     @Post("/logout")
     public async logout(@Req() request: Request, @Session() session: any) {
         return new Promise((resolve, reject) => {
-            const userDAO = new UserDAO();
             if (session && session.user && request.session) {
                 request.session.destroy(async err => {
                     if (err) {
                         logger.error("Error destroying session");
                         reject(err);
                     } else {
+                        const userDAO = new UserDAO();
                         logger.debug(`Destroying user session for userId#${session.user}`);
                         await userDAO.updateUser(session.user, { lastLoggedIn: new Date() });
                         delete session.user;

@@ -1,6 +1,8 @@
+import "jest";
+import "jest-extended";
 import * as typeorm from "typeorm";
-import UserDAO from "../../src/DAO/user";
-import mockUserDb, { testUser } from "./mocks/mockUserDb";
+import UserDAO from "../../../src/DAO/user";
+import mockUserDb, { testUser } from "../mocks/mockUserDb";
 
 jest.spyOn(typeorm, "getConnection")
     .mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
@@ -11,6 +13,9 @@ describe("UserDAO", () => {
     describe("getAllUsers", () => {
         beforeAll(() => {
             userDAO = new UserDAO();
+        });
+        afterAll(async () => {
+            await userDAO.connection.close();
         });
 
         it("should return an array of users as result of db call", async () => {

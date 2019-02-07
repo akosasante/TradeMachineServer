@@ -2,7 +2,6 @@ import { Server } from "http";
 import "jest";
 import "jest-extended";
 import request from "supertest";
-import util from "util";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import User, { Role } from "../../src/models/user";
@@ -116,16 +115,16 @@ describe("User API endpoints", () => {
             expect(users).toBeArrayOfSize(4);
             expect(users).toSatisfyAll(user => User.isUser(user));
         });
-        it("should return a 401 Unauthorized Error if the user does not have the correct roles", async () => {
+        it("should return a 403 Forbidden Error if the user does not have the correct roles", async () => {
             ownerLoggedIn = request.agent(app);
             const ownerRes = await makeLoggedInRequest(ownerLoggedIn, ownerUser, loggedInGetAll);
-            expect(ownerRes.status).toBe(401);
+            expect(ownerRes.status).toBe(403);
         });
-        it("should return a 401 Unauthorized Error if the user is not logged in at all", async () => {
+        it("should return a 403 Forbidden Error if the user is not logged in at all", async () => {
             await request(app)
                 .get("/users")
                 .expect("Content-Type", /json/)
-                .expect(401);
+                .expect(403);
         });
     });
     describe("GET /users/:id (get one user)", () => {
@@ -144,7 +143,6 @@ describe("User API endpoints", () => {
         it("should return a single public user if logged in, no matter the role (OWNER)", async () => {
             ownerLoggedIn = request.agent(app);
             const ownerRes = await makeLoggedInRequest(ownerLoggedIn, ownerUser, loggedInGetOne(1));
-            logger.debug(util.inspect(ownerRes));
             expect(ownerRes.status).toBe(200);
             expect(adminUser.equals(ownerRes.body)).toBeTrue();
         });
@@ -199,7 +197,6 @@ describe("User API endpoints", () => {
             ownerLoggedIn = request.agent(app);
             const ownerRes = await makeLoggedInRequest(ownerLoggedIn, ownerUser, loggedInDelete(1));
             expect(ownerRes.status).toBe(200);
-            logger.debug(ownerRes.body);
         });
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
             ownerLoggedIn = request.agent(app);
