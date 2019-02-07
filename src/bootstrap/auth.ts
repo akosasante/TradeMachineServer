@@ -9,7 +9,7 @@ import logger from "./logger";
 
 export async function serializeUser(user: User): Promise<number|undefined> {
     logger.debug("serializing user");
-    return user.id;
+    return user ? user.id : undefined;
 }
 
 export async function deserializeUser(id: number): Promise<User|undefined> {
@@ -58,10 +58,8 @@ export async function signInAuthentication(email: string, password: string,
             logger.debug("updating user last logged in");
             user = await userDAO.updateUser(user.id!, { lastLoggedIn: new Date() });
             return done(undefined, user);
-        } else if (!validPassword) {
+        } else {
             return done(new Error("Incorrect password"));
-        } else if (!user) {
-            return done(new Error("No user with that email"));
         }
     } catch (error) {
         logger.error(`${error instanceof EntityNotFoundError ?
@@ -77,23 +75,24 @@ export async function authorizationChecker(action: Action, roles: Role[]): Promi
     const user = await getUserFromAction(action);
     if (user) {
         const userHasRole = roles.some(role => user.hasRole(role));
-        if (!roles.length || userHasRole || user.isAdmin()) {
-            return true;
-        } else {
-            throw new UnauthorizedError(`User must have one of the following roles to perform this action: ${roles}.`);
-        }
+        return (!roles.length || userHasRole || user.isAdmin());
     } else {
-        throw new UnauthorizedError("User must be logged in to perform this action");
+        return false;
     }
 }
 
 export async function currentUserChecker(action: Action) {
     logger.debug("checking current user");
-    return  getUserFromAction(action);
+    try {
+        return !!(await getUserFromAction(action));
+    } catch (error) {
+        // Assuming error was due to not being able to find user with this ID
+        return false;
+    }
 }
 
 async function getUserFromAction(action: Action): Promise<User|undefined> {
     const userId = get(action, "request.session.user");
     logger.debug(`Current userId: ${userId}`);
-    return await deserializeUser(userId);
+    return userId ? await deserializeUser(userId) : undefined;
 }
