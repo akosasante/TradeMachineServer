@@ -6,5 +6,5 @@ services:
 before_script:
   - psql -c 'create database trade_machine;' -U postgres
   - npm run ts-fix
-  - npm run gen-migrate
+  - npm run gen-migrate -- "travis_ci_schema"
   - npm run run-migrate
