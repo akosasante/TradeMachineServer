@@ -17,9 +17,12 @@ describe("AuthController", () => {
     let mockSess: any;
 
     beforeAll(() => {
+        // @ts-ignore
         routingControllers.Req = jest.fn();
+        // @ts-ignore
         deserializeUser = jest.fn((userId: number) =>
             new User({ id: userId, email: "example@test.com", password: "test" }));
+        // @ts-ignore
         mockReq = { session: {} };
         mockSess = { user: 1 };
         authController = new AuthController();

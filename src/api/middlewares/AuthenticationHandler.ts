@@ -14,7 +14,8 @@ export class LoginHandler implements ExpressMiddlewareInterface {
         const password = get(request, "body.password");
         return signInAuthentication(email, password, async (err?: Error, user?: User) => {
             if (err || !user) {
-                return next(new UnauthorizedError(err ? err.message : "User could not be authenticated."));
+                const message = `User could not be authenticated. ${err ? err.message : ""}`;
+                return next(new UnauthorizedError(message));
             } else {
                 request.session!.user = await serializeUser(user);
                 return next();
