@@ -1,17 +1,15 @@
-import {Connection, DeleteResult, getConnection, Repository} from "typeorm";
+import { Connection, DeleteResult, getConnection, Repository } from "typeorm";
 import util from "util";
 import logger from "../bootstrap/logger";
 import User from "../models/user";
 
 export default class UserDAO {
-    private userDb: Repository<User>;
     public connection: Connection;
+    private userDb: Repository<User>;
     // constructor(private userDb: Repository<User>) {}
     constructor() {
         this.connection = getConnection(process.env.NODE_ENV);
-        console.log(util.inspect(this.connection));
         this.userDb = this.connection.getRepository("User");
-        console.log(util.inspect(this.userDb));
         // const connection = getConnection(process.env.NODE_ENV);
         // logger.debug(connection);
         // this.userDb = connection.getRepository("User");
