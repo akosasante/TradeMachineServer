@@ -24,7 +24,7 @@
     "run-migrate": "npm run build && typeorm migration:run -f ormconfig -c $NODE_ENV",
     "run-migrate-test": "npm run build && typeorm migration:run -f ormconfig -c test",
     "revert-migrate": "npm run build && typeorm migration:revert -f ormconfig -c $NODE_ENV",
-    "revert-migrate-test": "npm run build && typeorm migration:revert -f ormconfig -c test",
+    "revert-migrate-test": "npm run build && typeorm migration:revert -f ormconfig -c test"
   },
   "author": "Akosua Asante",
   "license": "ISC",
