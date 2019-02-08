@@ -48,14 +48,14 @@ const logger = winston.createLogger(({
         errorLogger,
         combinedLogger,
     ],
-    silent: !!process.env.SUPRESS_LOGS,
+    silent: process.env.ENABLE_LOGS === "false",
     exceptionHandlers: [
         exceptionHandler,
     ],
     exitOnError: false,
 }));
 
-if (process.env.NODE_ENV !== "production" && process.env.ENABLE_LOGS === "true") {
+if (process.env.NODE_ENV !== "production") {
     logger.add(consoleLogger);
 }
 

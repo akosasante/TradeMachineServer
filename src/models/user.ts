@@ -1,14 +1,6 @@
 import { compare, hash } from "bcryptjs";
-import { isEqual } from "lodash";
-import {
-    BeforeInsert,
-    Column,
-    CreateDateColumn,
-    Entity,
-    PrimaryGeneratedColumn,
-    Unique,
-    UpdateDateColumn,
-} from "typeorm";
+import { isEqual, union } from "lodash";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
 import logger from "../bootstrap/logger";
 
 export enum Role {
@@ -19,7 +11,7 @@ export enum Role {
 @Entity()
 @Unique(["email"])
 export default class User {
-    public get publicUser(): Pick<User, Exclude<keyof User, "password">> {
+    public get publicUser(): User {
         const user = new User(this);
         user.password = undefined;
         return user;
@@ -37,9 +29,9 @@ export default class User {
     //     return "trade_machine_new_user";
     // }
 
-    public static isUser(userObj: any): userObj is User {
-        return (userObj as User).email !== undefined;
-    }
+    // public static isUser(userObj: any): userObj is User {
+    //     return (userObj as User).email !== undefined;
+    // }
 
     @PrimaryGeneratedColumn()
     public readonly id?: number;
@@ -62,7 +54,7 @@ export default class User {
     @UpdateDateColumn()
     public dateModified?: Date;
 
-    @Column({ type: "enum", enum: Role, array: true, default: [Role.OWNER]})
+    @Column({type: "enum", enum: Role, array: true, default: [Role.OWNER]})
     public roles?: Role[];
 
     @Column({nullable: true})
@@ -81,9 +73,7 @@ export default class User {
     // }
 
     public async isPasswordMatching(password: string): Promise<boolean> {
-        return compare(password, this.password || "")
-            .then(pass => pass)
-            .catch(err => err);
+        return compare(password, this.password || "");
     }
 
     public toString(): string {
@@ -103,19 +93,22 @@ export default class User {
     }
 
     public equals(other: User, excludes: Excludes = {id: true, password: true, lastLoggedIn: true}): boolean {
-        const includes = Object.keys(excludes).filter((excludesKey: keyof Excludes) =>
-            !excludes[excludesKey]) as Array<keyof User>;
-        const props = ["email", "name", "username"].concat(includes) as Array<keyof User>;
-        const objects = ["roles"] as Array<keyof User>;
-        return propsEqual(props, this, other) && objectsEqual(objects, this, other);
+        const allFields = union(Object.keys(other), Object.keys(this));
+        const includeOnly = allFields.filter(field => !excludes[field]);
+        const props = includeOnly.filter(field => !COMPLEX_FIELDS.includes(field));
+        const objects = includeOnly.filter(field => COMPLEX_FIELDS.includes(field));
+        return propsEqual(props as Array<keyof User>, this, other) &&
+            objectsEqual(objects as Array<keyof User>, this, other);
     }
 }
+
+const COMPLEX_FIELDS = ["roles"];
 
 function objectsEqual<T>(props: Array<keyof T>, obj1: T, obj2: T): boolean {
     return props.reduce((bool: boolean, prop: keyof T) => {
         const res = bool && objectEqual(prop, obj1, obj2);
         if (!res) {
-            throw Error("Not matching: " + prop);
+            throw new Error("Not matching: " + prop);
         }
         return res;
     }, true);
@@ -130,7 +123,7 @@ function propsEqual<T>(props: Array<keyof T>, obj1: T, obj2: T): boolean {
     return props.reduce((bool: boolean, prop: keyof T) => {
         const res = bool && propEqual(prop, obj1, obj2);
         if (!res) {
-            throw Error("Not matching: " + prop);
+            throw new Error("Not matching: " + prop);
         }
         return res;
     }, true);

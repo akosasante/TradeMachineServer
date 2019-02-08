@@ -113,7 +113,7 @@ describe("User API endpoints", () => {
             const users = adminRes.body;
             expect(adminRes.status).toBe(200);
             expect(users).toBeArrayOfSize(4);
-            expect(users).toSatisfyAll(user => User.isUser(user));
+            // expect(users).toSatisfyAll(user => User.isUser(user));
         });
         it("should return a 403 Forbidden Error if the user does not have the correct roles", async () => {
             ownerLoggedIn = request.agent(app);
