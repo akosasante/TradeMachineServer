@@ -5,5 +5,6 @@ services:
   - redis-server
 before_script:
   - psql -c 'create database trade_machine;' -U postgres
+  - npm run ts-fix
   - npm run gen-migrate
   - npm run run-migrate
