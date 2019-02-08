@@ -4,7 +4,7 @@ services:
   - postgresql
   - redis-server
 before_script:
-  - psql -c 'create database trade_machine;' -U postgres
+  - psql -c 'create database trade_machine; \connect trade_machine; create schema test;' -U postgres
   - npm run ts-fix
   - npm run gen-migrate -- "travis_ci_schema"
   - npm run run-migrate
