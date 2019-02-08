@@ -3,9 +3,9 @@ const commonOpts = {
     host: "localhost",
     port: 5432,
     synchronize: false,
-    entities: [`${process.env.SERVER_ROOT}/dist/models/**/*.js`],
-    migrations: [`${process.env.SERVER_ROOT}/dist/db/migrations/**/*.js`],
-    subscribers: [`${process.env.SERVER_ROOT}/dist/db/subscribers/**/*.js`],
+    entities: [`${process.env.BASE_DIR}/dist/models/**/*.js`],
+    migrations: [`${process.env.BASE_DIR}/dist/db/migrations/**/*.js`],
+    subscribers: [`${process.env.BASE_DIR}/dist/db/subscribers/**/*.js`],
     cli: {
         entitiesDir: "src/models",
         migrationsDir: "src/db/migrations",
