@@ -21,10 +21,13 @@
     "serve-debug": "nodemon $NODE_DEBUG_OPTION --inspect dist/server.js",
     "gen-migrate": "npm run build && typeorm migration:generate -f ormconfig -c development -n",
     "gen-migrate-test": "npm run build && typeorm migration:generate -f ormconfig -c test -n",
+    "gen-migrate-prod": "npm run build && typeorm migration:generate -f ormconfig -c production -n",
     "run-migrate": "npm run build && typeorm migration:run -f ormconfig -c development",
     "run-migrate-test": "npm run build && typeorm migration:run -f ormconfig -c test",
+    "run-migrate-prod": "npm run build && typeorm migration:run -f ormconfig -c production",
     "revert-migrate": "npm run build && typeorm migration:revert -f ormconfig -c development",
-    "revert-migrate-test": "npm run build && typeorm migration:revert -f ormconfig -c test"
+    "revert-migrate-test": "npm run build && typeorm migration:revert -f ormconfig -c test",
+    "revert-migrate-prod": "npm run build && typeorm migration:revert -f ormconfig -c production"
   },
   "author": "Akosua Asante",
   "license": "ISC",
