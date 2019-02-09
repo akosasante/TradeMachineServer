@@ -28,5 +28,9 @@ module.exports = [
         schema: "test",
         synchronize: true,
         dropSchema: true,
-    }
+    },
+    {
+        ...commonOpts,
+        name: "travis_test",
+    },
 ];
