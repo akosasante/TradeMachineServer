@@ -101,16 +101,15 @@ describe("UserController", () => {
             expect(mockedUserDAO).toHaveBeenCalledTimes(1);
         });
 
-        it("should create a user and ignore the password here", async () => {
-            const { password, ...passwordRemoved } = testUser.parse();
+        it("should create a user", async () => {
             const res = await userController.createUser(testUser.parse());
             // Testing that the UserDAO class was instantiated
             expect(mockedUserDAO).toHaveBeenCalledTimes(1);
             // Testing that the correct dao function is called and with the correct params
             expect(mockCreateUser).toHaveBeenCalledTimes(1);
-            expect(mockCreateUser).toHaveBeenCalledWith(passwordRemoved);
+            expect(mockCreateUser).toHaveBeenCalledWith(testUser);
             // Testing that the return value from the controller method is as expected
-            expect(res).toEqual((new User(passwordRemoved)).publicUser);
+            expect(res).toEqual(testUser.publicUser);
         });
         it("should throw an error", async () => {
             await expect(userController.createUser({namez: "invalid"} as Partial<User>))

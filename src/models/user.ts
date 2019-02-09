@@ -1,6 +1,14 @@
 import { compare, hash } from "bcryptjs";
 import { isEqual, union } from "lodash";
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
+import {
+    BeforeInsert,
+    Column,
+    CreateDateColumn,
+    Entity,
+    PrimaryGeneratedColumn,
+    Unique,
+    UpdateDateColumn,
+} from "typeorm";
 import logger from "../bootstrap/logger";
 
 export enum Role {
@@ -63,16 +71,31 @@ export default class User {
     public hasPassword?: boolean;
 
     constructor(userObj: Partial<User> = {}) {
-        Object.assign(this, userObj);
+        this.assignUserFields(userObj);
+    }
+
+    // Couldn't get this to work for whatever reason so just hashing in the DAO itself.
+    // @BeforeInsert()
+    // public async setHashedPassword() {
+    //     logger.debug("HASHING ON INSERT");
+    //     this.password = this.password ? await User.generateHashedPassword(this.password) : this.password;
+    // }
+
+    public assignUserFields(userObj: Partial<User>) {
+        this.password = userObj.password;
+        this.username = userObj.username;
+        this.lastLoggedIn = userObj.lastLoggedIn;
+        this.email = userObj.email;
+        this.dateCreated = userObj.dateCreated;
+        this.dateModified = userObj.dateModified;
+        Object.assign(this, {id: userObj.id});
+        this.name = userObj.name;
+        this.roles = userObj.roles;
         this.hasPassword = !!this.password;
     }
 
-    // @BeforeInsert()
-    // public async setHashedPassword() {
-    //     this.password = await User.generateHashedPassword(this.password || User.defaultPassword());
-    // }
-
     public async isPasswordMatching(password: string): Promise<boolean> {
+        logger.debug(`comparing ${password} to ${this.password}`);
         return compare(password, this.password || "");
     }
 
@@ -92,7 +115,7 @@ export default class User {
         return Object.assign({}, this);
     }
 
-    public equals(other: User, excludes: Excludes = {id: true, password: true, lastLoggedIn: true}): boolean {
+    public equals(other: User, excludes: Excludes = DEFAULT_EXCLUDES): boolean {
         const allFields = union(Object.keys(other), Object.keys(this));
         const includeOnly = allFields.filter(field => !excludes[field]);
         const props = includeOnly.filter(field => !COMPLEX_FIELDS.includes(field));
@@ -103,6 +126,7 @@ export default class User {
 }
 
 const COMPLEX_FIELDS = ["roles"];
+const DEFAULT_EXCLUDES = { id: true, password: true, lastLoggedIn: true, dateCreated: true, dateModified: true };
 
 function objectsEqual<T>(props: Array<keyof T>, obj1: T, obj2: T): boolean {
     return props.reduce((bool: boolean, prop: keyof T) => {

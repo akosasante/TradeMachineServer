@@ -29,7 +29,7 @@ export async function signUpAuthentication(email: string, password: string,
         if (!user) {
             logger.debug("no existing user with that email");
             const hashedPass = await User.generateHashedPassword(password);
-            const newUser = await userDAO.createUser({email, password: hashedPass, lastLoggedIn: new Date()});
+            const newUser = await userDAO.createUser({email, password: hashedPass, lastLoggedIn: new Date()}, true);
             return done(undefined, newUser);
         } else if (user && !user.password) {
             logger.debug("user found with unset password");

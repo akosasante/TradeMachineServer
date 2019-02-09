@@ -69,13 +69,14 @@ describe("UserDAO", () => {
             userDAO = new UserDAO();
         });
 
-        it("should a user instance from the object passed in", async () => {
+        it("should a user instance and hash any included password before insert", async () => {
+            const expectedUser = expect.objectContaining({email: expect.any(String)});
             const res = await userDAO.createUser(testUser.parse());
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.save).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.save).toHaveBeenCalledWith(testUser);
+            expect(mockUserDb.save).toHaveBeenCalledWith(expectedUser);
             // Testing that we return as expected
-            expect(res).toEqual(testUser);
+            expect(testUser.equals(res)).toBeTrue();
         });
     });
 

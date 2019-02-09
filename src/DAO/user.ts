@@ -36,9 +36,13 @@ export default class UserDAO {
         }
     }
 
-    public async createUser(userObj: Partial<User>): Promise<User> {
+    public async createUser(userObj: Partial<User>, skipHash: boolean = false): Promise<User> {
         // TODO: Perhaps some custom validation that the db can't be responsible for?
         // Currently doesn't seem to be necessary
+        if (userObj.password && !skipHash) {
+            // Doing this here because I couldn't get beforeinsert to work
+            userObj.password = await User.generateHashedPassword(userObj.password);
+        }
         const dbUser = await this.userDb.save(userObj);
         return new User(dbUser);
     }

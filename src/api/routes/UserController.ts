@@ -32,10 +32,11 @@ export default class UserController {
     @Post("/")
     public async createUser(@Body() userObj: Partial<User>): Promise<User> {
         logger.debug("create user endpoint");
-        const { password, ...userRest } = userObj;
+        // const { password, ...userRest } = userObj;
         // ^ Because we don't hash passwords on insert.
         // Not sure what I was thinking here? Why not allow passing password on create API-wise?
-        const user = await this.dao.createUser(userRest);
+        // const user = await this.dao.createUser(userRest);
+        const user = await this.dao.createUser(userObj);
         logger.debug(`created user: ${user}`);
         return user.publicUser;
     }

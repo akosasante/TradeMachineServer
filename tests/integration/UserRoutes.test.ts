@@ -3,7 +3,6 @@ import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
-import logger from "../../src/bootstrap/logger";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
 
@@ -17,8 +16,6 @@ describe("User API endpoints", () => {
         name: "Jatheesh",
         roles: [Role.OWNER],
     });
-    const testUser = (email: string) => new User(testUserObj(email));
-    const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
     const ADMIN_EMAIL = "admin@example.com";
     const OWNER_EMAIL = "owner@example.com";
     const adminUserObj = {
@@ -29,13 +26,18 @@ describe("User API endpoints", () => {
         ...testUserObj(OWNER_EMAIL),
         roles: [Role.OWNER],
     };
-    let adminUser: User;
-    let ownerUser: User;
-    async function makeLoggedInRequest(agent: request.SuperTest<request.Test>, user: User,
+
+    const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
+
+    const testUser = (email: string) => new User(testUserObj(email));
+    const adminUser: User = new User(adminUserObj);
+    const ownerUser: User = new User(ownerUserObj);
+
+    async function makeLoggedInRequest(agent: request.SuperTest<request.Test>, email: string, password: string,
                                        req: (ag: request.SuperTest<request.Test>) => any) {
         await agent
             .post("/auth/login")
-            .send(user)
+            .send({email, password})
             .expect(200);
         return req(agent);
     }
@@ -57,8 +59,6 @@ describe("User API endpoints", () => {
             .post("/users")
             .send(ownerUserObj)
             .expect(200);
-        adminUser = new User(adminRes.body);
-        ownerUser = new User(ownerRes.body);
     });
     afterAll(async () => {
         await redisClient.quit();
@@ -77,7 +77,7 @@ describe("User API endpoints", () => {
         it("should return a single user object instance to the object passed in", async () => {
             const email = "jatheeshx@example.com";
             const res = await postRequest(testUserObj(email));
-            expect(testUser(email).equals(res.body)).toBeTrue();
+            expect((testUser(email).publicUser).equals(res.body)).toBeTrue();
         });
         it("should ignore any invalid properties from the object passed in", async () => {
             const email = "invalid@gmail.com";
@@ -109,7 +109,8 @@ describe("User API endpoints", () => {
             .expect("Content-Type", /json/);
         it("should return an array of all the users in the db", async () => {
             adminLoggedIn = request.agent(app);
-            const adminRes = await makeLoggedInRequest(adminLoggedIn, adminUser, loggedInGetAll);
+            const adminRes = await makeLoggedInRequest(
+                adminLoggedIn, adminUserObj.email, adminUserObj.password, loggedInGetAll);
             const users = adminRes.body;
             expect(adminRes.status).toBe(200);
             expect(users).toBeArrayOfSize(4);
@@ -117,7 +118,8 @@ describe("User API endpoints", () => {
         });
         it("should return a 403 Forbidden Error if the user does not have the correct roles", async () => {
             ownerLoggedIn = request.agent(app);
-            const ownerRes = await makeLoggedInRequest(ownerLoggedIn, ownerUser, loggedInGetAll);
+            const ownerRes = await makeLoggedInRequest(
+                ownerLoggedIn, ownerUserObj.email, ownerUserObj.password, loggedInGetAll);
             expect(ownerRes.status).toBe(403);
         });
         it("should return a 403 Forbidden Error if the user is not logged in at all", async () => {
@@ -136,13 +138,15 @@ describe("User API endpoints", () => {
             .expect("Content-Type", /json/);
         it("should return a single public user if logged in, no matter the role (ADMIN)", async () => {
             adminLoggedIn = request.agent(app);
-            const adminRes = await makeLoggedInRequest(adminLoggedIn, adminUser, loggedInGetOne(1));
+            const adminRes = await makeLoggedInRequest(
+                adminLoggedIn, adminUserObj.email, adminUserObj.password, loggedInGetOne(1));
             expect(adminRes.status).toBe(200);
             expect(adminUser.equals(adminRes.body)).toBeTrue();
         });
         it("should return a single public user if logged in, no matter the role (OWNER)", async () => {
             ownerLoggedIn = request.agent(app);
-            const ownerRes = await makeLoggedInRequest(ownerLoggedIn, ownerUser, loggedInGetOne(1));
+            const ownerRes = await makeLoggedInRequest(
+                ownerLoggedIn, ownerUserObj.email, ownerUserObj.password, loggedInGetOne(1));
             expect(ownerRes.status).toBe(200);
             expect(adminUser.equals(ownerRes.body)).toBeTrue();
         });
@@ -195,12 +199,14 @@ describe("User API endpoints", () => {
             .expect("Content-Type", /json/);
         it("should return a delete result when logged in", async () => {
             ownerLoggedIn = request.agent(app);
-            const ownerRes = await makeLoggedInRequest(ownerLoggedIn, ownerUser, loggedInDelete(1));
+            const ownerRes = await makeLoggedInRequest(
+                ownerLoggedIn, ownerUserObj.email, ownerUserObj.password, loggedInDelete(1));
             expect(ownerRes.status).toBe(200);
         });
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
             ownerLoggedIn = request.agent(app);
-            const ownerRes = await makeLoggedInRequest(ownerLoggedIn, ownerUser, loggedInDelete(1000));
+            const ownerRes = await makeLoggedInRequest(
+                ownerLoggedIn, ownerUserObj.email, ownerUserObj.password, loggedInDelete(1000));
             expect(ownerRes.status).toBe(404);
         });
         it("should throw a 401 Unauthorized error if not logged in", async () => {

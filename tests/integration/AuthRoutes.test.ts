@@ -73,7 +73,7 @@ describe("Auth API endpoints", () => {
         it("should successfully login the user, set up the session, and return the public user", async () => {
             const res = await request(app)
                 .post("/auth/login")
-                .send(testUser)
+                .send(testUserObj)
                 .expect(200);
             expect(testUser.equals(res.body)).toBeTrue();
             expect(res.body).not.toHaveProperty("password");
