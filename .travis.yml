@@ -7,7 +7,9 @@ before_script:
   - psql -c 'create database trade_machine owner postgres;' -U postgres -a
   - psql -l -U postgres -a
   - psql -c 'create schema test;' -U postgres -d trade_machine -a
+  - psql -c 'create schema dev;' -U postgres -d trade_machine -a
   - psql -c 'create table user();' -U postgres -d trade_machine -a
+  - echo '\dt' | psql -U postgres -d trade_machine -a
   - npm run ts-fix
 #  - npm run gen-migrate -- "travis_ci_schema"
 #  - npm run run-migrate
