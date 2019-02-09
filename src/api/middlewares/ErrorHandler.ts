@@ -30,7 +30,7 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
         }
     }
     private cleanErrorObject(error: Error) {
-        return {message: error.message || "", stack: error.stack || {}};
+        return {message: error.message || "", stack: error.stack || ""};
     }
 }
 
