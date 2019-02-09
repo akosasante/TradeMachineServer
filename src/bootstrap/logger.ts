@@ -55,7 +55,7 @@ const logger = winston.createLogger(({
     exitOnError: false,
 }));
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.ENABLE_LOGS === "true") {
     logger.add(consoleLogger);
 }
 
