@@ -27,7 +27,7 @@ export default class User {
 
     public static async generateHashedPassword(plainPassword: string): Promise<string> {
         logger.debug("hashing password");
-        const saltFactor = process.env.NODE_ENV === "test" ? 1 : 20;
+        const saltFactor = process.env.NODE_ENV !== "production" ? 1 : 15;
         return hash(plainPassword, saltFactor)
             .then(pass => pass)
             .catch(err => err);

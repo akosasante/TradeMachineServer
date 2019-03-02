@@ -1,0 +1,15 @@
+doctype html
+html
+    head
+        block head
+            meta(charset="utf-8")
+            meta(name="viewport", content="width=device-width")
+            meta(http-equiv="X-UA-Compatible", content="IE=edge")
+            meta(name="x-apple-disable-message-reformatting")
+            title= subject
+
+h3.mail-header Hi #{name}, you are receiving this because you have requested a password reset for your account.
+br
+h3.mail-header Please click on the following link, or paste it into your browser to complete the process:
+a.link-button(href=`${url}`) #{url}.
+h4 If you did not request this, please ignore this email and your password will remain unchanged.

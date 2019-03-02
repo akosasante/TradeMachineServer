@@ -29,12 +29,16 @@ export class RegisterHandler implements ExpressMiddlewareInterface {
         logger.debug("IN REGISTER HANDLER");
         const email = get(request, "body.email");
         const password = get(request, "body.password");
+        if (!email || !password) {
+            return next(new Error("Some details are missing. Cannot register user."));
+        }
         return signUpAuthentication(email, password, async (err?: Error, user?: User) => {
             if (err) {
                 return next(err);
             } else if (!user) {
                 return next(new Error("For some reason could not register user"));
             } else {
+                logger.debug(`registered user: ${user}`);
                 request.session!.user = await serializeUser(user);
                 return next();
             }
