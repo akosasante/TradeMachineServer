@@ -15,7 +15,7 @@ export class MessageConsumer extends MessageProtocol {
             await this.channel.consume(queue, async data => {
                 if (data) {
                     const message = JSON.parse(data.content.toString());
-                    logger.debug(inspect(message));
+                    // logger.debug(inspect(message));
                     await cb(message);
                     this.channel.ack(data);
                 } else {
@@ -37,7 +37,7 @@ export async function createConsumer(): Promise<MessageConsumer|undefined> {
         })
         .catch(err => {
             logger.error(err);
-            return undefined;
+            throw err;
             // return process.exit(1); // maybe have the error handled upstream instead?
         });
 }

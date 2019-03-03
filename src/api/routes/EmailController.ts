@@ -1,14 +1,41 @@
-import { Body, Controller, Post } from "routing-controllers";
-import User from "../../models/user";
+import { Response } from "express";
+import { Body, Controller, Post, Res } from "routing-controllers";
+import { mailQueue } from "../../bootstrap/app";
+import logger from "../../bootstrap/logger";
+import UserDAO from "../../DAO/user";
+import { MailQueue, MailQueueMessage } from "../../queue/mailQueue";
 
 @Controller("/email")
 export default class EmailController {
-    // tslint:disable-next-line:no-empty
-    constructor() {}
+    private readonly intervalId: NodeJS.Timeout;
+    private userDao: UserDAO;
+    private readonly mailQueue?: MailQueue;
+
+    constructor() {
+        this.userDao = new UserDAO();
+        this.intervalId = setInterval(this.mailQueueLoaded, 500);
+        this.mailQueue = mailQueue;
+    }
 
     @Post("/resetEmail")
-    public async sendResetEmail(@Body() userObj: Partial<User>): Promise<void> {
-        // Update current user with reset request time
-        // Send email with current user
+    public async sendResetEmail(@Body() email: string, @Res() response: Response): Promise<Response> {
+        try {
+            // Update current user with reset request time
+            const user = await this.userDao.findUser({email});
+            await this.userDao.setPasswordExpires(user!.id!);
+
+            // Send email with current user
+            const queueMessage: MailQueueMessage = {topic: "reset_pass", args: [user]};
+            await this.mailQueue!.addEmail(JSON.stringify(queueMessage));
+            return response.status(202).json({status: "email queued"});
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    private mailQueueLoaded() {
+        if (typeof this.mailQueue !== "undefined") {
+            clearInterval(this.intervalId);
+        }
     }
 }

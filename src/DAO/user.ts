@@ -59,4 +59,12 @@ export default class UserDAO {
         await this.getUserById(id); // This should throw error if the id does not exist
         return await this.userDb.delete(id);
     }
+
+    public async setPasswordExpires(id: number): Promise<void> {
+        const updateResult = await this.userDb.update(
+            {id},
+            {passwordResetExpiresOn: User.generateTimeToPasswordExpires()});
+        logger.debug(util.inspect(updateResult));
+        return;
+    }
 }

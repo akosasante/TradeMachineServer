@@ -41,10 +41,11 @@ export class Emailer {
             },
             transport: this.transport,
         });
+        logger.debug("Emailer class created");
     }
 
     public async sendPasswordResetEmail(user: User) {
-        const resetPassPage = `${this.baseDomain}/reset_password`;
+        const resetPassPage = `${this.baseDomain}/reset_password?u=${User.sanitizeUUID(user.userIdToken)}`;
         return this.emailer.send({
             template: "reset_password",
             message: {

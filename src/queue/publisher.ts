@@ -19,14 +19,16 @@ export class MessagePublisher extends MessageProtocol {
 }
 
 export async function createPublisher(): Promise<MessagePublisher|undefined> {
+    logger.debug("creating publisher");
     return amqp.connect(config.url)
         .then(async conn => {
+            logger.debug("connected to rabbitmq");
             const channel = await conn.createChannel();
             return new MessagePublisher(conn, channel);
         })
         .catch(err => {
             logger.error(err);
-            return undefined;
+            throw err;
             // return process.exit(1); // maybe have the error handled upstream instead?
         });
 }

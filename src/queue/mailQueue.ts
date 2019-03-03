@@ -4,7 +4,10 @@ import { Emailer } from "../email/mailer";
 import User from "../models/user";
 import { createConsumer, MessageConsumer } from "./consumer";
 import { createPublisher, MessagePublisher } from "./publisher";
-
+export interface MailQueueMessage {
+    topic: string;
+    args: any[];
+}
 export class MailQueue {
     private emailer: Emailer;
     private publisher: MessagePublisher;
@@ -27,14 +30,10 @@ export class MailQueue {
         return this.consumer.consumeMessagesOn("email", this.sendEmail.bind(this));
     }
 
-    public sendEmail(message: {topic: string, args: any[]}) {
+    public sendEmail(message: MailQueueMessage) {
         const type = message.topic;
         logger.debug(`sendEmail. Type = ${type}`);
         return this.emailer.trafficController[type](...message.args);
-    }
-
-    public toString() {
-        return "hi";
     }
 }
 
@@ -49,6 +48,7 @@ export async function createMailQueue() {
             throw new Error("Missing parameters");
         }
     } catch (error) {
+        logger.error("error creating mail queue");
         logger.error(error);
     }
 }

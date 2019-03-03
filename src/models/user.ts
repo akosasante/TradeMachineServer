@@ -4,7 +4,7 @@ import {
     BeforeInsert,
     Column,
     CreateDateColumn,
-    Entity,
+    Entity, Generated,
     PrimaryGeneratedColumn,
     Unique,
     UpdateDateColumn,
@@ -32,6 +32,16 @@ export default class User {
             .then(pass => pass)
             .catch(err => err);
     }
+
+    public static generateTimeToPasswordExpires() {
+        return new Date(Date.now() + User.TIME_TO_EXPIRE_PASSWORD_MS);
+    }
+
+    public static sanitizeUUID(uuid: string) {
+        return uuid.replace(/-/g, "");
+    }
+
+    private static TIME_TO_EXPIRE_PASSWORD_MS = 1 * 60 * 60 * 1000;  // 1 hr * 60 min/hr * 60 s/min * 1000ms/s
 
     // public static defaultPassword() {
     //     return "trade_machine_new_user";
@@ -68,20 +78,16 @@ export default class User {
     @Column({nullable: true})
     public lastLoggedIn?: Date;
 
+    @Column()
+    @Generated("uuid")
+    public userIdToken: string;
+
+    @Column({nullable: true})
+    public passwordResetExpiresOn?: Date;
+
     public hasPassword?: boolean;
 
     constructor(userObj: Partial<User> = {}) {
-        this.assignUserFields(userObj);
-    }
-
-    // Couldn't get this to work for whatever reason so just hashing in the DAO itself.
-    // @BeforeInsert()
-    // public async setHashedPassword() {
-    //     logger.debug("HASHING ON INSERT");
-    //     this.password = this.password ? await User.generateHashedPassword(this.password) : this.password;
-    // }
-
-    public assignUserFields(userObj: Partial<User>) {
         this.password = userObj.password;
         this.username = userObj.username;
         this.lastLoggedIn = userObj.lastLoggedIn;
@@ -92,7 +98,15 @@ export default class User {
         this.name = userObj.name;
         this.roles = userObj.roles;
         this.hasPassword = !!this.password;
+        this.userIdToken = userObj.userIdToken;
     }
+
+    // Couldn't get this to work for whatever reason so just hashing in the DAO itself.
+    // @BeforeInsert()
+    // public async setHashedPassword() {
+    //     logger.debug("HASHING ON INSERT");
+    //     this.password = this.password ? await User.generateHashedPassword(this.password) : this.password;
+    // }
 
     public async isPasswordMatching(password: string): Promise<boolean> {
         logger.debug(`comparing ${password} to ${this.password}`);
