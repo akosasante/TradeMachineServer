@@ -80,7 +80,7 @@ export default class User {
 
     @Column()
     @Generated("uuid")
-    public userIdToken: string;
+    public userIdToken?: string;
 
     @Column({nullable: true})
     public passwordResetExpiresOn?: Date;

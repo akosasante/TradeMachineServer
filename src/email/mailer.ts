@@ -9,25 +9,27 @@ import User from "../models/user";
 export class Emailer {
 
     // tslint:disable-next-line
-    public trafficController: {[key: string]: Function} = {
+    public trafficController: { [key: string]: Function } = {
         reset_pass: this.sendPasswordResetEmail.bind(this),
     };
     private emailer: Email;
     private transportOpts = {
         apiKey: process.env.EMAIL_KEY,
-        apiUrl: process.env.EMAIL_API,
+        apiUrl: process.env.EMAIL_API_URL,
     };
+
     private transport = nodemailer.createTransport(SendinBlueTransport(this.transportOpts));
     private baseDomain = process.env.BASE_URL;
 
     constructor() {
         logger.debug("creating Emailer class");
+        logger.debug(inspect(this.transportOpts));
         this.emailer = new Email({
             message: {
                 from: "tradebot@flexfoxfantasy.com",
             },
             preview: true,
-            send: false,
+            send: true,
             juice: true,
             juiceResources: {
                 preserveImportant: true,
@@ -45,7 +47,8 @@ export class Emailer {
     }
 
     public async sendPasswordResetEmail(user: User) {
-        const resetPassPage = `${this.baseDomain}/reset_password?u=${User.sanitizeUUID(user.userIdToken)}`;
+        const resetPassPage = `${this.baseDomain}/reset_password?u=${User.sanitizeUUID(user.userIdToken!)}`;
+        logger.debug("sending password reset email");
         return this.emailer.send({
             template: "reset_password",
             message: {
@@ -55,6 +58,18 @@ export class Emailer {
                 name: user.name || user.email,
                 url: resetPassPage,
             },
+        }).then((res: any) => {
+            return res;
+            /* Shape of response:
+            { messageId: string (<something@smtp-relay.sendinblue.com>),
+            code: string (success),
+            message: string,
+            originalMessage (an obect with to, from, html, and text versions of the email)
+            }
+             */
+        }).catch((err: Error) => {
+            logger.error(inspect(err));
+            return undefined;
         });
     }
 }
