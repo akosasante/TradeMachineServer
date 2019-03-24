@@ -23,12 +23,11 @@ export class Emailer {
 
     constructor() {
         logger.debug("creating Emailer class");
-        logger.debug(inspect(this.transportOpts));
         this.emailer = new Email({
             message: {
                 from: "tradebot@flexfoxfantasy.com",
             },
-            preview: true,
+            preview: false,
             send: true,
             juice: true,
             juiceResources: {
