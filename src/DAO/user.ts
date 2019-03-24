@@ -1,3 +1,4 @@
+import { NotFoundError } from "routing-controllers";
 import { Connection, DeleteResult, getConnection, Repository } from "typeorm";
 import util from "util";
 import logger from "../bootstrap/logger";
@@ -22,8 +23,15 @@ export default class UserDAO {
     }
 
     public async getUserById(id: number): Promise<User> {
+        if (!id) {
+            throw new NotFoundError("Id is required");
+        }
         const dbUser = await this.userDb.findOneOrFail(id);
         return new User(dbUser);
+    }
+
+    public async getUserByUUID(uuid: string): Promise<User|undefined> {
+        return await this.findUser({userIdToken: uuid});
     }
 
     public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User|undefined> {

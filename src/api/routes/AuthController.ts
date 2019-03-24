@@ -1,6 +1,5 @@
-import { Request } from "express";
-import { Controller, Post, Req, Session, UseBefore } from "routing-controllers";
-import util from "util";
+import { Request, Response } from "express";
+import { BodyParam, Controller, Post, Req, Res, Session, UseBefore } from "routing-controllers";
 import { deserializeUser } from "../../bootstrap/auth";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/user";
@@ -9,6 +8,12 @@ import { LoginHandler, RegisterHandler } from "../middlewares/AuthenticationHand
 
 @Controller("/auth")
 export default class AuthController {
+    private userDao: UserDAO;
+
+    constructor() {
+        this.userDao = new UserDAO();
+    }
+
     @Post("/login")
     @UseBefore(LoginHandler)
     public async login(@Req() request: Request, @Session() session: any): Promise<User> {
@@ -33,9 +38,8 @@ export default class AuthController {
                         logger.error("Error destroying session");
                         reject(err);
                     } else {
-                        const userDAO = new UserDAO();
                         logger.debug(`Destroying user session for userId#${session.user}`);
-                        await userDAO.updateUser(session.user, { lastLoggedIn: new Date() });
+                        await this.userDao.updateUser(session.user, { lastLoggedIn: new Date() });
                         delete session.user;
                         resolve(true);
                     }
@@ -47,5 +51,16 @@ export default class AuthController {
                 resolve(true);
             }
         });
+    }
+
+    @Post("/reset_password")
+    public async resetPassword(@BodyParam("id") userId: number,
+                               @BodyParam("password") newPassword: string,
+                               @Res() response: Response): Promise<Response> {
+        const hashedPassword = await User.generateHashedPassword(newPassword);
+        const user = await this.userDao.updateUser(userId, {
+            password: hashedPassword,
+            passwordResetExpiresOn: undefined });
+        return response.status(200).json("success");
     }
 }

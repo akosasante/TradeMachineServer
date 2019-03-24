@@ -1,14 +1,6 @@
 import { compare, hash } from "bcryptjs";
 import { isEqual, union } from "lodash";
-import {
-    BeforeInsert,
-    Column,
-    CreateDateColumn,
-    Entity, Generated,
-    PrimaryGeneratedColumn,
-    Unique,
-    UpdateDateColumn,
-} from "typeorm";
+import { Column, CreateDateColumn, Entity, Generated, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
 import logger from "../bootstrap/logger";
 
 export enum Role {
@@ -99,6 +91,7 @@ export default class User {
         this.roles = userObj.roles;
         this.hasPassword = !!this.password;
         this.userIdToken = userObj.userIdToken;
+        this.passwordResetExpiresOn = userObj.passwordResetExpiresOn;
     }
 
     // Couldn't get this to work for whatever reason so just hashing in the DAO itself.

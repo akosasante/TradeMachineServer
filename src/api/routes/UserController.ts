@@ -1,4 +1,15 @@
-import { Authorized, Body, CurrentUser, Delete, Get, JsonController, Param, Post, Put } from "routing-controllers";
+import {
+    Authorized,
+    Body,
+    CurrentUser,
+    Delete,
+    Get,
+    JsonController,
+    Param,
+    Post,
+    Put,
+    QueryParam,
+} from "routing-controllers";
 import util from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/user";
@@ -22,11 +33,13 @@ export default class UserController {
     }
 
     @Get("/:id")
-    public async getOne(@Param("id") id: number, @CurrentUser() currentUser?: User): Promise<User> {
-        logger.debug("get one user endpoint");
-        const user = await this.dao.getUserById(id);
+    public async getOne(@Param("id") id: string,
+                        @QueryParam("byUUID") byUUID?: boolean,
+                        @CurrentUser() currentUser?: User): Promise<User> {
+        logger.debug(`get one user endpoint ${byUUID ? " by UUID" : ""}`);
+        const user = byUUID ? await this.dao.getUserByUUID(id) : await this.dao.getUserById(Number(id));
         logger.debug(`got user: ${user}`);
-        return user.publicUser;
+        return user!.publicUser;
     }
 
     @Post("/")
