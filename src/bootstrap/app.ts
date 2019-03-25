@@ -21,7 +21,7 @@ export default async function(): Promise<Express> {
 
     // Register routes and some global auth middlewares
     logger.debug("setting up route-controllers");
-    const developmentOrigins = [/localhost:3000/, /localhost:8080/];
+    const developmentOrigins = [/localhost:3000/, /localhost:8080/, /127\.0\.0\.1/];
     const prodOrigins: Array<string|RegExp> = [];
     const allowedOrigins = prodOrigins.concat(process.env.NODE_ENV === "development" ? developmentOrigins : []);
     useExpressServer(app, {

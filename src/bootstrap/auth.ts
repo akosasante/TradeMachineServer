@@ -1,7 +1,7 @@
 import { get } from "lodash";
 import { Action, UnauthorizedError } from "routing-controllers";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
-import util from "util";
+import util, {inspect} from "util";
 import { ConflictError } from "../api/middlewares/ErrorHandler";
 import UserDAO from "../DAO/user";
 import User, { Role } from "../models/user";
@@ -95,6 +95,8 @@ export async function currentUserChecker(action: Action) {
 
 async function getUserFromAction(action: Action): Promise<User|undefined> {
     const userId = get(action, "request.session.user");
+    logger.debug(inspect(action.request.session));
+    logger.debug(inspect(action.request.sessionID));
     logger.debug(`Current userId: ${userId}`);
     return userId ? await deserializeUser(userId) : undefined;
 }

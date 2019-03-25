@@ -1,16 +1,9 @@
+import { Request } from "express";
 import {
-    Authorized,
-    Body,
-    CurrentUser,
-    Delete,
-    Get,
-    JsonController,
-    Param,
-    Post,
-    Put,
-    QueryParam,
+    Authorized, Body, CurrentUser, Delete, Get, JsonController, Param,
+    Post, Put, QueryParam, Req,
 } from "routing-controllers";
-import util from "util";
+import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/user";
 import User, { Role } from "../../models/user";
@@ -23,9 +16,9 @@ export default class UserController {
         this.dao = new UserDAO();
     }
 
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.OWNER)
     @Get("/")
-    public async getAll(): Promise<User[]> {
+    public async getAll(@Req() request: Request): Promise<User[]> {
         logger.debug("get all users endpoint");
         const users = await this.dao.getAllUsers();
         logger.debug(`got ${users.length} users`);
@@ -66,7 +59,7 @@ export default class UserController {
     public async deleteUser(@CurrentUser({required: true}) user: User, @Param("id") id: number) {
         logger.debug("delete user endpoint");
         const result = await this.dao.deleteUser(id);
-        logger.debug(`delete successful: ${util.inspect(result)}`);
+        logger.debug(`delete successful: ${inspect(result)}`);
         return await {deleteResult: !!result.raw[1], id};
     }
 }

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { get } from "lodash";
 import { ExpressMiddlewareInterface, UnauthorizedError } from "routing-controllers";
-import util from "util";
+import { inspect } from "util";
 import { serializeUser, signInAuthentication, signUpAuthentication } from "../../bootstrap/auth";
 import logger from "../../bootstrap/logger";
 import User from "../../models/user";
@@ -18,7 +18,13 @@ export class LoginHandler implements ExpressMiddlewareInterface {
                 return next(new UnauthorizedError(message));
             } else {
                 request.session!.user = await serializeUser(user);
-                return next();
+                request.session!.save((sessionErr: any) => {
+                    logger.debug(inspect(request.session));
+                    if (sessionErr) {
+                        return next(new Error("Could not save session"));
+                    }
+                    return next();
+                });
             }
         });
     }
