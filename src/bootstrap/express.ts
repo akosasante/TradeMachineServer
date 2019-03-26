@@ -46,13 +46,14 @@ const REDIS_OPTS = {
 // };
 
 app.use(expressSession({
-    // resave: false,
+    resave: false,
     saveUninitialized: true,
     secret: process.env.SESSION_SECRET || "test",
     store: new RedisSessionStore(REDIS_OPTS),
     unset: "destroy",
     cookie: {
         secure: process.env.NODE_ENV === "production",
+        httpOnly: false,
         // name: "trades.sid",
         // rolling: true,
         // domain: "127.0.0.1:8080",

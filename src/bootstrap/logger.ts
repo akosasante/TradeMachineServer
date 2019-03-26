@@ -13,45 +13,47 @@ const errorFileLogFormat = printf(info => {
 });
 const timestampFormat = "YYYY-MM-DD hh:mm:ss A";
 
-if (process.env.NODE_ENV !== "test" && !fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir);
-}
-
 // Transport objects
 const consoleLogger = new winston.transports.Console({
     format: combine(winston.format.cli()),
 });
 
-const errorLogger  = new winston.transports.File({
-    filename: `${logDir}/server-error.log`,
-    level: "error",
-    eol: "\r\n",
-});
+// tslint:disable-next-line
+let errorLogger, combinedLogger, exceptionHandler;
 
-const combinedLogger = new winston.transports.File({
-    filename: `${logDir}/server-combined.log`,
-    level: "info",
-    eol: "\r\n",
-    format: combine(timestamp({format: timestampFormat}), uncolorize(), fileLogFormat),
-});
+if (process.env.NODE_ENV !== "test" && !fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir);
 
-const exceptionHandler = new winston.transports.File({
-    filename: `${logDir}/uncaught-exceptions.log`,
-    eol: "\r\n",
-});
+    errorLogger = new winston.transports.File({
+        filename: `${logDir}/server-error.log`,
+        level: "error",
+        eol: "\r\n",
+    });
 
+    combinedLogger = new winston.transports.File({
+        filename: `${logDir}/server-combined.log`,
+        level: "info",
+        eol: "\r\n",
+        format: combine(timestamp({format: timestampFormat}), uncolorize(), fileLogFormat),
+    });
+
+    exceptionHandler = new winston.transports.File({
+        filename: `${logDir}/uncaught-exceptions.log`,
+        eol: "\r\n",
+    });
+}
 // Logger object
 const logger = winston.createLogger(({
     level: "debug",
     format: combine(timestamp({format: timestampFormat}), errorFileLogFormat),
-    transports: [
+    transports: errorLogger && combinedLogger ? [
         errorLogger,
         combinedLogger,
-    ],
+    ] : [],
     silent: process.env.ENABLE_LOGS === "false",
-    exceptionHandlers: [
+    exceptionHandlers: exceptionHandler ? [
         exceptionHandler,
-    ],
+    ] : [],
     exitOnError: false,
 }));
 

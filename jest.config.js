@@ -64,14 +64,14 @@ module.exports = {
     // globalTeardown: null,
 
     // A set of global variables that need to be available in all test environments
-    globals: {
-        "ts-jest": {
-            diagnostics: {
-                warnOnly: true,
-                pathRegex: /\.test\.ts/
-            }
-        }
-    },
+    // globals: {
+    //     "ts-jest": {
+    //         diagnostics: {
+    //             warnOnly: true,
+    //             pathRegex: /\.test\.ts/
+    //         }
+    //     }
+    // },
 
     // An array of directory names to be searched recursively up from the requiring module's location
     // modulePaths: [
@@ -99,7 +99,7 @@ module.exports = {
     notifyMode: "success-change",
 
     // A preset that is used as a base for Jest's configuration
-    // preset: null,
+    preset: "ts-jest",
 
     // Run tests from one or more projects
     // projects: null,
@@ -129,10 +129,10 @@ module.exports = {
     // runner: "jest-runner",
 
     // The paths to modules that run some code to configure or set up the testing environment before each test
-    // setupFiles: [],
+    setupFiles: ["jest-extended"],
 
     // The path to a module that runs some code to configure or set up the testing framework before each test
-    setupTestFrameworkScriptFile: "jest-extended",
+    // setupTestFrameworkScriptFile: "jest-extended",
 
     // A list of paths to snapshot serializer modules Jest should use for snapshot testing
     // snapshotSerializers: [],
