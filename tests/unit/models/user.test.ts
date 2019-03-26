@@ -1,6 +1,5 @@
 import "jest";
 import "jest-extended";
-import logger from "../../../src/bootstrap/logger";
 import User, { Role } from "../../../src/models/user";
 
 describe("User Class", () => {
@@ -62,11 +61,11 @@ describe("User Class", () => {
         expect(user.parse()).not.toBeInstanceOf(User);
         expect(user.parse()).toEqual(expect.any(Object));
     });
-    describe("equals/1", () => {
+    describe("equals/2", () => {
         const firstUser = new User(userObj);
         const otherUser = new User(userObj);
         it("should match if the two instances are identical. Excludes = {}", () => {
-            expect(firstUser.equals(otherUser, {})).toBeTrue();
+            expect(firstUser.equals(otherUser)).toBeTrue();
         });
         it("should match if the two instances are identical. Excludes = default", () => {
             firstUser.password = "pass1";

@@ -19,6 +19,7 @@ export class BaseModel {
         // Done separately so that we can log the particular deep fields that didn't match
         // These functions also allow for undefined
         const objects = includeOnly.filter(field => complexFields[field]);
+
         return propsEqual(props as Array<keyof T>, self, other) &&
             objectsEqual(objects as Array<keyof T>, self, other);
     }
