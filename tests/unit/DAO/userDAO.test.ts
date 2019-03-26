@@ -4,8 +4,8 @@ import * as typeorm from "typeorm";
 import UserDAO from "../../../src/DAO/UserDAO";
 import mockUserDb, { testUser } from "../mocks/mockUserDb";
 
-jest.spyOn(typeorm, "getConnection")
-    .mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
+// @ts-ignore
+jest.spyOn(typeorm, "getConnection").mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
 
 describe("UserDAO", () => {
     let userDAO: UserDAO;

@@ -121,7 +121,7 @@ export default class User extends BaseModel {
         return (this.roles || []).includes(role);
     }
 
-    public equals(other: User, excludes: Excludes): boolean {
+    public equals(other: User, excludes?: Excludes): boolean {
         const COMPLEX_FIELDS = {roles: true};
         const DEFAULT_EXCLUDES = {
             id: true,
