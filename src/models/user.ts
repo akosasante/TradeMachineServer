@@ -1,7 +1,8 @@
 import { compare, hash } from "bcryptjs";
-import { isEqual, union } from "lodash";
-import { Column, CreateDateColumn, Entity, Generated, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Generated, ManyToOne, Unique, UpdateDateColumn } from "typeorm";
 import logger from "../bootstrap/logger";
+import { BaseModel, Excludes } from "./base";
+import Team from "./team";
 
 export enum Role {
     ADMIN = "Admin",
@@ -10,7 +11,7 @@ export enum Role {
 
 @Entity()
 @Unique(["email"])
-export default class User {
+export default class User extends BaseModel {
     public get publicUser(): User {
         const user = new User(this);
         user.password = undefined;
@@ -43,9 +44,6 @@ export default class User {
     //     return (userObj as User).email !== undefined;
     // }
 
-    @PrimaryGeneratedColumn()
-    public readonly id?: number;
-
     @Column()
     public email?: string;
 
@@ -77,9 +75,13 @@ export default class User {
     @Column({nullable: true})
     public passwordResetExpiresOn?: Date;
 
+    @ManyToOne(type => Team, team => team.owners)
+    public team?: Team;
+
     public hasPassword?: boolean;
 
     constructor(userObj: Partial<User> = {}) {
+        super();
         this.password = userObj.password;
         this.username = userObj.username;
         this.lastLoggedIn = userObj.lastLoggedIn;
@@ -92,6 +94,7 @@ export default class User {
         this.hasPassword = !!this.password;
         this.userIdToken = userObj.userIdToken;
         this.passwordResetExpiresOn = userObj.passwordResetExpiresOn;
+        this.team = userObj.team;
     }
 
     // Couldn't get this to work for whatever reason so just hashing in the DAO itself.
@@ -118,52 +121,15 @@ export default class User {
         return (this.roles || []).includes(role);
     }
 
-    public parse(): Partial<User> {
-        return Object.assign({}, this);
+    public equals(other: User, excludes: Excludes): boolean {
+        const COMPLEX_FIELDS = {roles: true};
+        const DEFAULT_EXCLUDES = {
+            id: true,
+            password: true,
+            lastLoggedIn: true,
+            dateCreated: true,
+            dateModified: true,
+        };
+        return BaseModel.equals(this, other, excludes || DEFAULT_EXCLUDES, COMPLEX_FIELDS);
     }
-
-    public equals(other: User, excludes: Excludes = DEFAULT_EXCLUDES): boolean {
-        const allFields = union(Object.keys(other), Object.keys(this));
-        const includeOnly = allFields.filter(field => !excludes[field]);
-        const props = includeOnly.filter(field => !COMPLEX_FIELDS.includes(field));
-        const objects = includeOnly.filter(field => COMPLEX_FIELDS.includes(field));
-        return propsEqual(props as Array<keyof User>, this, other) &&
-            objectsEqual(objects as Array<keyof User>, this, other);
-    }
-}
-
-const COMPLEX_FIELDS = ["roles"];
-const DEFAULT_EXCLUDES = { id: true, password: true, lastLoggedIn: true, dateCreated: true, dateModified: true };
-
-function objectsEqual<T>(props: Array<keyof T>, obj1: T, obj2: T): boolean {
-    return props.reduce((bool: boolean, prop: keyof T) => {
-        const res = bool && objectEqual(prop, obj1, obj2);
-        if (!res) {
-            throw new Error("Not matching: " + prop);
-        }
-        return res;
-    }, true);
-}
-
-function objectEqual<T>(prop: keyof T, obj1: T, obj2: T): boolean {
-    return isEqual(obj1[prop], obj2[prop]);
-}
-
-function propsEqual<T>(props: Array<keyof T>, obj1: T, obj2: T): boolean {
-    // key of T?
-    return props.reduce((bool: boolean, prop: keyof T) => {
-        const res = bool && propEqual(prop, obj1, obj2);
-        if (!res) {
-            throw new Error("Not matching: " + prop);
-        }
-        return res;
-    }, true);
-}
-
-function propEqual<T>(prop: keyof T, obj1: T, obj2: T): boolean {
-    return (obj1[prop] || undefined) === (obj2[prop] || undefined);
-}
-
-interface Excludes {
-    [key: string]: boolean;
 }
