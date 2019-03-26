@@ -1,7 +1,7 @@
 import { get } from "lodash";
-import { Action, UnauthorizedError } from "routing-controllers";
+import { Action } from "routing-controllers";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
-import util, {inspect} from "util";
+import { inspect } from "util";
 import { ConflictError } from "../api/middlewares/ErrorHandler";
 import UserDAO from "../DAO/UserDAO";
 import User, { Role } from "../models/user";

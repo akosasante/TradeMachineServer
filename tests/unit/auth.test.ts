@@ -1,9 +1,8 @@
 import "jest";
 import "jest-extended";
-import { Action, UnauthorizedError } from "routing-controllers";
+import { Action } from "routing-controllers";
 import * as typeorm from "typeorm";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
-import util from "util";
 import { ConflictError } from "../../src/api/middlewares/ErrorHandler";
 import * as authFunctions from "../../src/bootstrap/auth";
 import {
@@ -12,13 +11,11 @@ import {
     signInAuthentication,
     signUpAuthentication,
 } from "../../src/bootstrap/auth";
-import logger from "../../src/bootstrap/logger";
-import UserDAO from "../../src/DAO/UserDAO";
 import User, { Role } from "../../src/models/user";
 import mockUserDb, { testUser } from "./mocks/mockUserDb";
 
-jest.spyOn(typeorm, "getConnection")
-    .mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
+// @ts-ignore
+jest.spyOn(typeorm, "getConnection").mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
 
 describe("Authorization helper methods", () => {
     describe("serializeUser", () => {
@@ -71,7 +68,7 @@ describe("Authorization helper methods", () => {
         });
         it("should update and return an existing user with no password", async () => {
             const cb = jest.fn();
-            mockUserDb.findOne = jest.fn(id => (new User({email})));
+            mockUserDb.findOne = jest.fn(id => (new User({id: 1, email})));
             mockUserDb.findOneOrFail = jest.fn((id, userObj) => expectedUser);
             User.generateHashedPassword = jest.fn();
 
@@ -93,12 +90,14 @@ describe("Authorization helper methods", () => {
     describe("signInAuthentication", () => {
         const email = "test@example.com";
         const expectedUser = new User({
+            id: 1,
             email,
             password: testUser.password!,
             lastLoggedIn: new Date(),
         });
         it("should return an updated user if the password is matching", async () => {
             const cb = jest.fn();
+            // @ts-ignore
             User.prototype.isPasswordMatching = jest.fn(() => true);
             mockUserDb.findOneOrFail = jest.fn((id, userObj) => expectedUser);
 
@@ -108,6 +107,7 @@ describe("Authorization helper methods", () => {
         });
         it("should return an error if the password is not matching", async () => {
             const cb = jest.fn();
+            // @ts-ignore
             User.prototype.isPasswordMatching = jest.fn(() => false);
 
             await signInAuthentication(email, testUser.password!, cb);
