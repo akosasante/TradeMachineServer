@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { BodyParam, Controller, Post, Req, Res, Session, UseBefore } from "routing-controllers";
 import { deserializeUser } from "../../bootstrap/auth";
 import logger from "../../bootstrap/logger";
-import UserDAO from "../../DAO/user";
+import UserDAO from "../../DAO/UserDAO";
 import User from "../../models/user";
 import { LoginHandler, RegisterHandler } from "../middlewares/AuthenticationHandler";
 

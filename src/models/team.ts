@@ -19,7 +19,7 @@ export default class Team extends BaseModel {
     @UpdateDateColumn()
     public dateModified?: Date;
 
-    @OneToMany(type => User, user => user)
+    @OneToMany(type => User, user => user, { eager: true, onDelete: "SET NULL"})
     public owners: User[];
 
     constructor(teamObj: Partial<Team> = {}) {

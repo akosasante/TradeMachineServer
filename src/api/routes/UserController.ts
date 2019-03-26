@@ -5,7 +5,7 @@ import {
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
-import UserDAO from "../../DAO/user";
+import UserDAO from "../../DAO/UserDAO";
 import User, { Role } from "../../models/user";
 
 @JsonController("/users")

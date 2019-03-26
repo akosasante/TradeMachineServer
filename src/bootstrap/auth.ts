@@ -3,7 +3,7 @@ import { Action, UnauthorizedError } from "routing-controllers";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import util, {inspect} from "util";
 import { ConflictError } from "../api/middlewares/ErrorHandler";
-import UserDAO from "../DAO/user";
+import UserDAO from "../DAO/UserDAO";
 import User, { Role } from "../models/user";
 import logger from "./logger";
 

@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { BodyParam, Controller, Post, Res } from "routing-controllers";
 import { mailQueue } from "../../bootstrap/app";
-import UserDAO from "../../DAO/user";
+import UserDAO from "../../DAO/UserDAO";
 import { MailQueue, MailQueueMessage } from "../../queue/mailQueue";
 
 @Controller("/email")

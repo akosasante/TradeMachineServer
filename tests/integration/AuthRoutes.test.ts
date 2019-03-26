@@ -5,7 +5,7 @@ import request from "supertest";
 import util from "util";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
-import UserDAO from "../../src/DAO/user";
+import UserDAO from "../../src/DAO/UserDAO";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
 

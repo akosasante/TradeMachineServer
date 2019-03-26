@@ -1,7 +1,7 @@
 import "jest";
 import "jest-extended";
 import * as typeorm from "typeorm";
-import UserDAO from "../../../src/DAO/user";
+import UserDAO from "../../../src/DAO/UserDAO";
 import mockUserDb, { testUser } from "../mocks/mockUserDb";
 
 jest.spyOn(typeorm, "getConnection")

@@ -4,7 +4,7 @@ import { mocked } from "ts-jest/utils";
 import { Error } from "tslint/lib/error";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import UserController from "../../../../src/api/routes/UserController";
-import UserDAO from "../../../../src/DAO/user";
+import UserDAO from "../../../../src/DAO/UserDAO";
 import User from "../../../../src/models/user";
 
 jest.mock("../../../../src/DAO/user");

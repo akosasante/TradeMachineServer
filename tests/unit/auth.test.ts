@@ -13,7 +13,7 @@ import {
     signUpAuthentication,
 } from "../../src/bootstrap/auth";
 import logger from "../../src/bootstrap/logger";
-import UserDAO from "../../src/DAO/user";
+import UserDAO from "../../src/DAO/UserDAO";
 import User, { Role } from "../../src/models/user";
 import mockUserDb, { testUser } from "./mocks/mockUserDb";
 
