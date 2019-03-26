@@ -34,13 +34,14 @@ export default class Team extends BaseModel {
         return `Team#${this.id}: ${this.name}`;
     }
 
-    public equals(other: Team, excludes: Excludes): boolean {
+    public equals(other: Team, excludes: Excludes = {}): boolean {
+        const COMPLEX_FIELDS = {owners: true};
         const DEFAULT_EXCLUDES = {
             id: true,
             dateCreated: true,
             dateModified: true,
         };
-        return BaseModel.equals(this, other, excludes || DEFAULT_EXCLUDES);
+        return BaseModel.equals(this, other, excludes || DEFAULT_EXCLUDES, COMPLEX_FIELDS);
     }
 
 }
