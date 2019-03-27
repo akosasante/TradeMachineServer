@@ -19,13 +19,14 @@ describe("Authentication middleware", () => {
             });
             const next: NextFunction = jest.fn();
             // @ts-ignore
-            const request: Request = {body: {email, password}, session: {}};
+            const request: Request = {body: {email, password}, session: {save: jest.fn(() => next())}};
             // @ts-ignore
             const response: Response  = {};
             const loginHandler = new LoginHandler();
             await loginHandler.use(request, response, next);
             expect(next).toBeCalledTimes(1);
             expect(next).toBeCalledWith();
+            expect(request.session!.save).toBeCalledTimes(1);
             expect(request.session!.user).toBeDefined();
             expect(request.session!.user).toEqual(testUser.id);
         });
