@@ -20,14 +20,14 @@ export default class Team extends BaseModel {
     public dateModified?: Date;
 
     @OneToMany(type => User, user => user, { eager: true, onDelete: "SET NULL"})
-    public owners: User[];
+    public owners?: User[];
 
     constructor(teamObj: Partial<Team> = {}) {
         super();
         Object.assign(this, {id: teamObj.id});
         this.name = teamObj.name || "";
         this.espnId = teamObj.espnId;
-        this.owners = teamObj.owners || [];
+        this.owners = teamObj.owners;
     }
 
     public toString(): string {

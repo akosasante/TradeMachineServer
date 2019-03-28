@@ -1,8 +1,5 @@
-import { Request } from "express";
-import {
-    Authorized, Body, CurrentUser, Delete, Get, JsonController, Param,
-    Post, Put, QueryParam, Req,
-} from "routing-controllers";
+import { Authorized, Body, CurrentUser, Delete, Get, JsonController,
+    Param, Post, Put, QueryParam } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
@@ -12,15 +9,16 @@ import User, { Role } from "../../models/user";
 export default class UserController {
     private dao: UserDAO;
 
-    constructor() {
-        this.dao = new UserDAO();
+    constructor(DAO?: UserDAO) {
+        // ^ injected in tests
+        this.dao = DAO ? DAO : new UserDAO();
     }
 
     @Authorized(Role.OWNER)
     @Get("/")
-    public async getAll(@Req() request: Request): Promise<User[]> {
+    public async getAll(): Promise<User[]> {
         logger.debug("get all users endpoint");
-        const users = await this.dao.getAllUsers();
+        const users = (await this.dao.getAllUsers()) || [];
         logger.debug(`got ${users.length} users`);
         return users.map(user => user.publicUser);
     }

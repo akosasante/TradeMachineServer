@@ -17,13 +17,9 @@ const mockTeamDb = {
 jest.spyOn(typeorm, "getConnection").mockReturnValue({ getRepository: jest.fn().mockReturnValue(mockTeamDb) });
 
 describe("TeamDAO", () => {
-    let teamDAO: TeamDAO;
+    const teamDAO = new TeamDAO();
     const testTeam1 = new Team({id: 1, name: "Squirtle Squad"});
     const testTeam2 = new Team({id: 2, name: "Flex Fox's Team"});
-
-    beforeAll(() => {
-        teamDAO = new TeamDAO();
-    });
 
     afterEach(() => {
         mockTeamDb.delete.mockClear();
