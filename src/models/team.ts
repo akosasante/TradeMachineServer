@@ -4,6 +4,12 @@ import User from "./user";
 
 @Entity()
 export default class Team extends BaseModel {
+
+    public get publicTeam(): Team {
+        const team = new Team(this);
+        team.owners = (team.owners || []).map((owner: User) => owner.publicUser);
+        return team;
+    }
     @PrimaryGeneratedColumn()
     public readonly id?: number;
 

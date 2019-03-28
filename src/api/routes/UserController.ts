@@ -11,7 +11,7 @@ export default class UserController {
 
     constructor(DAO?: UserDAO) {
         // ^ injected in tests
-        this.dao = DAO ? DAO : new UserDAO();
+        this.dao = DAO || new UserDAO();
     }
 
     @Authorized(Role.OWNER)
@@ -46,7 +46,7 @@ export default class UserController {
     }
 
     @Put("/:id")
-    public async updateUser(@Param("id") id: number, @Body() userObj: any): Promise<User> {
+    public async updateUser(@Param("id") id: number, @Body() userObj: Partial<User>): Promise<User> {
         logger.debug("update user endpoint");
         const user = await this.dao.updateUser(id, userObj);
         logger.debug(`updated user: ${user}`);
