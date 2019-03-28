@@ -121,15 +121,17 @@ export default class User extends BaseModel {
         return (this.roles || []).includes(role);
     }
 
-    public equals(other: User, excludes: Excludes = {}): boolean {
+    public equals(other: User, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
         const COMPLEX_FIELDS = {roles: true};
         const DEFAULT_EXCLUDES = {
             id: true,
             password: true,
+            userIdToken: true,
             lastLoggedIn: true,
             dateCreated: true,
             dateModified: true,
         };
-        return BaseModel.equals(this, other, excludes || DEFAULT_EXCLUDES, COMPLEX_FIELDS);
+        excludes = bypassDefaults ? excludes : Object.assign(DEFAULT_EXCLUDES, (excludes || {}));
+        return BaseModel.equals(this, other, excludes, COMPLEX_FIELDS);
     }
 }

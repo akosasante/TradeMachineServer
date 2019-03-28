@@ -64,10 +64,10 @@ describe("User Class", () => {
     describe("equals/2", () => {
         const firstUser = new User(userObj);
         const otherUser = new User(userObj);
-        it("should match if the two instances are identical. Excludes = {}", () => {
+        it("should match if the two instances are identical.", () => {
             expect(firstUser.equals(otherUser)).toBeTrue();
         });
-        it("should match if the two instances are identical. Excludes = default", () => {
+        it("should match if the two instances are identical except for default excludes.", () => {
             firstUser.password = "pass1";
             otherUser.password = "pass2";
             expect(firstUser.equals(otherUser)).toBeTrue();
@@ -77,11 +77,13 @@ describe("User Class", () => {
             expect(firstUser.equals(otherUser, {name: true, password: true})).toBeTrue();
         });
         it("should throw a useful error if something doesn't match (props)", () => {
+            firstUser.name = "John";
+            otherUser.name = "Jack";
             expect(() => firstUser.equals(otherUser)).toThrow(new Error("Not matching: name"));
         });
         it("should throw a useful error if something doesn't match (objects)", () => {
+            firstUser.name = "Jack";
             firstUser.roles = [Role.ADMIN, Role.OWNER];
-            otherUser.name = "John";
             expect(() => firstUser.equals(otherUser)).toThrow(new Error("Not matching: roles"));
         });
     });

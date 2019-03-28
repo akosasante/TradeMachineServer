@@ -8,8 +8,8 @@ import { deserializeUser } from "../../../../src/bootstrap/auth";
 import User from "../../../../src/models/user";
 import mockUserDb from "../../mocks/mockUserDb";
 
-jest.spyOn(typeorm, "getConnection")
-    .mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
+// @ts-ignore
+jest.spyOn(typeorm, "getConnection").mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
 
 describe("AuthController", () => {
     let authController: AuthController;
@@ -47,7 +47,7 @@ describe("AuthController", () => {
     describe("logout method", () => {
         it("should resolve the promise and destroy the session if logout is successful", async () => {
             mockReq.session!.destroy = jest.fn(cb => {
-                return cb();
+                return cb(undefined);
             });
             expect(mockSess).toEqual({ user: 1 });
             const res = authController.logout(mockReq, mockSess);
@@ -58,7 +58,7 @@ describe("AuthController", () => {
         it("should resolve the promise if there is no userId on the session", async () => {
             mockSess = {};
             mockReq.session!.destroy = jest.fn(cb => {
-                return cb();
+                return cb(undefined);
             });
             const res = authController.logout(mockReq, mockSess);
             await expect(res).resolves.toBeTrue();

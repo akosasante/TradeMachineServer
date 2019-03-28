@@ -2,9 +2,7 @@ import { Server } from "http";
 import "jest";
 import "jest-extended";
 import request from "supertest";
-import util from "util";
 import { redisClient } from "../../src/bootstrap/express";
-import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
@@ -36,6 +34,7 @@ describe("Auth API endpoints", () => {
                 .post("/auth/signup")
                 .send(testUserObj)
                 .expect(200);
+
             expect(testUser.equals(res.body)).toBeTrue();
             expect(res.body).not.toHaveProperty("password");
             expect(res.body.hasPassword).toBeTrue();
@@ -84,7 +83,7 @@ describe("Auth API endpoints", () => {
     describe("POST /auth/logout", () => {
         const logoutFunc = (agent: request.SuperTest<request.Test>) => agent.post("/auth/logout").expect(200);
         it("should successfully 'logout' a non-initialized session", async () => {
-            const res = await request(app)
+            await request(app)
                 .post("/auth/logout")
                 .expect(200);
         });

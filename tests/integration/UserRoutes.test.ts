@@ -31,7 +31,7 @@ describe("User API endpoints", () => {
 
     const testUser = (email: string) => new User(testUserObj(email));
     const adminUser: User = new User(adminUserObj);
-    const ownerUser: User = new User(ownerUserObj);
+    // const ownerUser: User = new User(ownerUserObj);
 
     async function makeLoggedInRequest(agent: request.SuperTest<request.Test>, email: string, password: string,
                                        req: (ag: request.SuperTest<request.Test>) => any) {
@@ -51,11 +51,12 @@ describe("User API endpoints", () => {
 
     beforeAll(async () => {
         app = await server;
-        const adminRes = await request(app)
+        // Create admin and owner users in db for rest of this suite's use
+        await request(app)
             .post("/users")
             .send(adminUserObj)
             .expect(200);
-        const ownerRes = await request(app)
+        await request(app)
             .post("/users")
             .send(ownerUserObj)
             .expect(200);
@@ -116,12 +117,13 @@ describe("User API endpoints", () => {
             expect(users).toBeArrayOfSize(4);
             // expect(users).toSatisfyAll(user => User.isUser(user));
         });
-        it("should return a 403 Forbidden Error if the user does not have the correct roles", async () => {
-            ownerLoggedIn = request.agent(app);
-            const ownerRes = await makeLoggedInRequest(
-                ownerLoggedIn, ownerUserObj.email, ownerUserObj.password, loggedInGetAll);
-            expect(ownerRes.status).toBe(403);
-        });
+        // it("should return a 403 Forbidden Error if the user does not have the correct roles", async () => {
+        //     Leaving this here as an example; but this endpoint is not actually retrictred to a role anymore
+        //     ownerLoggedIn = request.agent(app);
+        //     const ownerRes = await makeLoggedInRequest(
+        //         ownerLoggedIn, ownerUserObj.email, ownerUserObj.password, loggedInGetAll);
+        //     expect(ownerRes.status).toBe(403);
+        // });
         it("should return a 403 Forbidden Error if the user is not logged in at all", async () => {
             await request(app)
                 .get("/users")

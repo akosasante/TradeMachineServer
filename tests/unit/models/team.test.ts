@@ -12,7 +12,7 @@ describe("Team Class", () => {
         expect(team.name).toEqual(teamObj.name);
         expect(team.espnId).toEqual(teamObj.espnId);
         expect(team.id).not.toBeDefined();
-        expect(team.owners).toBeArrayOfSize(0);
+        expect(team.owners).toBeUndefined();
     });
 
     it("toString/0", async () => {
