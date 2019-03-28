@@ -20,6 +20,15 @@ describe("Team Class", () => {
         expect(team.toString()).toMatch("Team#");
     });
 
+    it("get publicTeam/0 - should return a team copy with owners' psswds cleaned", () => {
+        team.owners = [new User({email: "test@example.com", password: "lol"})];
+        expect(team.publicTeam).toBeInstanceOf(Team);
+        expect((team.publicTeam.owners || [])[0]).toBeInstanceOf(User);
+        expect((team.publicTeam.owners || [])[0].password).toBeFalsy();
+        expect((team.publicTeam.owners || [])[0].hasPassword).toBeTrue();
+        team.owners = undefined; // Reset for following "equals/2" tests
+    });
+
     describe("equals/2", () => {
         const user1 = new User({email: "test@example.com", password: "lol", roles: [Role.ADMIN]});
         const team2 = new Team({name: "Squirtle Squad", espnId: 1, owners: [user1]});
