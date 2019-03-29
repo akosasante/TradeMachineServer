@@ -15,6 +15,7 @@ export default class Team extends BaseModel {
 
     @Column()
     public espnId?: number;
+    // TODO: Consider enforcing uniqueness on this column? Or name column? Maybe not necessary for now.
 
     @Column()
     public name: string;
@@ -25,7 +26,7 @@ export default class Team extends BaseModel {
     @UpdateDateColumn()
     public dateModified?: Date;
 
-    @OneToMany(type => User, user => user, { eager: true, onDelete: "SET NULL"})
+    @OneToMany(type => User, user => user.team, { eager: true, onDelete: "SET NULL"})
     public owners?: User[];
 
     constructor(teamObj: Partial<Team> = {}) {

@@ -1,5 +1,5 @@
 import { NotFoundError } from "routing-controllers";
-import { Connection, DeleteResult, getConnection, Repository } from "typeorm";
+import { Connection, DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
 import Team from "../models/team";
 
 export default class TeamDAO {
@@ -12,7 +12,8 @@ export default class TeamDAO {
     }
 
     public async getAllTeams(): Promise<Team[]> {
-        const dbTeams = await this.teamDb.find();
+        const options: FindManyOptions = {order: {id: "ASC"}};
+        const dbTeams = await this.teamDb.find(options);
         return dbTeams.map(team => new Team(team));
     }
 
