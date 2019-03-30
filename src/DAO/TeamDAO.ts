@@ -1,6 +1,7 @@
 import { NotFoundError } from "routing-controllers";
 import { Connection, DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
 import Team from "../models/team";
+import User from "../models/user";
 
 export default class TeamDAO {
     public connection: Connection;
@@ -41,7 +42,22 @@ export default class TeamDAO {
     }
 
     public async deleteTeam(id: number): Promise<DeleteResult> {
-        await this.getTeamById(id);
+        if (!id) {
+            throw new NotFoundError("Id is required");
+        }
+        await this.teamDb.findOneOrFail(id);
         return await this.teamDb.delete(id);
+    }
+
+    public async updateTeamOwners(id: number, ownersToAdd: User[], ownersToRemove: User[]): Promise<Team> {
+        if (!id) {
+            throw new NotFoundError("Id is required");
+        }
+        await this.teamDb
+            .createQueryBuilder()
+            .relation("owners")
+            .of(id)
+            .addAndRemove(ownersToAdd, ownersToRemove);
+        return await this.getTeamById(id);
     }
 }

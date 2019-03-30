@@ -4,6 +4,7 @@ import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
 import TeamDAO from "../../../src/DAO/TeamDAO";
 import Team from "../../../src/models/team";
+import User from "../../../src/models/user";
 
 const mockTeamDb = {
     find: jest.fn(),
@@ -11,6 +12,7 @@ const mockTeamDb = {
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    createQueryBuilder: jest.fn(),
 };
 
 // @ts-ignore
@@ -35,10 +37,11 @@ describe("TeamDAO", () => {
 
     it("getAllTeams - should call the db find method once with no args", async () => {
         mockTeamDb.find.mockReturnValueOnce([testTeam1.parse(), testTeam2.parse()]);
+        const defaultOpts = {order: {id: "ASC"}};
         const res = await teamDAO.getAllTeams();
 
         expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
-        expect(mockTeamDb.find).toHaveBeenCalledWith();
+        expect(mockTeamDb.find).toHaveBeenCalledWith(defaultOpts);
         expect(res).toEqual([testTeam1, testTeam2]);
     });
 
@@ -75,7 +78,7 @@ describe("TeamDAO", () => {
         expect(res).toEqual(testTeam1);
     });
 
-    it("updateTeam - should call the db update once with id and teamObj", async () => {
+    it("updateTeam - should call the db update and findOneOrFail once with id and teamObj", async () => {
         mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam1.parse());
         const res = await teamDAO.updateTeam(1, testTeam1.parse());
 
@@ -86,12 +89,38 @@ describe("TeamDAO", () => {
         expect(res).toEqual(testTeam1);
     });
 
-    it("deleteTeam - should throw NotFoundError if no id is passed", async () => {
-        await teamDAO.deleteTeam(1);
+    it("deleteTeam - should call the db delete once with id", async () => {
+        const deleteResult = { raw: [ [], 1 ]};
+        mockTeamDb.delete.mockReturnValueOnce(deleteResult);
+        const res = await teamDAO.deleteTeam(1);
 
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(1);
         expect(mockTeamDb.delete).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.delete).toHaveBeenCalledWith(1);
+        expect(res).toEqual(deleteResult);
+    });
+
+    it("deleteTeam - should throw NotFoundError if no id is passed", async () => {
+        // @ts-ignore
+        await expect(teamDAO.deleteTeam(undefined)).rejects.toThrow(NotFoundError);
+        expect(mockTeamDb.delete).toHaveBeenCalledTimes(0);
+    });
+
+    it("updateOwners - should call the db createQueryBuilder and findOneOrFail with id and owner objects", async () => {
+        const addAndRemove = jest.fn();
+        const of = jest.fn(() => ({addAndRemove}));
+        const relation = jest.fn(() => ({of}));
+        mockTeamDb.createQueryBuilder.mockImplementation(() => ({ relation }));
+        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam1.parse());
+        const res = await teamDAO.updateTeamOwners(
+            1,
+            [new User({email: "1@example.com"})], [new User({email: "2@example.com"})]);
+
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith();
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(1);
+        expect(res).toEqual(testTeam1);
     });
 });
