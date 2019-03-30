@@ -1,9 +1,10 @@
-import { Authorized, Body, Delete, Get, JsonController, Param, Post, Put } from "routing-controllers";
+import { Authorized, Body, BodyParam, Delete, Get, JsonController,
+    Param, Patch, Post, Put, QueryParams } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import TeamDAO from "../../DAO/TeamDAO";
 import Team from "../../models/team";
-import { Role } from "../../models/user";
+import User, { Role } from "../../models/user";
 
 @JsonController("/teams")
 export default class TeamController {
@@ -26,6 +27,14 @@ export default class TeamController {
         logger.debug("get one team endpoint");
         const team = await this.dao.getTeamById(id);
         return team.publicTeam;
+    }
+
+    @Get("/search")
+    public async findTeamByQuery(@QueryParams() query: Partial<Team>): Promise<Team|undefined> {
+        logger.debug(`searching for team with props: ${inspect(query)}`);
+        // TODO: May allow for searching for multiple teams in the future?
+        const team = await this.dao.findTeam(query);
+        return (team || {} as Team).publicTeam;
     }
 
     /* Only the league admins can edit/delete/create teams at the moment */
@@ -54,5 +63,15 @@ export default class TeamController {
         const result = await this.dao.deleteTeam(id);
         logger.debug(`delete successful: ${inspect(result)}`);
         return await {deleteResult: !!result.raw[1], id};
+    }
+
+    @Authorized(Role.ADMIN)
+    @Patch("/:id")
+    public async updateTeamOwners(@Param("id") id: number,
+                                  @BodyParam("add") ownersToAdd: User[],
+                                  @BodyParam("remove") ownersToRemove: User[]): Promise<Team> {
+        logger.debug("update team owners endpoint");
+        const team = await this.dao.updateTeamOwners(id, ownersToAdd, ownersToRemove);
+        return team.publicTeam;
     }
 }
