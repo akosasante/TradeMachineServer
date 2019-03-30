@@ -50,7 +50,7 @@ describe("UserController", () => {
     describe("getOne method", () => {
         it("should return a user by id without its password", async () => {
             mockUserDAO.getUserById.mockReturnValue(testUser);
-            const res = await userController.getOne(testUser.id!.toString(), false, loggedInUser);
+            const res = await userController.getOne(testUser.id!.toString(), false);
 
             // Must call the correct DAO method
             expect(mockUserDAO.getUserById).toHaveBeenCalledTimes(1);
@@ -59,7 +59,7 @@ describe("UserController", () => {
         });
         it("should return a user by uuid without its password", async () => {
             mockUserDAO.getUserByUUID.mockReturnValue(testUser);
-            const res = await userController.getOne(testUser.userIdToken!, true, loggedInUser);
+            const res = await userController.getOne(testUser.userIdToken!, true);
 
             // Must call the correct DAO method
             expect(mockUserDAO.getUserByUUID).toHaveBeenCalledTimes(1);
@@ -70,14 +70,14 @@ describe("UserController", () => {
             mockUserDAO.getUserById.mockImplementation(() => {
                 throw new EntityNotFoundError(User, "ID not found.");
             });
-            await expect(userController.getOne("9999", false, loggedInUser))
+            await expect(userController.getOne("9999", false))
                 .rejects.toThrow(EntityNotFoundError);
         });
         it("should throw an error if entity not found (by uuid)", async () => {
             mockUserDAO.getUserByUUID.mockImplementation(() => {
                 throw new EntityNotFoundError(User, "UUID not found.");
             });
-            await expect(userController.getOne("invalid-id", true, loggedInUser))
+            await expect(userController.getOne("invalid-id", true))
                 .rejects.toThrow(EntityNotFoundError);
         });
     });
@@ -121,7 +121,7 @@ describe("UserController", () => {
     describe("deleteUser method", () => {
         it("should delete a user by id", async () => {
             mockUserDAO.deleteUser.mockReturnValue({raw: [ [], testUser.id!]});
-            const res = await userController.deleteUser(loggedInUser, testUser.id!);
+            const res = await userController.deleteUser(testUser.id!);
 
             expect(mockUserDAO.deleteUser).toBeCalledTimes(1);
             expect(mockUserDAO.deleteUser).toBeCalledWith(testUser.id!);
@@ -131,7 +131,7 @@ describe("UserController", () => {
             mockUserDAO.deleteUser.mockImplementation(() => {
                 throw new EntityNotFoundError(User, "Id not found.");
             });
-            await expect(userController.deleteUser(loggedInUser, 9999))
+            await expect(userController.deleteUser(9999))
                 .rejects.toThrow(EntityNotFoundError);
         });
     });

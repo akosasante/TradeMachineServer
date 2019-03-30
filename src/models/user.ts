@@ -75,7 +75,7 @@ export default class User extends BaseModel {
     @Column({nullable: true})
     public passwordResetExpiresOn?: Date;
 
-    @ManyToOne(type => Team, team => team.owners)
+    @ManyToOne(type => Team, team => team.owners, {onDelete: "SET NULL"})
     public team?: Team;
 
     public hasPassword?: boolean;
@@ -122,6 +122,7 @@ export default class User extends BaseModel {
     }
 
     public equals(other: User, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
+        logger.debug("User equals check");
         const COMPLEX_FIELDS = {roles: true};
         const DEFAULT_EXCLUDES = {
             id: true,

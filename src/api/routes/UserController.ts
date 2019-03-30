@@ -27,7 +27,7 @@ export default class UserController {
         logger.debug(`get one user endpoint ${byUUID ? " by UUID" : ""}`);
         const user = byUUID ? await this.dao.getUserByUUID(id) : await this.dao.getUserById(Number(id));
         logger.debug(`got user: ${user}`);
-        return user!.publicUser;
+        return (user || {} as User).publicUser;
     }
 
     @Authorized(Role.ADMIN)

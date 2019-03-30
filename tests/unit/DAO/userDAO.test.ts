@@ -20,9 +20,10 @@ describe("UserDAO", () => {
 
         it("should return an array of users as result of db call", async () => {
             const res = await userDAO.getAllUsers();
+            const defaultOptions = {order: {id: "ASC"}};
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.find).toHaveBeenCalledWith();
+            expect(mockUserDb.find).toHaveBeenCalledWith(defaultOptions);
             // Testing that we return as expected
             expect(res).toEqual([testUser]);
         });
