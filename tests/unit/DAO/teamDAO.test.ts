@@ -112,14 +112,14 @@ describe("TeamDAO", () => {
         const of = jest.fn(() => ({addAndRemove}));
         const relation = jest.fn(() => ({of}));
         mockTeamDb.createQueryBuilder.mockImplementation(() => ({ relation }));
-        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam1.parse());
+        mockTeamDb.findOneOrFail.mockReturnValue(testTeam1.parse());
         const res = await teamDAO.updateTeamOwners(
             1,
             [new User({email: "1@example.com"})], [new User({email: "2@example.com"})]);
 
         expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith();
-        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(2);
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(1);
         expect(res).toEqual(testTeam1);
     });

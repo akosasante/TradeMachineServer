@@ -47,3 +47,12 @@ export async function makeDeleteRequest(agent: request.SuperTest<request.Test>, 
         .expect("Content-Type", /json/)
         .expect(expectedStatus);
 }
+
+export async function makePatchRequest<T>(agent: request.SuperTest<request.Test>, url: string,
+                                          obj: T, expectedStatus: number) {
+    return agent
+        .patch(url)
+        .send(obj as unknown as object)
+        .expect("Content-Type", /json/)
+        .expect(expectedStatus);
+}

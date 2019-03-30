@@ -5,23 +5,27 @@ import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import UserDAO from "../../src/DAO/UserDAO";
 import Team from "../../src/models/team";
-import { Role } from "../../src/models/user";
+import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
 import {
     doLogout,
     makeDeleteRequest,
     makeGetRequest,
-    makeLoggedInRequest,
+    makeLoggedInRequest, makePatchRequest,
     makePostRequest,
     makePutRequest
 } from "./helpers";
 
 describe("Team API endpoints", () => {
     let app: Server;
+    let adminUser: User;
+    let ownerUser: User;
+    let otherUser: User;
     const adminUserObj = { email: "admin@example.com", password: "lol", name: "Cam", roles: [Role.ADMIN]};
     const ownerUserObj = { email: "owner@example.com", password: "lol", name: "Jatheesh", roles: [Role.OWNER]};
     const testTeamObj = {name: "Squirtle Squad", espnId: 1};
     const testTeam = new Team({name: "Squirtle Squad", espnId: 1});
+    const updatedName = "Hello darkness my old friend";
 
     const adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
         makeLoggedInRequest(request.agent(app), adminUserObj.email, adminUserObj.password, requestFn);
@@ -33,8 +37,9 @@ describe("Team API endpoints", () => {
 
         // Create admin and owner users in db for rest of this suite's use
         const userDAO = new UserDAO();
-        await userDAO.createUser({...adminUserObj});
-        await userDAO.createUser({...ownerUserObj});
+        adminUser = await userDAO.createUser({...adminUserObj});
+        ownerUser = await userDAO.createUser({...ownerUserObj});
+        otherUser = await userDAO.createUser({email: "example@test.ca"});
     });
     afterAll(async () => {
         await redisClient.quit();
@@ -78,7 +83,6 @@ describe("Team API endpoints", () => {
 
         it("should return an array of all teams (public vers.) in the db", async () => {
             const res = await getAllRequest();
-            expect(res.body).toBeArrayOfSize(2);
             expect(testTeam.publicTeam.equals(res.body[0])).toBeTrue();
         });
     });
@@ -98,11 +102,29 @@ describe("Team API endpoints", () => {
         });
     });
 
+    describe("GET /teams/search?queryOpts (get team by query)", () => {
+        function stringifyQuery(query: any) {
+            return Object.entries(query).reduce((queryString: string, kvp: any) =>
+                `${queryString}${kvp[0]}=${kvp[1]}&`, "?");
+        }
+        const findOneRequest = (query: Partial<Team>, status: number = 200) =>
+            makeGetRequest(request(app), `/teams/search${stringifyQuery(query)}`, status);
+
+        it("should return a single team (public vers.) for the given query", async () => {
+            const res = await findOneRequest({espnId: 2});
+            const testTeam2 = new Team({ id: 2, name: "Squirtle Squad", espnId: 2});
+
+            expect(res.body).toBeObject();
+            expect(testTeam2.publicTeam.equals(res.body)).toBeTrue();
+            expect(res.body.id).toEqual(2);
+        });
+    });
+
     describe("UPDATE /teams/:id (update one team)", () => {
         const putTeamRequest = (id: number, teamObj: Partial<Team>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<Team>>(agent, `/teams/${id}`, teamObj, status);
-        const updatedTeamObj = {...testTeamObj, id: 1, name: "Hello darkness my old friend"};
+        const updatedTeamObj = {...testTeamObj, id: 1, name: updatedName};
         const updatedTeam = new Team(updatedTeamObj);
         afterEach(async () => {
             await doLogout(request.agent(app));
@@ -136,6 +158,44 @@ describe("Team API endpoints", () => {
         });
     });
 
+    describe("PATCH /teams/:id (edit a team's owners)", () => {
+        const patchTeamRequest = (id: number, ownersToAdd: User[], ownersToRemove: User[], status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePatchRequest(agent, `/teams/${id}`, {add: ownersToAdd, remove: ownersToRemove}, status);
+        afterEach(async () => {
+            await doLogout(request.agent(app));
+        });
+
+        it("should return the updated team with added owners", async () => {
+            const res = await adminLoggedIn(patchTeamRequest(1, [otherUser, adminUser], []));
+            const testTeamUpdated = new Team({...testTeamObj, name: updatedName, owners: [otherUser, adminUser]});
+            expect(res.body.owners).toBeArrayOfSize(2);
+            expect(res.body.owners.filter((owner: User) => owner.id === adminUser.id || owner.id === otherUser.id))
+                .toBeArrayOfSize(2);
+            expect(testTeamUpdated.publicTeam.equals(new Team(res.body), {hasPassword: true})).toBeTrue();
+        });
+        it("should allow adding and removing at the same time", async () => {
+            const res = await adminLoggedIn(patchTeamRequest(1, [ownerUser], [otherUser]));
+            const testTeamUpdated = new Team({...testTeamObj, name: updatedName, owners: [adminUser, ownerUser]});
+            expect(res.body.owners).toBeArrayOfSize(2);
+            // Checking if admin user is here:
+            expect(res.body.owners.filter((owner: User) => owner.id === otherUser.id)).toBeEmpty();
+            // Checking if new owner user and other user are here:
+            expect(res.body.owners.filter((owner: User) => owner.id === adminUser.id || owner.id === ownerUser.id))
+                .toBeArrayOfSize(2);
+            expect(testTeamUpdated.publicTeam.equals(new Team(res.body), {hasPassword: true})).toBeTrue();
+        });
+        it("should throw a 404 Not Found error if there is no team with that ID", async () => {
+            await adminLoggedIn(patchTeamRequest(999, [otherUser], [], 404));
+        });
+        it("should throw a 403 Forbidden error if a non-admin tries to update a team's owners", async () => {
+            await ownerLoggedIn(patchTeamRequest(1, [otherUser], [], 403));
+        });
+        it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
+            await patchTeamRequest(1, [otherUser], [], 403)(request(app));
+        });
+    });
+
     describe("DELETE /teams/:id (delete one team)", () => {
         const deleteTeamRequest = (id: number, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/teams/${id}`, status);
@@ -150,6 +210,9 @@ describe("Team API endpoints", () => {
             // Confirm that it was deleted from the db:
             const getAllRes = await request(app).get("/teams").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(1);
+
+            // Confirm that users that were previously owners of this team have their TeamID set to none
+            // lo
         });
         it("should throw a 404 Not Found error if there is no team with that ID", async () => {
             await adminLoggedIn(deleteTeamRequest(1, 404));

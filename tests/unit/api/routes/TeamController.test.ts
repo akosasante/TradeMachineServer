@@ -17,7 +17,7 @@ describe("TeamController", () => {
         updateTeamOwners: jest.fn(),
     };
     const testUser = new User({id: 1, name: "Jatheesh", password: "pswd", userIdToken: "ra-ndom-string"});
-    const testTeam = new Team({name: "Squirtle Squad", espnId: 209, owners: [testUser.publicUser]});
+    const testTeam = new Team({id: 1, name: "Squirtle Squad", espnId: 209, owners: [testUser.publicUser]});
     const teamController = new TeamController(mockTeamDAO as unknown as TeamDAO);
 
     afterEach(() => {
@@ -122,7 +122,7 @@ describe("TeamController", () => {
             const res = await teamController.findTeamByQuery(query);
 
             expect(mockTeamDAO.findTeam).toHaveBeenCalledTimes(1);
-            expect(mockTeamDAO.findTeam).toHaveBeenCalledWith(testTeam.id, query);
+            expect(mockTeamDAO.findTeam).toHaveBeenCalledWith(query);
             expect(res).toEqual(testTeam);
         });
         it("should throw an error if entity is not found in db", async () => {
