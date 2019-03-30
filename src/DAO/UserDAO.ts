@@ -1,5 +1,5 @@
 import { NotFoundError } from "routing-controllers";
-import { Connection, DeleteResult, getConnection, Repository } from "typeorm";
+import { Connection, DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
 import util from "util";
 import logger from "../bootstrap/logger";
 import User from "../models/user";
@@ -18,7 +18,8 @@ export default class UserDAO {
     }
 
     public async getAllUsers(): Promise<User[]> {
-        const dbUsers = await this.userDb.find();
+        const options: FindManyOptions = { order: { id: "ASC" } };
+        const dbUsers = await this.userDb.find(options);
         return dbUsers.map(user => new User(user));
     }
 

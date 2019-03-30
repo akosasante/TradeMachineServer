@@ -12,7 +12,7 @@ export let mailQueue: MailQueue|undefined;
 export default async function(): Promise<Express> {
     // Set up db
     logger.debug("setting up database");
-    await initializeDb(process.env.ENABLE_LOGS === "true");
+    await initializeDb(process.env.DB_LOGS === "true");
     logger.debug("database setup complete");
 
     logger.debug("setting up mail queue");

@@ -1,4 +1,4 @@
-import { Authorized, Body, CurrentUser, Delete, Get, JsonController,
+import { Authorized, Body, Delete, Get, JsonController,
     Param, Post, Put, QueryParam } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -14,7 +14,6 @@ export default class UserController {
         this.dao = DAO || new UserDAO();
     }
 
-    @Authorized(Role.OWNER)
     @Get("/")
     public async getAll(): Promise<User[]> {
         logger.debug("get all users endpoint");
@@ -24,15 +23,14 @@ export default class UserController {
     }
 
     @Get("/:id")
-    public async getOne(@Param("id") id: string,
-                        @QueryParam("byUUID") byUUID?: boolean,
-                        @CurrentUser() currentUser?: User): Promise<User> {
+    public async getOne(@Param("id") id: string, @QueryParam("byUUID") byUUID?: boolean): Promise<User> {
         logger.debug(`get one user endpoint ${byUUID ? " by UUID" : ""}`);
         const user = byUUID ? await this.dao.getUserByUUID(id) : await this.dao.getUserById(Number(id));
         logger.debug(`got user: ${user}`);
         return user!.publicUser;
     }
 
+    @Authorized(Role.ADMIN)
     @Post("/")
     public async createUser(@Body() userObj: Partial<User>): Promise<User> {
         logger.debug("create user endpoint");
@@ -45,6 +43,7 @@ export default class UserController {
         return user.publicUser;
     }
 
+    @Authorized(Role.ADMIN)
     @Put("/:id")
     public async updateUser(@Param("id") id: number, @Body() userObj: Partial<User>): Promise<User> {
         logger.debug("update user endpoint");
@@ -53,8 +52,9 @@ export default class UserController {
         return user.publicUser;
     }
 
+    @Authorized(Role.ADMIN)
     @Delete("/:id")
-    public async deleteUser(@CurrentUser({required: true}) user: User, @Param("id") id: number) {
+    public async deleteUser(@Param("id") id: number) {
         logger.debug("delete user endpoint");
         const result = await this.dao.deleteUser(id);
         logger.debug(`delete successful: ${inspect(result)}`);

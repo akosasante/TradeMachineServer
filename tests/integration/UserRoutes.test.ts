@@ -3,13 +3,20 @@ import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
+import UserDAO from "../../src/DAO/UserDAO";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
+import {
+    doLogout,
+    makeDeleteRequest,
+    makeGetRequest,
+    makeLoggedInRequest,
+    makePostRequest,
+    makePutRequest
+} from "./helpers";
 
 describe("User API endpoints", () => {
     let app: Server;
-    let adminLoggedIn: request.SuperTest<request.Test>;
-    let ownerLoggedIn: request.SuperTest<request.Test>;
     const testUserObj = (email: string) => ({
         email,
         password: "lol",
@@ -26,58 +33,37 @@ describe("User API endpoints", () => {
         ...testUserObj(OWNER_EMAIL),
         roles: [Role.OWNER],
     };
-
-    const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-
     const testUser = (email: string) => new User(testUserObj(email));
     const adminUser: User = new User(adminUserObj);
-    // const ownerUser: User = new User(ownerUserObj);
 
-    async function makeLoggedInRequest(agent: request.SuperTest<request.Test>, email: string, password: string,
-                                       req: (ag: request.SuperTest<request.Test>) => any) {
-        await agent
-            .post("/auth/login")
-            .send({email, password})
-            .expect(200);
-        return req(agent);
-    }
-
-    async function logoutAgent(agent: request.SuperTest<request.Test>) {
-        await agent
-            .post("/auth/logout")
-            .send({})
-            .expect(200);
-    }
+    const adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
+        makeLoggedInRequest(request.agent(app), adminUserObj.email, adminUserObj.password, requestFn);
+    const ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
+        makeLoggedInRequest(request.agent(app), ownerUserObj.email, ownerUserObj.password, requestFn);
 
     beforeAll(async () => {
         app = await server;
+        const userDAO = new UserDAO();
         // Create admin and owner users in db for rest of this suite's use
-        await request(app)
-            .post("/users")
-            .send(adminUserObj)
-            .expect(200);
-        await request(app)
-            .post("/users")
-            .send(ownerUserObj)
-            .expect(200);
+        await userDAO.createUser({...adminUserObj});
+        await userDAO.createUser({...ownerUserObj});
     });
     afterAll(async () => {
         await redisClient.quit();
     });
+
     describe("POST /users (create new user)", () => {
-        const postRequest = (userObj: Partial<User>) => request(app)
-            .post("/users")
-            .send(userObj)
-            .expect("Content-Type", /json/)
-            .expect(200);
-        const badRequest = (userObj: Partial<User>) => request(app)
-            .post("/users")
-            .send(userObj)
-            .expect("Content-Type", /json/)
-            .expect(400);
+        const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
+        const postRequest = (userObj: Partial<User>, status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<Partial<User>>(agent, "/users", userObj, status);
+        afterEach(async () => {
+            await doLogout(request.agent(app));
+        });
+
         it("should return a single user object instance to the object passed in", async () => {
             const email = "jatheeshx@example.com";
-            const res = await postRequest(testUserObj(email));
+            const res = await adminLoggedIn(postRequest(testUserObj(email)));
             expect((testUser(email).publicUser).equals(res.body)).toBeTrue();
         });
         it("should ignore any invalid properties from the object passed in", async () => {
@@ -87,135 +73,117 @@ describe("User API endpoints", () => {
                 blah: "Hello",
                 bloop: "yeeeah",
             };
-            const res = await postRequest(invalidPropsObj);
+            const res = await adminLoggedIn(postRequest(invalidPropsObj));
             expect(testUser(email).equals(res.body)).toBeTrue();
         });
         it("should return a 400 Bad Request error if missing required property", async () => {
             const missingEmailUser = {name: "Jatheesh"};
-            const res = await badRequest(missingEmailUser);
+            const res = await adminLoggedIn(postRequest(missingEmailUser, 400));
             expect(res.body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should return a 400 Bad Request error if user with this email already exists in db", async () => {
             const email = "jatheeshx@example.com";
-            const res = await badRequest(testUserObj(email));
+            const res = await adminLoggedIn(postRequest(testUserObj(email), 400));
             expect(res.body.stack).toEqual(expectQueryFailedErrorString);
         });
+        it("should throw a 403 Forbidden Error if a non-admin tries to create a user", async () => {
+            await ownerLoggedIn(postRequest(testUserObj("email@example.com"), 403));
+        });
+        it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
+            await postRequest(testUserObj("email@example.com"), 403)(request(app));
+        });
     });
+
     describe("GET /users (get all users)", () => {
-        afterEach(async () => {
-            await logoutAgent(request.agent(app));
-        });
-        const loggedInGetAll = (agent: request.SuperTest<request.Test>) => agent
-            .get("/users")
-            .expect("Content-Type", /json/);
+        const getAllRequest = (status: number = 200) => makeGetRequest(request(app), "/users", status);
+
         it("should return an array of all the users in the db", async () => {
-            adminLoggedIn = request.agent(app);
-            const adminRes = await makeLoggedInRequest(
-                adminLoggedIn, adminUserObj.email, adminUserObj.password, loggedInGetAll);
-            const users = adminRes.body;
-            expect(adminRes.status).toBe(200);
-            expect(users).toBeArrayOfSize(4);
-            // expect(users).toSatisfyAll(user => User.isUser(user));
-        });
-        // it("should return a 403 Forbidden Error if the user does not have the correct roles", async () => {
-        //     Leaving this here as an example; but this endpoint is not actually retrictred to a role anymore
-        //     ownerLoggedIn = request.agent(app);
-        //     const ownerRes = await makeLoggedInRequest(
-        //         ownerLoggedIn, ownerUserObj.email, ownerUserObj.password, loggedInGetAll);
-        //     expect(ownerRes.status).toBe(403);
-        // });
-        it("should return a 403 Forbidden Error if the user is not logged in at all", async () => {
-            await request(app)
-                .get("/users")
-                .expect("Content-Type", /json/)
-                .expect(403);
+            const res = await getAllRequest();
+            expect(res.body).toBeArrayOfSize(4);
+            expect(adminUser.publicUser.equals(res.body[0])).toBeTrue();
         });
     });
+
     describe("GET /users/:id (get one user)", () => {
-        afterEach(async () => {
-            await logoutAgent(request.agent(app));
-        });
-        const loggedInGetOne = (id: number) => (agent: request.SuperTest<request.Test>) => agent
-            .get(`/users/${id}`)
-            .expect("Content-Type", /json/);
+        const getOneRequest = (id: number, status: number = 200) =>
+            makeGetRequest(request(app), `/users/${id}`, status);
+
         it("should return a single public user if logged in, no matter the role (ADMIN)", async () => {
-            adminLoggedIn = request.agent(app);
-            const adminRes = await makeLoggedInRequest(
-                adminLoggedIn, adminUserObj.email, adminUserObj.password, loggedInGetOne(1));
-            expect(adminRes.status).toBe(200);
-            expect(adminUser.equals(adminRes.body)).toBeTrue();
-        });
-        it("should return a single public user if logged in, no matter the role (OWNER)", async () => {
-            ownerLoggedIn = request.agent(app);
-            const ownerRes = await makeLoggedInRequest(
-                ownerLoggedIn, ownerUserObj.email, ownerUserObj.password, loggedInGetOne(1));
-            expect(ownerRes.status).toBe(200);
-            expect(adminUser.equals(ownerRes.body)).toBeTrue();
-        });
-        it("should return a single public user if not logged in, since it's optional", async () => {
-            const res = await request(app)
-                .get("/users/1")
-                .expect("Content-Type", /json/)
-                .expect(200);
+            const res = await getOneRequest(1);
+            expect(res.body).toBeObject();
             expect(adminUser.equals(res.body)).toBeTrue();
         });
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
-            await request(app)
-                .get("/users/1000")
-                .expect("Content-Type", /json/)
-                .expect(404);
+            await getOneRequest(999, 404);
         });
     });
+
     describe("UPDATE /users/:id (update one user)", () => {
+        const putRequest = (id: number, userObj: Partial<User>, status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePutRequest<Partial<User>>(agent, `/users/${id}`, userObj, status);
+        const getOneRequest = (id: number) => makeGetRequest(request(app), `/users/${id}`, 200);
+        const username = "MrMeSeeks92";
+        const updatedAdmin = new User({...adminUserObj, username});
+        afterEach(async () => {
+            await doLogout(request.agent(app));
+        });
+
         it("should return the updated user without a password", async () => {
-            const email = "updatedEmail@gmail.com";
-            const updatedAdmin = new User({...adminUserObj, email});
-            const res = await request(app)
-                .put("/users/1")
-                .send({email})
-                .expect("Content-Type", /json/)
-                .expect(200);
-            expect(updatedAdmin.equals(res.body)).toBeTrue();
+            const res = await adminLoggedIn(putRequest(1, { username }));
+            expect(updatedAdmin.publicUser.equals(res.body)).toBeTrue();
+
+            // Confirm db was actually updated:
+            const getOneRes = await getOneRequest(1);
+            expect(updatedAdmin.publicUser.equals(getOneRes.body)).toBeTrue();
         });
         it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
-            const email = "new@gmail.com";
-            const updatedAdmin = new User({...adminUserObj, email});
-            await request(app)
-                .put("/users/1")
-                .send({email, nomnom: 1, namez: "HI"})
-                .expect("Content-Type", /json/)
-                .expect(400);
+            const updatedObj = { email: "new@gmail.com", blah: "yo" };
+            await adminLoggedIn(putRequest(1, updatedObj, 400));
+
+            // Confirm db was NOT updated:
+            const getOneRes = await getOneRequest(1);
+            expect(updatedAdmin.publicUser.equals(getOneRes.body)).toBeTrue();
+            expect(getOneRes.body.blah).toBeUndefined();
         });
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
             const email = "up2date@gmail.com";
-            await request(app)
-                .put("/users/1000000")
-                .send({email})
-                .expect("Content-Type", /json/)
-                .expect(404);
+            await adminLoggedIn(putRequest(999, { email }, 404));
+        });
+        it("should throw a 403 Forbidden Error if a non-admin tries to update a user", async () => {
+            await ownerLoggedIn(putRequest(1, { username: "hey" }, 403));
+        });
+        it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
+            await putRequest(1, { username: "Hey2" }, 403)(request(app));
         });
     });
+
     describe("DELETE /users/:id (delete one user)", () => {
-        const loggedInDelete = (id: number) => (agent: request.SuperTest<request.Test>) => agent
-            .delete(`/users/${id}`)
-            .expect("Content-Type", /json/);
+        const deleteRequest = (id: number, status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/users/${id}`, status);
+        const getAllRequest = () => makeGetRequest(request(app), "/users", 200);
+        afterEach(async () => {
+            await doLogout(request.agent(app));
+        });
+
         it("should return a delete result when logged in", async () => {
-            ownerLoggedIn = request.agent(app);
-            const ownerRes = await makeLoggedInRequest(
-                ownerLoggedIn, ownerUserObj.email, ownerUserObj.password, loggedInDelete(1));
-            expect(ownerRes.status).toBe(200);
+            const id = 4;
+            const res = await adminLoggedIn(deleteRequest(id));
+            expect(res.body).toEqual({ deleteResult: true, id });
+
+            // Confirm that one was deleted from db
+            const getAllRes = await getAllRequest();
+            expect(getAllRes.body).toBeArrayOfSize(3);
+            expect(getAllRes.body.filter((user: User) => user.id === id)).toBeEmpty();
         });
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
-            ownerLoggedIn = request.agent(app);
-            const ownerRes = await makeLoggedInRequest(
-                ownerLoggedIn, ownerUserObj.email, ownerUserObj.password, loggedInDelete(1000));
-            expect(ownerRes.status).toBe(404);
+            await adminLoggedIn(deleteRequest(999, 404));
         });
-        it("should throw a 401 Unauthorized error if not logged in", async () => {
-            await request(app)
-                .delete("/users/2")
-                .expect("Content-Type", /json/)
-                .expect(401);
+        it("should throw a 403 Forbidden Error if a non-admin tries to delete a user", async () => {
+            await ownerLoggedIn(deleteRequest(1, 403));
+        });
+        it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
+            await deleteRequest(1, 403)(request(app));
         });
     });
 });
