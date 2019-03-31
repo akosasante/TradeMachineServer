@@ -14,7 +14,7 @@ export default class Team extends BaseModel implements HasEquals {
     @PrimaryGeneratedColumn()
     public readonly id?: number;
 
-    @Column()
+    @Column({nullable: true})
     public espnId?: number;
     // TODO: Consider enforcing uniqueness on this column? Or name column? Maybe not necessary for now.
 

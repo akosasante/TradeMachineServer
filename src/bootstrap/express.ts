@@ -28,7 +28,7 @@ const REDIS_OPTS = {
     host: process.env.REDIS_IP || "localhost",
     port: Number(process.env.REDIS_PORT || 6379),
     logErrors: true,
-    ttl: 3000,
+    ttl: 7200000,
     // client: redisClient,
 };
 
@@ -54,10 +54,11 @@ app.use(expressSession({
     cookie: {
         secure: process.env.NODE_ENV === "production",
         httpOnly: false,
-        // name: "trades.sid",
+        // @ts-ignore
+        name: "trades.sid",
         // rolling: true,
         // domain: "127.0.0.1:8080",
-        maxAge: 3000,
+        maxAge: 7200000,
     },
 }));
 
