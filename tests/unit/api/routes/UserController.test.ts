@@ -1,5 +1,6 @@
 import "jest";
 import "jest-extended";
+import { NotFoundError } from "routing-controllers";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import UserController from "../../../../src/api/routes/UserController";
 import UserDAO from "../../../../src/DAO/UserDAO";
@@ -14,6 +15,7 @@ describe("UserController", () => {
         updateUser: jest.fn(),
         deleteUser: jest.fn(),
         findUser: jest.fn(),
+        findUsers: jest.fn(),
     };
     const userController = new UserController(mockUserDAO as unknown as UserDAO);
     const testUser = new User({id: 1, name: "Jatheesh", password: "pswd", userIdToken: "ra-ndom-string"});
@@ -26,6 +28,7 @@ describe("UserController", () => {
         mockUserDAO.updateUser.mockClear();
         mockUserDAO.deleteUser.mockClear();
         mockUserDAO.findUser.mockClear();
+        mockUserDAO.findUsers.mockClear();
     });
 
     describe("getAll method", () => {
@@ -84,7 +87,7 @@ describe("UserController", () => {
     });
 
     describe("findUser method", () => {
-        const query = { name: "Jatheesh" };
+        const query: {[key: string]: string} = { name: "Jatheesh" };
         it("should find a user by the given query options", async () => {
             mockUserDAO.findUser.mockReturnValueOnce(testUser);
             const res = await userController.findUser(query);
@@ -98,6 +101,22 @@ describe("UserController", () => {
                 throw new EntityNotFoundError(User, "ID not found");
             });
             await expect(userController.findUser(query)).rejects.toThrow(EntityNotFoundError);
+        });
+        it("should return an array of users if multiple is a key in the query", async () => {
+            query.multiple = "true";
+            mockUserDAO.findUsers.mockReturnValueOnce([testUser]);
+            const res = await userController.findUser(query);
+
+            expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.findUsers).toHaveBeenCalledWith(query, true);
+            expect(res).toEqual([testUser.publicUser]);
+        });
+        it("should throw an error if no entities are found with the multiple key", async () => {
+            query.multiple = "true";
+            mockUserDAO.findUsers.mockImplementation(() => {
+                throw new NotFoundError("ID not found");
+            });
+            await expect(userController.findUser(query)).rejects.toThrow(NotFoundError);
         });
     });
 

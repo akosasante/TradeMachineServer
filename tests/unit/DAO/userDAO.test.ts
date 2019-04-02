@@ -1,5 +1,6 @@
 import "jest";
 import "jest-extended";
+import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
 import UserDAO from "../../../src/DAO/UserDAO";
 import mockUserDb, { testUser } from "../mocks/mockUserDb";
@@ -8,11 +9,14 @@ import mockUserDb, { testUser } from "../mocks/mockUserDb";
 jest.spyOn(typeorm, "getConnection").mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
 
 describe("UserDAO", () => {
-    let userDAO: UserDAO;
+    const userDAO: UserDAO = new UserDAO();
 
     describe("getAllUsers", () => {
-        beforeAll(() => {
-            userDAO = new UserDAO();
+        afterEach(async () => {
+            Object.keys(mockUserDb).forEach((action: string) => {
+                // @ts-ignore
+                (mockUserDb[action] as jest.Mock).mockClear();
+            });
         });
         afterAll(async () => {
             await userDAO.connection.close();
@@ -30,10 +34,6 @@ describe("UserDAO", () => {
     });
 
     describe("getUserById", () => {
-        beforeAll(() => {
-            userDAO = new UserDAO();
-        });
-
         it("should return a single user as result of db call", async () => {
             const res = await userDAO.getUserById(testUser.id!);
             // Testing that the correct db function is called with the correct params
@@ -42,13 +42,15 @@ describe("UserDAO", () => {
             // Testing that we return as expected
             expect(res).toEqual(testUser);
         });
+        it("should throw a NotFoundError if no id is passed in", async () => {
+            // This can happen if like user.id is passed in and we expect it to always be a number
+            // But for some reason it's undefined.
+            // @ts-ignore
+            await expect(userDAO.getUserById(undefined)).rejects.toThrow(NotFoundError);
+        });
     });
 
     describe("findUser", () => {
-        beforeAll(() => {
-            userDAO = new UserDAO();
-        });
-
         it("should pass a query object to db and return a single user", async () => {
             const res = await userDAO.findUser({email: testUser.email});
             // Testing that the correct db function is called with the correct params
@@ -65,11 +67,29 @@ describe("UserDAO", () => {
         });
     });
 
-    describe("createUser", () => {
-        beforeAll(() => {
-            userDAO = new UserDAO();
+    describe("findUsers", () => {
+        const condition = {email: testUser.email};
+        it("should pass a query object to the find method and return an array", async () => {
+            const res = await userDAO.findUsers(condition, false);
+            expect(mockUserDb.find).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.find).toHaveBeenCalledWith({where: condition});
+            expect(res).toEqual([testUser]);
+            mockUserDb.find.mockClear();
         });
+        it("should return an empty array if failIfNotFound is falsy", async () => {
+            mockUserDb.find.mockImplementationOnce(() => []);
+            const res = await userDAO.findUsers(condition, false);
+            expect(mockUserDb.find).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.find).toHaveBeenCalledWith({where: condition});
+            expect(res).toEqual([]);
+        });
+        it("should throw a NotFoundError if the failIfNotFound arg is true", async () => {
+            mockUserDb.find.mockImplementationOnce(() => []);
+            await expect(userDAO.findUsers(condition, true)).rejects.toThrow(NotFoundError);
+        });
+    });
 
+    describe("createUser", () => {
         it("should a user instance and hash any included password before insert", async () => {
             const expectedUser = expect.objectContaining({email: expect.any(String)});
             const res = await userDAO.createUser(testUser.parse());
@@ -82,9 +102,6 @@ describe("UserDAO", () => {
     });
 
     describe("updateUser", () => {
-        beforeAll(() => {
-            userDAO = new UserDAO();
-        });
 
         it("should call getUsrsById and associated db call then return single user", async () => {
             const res = await userDAO.updateUser(testUser.id!, testUser.parse());
@@ -99,10 +116,6 @@ describe("UserDAO", () => {
     });
 
     describe("deleteUser", () => {
-        beforeAll(() => {
-            userDAO = new UserDAO();
-        });
-
         it("should return a delete result", async () => {
             const res = await userDAO.deleteUser(testUser.id!);
             // Testing that the correct db function is called with the correct params

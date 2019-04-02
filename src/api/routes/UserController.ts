@@ -32,10 +32,19 @@ export default class UserController {
     }
 
     @Get("/search")
-    public async findUser(@QueryParams() query: Partial<User>): Promise<User|undefined> {
+    public async findUser(@QueryParams() query: Partial<User>): Promise<User[]|User|undefined> {
         logger.debug(`searching for user with props: ${inspect(query)}`);
-        const user = await this.dao.findUser(cleanupQuery(query as {[key: string]: string}), true);
-        return (user || {} as User).publicUser;
+        const multiple = Object.keys(query).includes("multiple");
+        if (multiple) {
+            logger.debug("fetching all users with query");
+            const users = await this.dao.findUsers(cleanupQuery(query as { [key: string]: string }), true);
+            logger.debug(`got ${users.length} users`);
+            return users.map(user => user.publicUser);
+        } else {
+            logger.debug("fetching one user with query");
+            const user = await this.dao.findUser(cleanupQuery(query as { [key: string]: string }), true);
+            return (user || {} as User).publicUser;
+        }
     }
 
     @Authorized(Role.ADMIN)

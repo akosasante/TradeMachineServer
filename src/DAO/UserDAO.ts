@@ -45,6 +45,17 @@ export default class UserDAO {
         }
     }
 
+    public async findUsers(query: Partial<User>, failIfNotFound: boolean = true): Promise<User[]> {
+        const dbUsers = await this.userDb.find({where: query});
+        if (dbUsers.length) {
+            return dbUsers.map(user => new User(user));
+        } else if (failIfNotFound) {
+            throw new NotFoundError("No users found for that query");
+        } else {
+            return [];
+        }
+    }
+
     public async createUser(userObj: Partial<User>, skipHash: boolean = false): Promise<User> {
         // TODO: Perhaps some custom validation that the db can't be responsible for?
         logger.debug("creating");

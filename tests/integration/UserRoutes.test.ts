@@ -121,16 +121,25 @@ describe("User API endpoints", () => {
     });
 
     describe("GET /users/search?queryOpts (get user by query)", () => {
-        const findOneRequest = (query: Partial<User>, status: number = 200) =>
+        const findRequest = (query: any, status: number = 200) =>
             makeGetRequest(request(app), `/users/search${stringifyQuery(query)}`, status);
 
         it("should return a single public user for the given query", async () => {
-            const res = await findOneRequest({ email: ownerUserObj.email });
+            const res = await findRequest({ email: ownerUserObj.email });
             expect(res.body).toBeObject();
             expect(ownerUser.publicUser.equals(res.body)).toBeTrue();
         });
         it("should throw a 404 error if no user with that query is found", async () => {
-            await findOneRequest({ email: "nonono@test.com" }, 404);
+            await findRequest({ email: "nonono@test.com" }, 404);
+        });
+        it("should return an array of users if given query includes the key 'multiple'", async () => {
+            const res = await findRequest({email: ownerUserObj.email, multiple: "true"});
+            expect(res).toBeArrayOfSize(1);
+            expect(res.body[0]).toBeObject();
+            expect(ownerUser.publicUser.equals(res.body[0])).toBeTrue();
+        });
+        it("should throw a 404 error if no users with that query are found (multiple)", async () => {
+            await findRequest({ email: "nonono@test.com", multiple: "true" }, 404);
         });
     });
 
