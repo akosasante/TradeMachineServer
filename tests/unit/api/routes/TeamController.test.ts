@@ -22,14 +22,9 @@ describe("TeamController", () => {
     const teamController = new TeamController(mockTeamDAO as unknown as TeamDAO);
 
     afterEach(() => {
-        mockTeamDAO.getAllTeams.mockClear();
-        mockTeamDAO.getTeamById.mockClear();
-        mockTeamDAO.findTeams.mockClear();
-        mockTeamDAO.createTeam.mockClear();
-        mockTeamDAO.updateTeam.mockClear();
-        mockTeamDAO.deleteTeam.mockClear();
-        mockTeamDAO.updateTeamOwners.mockClear();
-        mockTeamDAO.getTeamsByOwnerStatus.mockClear();
+        Object.entries(mockTeamDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
+            kvp[1].mockClear();
+        });
     });
 
     describe("getAllTeams method", () => {
