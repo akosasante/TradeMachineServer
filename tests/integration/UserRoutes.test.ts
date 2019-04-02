@@ -134,7 +134,7 @@ describe("User API endpoints", () => {
         });
         it("should return an array of users if given query includes the key 'multiple'", async () => {
             const res = await findRequest({email: ownerUserObj.email, multiple: "true"});
-            expect(res).toBeArrayOfSize(1);
+            expect(res.body).toBeArrayOfSize(1);
             expect(res.body[0]).toBeObject();
             expect(ownerUser.publicUser.equals(res.body[0])).toBeTrue();
         });

@@ -103,11 +103,13 @@ describe("UserController", () => {
             await expect(userController.findUser(query)).rejects.toThrow(EntityNotFoundError);
         });
         it("should return an array of users if multiple is a key in the query", async () => {
-            query.multiple = "true";
+            const multiQuery = {...query, multiple: "true"};
             mockUserDAO.findUsers.mockReturnValueOnce([testUser]);
-            const res = await userController.findUser(query);
+            // @ts-ignore
+            const res = await userController.findUser(multiQuery);
 
             expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);
+            // We delete the "multiple" key before passing the rest to the DAO
             expect(mockUserDAO.findUsers).toHaveBeenCalledWith(query, true);
             expect(res).toEqual([testUser.publicUser]);
         });
