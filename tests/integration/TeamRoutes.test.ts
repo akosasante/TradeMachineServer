@@ -97,19 +97,19 @@ describe("Team API endpoints", () => {
     });
 
     describe("GET /teams/search?queryOpts (get team by query)", () => {
-        const findOneRequest = (query: Partial<Team>, status: number = 200) =>
+        const findRequest = (query: Partial<Team>, status: number = 200) =>
             makeGetRequest(request(app), `/teams/search${stringifyQuery(query)}`, status);
 
-        it("should return a single team (public vers.) for the given query", async () => {
-            const res = await findOneRequest({espnId: 2});
+        it("should return teams (public vers.) for the given query", async () => {
+            const res = await findRequest({espnId: 2});
             const testTeam2 = new Team({ id: 2, name: "Squirtle Squad", espnId: 2});
 
-            expect(res.body).toBeObject();
-            expect(testTeam2.publicTeam.equals(res.body)).toBeTrue();
-            expect(res.body.id).toEqual(2);
+            expect(res.body).toBeArrayOfSize(1);
+            expect(testTeam2.publicTeam.equals(res.body[0])).toBeTrue();
+            expect(res.body[0].id).toEqual(2);
         });
         it("should throw a 404 error if no team with that query is found", async () => {
-            await findOneRequest({ espnId: 999 }, 404);
+            await findRequest({ espnId: 999 }, 404);
         });
     });
 

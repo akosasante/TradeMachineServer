@@ -10,7 +10,7 @@ describe("TeamController", () => {
     const mockTeamDAO = {
         getAllTeams: jest.fn(),
         getTeamById: jest.fn(),
-        findTeam: jest.fn(),
+        findTeams: jest.fn(),
         createTeam: jest.fn(),
         updateTeam: jest.fn(),
         deleteTeam: jest.fn(),
@@ -23,7 +23,7 @@ describe("TeamController", () => {
     afterEach(() => {
         mockTeamDAO.getAllTeams.mockClear();
         mockTeamDAO.getTeamById.mockClear();
-        mockTeamDAO.findTeam.mockClear();
+        mockTeamDAO.findTeams.mockClear();
         mockTeamDAO.createTeam.mockClear();
         mockTeamDAO.updateTeam.mockClear();
         mockTeamDAO.deleteTeam.mockClear();
@@ -115,21 +115,21 @@ describe("TeamController", () => {
                 .rejects.toThrow(EntityNotFoundError);
         });
     });
-    describe("findTeamByQuery method", () => {
+    describe("findTeamsByQuery method", () => {
         const query = {espnId: 1};
-        it("should find a team by the given query options", async () => {
-            mockTeamDAO.findTeam.mockReturnValue(testTeam);
-            const res = await teamController.findTeamByQuery(query);
+        it("should find teams by the given query options", async () => {
+            mockTeamDAO.findTeams.mockReturnValue([testTeam]);
+            const res = await teamController.findTeamsByQuery(query);
 
-            expect(mockTeamDAO.findTeam).toHaveBeenCalledTimes(1);
-            expect(mockTeamDAO.findTeam).toHaveBeenCalledWith(query);
-            expect(res).toEqual(testTeam);
+            expect(mockTeamDAO.findTeams).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.findTeams).toHaveBeenCalledWith(query);
+            expect(res).toEqual([testTeam]);
         });
         it("should throw an error if entity is not found in db", async () => {
-            mockTeamDAO.findTeam.mockImplementation(() => {
+            mockTeamDAO.findTeams.mockImplementation(() => {
                 throw new EntityNotFoundError(Team, "ID not found.");
             });
-            await expect(teamController.findTeamByQuery(query)).rejects.toThrow(EntityNotFoundError);
+            await expect(teamController.findTeamsByQuery(query)).rejects.toThrow(EntityNotFoundError);
         });
     });
     describe("updateTeamOwners method", () => {

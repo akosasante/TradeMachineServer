@@ -31,11 +31,11 @@ export default class TeamController {
     }
 
     @Get("/search")
-    public async findTeamByQuery(@QueryParams() query: Partial<Team>): Promise<Team|undefined> {
+    public async findTeamsByQuery(@QueryParams() query: Partial<Team>): Promise<Team[]> {
         logger.debug(`searching for team with props: ${inspect(query)}`);
         // TODO: May allow for searching for multiple teams in the future?
-        const team = await this.dao.findTeam(cleanupQuery(query as {[key: string]: string}));
-        return (team || {} as Team).publicTeam;
+        const teams = await this.dao.findTeams(cleanupQuery(query as {[key: string]: string}));
+        return teams.map((team: Team) => team.publicTeam);
     }
 
     /* Only the league admins can edit/delete/create teams at the moment */

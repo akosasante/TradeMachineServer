@@ -60,13 +60,13 @@ describe("TeamDAO", () => {
         expect(res).toEqual(testTeam1);
     });
 
-    it("findTeam - should call the db findOneOrFail once with query", async () => {
-        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam1.parse());
-        const res = await teamDAO.findTeam({espnId: 1});
+    it("findTeam - should call the db find once with query", async () => {
+        mockTeamDb.find.mockReturnValueOnce([testTeam1.parse()]);
+        const res = await teamDAO.findTeams({espnId: 1});
 
-        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith({where: {espnId: 1}});
-        expect(res).toEqual(testTeam1);
+        expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.find).toHaveBeenCalledWith({where: {espnId: 1}});
+        expect(res).toEqual([testTeam1]);
     });
 
     it("createTeam - should call the db save once with teamObj", async () => {
