@@ -12,11 +12,13 @@ import {
     makeGetRequest,
     makeLoggedInRequest,
     makePostRequest,
-    makePutRequest
+    makePutRequest,
+    stringifyQuery
 } from "./helpers";
 
 describe("User API endpoints", () => {
     let app: Server;
+    let ownerUser: User;
     const testUserObj = (email: string) => ({
         email,
         password: "lol",
@@ -46,7 +48,7 @@ describe("User API endpoints", () => {
         const userDAO = new UserDAO();
         // Create admin and owner users in db for rest of this suite's use
         await userDAO.createUser({...adminUserObj});
-        await userDAO.createUser({...ownerUserObj});
+        ownerUser = await userDAO.createUser({...ownerUserObj});
     });
     afterAll(async () => {
         await redisClient.quit();
@@ -115,6 +117,20 @@ describe("User API endpoints", () => {
         });
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
             await getOneRequest(999, 404);
+        });
+    });
+
+    describe("GET /users/search?queryOpts (get user by query)", () => {
+        const findOneRequest = (query: Partial<User>, status: number = 200) =>
+            makeGetRequest(request(app), `/users/search${stringifyQuery(query)}`, status);
+
+        it("should return a single public user for the given query", async () => {
+            const res = await findOneRequest({ email: ownerUserObj.email });
+            expect(res.body).toBeObject();
+            expect(ownerUser.publicUser.equals(res.body)).toBeTrue();
+        });
+        it("should throw a 404 error if no user with that query is found", async () => {
+            await findOneRequest({ email: "nonono@test.com" }, 404);
         });
     });
 

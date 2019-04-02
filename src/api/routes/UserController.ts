@@ -1,5 +1,5 @@
 import { Authorized, Body, Delete, Get, JsonController,
-    Param, Post, Put, QueryParam } from "routing-controllers";
+    Param, Post, Put, QueryParam, QueryParams } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
@@ -22,11 +22,18 @@ export default class UserController {
         return users.map(user => user.publicUser);
     }
 
-    @Get("/:id")
+    @Get("/:id([0-9]+)")
     public async getOne(@Param("id") id: string, @QueryParam("byUUID") byUUID?: boolean): Promise<User> {
         logger.debug(`get one user endpoint ${byUUID ? " by UUID" : ""}`);
         const user = byUUID ? await this.dao.getUserByUUID(id) : await this.dao.getUserById(Number(id));
         logger.debug(`got user: ${user}`);
+        return (user || {} as User).publicUser;
+    }
+
+    @Get("/search")
+    public async findUser(@QueryParams() query: Partial<User>): Promise<User|undefined> {
+        logger.debug(`searching for user with props: ${inspect(query)}`);
+        const user = await this.dao.findUser(query, true);
         return (user || {} as User).publicUser;
     }
 

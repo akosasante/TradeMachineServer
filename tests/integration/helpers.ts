@@ -56,3 +56,8 @@ export async function makePatchRequest<T>(agent: request.SuperTest<request.Test>
         .expect("Content-Type", /json/)
         .expect(expectedStatus);
 }
+
+export function stringifyQuery(query: any) {
+    return Object.entries(query).reduce((queryString: string, kvp: any) =>
+        `${queryString}${kvp[0]}=${kvp[1]}&`, "?");
+}

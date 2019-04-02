@@ -13,10 +13,10 @@ describe("UserController", () => {
         createUser: jest.fn(),
         updateUser: jest.fn(),
         deleteUser: jest.fn(),
+        findUser: jest.fn(),
     };
     const userController = new UserController(mockUserDAO as unknown as UserDAO);
     const testUser = new User({id: 1, name: "Jatheesh", password: "pswd", userIdToken: "ra-ndom-string"});
-    const loggedInUser = new User({name: "Admin", password: "pswd"});
 
     afterEach(() => {
         mockUserDAO.getUserByUUID.mockClear();
@@ -25,6 +25,7 @@ describe("UserController", () => {
         mockUserDAO.createUser.mockClear();
         mockUserDAO.updateUser.mockClear();
         mockUserDAO.deleteUser.mockClear();
+        mockUserDAO.findUser.mockClear();
     });
 
     describe("getAll method", () => {
@@ -79,6 +80,24 @@ describe("UserController", () => {
             });
             await expect(userController.getOne("invalid-id", true))
                 .rejects.toThrow(EntityNotFoundError);
+        });
+    });
+
+    describe("findUser method", () => {
+        const query = { name: "Jatheesh" };
+        it("should find a user by the given query options", async () => {
+            mockUserDAO.findUser.mockReturnValueOnce(testUser);
+            const res = await userController.findUser(query);
+
+            expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.findUser).toHaveBeenCalledWith(query, true);
+            expect(res).toEqual(testUser.publicUser);
+        });
+        it("should throw an error if the entity is not found in db", async () => {
+            mockUserDAO.findUser.mockImplementation(() => {
+                throw new EntityNotFoundError(User, "ID not found");
+            });
+            await expect(userController.findUser(query)).rejects.toThrow(EntityNotFoundError);
         });
     });
 
