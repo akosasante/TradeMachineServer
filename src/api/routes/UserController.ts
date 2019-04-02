@@ -4,6 +4,7 @@ import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import User, { Role } from "../../models/user";
+import { cleanupQuery } from "../ApiHelpers";
 
 @JsonController("/users")
 export default class UserController {
@@ -33,7 +34,7 @@ export default class UserController {
     @Get("/search")
     public async findUser(@QueryParams() query: Partial<User>): Promise<User|undefined> {
         logger.debug(`searching for user with props: ${inspect(query)}`);
-        const user = await this.dao.findUser(query, true);
+        const user = await this.dao.findUser(cleanupQuery(query as {[key: string]: string}), true);
         return (user || {} as User).publicUser;
     }
 

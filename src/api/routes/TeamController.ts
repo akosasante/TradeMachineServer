@@ -5,6 +5,7 @@ import logger from "../../bootstrap/logger";
 import TeamDAO from "../../DAO/TeamDAO";
 import Team from "../../models/team";
 import User, { Role } from "../../models/user";
+import { cleanupQuery } from "../ApiHelpers";
 
 @JsonController("/teams")
 export default class TeamController {
@@ -33,7 +34,7 @@ export default class TeamController {
     public async findTeamByQuery(@QueryParams() query: Partial<Team>): Promise<Team|undefined> {
         logger.debug(`searching for team with props: ${inspect(query)}`);
         // TODO: May allow for searching for multiple teams in the future?
-        const team = await this.dao.findTeam(query);
+        const team = await this.dao.findTeam(cleanupQuery(query as {[key: string]: string}));
         return (team || {} as Team).publicTeam;
     }
 
