@@ -74,9 +74,20 @@ describe("Team API endpoints", () => {
 
     describe("GET /teams (get all teams)", () => {
         const getAllRequest = (status: number = 200) => makeGetRequest(request(app), "/teams", status);
+        const getAllOwnerRequest = (condition: string, status: number = 200) =>
+            makeGetRequest(request(app), `/teams?hasOwners=${condition}`, status);
 
         it("should return an array of all teams (public vers.) in the db", async () => {
             const res = await getAllRequest();
+            expect(testTeam.publicTeam.equals(res.body[0])).toBeTrue();
+        });
+        it("should return an array of all teams with owners or empty array otherwise", async () => {
+            const res = await getAllOwnerRequest("true");
+            expect(res.body).toBeArrayOfSize(0);
+        });
+        it("should return an array of all teams without owners or empty array otherwise", async () => {
+            const res = await getAllOwnerRequest("false");
+            expect(res.body).toBeArrayOfSize(2);
             expect(testTeam.publicTeam.equals(res.body[0])).toBeTrue();
         });
     });

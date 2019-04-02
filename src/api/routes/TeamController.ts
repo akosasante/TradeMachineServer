@@ -1,5 +1,5 @@
 import { Authorized, Body, BodyParam, Delete, Get, JsonController,
-    Param, Patch, Post, Put, QueryParams } from "routing-controllers";
+    Param, Patch, Post, Put, QueryParam, QueryParams } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import TeamDAO from "../../DAO/TeamDAO";
@@ -16,9 +16,14 @@ export default class TeamController {
     }
 
     @Get("/")
-    public async getAllTeams(): Promise<Team[]> {
-        logger.debug("get all teams endpoint");
-        const teams = (await this.dao.getAllTeams()) || [];
+    public async getAllTeams(@QueryParam("hasOwners") hasOwners?: "true"|"false"): Promise<Team[]> {
+        logger.debug("get all teams endpoint" + ` -- ${hasOwners ? ("hasOwners: " + hasOwners ) : ""}`);
+        let teams: Team[] = [];
+        if (!hasOwners) {
+            teams = (await this.dao.getAllTeams()) || [];
+        } else {
+            teams = (await this.dao.getTeamsByOwnerStatus(hasOwners === "true"));
+        }
         logger.debug(`got ${teams.length} teams`);
         return teams.map((team: Team) => team.publicTeam);
     }

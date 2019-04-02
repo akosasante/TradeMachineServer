@@ -18,6 +18,16 @@ export default class TeamDAO {
         return dbTeams.map(team => new Team(team));
     }
 
+    public async getTeamsByOwnerStatus(hasOwners: boolean): Promise<Team[]> {
+        const condition = `owner."teamId" IS ${(hasOwners ? "NOT NULL" : "NULL")}`;
+        const dbTeams = await this.teamDb
+            .createQueryBuilder("team")
+            .leftJoinAndSelect("team.owners", "owner")
+            .where(condition)
+            .getMany();
+        return dbTeams.map(team => new Team(team));
+    }
+
     public async getTeamById(id: number): Promise<Team> {
         if (!id) {
             throw new NotFoundError("Id is required");

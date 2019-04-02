@@ -29,6 +29,7 @@ describe("TeamDAO", () => {
         mockTeamDb.find.mockClear();
         mockTeamDb.save.mockClear();
         mockTeamDb.update.mockClear();
+        mockTeamDb.createQueryBuilder.mockClear();
     });
 
     afterAll(async () => {
@@ -111,7 +112,7 @@ describe("TeamDAO", () => {
         const addAndRemove = jest.fn();
         const of = jest.fn(() => ({addAndRemove}));
         const relation = jest.fn(() => ({of}));
-        mockTeamDb.createQueryBuilder.mockImplementation(() => ({ relation }));
+        mockTeamDb.createQueryBuilder.mockImplementationOnce(() => ({ relation }));
         mockTeamDb.findOneOrFail.mockReturnValue(testTeam1.parse());
         const res = await teamDAO.updateTeamOwners(
             1,
@@ -122,5 +123,24 @@ describe("TeamDAO", () => {
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(2);
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(1);
         expect(res).toEqual(testTeam1);
+    });
+
+    it("getTeamsByOwnerStatus - should call the db createQueryBuilder with the correct methods", async () => {
+        const getMany = jest.fn(() => [testTeam1.parse()]);
+        const where = jest.fn(() => ({ getMany }));
+        const leftJoinAndSelect = jest.fn(() => ({ where }));
+        mockTeamDb.createQueryBuilder.mockImplementation(() => ({ leftJoinAndSelect }));
+
+        const resTrue = await teamDAO.getTeamsByOwnerStatus(true);
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith("team");
+        expect(where).toHaveBeenLastCalledWith('owner."teamId" IS NOT NULL');
+        expect(resTrue).toEqual([testTeam1]);
+
+        const resFalse = await teamDAO.getTeamsByOwnerStatus(false);
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(2);
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith("team");
+        expect(where).toHaveBeenLastCalledWith('owner."teamId" IS NULL');
+        expect(resFalse).toEqual([testTeam1]);
     });
 });

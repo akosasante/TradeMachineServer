@@ -15,6 +15,7 @@ describe("TeamController", () => {
         updateTeam: jest.fn(),
         deleteTeam: jest.fn(),
         updateTeamOwners: jest.fn(),
+        getTeamsByOwnerStatus: jest.fn(),
     };
     const testUser = new User({id: 1, name: "Jatheesh", password: "pswd", userIdToken: "ra-ndom-string"});
     const testTeam = new Team({id: 1, name: "Squirtle Squad", espnId: 209, owners: [testUser.publicUser]});
@@ -28,15 +29,32 @@ describe("TeamController", () => {
         mockTeamDAO.updateTeam.mockClear();
         mockTeamDAO.deleteTeam.mockClear();
         mockTeamDAO.updateTeamOwners.mockClear();
+        mockTeamDAO.getTeamsByOwnerStatus.mockClear();
     });
 
     describe("getAllTeams method", () => {
-        it("should return an array of teams", async () => {
+        it("should return an array of teams if no hasOwner param is passed", async () => {
             mockTeamDAO.getAllTeams.mockReturnValue([testTeam]);
             const res = await teamController.getAllTeams();
 
             expect(mockTeamDAO.getAllTeams).toHaveBeenCalledTimes(1);
             expect(mockTeamDAO.getAllTeams).toHaveBeenCalledWith();
+            expect(res).toEqual([testTeam.publicTeam]);
+        });
+        it("should call the getTeamsByOwners DAO method with true if that param passed", async () => {
+            mockTeamDAO.getTeamsByOwnerStatus.mockReturnValue([testTeam]);
+            const res = await teamController.getAllTeams("true");
+
+            expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledWith(true);
+            expect(res).toEqual([testTeam.publicTeam]);
+        });
+        it("should call the getTeamsByOwnerStatus DAO method with false if that param passed", async () => {
+            mockTeamDAO.getTeamsByOwnerStatus.mockReturnValue([testTeam]);
+            const res = await teamController.getAllTeams("false");
+
+            expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledWith(false);
             expect(res).toEqual([testTeam.publicTeam]);
         });
         it("should throw bubble up any errors from the DAO", async () => {
