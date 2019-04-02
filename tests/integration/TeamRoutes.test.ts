@@ -7,14 +7,8 @@ import UserDAO from "../../src/DAO/UserDAO";
 import Team from "../../src/models/team";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
-import {
-    doLogout,
-    makeDeleteRequest,
-    makeGetRequest,
-    makeLoggedInRequest, makePatchRequest,
-    makePostRequest,
-    makePutRequest
-} from "./helpers";
+import { doLogout, makeDeleteRequest, makeGetRequest, makeLoggedInRequest, makePatchRequest,
+    makePostRequest, makePutRequest, stringifyQuery } from "./helpers";
 
 describe("Team API endpoints", () => {
     let app: Server;
@@ -103,10 +97,6 @@ describe("Team API endpoints", () => {
     });
 
     describe("GET /teams/search?queryOpts (get team by query)", () => {
-        function stringifyQuery(query: any) {
-            return Object.entries(query).reduce((queryString: string, kvp: any) =>
-                `${queryString}${kvp[0]}=${kvp[1]}&`, "?");
-        }
         const findOneRequest = (query: Partial<Team>, status: number = 200) =>
             makeGetRequest(request(app), `/teams/search${stringifyQuery(query)}`, status);
 
@@ -117,6 +107,9 @@ describe("Team API endpoints", () => {
             expect(res.body).toBeObject();
             expect(testTeam2.publicTeam.equals(res.body)).toBeTrue();
             expect(res.body.id).toEqual(2);
+        });
+        it("should throw a 404 error if no team with that query is found", async () => {
+            await findOneRequest({ espnId: 999 }, 404);
         });
     });
 
