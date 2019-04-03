@@ -78,8 +78,8 @@ export default class TeamController {
                                   @BodyParam("add") ownersToAdd: User[],
                                   @BodyParam("remove") ownersToRemove: User[]): Promise<Team> {
         logger.debug("update team owners endpoint");
-        logger.debug(`add: ${inspect(ownersToAdd.map((user: User) => new User(user).toString()))}
-         remove: ${inspect(ownersToRemove.map((user: User) => new User(user).toString()))}`);
+        logger.debug(`add: ${inspect((ownersToAdd || []).map((user: User) => new User(user).toString()))}
+         remove: ${inspect((ownersToRemove || []).map((user: User) => new User(user).toString()))}`);
         const team = await this.dao.updateTeamOwners(id, ownersToAdd, ownersToRemove);
         return team.publicTeam;
     }
