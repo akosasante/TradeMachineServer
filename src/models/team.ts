@@ -3,6 +3,11 @@ import logger from "../bootstrap/logger";
 import { BaseModel, Excludes, HasEquals } from "./base";
 import User from "./user";
 
+export enum Status {
+    ACTIVE = "Active",
+    DISABLED = "Disabled",
+}
+
 @Entity()
 export default class Team extends BaseModel implements HasEquals {
 
@@ -21,6 +26,9 @@ export default class Team extends BaseModel implements HasEquals {
     @Column()
     public name: string;
 
+    @Column({type: "enum", enum: Status, default: [Status.DISABLED]})
+    public status?: Status;
+
     @CreateDateColumn()
     public dateCreated?: Date;
 
@@ -35,6 +43,7 @@ export default class Team extends BaseModel implements HasEquals {
         Object.assign(this, {id: teamObj.id});
         this.name = teamObj.name || "";
         this.espnId = teamObj.espnId;
+        this.status = teamObj.status || Status.DISABLED;
         this.owners = teamObj.owners ? teamObj.owners.map((obj: any) =>
                 new User(obj)).sort((a, b) => (a.id || 0) - (b.id || 0))
             : teamObj.owners;
