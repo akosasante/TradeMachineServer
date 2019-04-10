@@ -33,6 +33,7 @@
   "license": "ISC",
   "dependencies": {
     "amqplib": "^0.5.3",
+    "axios": "^0.18.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.3",
     "compression": "^1.7.3",
@@ -54,6 +55,7 @@
   },
   "devDependencies": {
     "@types/amqplib": "^0.5.10",
+    "@types/axios": "^0.14.0",
     "@types/bcryptjs": "^2.4.2",
     "@types/body-parser": "^1.17.0",
     "@types/compression": "0.0.36",
