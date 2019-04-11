@@ -16,16 +16,16 @@ export default class UserController {
     }
 
     @Get("/")
-    public async getAll(): Promise<User[]> {
-        logger.debug("get all users endpoint");
-        const users = (await this.dao.getAllUsers()) || [];
+    public async getAll(@QueryParam("full") full?: boolean): Promise<User[]> {
+        logger.debug(`get all users endpoint${full ? " with teams" : ""}`);
+        const users = full ? await this.dao.getAllUsersWithTeams() : await this.dao.getAllUsers();
         logger.debug(`got ${users.length} users`);
-        return users.map(user => user.publicUser);
+        return (users || []).map(user => user.publicUser);
     }
 
     @Get("/:id([0-9]+)")
     public async getOne(@Param("id") id: string, @QueryParam("byUUID") byUUID?: boolean): Promise<User> {
-        logger.debug(`get one user endpoint ${byUUID ? " by UUID" : ""}`);
+        logger.debug(`get one user endpoint${byUUID ? " by UUID" : ""}`);
         const user = byUUID ? await this.dao.getUserByUUID(id) : await this.dao.getUserById(Number(id));
         logger.debug(`got user: ${user}`);
         return (user || {} as User).publicUser;

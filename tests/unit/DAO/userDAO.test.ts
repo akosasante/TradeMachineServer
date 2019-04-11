@@ -9,25 +9,37 @@ import mockUserDb, { testUser } from "../mocks/mockUserDb";
 jest.spyOn(typeorm, "getConnection").mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
 
 describe("UserDAO", () => {
+    afterEach(async () => {
+        Object.keys(mockUserDb).forEach((action: string) => {
+            // @ts-ignore
+            (mockUserDb[action] as jest.Mock).mockClear();
+        });
+    });
+    afterAll(async () => {
+        await userDAO.connection.close();
+    });
+
     const userDAO: UserDAO = new UserDAO();
 
     describe("getAllUsers", () => {
-        afterEach(async () => {
-            Object.keys(mockUserDb).forEach((action: string) => {
-                // @ts-ignore
-                (mockUserDb[action] as jest.Mock).mockClear();
-            });
-        });
-        afterAll(async () => {
-            await userDAO.connection.close();
-        });
-
         it("should return an array of users as result of db call", async () => {
             const res = await userDAO.getAllUsers();
             const defaultOptions = {order: {id: "ASC"}};
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
             expect(mockUserDb.find).toHaveBeenCalledWith(defaultOptions);
+            // Testing that we return as expected
+            expect(res).toEqual([testUser]);
+        });
+    });
+
+    describe("getAllUsersWithTeams", () => {
+        it("should return an array of users as result of db call with the team relation", async () => {
+            const res = await userDAO.getAllUsersWithTeams();
+            const options = { order: { id: "ASC" }, relations: ["team"]};
+            // Testing that the correct db function is called with the correct params
+            expect(mockUserDb.find).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.find).toHaveBeenCalledWith(options);
             // Testing that we return as expected
             expect(res).toEqual([testUser]);
         });
@@ -54,7 +66,7 @@ describe("UserDAO", () => {
         it("should pass a query object to db and return a single user", async () => {
             const res = await userDAO.findUser({email: testUser.email});
             // Testing that the correct db function is called with the correct params
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(2);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({where: {email: testUser.email}});
             // Testing that we return as expected
             expect(res).toEqual(testUser);
@@ -108,7 +120,7 @@ describe("UserDAO", () => {
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.update).toHaveBeenCalledTimes(1);
             expect(mockUserDb.update).toHaveBeenCalledWith({id: testUser.id}, testUser.parse());
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(3);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
             // Testing that we return as expected
             expect(res).toEqual(testUser);

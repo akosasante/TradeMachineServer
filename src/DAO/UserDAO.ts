@@ -23,6 +23,12 @@ export default class UserDAO {
         return dbUsers.map(user => new User(user));
     }
 
+    public async getAllUsersWithTeams(): Promise<User[]> {
+        const options: FindManyOptions = { order: { id: "ASC" }, relations: ["team"]};
+        const dbUsers = await this.userDb.find(options);
+        return dbUsers.map(user => new User(user));
+    }
+
     public async getUserById(id: number): Promise<User> {
         if (!id) {
             throw new NotFoundError("Id is required");

@@ -9,6 +9,7 @@ import User from "../../../../src/models/user";
 describe("UserController", () => {
     const mockUserDAO = {
         getAllUsers: jest.fn(),
+        getAllUsersWithTeams: jest.fn(),
         getUserById: jest.fn(),
         getUserByUUID: jest.fn(),
         createUser: jest.fn(),
@@ -21,14 +22,9 @@ describe("UserController", () => {
     const testUser = new User({id: 1, name: "Jatheesh", password: "pswd", userIdToken: "ra-ndom-string"});
 
     afterEach(() => {
-        mockUserDAO.getUserByUUID.mockClear();
-        mockUserDAO.getUserById.mockClear();
-        mockUserDAO.getAllUsers.mockClear();
-        mockUserDAO.createUser.mockClear();
-        mockUserDAO.updateUser.mockClear();
-        mockUserDAO.deleteUser.mockClear();
-        mockUserDAO.findUser.mockClear();
-        mockUserDAO.findUsers.mockClear();
+        Object.entries(mockUserDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
+            kvp[1].mockClear();
+        });
     });
 
     describe("getAll method", () => {
@@ -40,6 +36,21 @@ describe("UserController", () => {
             expect(mockUserDAO.getAllUsers).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.getAllUsers).toHaveBeenCalledWith();
             // Testing that the return value from the controller method is as expected
+            expect(res).toEqual([testUser.publicUser]);
+        });
+        it("should call the getAll method if 'full' param is false", async () => {
+            mockUserDAO.getAllUsers.mockReturnValue([testUser]);
+            await userController.getAll(false);
+
+            expect(mockUserDAO.getAllUsers).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.getAllUsers).toHaveBeenCalledWith();
+        });
+        it("should call the getAllWithTeams method if 'full' param is true", async () => {
+            mockUserDAO.getAllUsersWithTeams.mockReturnValue([testUser]);
+            const res = await userController.getAll(true);
+
+            expect(mockUserDAO.getAllUsersWithTeams).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.getAllUsersWithTeams).toHaveBeenCalledWith();
             expect(res).toEqual([testUser.publicUser]);
         });
         it("should throw an error if dao throws an error", async () => {

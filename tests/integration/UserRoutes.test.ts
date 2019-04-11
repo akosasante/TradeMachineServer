@@ -106,6 +106,24 @@ describe("User API endpoints", () => {
         });
     });
 
+    describe("GET /users?full= (get all users with teams)", () => {
+        const getAllRequest = (full: boolean = true, status: number = 200) =>
+            makeGetRequest(request(app), `/users?full=${full}`, status);
+
+        it("should return an array of all the users with teams in the db if full=true", async () => {
+            const res = await getAllRequest();
+            expect(res.body).toBeArrayOfSize(4);
+            expect(adminUser.publicUser.equals(res.body[0])).toBeTrue();
+            expect(res.body[0]).toHaveProperty("team");
+        });
+        it("should return an array of all the users without teams in the db if full=false", async () => {
+            const res = await getAllRequest(false );
+            expect(res.body).toBeArrayOfSize(4);
+            expect(adminUser.publicUser.equals(res.body[0])).toBeTrue();
+            expect(res.body[0]).not.toHaveProperty("team");
+        });
+    });
+
     describe("GET /users/:id (get one user)", () => {
         const getOneRequest = (id: number, status: number = 200) =>
             makeGetRequest(request(app), `/users/${id}`, status);
