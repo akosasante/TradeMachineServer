@@ -9,6 +9,11 @@ export enum Role {
     OWNER = "Owner",
 }
 
+export enum UserStatus {
+    ACTIVE = "Active",
+    INACTIVE = "Inactive",
+}
+
 @Entity()
 @Unique(["email"])
 export default class User extends BaseModel {
@@ -75,6 +80,9 @@ export default class User extends BaseModel {
     @Column({nullable: true})
     public passwordResetExpiresOn?: Date;
 
+    @Column({type: "enum", enum: UserStatus, default: UserStatus.ACTIVE})
+    public status?: UserStatus;
+
     @ManyToOne(type => Team, team => team.owners, {onDelete: "SET NULL"})
     public team?: Team;
 
@@ -95,6 +103,7 @@ export default class User extends BaseModel {
         this.userIdToken = userObj.userIdToken;
         this.passwordResetExpiresOn = userObj.passwordResetExpiresOn;
         this.team = userObj.team;
+        this.status = userObj.status || UserStatus.ACTIVE;
     }
 
     // Couldn't get this to work for whatever reason so just hashing in the DAO itself.
