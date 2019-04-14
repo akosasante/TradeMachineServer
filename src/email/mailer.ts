@@ -34,6 +34,7 @@ export class Emailer {
                 preserveImportant: true,
                 webResources: {
                     relativeTo: path.resolve("./src/email/templates"),
+                    images: true,
                 },
             },
             // htmlToText: false, // set to false if we decide to manually make text versions

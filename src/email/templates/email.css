@@ -3,12 +3,14 @@
 header {
     /*height: 200px;*/
     height: 25%;
-    /*background: #cccccc;*/
+    background-color: #4abdad;
     padding: 20px;
-    background: #244c8e;
+    /*background: #244c8e;*/
     color: #f8f8f8;
-    /*background: url(https://i.imgur.com/MIOpn55.jpg);*/
+    /*background-image: url("https://i.imgur.com/jqlYp2Y.png");*/
     /*background-size: cover;*/
+    background-position: center center;
+    background-repeat: no-repeat;
     /*background-position: 0 60%;*/
     font-size: 18px;
     text-align: center;
@@ -51,13 +53,14 @@ footer {
     /*height: 100px;*/
     height: 5%;
     /*background: #C21F39;*/
-    background: #244c8e;
+    background: #4abdad;
 }
 
 @media only screen and (max-width:700px) {
     header {
         height: 100px !important;
         font-size: 55% !important;
+        background-size: cover;
     }
     footer {
         height: 50px !important;

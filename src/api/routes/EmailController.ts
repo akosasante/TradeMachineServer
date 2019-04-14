@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { BodyParam, Controller, Post, Res } from "routing-controllers";
 import { mailQueue } from "../../bootstrap/app";
+import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import { MailQueue, MailQueueMessage } from "../../queue/mailQueue";
 
@@ -20,6 +21,7 @@ export default class EmailController {
     public async sendResetEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
         try {
             // Update current user with reset request time
+            logger.debug(`Finding user with email: ${email}`);
             const user = await this.userDao.findUser({email});
             await this.userDao.setPasswordExpires(user!.id!);
 
