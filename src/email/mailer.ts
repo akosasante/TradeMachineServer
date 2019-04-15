@@ -11,6 +11,7 @@ export class Emailer {
     // tslint:disable-next-line
     public trafficController: { [key: string]: Function } = {
         reset_pass: this.sendPasswordResetEmail.bind(this),
+        test_email: this.sendTestEmail.bind(this),
     };
     private emailer: Email;
     private transportOpts = {
@@ -71,6 +72,24 @@ export class Emailer {
             logger.error(inspect(err));
             return undefined;
         });
+    }
+
+    public async sendTestEmail(user: User) {
+        logger.debug("sending test email");
+        return this.emailer.send({
+            template: "test_email",
+            message: {
+                to: user.email,
+            },
+            locals: {
+                name: user.name || user.email,
+            },
+        })
+            .then((res: any) => res)
+            .catch((err: Error) => {
+                logger.error(inspect(err));
+                return undefined;
+            });
     }
 }
 

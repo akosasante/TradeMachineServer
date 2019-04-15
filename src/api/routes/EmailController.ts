@@ -34,6 +34,21 @@ export default class EmailController {
         }
     }
 
+    @Post("/testEmail")
+    public async sendTestEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
+        try {
+            logger.debug(`Finding user with email: ${email}`);
+            const user = await this.userDao.findUser({email});
+
+            const queueMessage: MailQueueMessage = {topic: "test_email", args: [user]};
+            await this.mailQueue!.addEmail(JSON.stringify(queueMessage));
+            return response.status(202).json({status: "email queued"});
+        } catch (error) {
+            throw error;
+        }
+
+    }
+
     private mailQueueLoaded() {
         if (typeof this.mailQueue !== "undefined") {
             clearInterval(this.intervalId);
