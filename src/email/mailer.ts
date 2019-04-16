@@ -12,6 +12,7 @@ export class Emailer {
     public trafficController: { [key: string]: Function } = {
         reset_pass: this.sendPasswordResetEmail.bind(this),
         test_email: this.sendTestEmail.bind(this),
+        registration_email: this.sendRegistrationEmail.bind(this),
     };
     private emailer: Email;
     private transportOpts = {
@@ -83,6 +84,26 @@ export class Emailer {
             },
             locals: {
                 name: user.name || user.email,
+            },
+        })
+            .then((res: any) => res)
+            .catch((err: Error) => {
+                logger.error(inspect(err));
+                return undefined;
+            });
+    }
+
+    public async sendRegistrationEmail(user: User) {
+        logger.debug("sending registration email");
+        const registrationLink = `${this.baseDomain}/register`;
+        return this.emailer.send({
+            template: "registration_email",
+            message: {
+                to: user.email,
+            },
+            locals: {
+                name: user.name || user.email,
+                url: registrationLink,
             },
         })
             .then((res: any) => res)
