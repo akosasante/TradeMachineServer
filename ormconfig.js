@@ -9,7 +9,7 @@ const commonOpts = {
     cli: {
         entitiesDir: "src/models",
         migrationsDir: "src/db/migrations",
-        subscribersDir: "src/db/subscribers"
+        subscribersDir: "src/db/subscribers",
     },
     username: process.env.PG_USER,
     password: process.env.PG_PASSWORD,
@@ -20,7 +20,14 @@ module.exports = [
     {
         ...commonOpts,
         name: "development",
-        schema: "dev"
+        schema: "dev",
+        extra: {
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 10000,
+            keepAlive: true,
+            max: 8,
+            min: 1,
+        },
     },
     {
         ...commonOpts,
@@ -32,5 +39,5 @@ module.exports = [
     {
         ...commonOpts,
         name: "production",
-    }
+    },
 ];

@@ -14,6 +14,7 @@ export default class EspnController {
 
     @Get("/teams/:id([0-9]+)/name")
     public async getTeamName(@Param("id") id: number): Promise<string> {
+        logger.debug(`Searching for ESPN team with ID: ${id}`);
         const team = await this.api.loadAndRun(() => this.api.getTeamById(id));
         logger.debug(`Fetched team: ${inspect(team)}`);
         return EspnAPI.getTeamName(team);
