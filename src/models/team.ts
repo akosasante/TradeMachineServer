@@ -16,8 +16,6 @@ export default class Team extends BaseModel implements HasEquals {
         team.owners = (team.owners || []).map((owner: User) => owner.publicUser);
         return team;
     }
-    @PrimaryGeneratedColumn()
-    public readonly id?: number;
 
     @Column({nullable: true})
     public espnId?: number;
@@ -28,12 +26,6 @@ export default class Team extends BaseModel implements HasEquals {
 
     @Column({type: "enum", enum: TeamStatus, default: [TeamStatus.DISABLED]})
     public status?: TeamStatus;
-
-    @CreateDateColumn()
-    public dateCreated?: Date;
-
-    @UpdateDateColumn()
-    public dateModified?: Date;
 
     @OneToMany(type => User, user => user.team, { eager: true, onDelete: "SET NULL"})
     public owners?: User[];

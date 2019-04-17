@@ -61,12 +61,6 @@ export default class User extends BaseModel {
     @Column({nullable: true})
     public username?: string;
 
-    @CreateDateColumn()
-    public dateCreated?: Date;
-
-    @UpdateDateColumn()
-    public dateModified?: Date;
-
     @Column({type: "enum", enum: Role, array: true, default: [Role.OWNER]})
     public roles?: Role[];
 
