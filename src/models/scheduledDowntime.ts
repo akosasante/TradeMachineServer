@@ -1,4 +1,4 @@
-import { Entity } from "typeorm";
+import { Entity, ManyToOne } from "typeorm";
 import { Column } from "typeorm/decorator/columns/Column";
 import { BaseModel } from "./base";
 import User from "./user";
@@ -17,10 +17,10 @@ export default class ScheduledDowntime extends BaseModel {
     @Column()
     public reason?: string;
 
-    @Column()
+    @ManyToOne(type => User, user => user.createdSchedules, {onDelete: "SET NULL"})
     public createdBy?: User;
 
-    @Column()
+    @ManyToOne(type => User, user => user.updatedSchedules, {onDelete: "SET NULL"})
     public modifiedBy?: User;
 
     constructor(downtimeObj: Partial<ScheduledDowntime> = {startTime: new Date(), endTime: new Date()}) {

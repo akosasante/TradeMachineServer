@@ -1,7 +1,8 @@
 import { compare, hash } from "bcryptjs";
-import { Column, CreateDateColumn, Entity, Generated, ManyToOne, Unique, UpdateDateColumn } from "typeorm";
+import { Column, Entity, Generated, ManyToOne, OneToMany, Unique } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes } from "./base";
+import ScheduledDowntime from "./scheduledDowntime";
 import Team from "./team";
 
 export enum Role {
@@ -80,6 +81,12 @@ export default class User extends BaseModel {
     @ManyToOne(type => Team, team => team.owners, {onDelete: "SET NULL"})
     public team?: Team;
 
+    @OneToMany(type => ScheduledDowntime, schedule => schedule.createdBy)
+    public createdSchedules?: ScheduledDowntime[];
+
+    @OneToMany(type => ScheduledDowntime, schedule => schedule.modifiedBy)
+    public updatedSchedules?: ScheduledDowntime[];
+
     public hasPassword?: boolean;
 
     constructor(userObj: Partial<User> = {}) {
@@ -98,6 +105,8 @@ export default class User extends BaseModel {
         this.passwordResetExpiresOn = userObj.passwordResetExpiresOn;
         this.team = userObj.team;
         this.status = userObj.status || UserStatus.ACTIVE;
+        this.createdSchedules = userObj.createdSchedules;
+        this.updatedSchedules = userObj.updatedSchedules;
     }
 
     // Couldn't get this to work for whatever reason so just hashing in the DAO itself.
@@ -134,6 +143,8 @@ export default class User extends BaseModel {
             lastLoggedIn: true,
             dateCreated: true,
             dateModified: true,
+            createdSchedules: true,
+            updatedSchedules: true,
         };
         excludes = bypassDefaults ? excludes : Object.assign(DEFAULT_EXCLUDES, (excludes || {}));
         return BaseModel.equals(this, other, excludes, COMPLEX_FIELDS);
