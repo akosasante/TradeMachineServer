@@ -38,7 +38,7 @@ describe("TeamController", () => {
         });
         it("should call the getTeamsByOwners DAO method with true if that param passed", async () => {
             mockTeamDAO.getTeamsByOwnerStatus.mockReturnValue([testTeam]);
-            const res = await teamController.getAllTeams("true");
+            const res = await teamController.getAllTeams(true);
 
             expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledTimes(1);
             expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledWith(true);
@@ -46,13 +46,13 @@ describe("TeamController", () => {
         });
         it("should call the getTeamsByOwnerStatus DAO method with false if that param passed", async () => {
             mockTeamDAO.getTeamsByOwnerStatus.mockReturnValue([testTeam]);
-            const res = await teamController.getAllTeams("false");
+            const res = await teamController.getAllTeams(false);
 
             expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledTimes(1);
             expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledWith(false);
             expect(res).toEqual([testTeam.publicTeam]);
         });
-        it("should throw bubble up any errors from the DAO", async () => {
+        it("should bubble up any errors from the DAO", async () => {
             mockTeamDAO.getAllTeams.mockImplementation(() => {
                 throw new Error("Generic Error");
             });
@@ -86,7 +86,7 @@ describe("TeamController", () => {
             expect(mockTeamDAO.createTeam).toHaveBeenCalledWith(testTeam.parse());
             expect(res).toEqual(testTeam.publicTeam);
         });
-        it("should throw bubble up any errors from the DAO", async () => {
+        it("should bubble up any errors from the DAO", async () => {
             mockTeamDAO.createTeam.mockImplementation(() => {
                 throw new Error("Generic Error");
             });
