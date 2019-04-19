@@ -24,12 +24,9 @@ describe("TeamDAO", () => {
     const testTeam2 = new Team({id: 2, name: "Flex Fox's Team"});
 
     afterEach(() => {
-        mockTeamDb.delete.mockClear();
-        mockTeamDb.findOneOrFail.mockClear();
-        mockTeamDb.find.mockClear();
-        mockTeamDb.save.mockClear();
-        mockTeamDb.update.mockClear();
-        mockTeamDb.createQueryBuilder.mockClear();
+        Object.entries(mockTeamDb).forEach((kvp: [string, jest.Mock<any, any>]) => {
+            kvp[1].mockClear();
+        });
     });
 
     afterAll(async () => {
