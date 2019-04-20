@@ -57,7 +57,7 @@ export default class SettingsController {
     @Authorized(Role.ADMIN)
     @Delete("/downtime/:id")
     public async deleteScheduledDowntime(@Param("id") id: number) {
-        logger.debug("delete shcedule endpoint");
+        logger.debug("delete downtime endpoint");
         const result = await this.dao.deleteScheduledDowntime(id);
         return { deleteResult: !!result.raw[1], id };
     }

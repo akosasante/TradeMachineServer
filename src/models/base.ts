@@ -1,4 +1,4 @@
-import { isEqual, union } from "lodash";
+import { isEqualWith, union } from "lodash";
 import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
@@ -65,7 +65,9 @@ function objectsEqual<T extends BaseModel>(props: Array<keyof T>, obj1: T, obj2:
 }
 
 function objectEqual<T extends BaseModel>(prop: keyof T, obj1: T, obj2: T): boolean {
-    return isEqual(obj1[prop], obj2[prop]);
+    const coalesceNullAndUndefined = (val1: any, val2: any) =>
+        (val1 === null || val1 === undefined) && (val2 === null || val2 === undefined) ? true : undefined;
+    return isEqualWith(obj1[prop], obj2[prop], coalesceNullAndUndefined);
 }
 
 function propsEqual<T extends BaseModel>(props: Array<keyof T>, obj1: T, obj2: T): boolean {
