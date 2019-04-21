@@ -10,13 +10,27 @@ import server from "../../src/server";
 import { doLogout, makeDeleteRequest, makeGetRequest, makeLoggedInRequest, makePatchRequest,
     makePostRequest, makePutRequest, stringifyQuery } from "./helpers";
 
+let app: Server;
+let adminUser: User;
+let ownerUser: User;
+let otherUser: User;
+const adminUserObj = { email: "admin@example.com", password: "lol", name: "Cam", roles: [Role.ADMIN]};
+const ownerUserObj = { email: "owner@example.com", password: "lol", name: "Jatheesh", roles: [Role.OWNER]};
+
+beforeAll(async () => {
+    app = await server;
+
+    // Create admin and owner users in db for rest of this suite's use
+    const userDAO = new UserDAO();
+    adminUser = await userDAO.createUser({...adminUserObj});
+    ownerUser = await userDAO.createUser({...ownerUserObj});
+    otherUser = await userDAO.createUser({email: "example@test.ca"});
+});
+afterAll(async () => {
+    await redisClient.quit();
+});
+
 describe("Team API endpoints", () => {
-    let app: Server;
-    let adminUser: User;
-    let ownerUser: User;
-    let otherUser: User;
-    const adminUserObj = { email: "admin@example.com", password: "lol", name: "Cam", roles: [Role.ADMIN]};
-    const ownerUserObj = { email: "owner@example.com", password: "lol", name: "Jatheesh", roles: [Role.OWNER]};
     const testTeamObj = {name: "Squirtle Squad", espnId: 1};
     const testTeam = new Team({name: "Squirtle Squad", espnId: 1});
     const updatedName = "Hello darkness my old friend";
@@ -25,19 +39,6 @@ describe("Team API endpoints", () => {
         makeLoggedInRequest(request.agent(app), adminUserObj.email, adminUserObj.password, requestFn);
     const ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
         makeLoggedInRequest(request.agent(app), ownerUserObj.email, ownerUserObj.password, requestFn);
-
-    beforeAll(async () => {
-        app = await server;
-
-        // Create admin and owner users in db for rest of this suite's use
-        const userDAO = new UserDAO();
-        adminUser = await userDAO.createUser({...adminUserObj});
-        ownerUser = await userDAO.createUser({...ownerUserObj});
-        otherUser = await userDAO.createUser({email: "example@test.ca"});
-    });
-    afterAll(async () => {
-        await redisClient.quit();
-    });
 
     describe("POST /teams (create new team)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);

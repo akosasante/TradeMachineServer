@@ -7,11 +7,20 @@ import UserDAO from "../../src/DAO/UserDAO";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
 
+let app: Server;
+let userDAO: UserDAO;
+
+beforeAll(async () => {
+    app = await server;
+    userDAO = new UserDAO();
+});
+afterAll(async () => {
+    await redisClient.quit();
+});
+
 describe("Auth API endpoints", () => {
-    let app: Server;
     const testUserObj = {email: "test@example.com", password: "lol", roles: [Role.OWNER]};
     const testUser = new User(testUserObj);
-    let userDAO: UserDAO;
     async function makeLoggedInRequest(agent: request.SuperTest<request.Test>,
                                        req: (ag: request.SuperTest<request.Test>) => any) {
         await agent
@@ -21,13 +30,6 @@ describe("Auth API endpoints", () => {
         return req(agent);
     }
 
-    beforeAll(async () => {
-        app = await server;
-        userDAO = new UserDAO();
-    });
-    afterAll(async () => {
-        await redisClient.quit();
-    });
     describe("POST /auth/signup", () => {
         it("should successfully signup the user, set up the session, and return the public user", async () => {
             const res = await request(app)

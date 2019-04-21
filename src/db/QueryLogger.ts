@@ -13,14 +13,14 @@ export default class CustomQueryLogger implements Logger {
      */
     public logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner): void {
         const sql = this.sqlString(query, parameters);
-        this.winstonLogger.debug(`QUERY: ${sql}`);
+        this.winstonLogger.info(`QUERY: ${sql}`);
     }
     /**
      * Logs query that is failed.
      */
     public logQueryError(error: string, query: string, parameters?: any[], queryRunner?: QueryRunner): void {
         const sql = this.sqlString(query, parameters);
-        this.winstonLogger.debug(`QUERY FAILED: ${sql}`);
+        this.winstonLogger.info(`QUERY FAILED: ${sql}`);
         this.winstonLogger.error(`QUERY ERROR: ${error}`);
     }
     /**
@@ -28,14 +28,14 @@ export default class CustomQueryLogger implements Logger {
      */
     public logQuerySlow(time: number, query: string, parameters?: any[], queryRunner?: QueryRunner): void {
         const sql = this.sqlString(query, parameters);
-        this.winstonLogger.debug(`SLOW QUERY: ${sql}`);
+        this.winstonLogger.info(`SLOW QUERY: ${sql}`);
         this.winstonLogger.error(`SLOW QUERY EXECUTION TIME: ${time}`);
     }
     /**
      * Logs events from the schema build process.
      */
     public logSchemaBuild(message: string, queryRunner?: QueryRunner): void {
-        this.winstonLogger.debug(`SCHEMA BUILD MESSAGE: ${message}`);
+        this.winstonLogger.info(`SCHEMA BUILD MESSAGE: ${message}`);
     }
     /**
      * Logs events from the migrations run process.

@@ -16,12 +16,34 @@ import {
     makePutRequest
 } from "./helpers";
 
-describe("Settings API endpoints", () => {
-    let app: Server;
+let app: Server;
+let adminLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
+let ownerLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
+
+beforeAll(async () => {
+    app = await server;
     let adminUser: User;
     let ownerUser: User;
-    let adminLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
-    let ownerLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
+
+    const userDAO = new UserDAO();
+    const testPassword = "lol";
+    adminUser = await userDAO.createUser({
+        email: "admin@example.com", password: testPassword, name: "Cam", roles: [Role.ADMIN],
+    });
+    ownerUser = await userDAO.createUser({
+        email: "owner@example.com", password: testPassword, name: "Jatheesh", roles: [Role.OWNER],
+    });
+    adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
+        makeLoggedInRequest(request.agent(app), adminUser.email!, testPassword, requestFn);
+    ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
+        makeLoggedInRequest(request.agent(app), ownerUser.email!, testPassword, requestFn);
+});
+
+afterAll(async () => {
+    await redisClient.quit();
+});
+
+describe("Settings API endpoints", () => {
     const previousSchedule = new ScheduledDowntime({
         startTime: new Date("01-01-2018"), endTime: new Date("01-01-2019"),
     });
@@ -30,27 +52,6 @@ describe("Settings API endpoints", () => {
     });
     const futureSchedule = new ScheduledDowntime({
         startTime: new Date("01-01-2050"), endTime: new Date("01-01-2080"),
-    });
-
-    beforeAll(async () => {
-        app = await server;
-
-        const userDAO = new UserDAO();
-        const testPassword = "lol";
-        adminUser = await userDAO.createUser({
-            email: "admin@example.com", password: testPassword, name: "Cam", roles: [Role.ADMIN],
-        });
-        ownerUser = await userDAO.createUser({
-            email: "owner@example.com", password: testPassword, name: "Jatheesh", roles: [Role.OWNER],
-        });
-        adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-            makeLoggedInRequest(request.agent(app), adminUser.email!, testPassword, requestFn);
-        ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-            makeLoggedInRequest(request.agent(app), ownerUser.email!, testPassword, requestFn);
-    });
-
-    afterAll(async () => {
-        await redisClient.quit();
     });
 
     describe("POST /settings/downtime (create new scheduled downtime)", () => {

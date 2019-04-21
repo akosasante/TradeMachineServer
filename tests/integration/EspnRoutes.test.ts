@@ -6,17 +6,17 @@ import { redisClient } from "../../src/bootstrap/express";
 import server from "../../src/server";
 import { makeGetRequest } from "./helpers";
 
+let app: Server;
+
+beforeAll(async () => {
+    app = await server;
+});
+
+afterAll(async () => {
+    await redisClient.quit();
+});
+
 describe("ESPN API endpoints", () => {
-    let app: Server;
-
-    beforeAll(async () => {
-        app = await server;
-    });
-
-    afterAll(async () => {
-        await redisClient.quit();
-    });
-
     describe("GET /espn/teams/:id/name (get a team's full name from its id)", () => {
         const getOneRequest = (id: number, status: number = 200) =>
             makeGetRequest(request(app), `/espn/teams/${id}/name`, status);
