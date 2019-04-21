@@ -10,6 +10,7 @@ const mockAPI = mocked(EspnAPI);
 
 describe("EspnController", () => {
     beforeEach(() => {
+        // @ts-ignore
         mockAPI.mockClear();
     });
     const FFLeagueId = 545;
@@ -25,6 +26,7 @@ describe("EspnController", () => {
         const teamId = 1;
         it("should return the location + nickname of the given team based on id", async () => {
             const loadAndRunSpy = jest.fn().mockImplementation((func: any) => func());
+            // @ts-ignore
             const getTeamByIdSpy = jest.fn().mockReturnValue(Promise.resolve(testTeam));
 
             // @ts-ignore
@@ -34,6 +36,7 @@ describe("EspnController", () => {
                     getTeamById: getTeamByIdSpy,
                 };
             });
+            // @ts-ignore
             mockAPI.getTeamName.mockReturnValue(testTeam.name);
 
             const router = new EspnController();
@@ -61,6 +64,7 @@ describe("EspnController", () => {
                     getTeamById: getTeamByIdSpy,
                 };
             });
+            // @ts-ignore
             mockAPI.getTeamName.mockClear();
 
             const router = new EspnController();

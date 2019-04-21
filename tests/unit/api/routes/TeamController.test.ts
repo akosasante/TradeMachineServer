@@ -38,7 +38,7 @@ describe("TeamController", () => {
         });
         it("should call the getTeamsByOwners DAO method with true if that param passed", async () => {
             mockTeamDAO.getTeamsByOwnerStatus.mockReturnValue([testTeam]);
-            const res = await teamController.getAllTeams(true);
+            const res = await teamController.getAllTeams("true");
 
             expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledTimes(1);
             expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledWith(true);
@@ -46,7 +46,7 @@ describe("TeamController", () => {
         });
         it("should call the getTeamsByOwnerStatus DAO method with false if that param passed", async () => {
             mockTeamDAO.getTeamsByOwnerStatus.mockReturnValue([testTeam]);
-            const res = await teamController.getAllTeams(false);
+            const res = await teamController.getAllTeams("false");
 
             expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledTimes(1);
             expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledWith(false);

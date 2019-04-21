@@ -1,6 +1,7 @@
 import axios, { AxiosPromise } from "axios";
 import "jest";
 import "jest-extended";
+import { NotFoundError } from "routing-controllers";
 import { mocked } from "ts-jest/utils";
 import EspnAPI from "../../../src/espn/espnApi";
 
@@ -46,11 +47,10 @@ describe("EspnApi Class", () => {
         expect(res).toEqual(testTeam1);
     });
 
-    it("should return undefined if a team is not found in the array", async () => {
+    it("should throw NotFoundError if a team is not found in the array", async () => {
         const api = new EspnAPI(testLeagueId);
         const getTeam = api.getTeamById.bind(api, 999);
-        const res = await api.loadAndRun(getTeam);
-        expect(res).toBeUndefined();
+        await expect(api.loadAndRun(getTeam)).rejects.toThrow(NotFoundError);
     });
 
     it("should return a team name based on the location and nickname", async () => {
