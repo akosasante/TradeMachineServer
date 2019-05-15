@@ -1,5 +1,6 @@
 import { NotFoundError } from "routing-controllers";
 import { Connection, DeleteResult, FindManyOptions, getConnection, LessThan, MoreThan, Repository } from "typeorm";
+import GeneralSettings from "../models/generalSettings";
 import ScheduledDowntime from "../models/scheduledDowntime";
 
 export enum ScheduleGetAllOptions {
@@ -10,10 +11,12 @@ export enum ScheduleGetAllOptions {
 export default class SettingsDAO {
     public connection: Connection;
     private scheduleDb: Repository<ScheduledDowntime>;
+    private settingsDb: Repository<GeneralSettings>;
 
     constructor() {
         this.connection = getConnection(process.env.NODE_ENV);
         this.scheduleDb = this.connection.getRepository("ScheduledDowntime");
+        this.settingsDb = this.connection.getRepository("GeneralSettings");
     }
 
     public async getAllScheduledDowntimes(option?: ScheduleGetAllOptions): Promise<ScheduledDowntime[]> {
@@ -61,5 +64,32 @@ export default class SettingsDAO {
         }
         await this.scheduleDb.findOneOrFail(id);
         return await this.scheduleDb.delete(id);
+    }
+
+    public async getAllGeneralSettings(): Promise<GeneralSettings[]> {
+        const options: FindManyOptions = {order: {dateCreated: "DESC"}};
+        const dbSettings = await this.settingsDb.find(options);
+        return dbSettings.map(settings => new GeneralSettings(settings));
+    }
+
+    public async getSettingsById(id: number): Promise<GeneralSettings> {
+        if (!id) {
+            throw new NotFoundError("Id is required");
+        }
+        const dbSettings = await this.settingsDb.findOneOrFail(id);
+        return new GeneralSettings(dbSettings);
+    }
+
+    public async getMostRecentSettings(): Promise<GeneralSettings|undefined> {
+        const options: FindManyOptions = {order: {dateCreated: "DESC"}, take: 1};
+        const dbSettings = await this.settingsDb.find(options);
+        return dbSettings.length ? new GeneralSettings(dbSettings[0]) : undefined;
+    }
+
+    public async insertNewSettingsLine(settingsObj: Partial<GeneralSettings>): Promise<GeneralSettings> {
+        const mostRecentSettings = await this.getMostRecentSettings();
+        const newSettingsObj = Object.assign(mostRecentSettings, settingsObj);
+        const dbSettings = await this.settingsDb.save(newSettingsObj);
+        return new GeneralSettings(dbSettings);
     }
 }
