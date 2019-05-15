@@ -1,5 +1,4 @@
-import { Entity, ManyToOne } from "typeorm";
-import { Column } from "typeorm/decorator/columns/Column";
+import { Column, Entity, ManyToOne } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes } from "./base";
 import User from "./user";
