@@ -1,20 +1,20 @@
-import { Request } from "express";
+import { Request, Response } from "express";
 import "jest";
 import "jest-extended";
 import * as routingControllers from "routing-controllers";
-import * as typeorm from "typeorm";
 import AuthController from "../../../../src/api/routes/AuthController";
 import { deserializeUser } from "../../../../src/bootstrap/auth";
+import UserDAO from "../../../../src/DAO/UserDAO";
 import User from "../../../../src/models/user";
-import mockUserDb from "../../mocks/mockUserDb";
-
-// @ts-ignore
-jest.spyOn(typeorm, "getConnection").mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
 
 describe("AuthController", () => {
     let authController: AuthController;
     let mockReq: Request;
+    let mockRes: Response;
     let mockSess: any;
+    const mockUserDAO = {
+        updateUser: jest.fn(),
+    };
 
     beforeAll(() => {
         // @ts-ignore
@@ -25,7 +25,24 @@ describe("AuthController", () => {
         // @ts-ignore
         mockReq = { session: {} };
         mockSess = { user: 1 };
-        authController = new AuthController();
+        // @ts-ignore
+        mockRes = {
+            status: jest.fn(function() {
+                // @ts-ignore
+                return this;
+            }),
+            json: jest.fn(function() {
+                // @ts-ignore
+                return this;
+            }),
+        };
+        authController = new AuthController(mockUserDAO as unknown as UserDAO);
+    });
+
+    afterEach(() => {
+        Object.entries(mockUserDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
+            kvp[1].mockClear();
+        });
     });
 
     describe("login method", () => {
@@ -54,6 +71,8 @@ describe("AuthController", () => {
             await expect(res).resolves.toBeTrue();
             expect(mockReq.session!.destroy).toHaveBeenCalledTimes(1);
             expect(mockSess).toBeEmpty();
+            expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.updateUser).toHaveBeenCalledWith(1, {lastLoggedIn: expect.toBeDate()});
         });
         it("should resolve the promise if there is no userId on the session", async () => {
             mockSess = {};
@@ -63,6 +82,7 @@ describe("AuthController", () => {
             const res = authController.logout(mockReq, mockSess);
             await expect(res).resolves.toBeTrue();
             expect(mockReq.session!.destroy).toHaveBeenCalledTimes(0);
+            expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
             // Reset mockSess for following tests
             mockSess = { user: 1 };
         });
@@ -73,6 +93,17 @@ describe("AuthController", () => {
             });
             const res = authController.logout(mockReq, mockSess);
             await expect(res).rejects.toThrow(err);
+            expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
+        });
+    });
+
+    describe("resetPassword method", () => {
+        it("should return a successful response and update user", async () => {
+            const res = await authController.resetPassword(1, "lol", mockRes);
+            expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.updateUser).toHaveBeenCalledWith(1, expect.toBeObject());
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith("success");
         });
     });
 });

@@ -10,8 +10,8 @@ import { LoginHandler, RegisterHandler } from "../middlewares/AuthenticationHand
 export default class AuthController {
     private userDao: UserDAO;
 
-    constructor() {
-        this.userDao = new UserDAO();
+    constructor(userDAO?: UserDAO) {
+        this.userDao = userDAO || new UserDAO();
     }
 
     @Post("/login")
