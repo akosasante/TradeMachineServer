@@ -8,47 +8,53 @@ describe("Team Class", () => {
     const teamObj = {name: "Squirtle Squad", espnId: 1};
     const team = new Team(teamObj);
 
-    it("should construct the obj as expected", async () => {
-        expect(team.name).toEqual(teamObj.name);
-        expect(team.espnId).toEqual(teamObj.espnId);
-        expect(team.id).not.toBeDefined();
-        expect(team.owners).toBeUndefined();
+    describe("constructor", () => {
+        it("should construct the obj as expected", async () => {
+            expect(team.name).toEqual(teamObj.name);
+            expect(team.espnId).toEqual(teamObj.espnId);
+            expect(team.id).not.toBeDefined();
+            expect(team.owners).toBeUndefined();
+        });
     });
 
-    it("toString/0", async () => {
-        expect(team.toString()).toMatch(team.name);
-        expect(team.toString()).toMatch("Team#");
+    describe("getters", () => {
+        it("publicTeam/0 - should return a team copy with owners' psswds cleaned", () => {
+            team.owners = [new User({email: "test@example.com", password: "lol"})];
+            expect(team.publicTeam).toBeInstanceOf(Team);
+            expect((team.publicTeam.owners || [])[0]).toBeInstanceOf(User);
+            expect((team.publicTeam.owners || [])[0].password).toBeFalsy();
+            expect((team.publicTeam.owners || [])[0].hasPassword).toBeTrue();
+            team.owners = undefined; // Reset for following "equals/2" tests
+        });
     });
 
-    it("get publicTeam/0 - should return a team copy with owners' psswds cleaned", () => {
-        team.owners = [new User({email: "test@example.com", password: "lol"})];
-        expect(team.publicTeam).toBeInstanceOf(Team);
-        expect((team.publicTeam.owners || [])[0]).toBeInstanceOf(User);
-        expect((team.publicTeam.owners || [])[0].password).toBeFalsy();
-        expect((team.publicTeam.owners || [])[0].hasPassword).toBeTrue();
-        team.owners = undefined; // Reset for following "equals/2" tests
-    });
-
-    describe("equals/2", () => {
-        const user1 = new User({email: "test@example.com", password: "lol", roles: [Role.ADMIN]});
-        const team2 = new Team({name: "Squirtle Squad", espnId: 1, owners: [user1]});
-        const team3 = new Team({name: "Squirtle Squad", espnId: 2});
-        const team4 = clone(team);
-
-        it("should return true if the two instances are identical. Excludes = default", async () => {
-            expect(team.equals(team4)).toBeTrue();
+    describe("instance methods", () => {
+        it("toString/0", async () => {
+            expect(team.toString()).toMatch(team.name);
+            expect(team.toString()).toMatch("Team#");
         });
 
-        it("should return true if the two instances are identical considering the excludes", async () => {
-            expect(team.equals(team3, {espnId: true}));
-        });
+        describe("equals/2", () => {
+            const user1 = new User({email: "test@example.com", password: "lol", roles: [Role.ADMIN]});
+            const team2 = new Team({name: "Squirtle Squad", espnId: 1, owners: [user1]});
+            const team3 = new Team({name: "Squirtle Squad", espnId: 2});
+            const team4 = clone(team);
 
-        it("should throw a useful error if something doesn't match (props)", async () => {
-            expect(() => team.equals(team3)).toThrowWithMessage(Error, "Not matching: espnId");
-        });
+            it("should return true if the two instances are identical. Excludes = default", async () => {
+                expect(team.equals(team4)).toBeTrue();
+            });
 
-        it("should throw  a useful error if something doesn't match (objects)", () => {
-            expect(() => team.equals(team2)).toThrowWithMessage(Error, "Not matching: owners");
+            it("should return true if the two instances are identical considering the excludes", async () => {
+                expect(team.equals(team3, {espnId: true}));
+            });
+
+            it("should throw a useful error if something doesn't match (props)", async () => {
+                expect(() => team.equals(team3)).toThrowWithMessage(Error, "Not matching: espnId");
+            });
+
+            it("should throw  a useful error if something doesn't match (objects)", () => {
+                expect(() => team.equals(team2)).toThrowWithMessage(Error, "Not matching: owners");
+            });
         });
     });
 });
