@@ -3,10 +3,15 @@ import logger from "../bootstrap/logger";
 import { BaseModel, Excludes } from "./base";
 import User from "./user";
 
+export enum TradeDeadlineStatus {
+    ON = "ON",
+    OFF = "OFF",
+}
+
 interface TradeDeadlineSetting {
-    status: "ON"|"OFF";
+    status: TradeDeadlineStatus;
     startTime: Date;
-    endTiime: Date;
+    endTime: Date;
 }
 
 @Entity()
@@ -25,7 +30,9 @@ export default class GeneralSettings extends BaseModel {
     }
 
     public toString(): string {
-        return `General Settings: Deadline Status: ${this.deadline.status}, Last changed by ${this.modifiedBy}`;
+        const lastModifedString = `Last changed by ${this.modifiedBy}`;
+        return `General Settings: Deadline Status: ${this.deadline.status}, \
+        ${this.modifiedBy ? lastModifedString : ""}`;
     }
 
     public equals(other: GeneralSettings, excludes?: Excludes, bypassDefaults: boolean = false): boolean {

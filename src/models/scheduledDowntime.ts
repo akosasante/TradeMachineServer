@@ -47,7 +47,10 @@ export default class ScheduledDowntime extends BaseModel {
             endTime: true,
             cancelledDate: true,
         };
-        const MODEL_FIELDS = {};
+        const MODEL_FIELDS = {
+            createdBy: true,
+            modifiedBy: true,
+        };
         const DEFAULT_EXCLUDES = {
             id: true,
             dateCreated: true,
