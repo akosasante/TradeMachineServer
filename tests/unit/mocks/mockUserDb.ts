@@ -1,7 +1,8 @@
 import logger from "../../../src/bootstrap/logger";
 import User from "../../../src/models/user";
 
-export const testUser = new User({id: 1, email: "test@example.com", name: "Jatheesh", password: "pswd"});
+export const testUser = new User({
+    id: 1, email: "test@example.com", name: "Jatheesh", password: "pswd", userIdToken: "abc-def-geh"});
 
 export default {
     find: jest.fn()

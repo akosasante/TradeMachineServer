@@ -38,6 +38,9 @@ export default class UserDAO {
     }
 
     public async getUserByUUID(uuid: string): Promise<User|undefined> {
+        if (!uuid) {
+            throw new NotFoundError("UUID is required");
+        }
         return await this.findUser({userIdToken: uuid});
     }
 

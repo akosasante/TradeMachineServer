@@ -62,6 +62,21 @@ describe("UserDAO", () => {
         });
     });
 
+    describe("getUserByUUID", () => {
+        it("should return a single user as a result of db call", async () => {
+            const res = await userDAO.getUserByUUID(testUser.userIdToken!);
+
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({where: {userIdToken: testUser.userIdToken}});
+
+            expect(res).toEqual(testUser);
+        });
+        it("should throw a NotFoundError if no UUID is passed in", async () => {
+            // @ts-ignore
+            await expect(userDAO.getUserByUUID(undefined)).rejects.toThrow(NotFoundError);
+        });
+    });
+
     describe("findUser", () => {
         it("should pass a query object to db and return a single user", async () => {
             const res = await userDAO.findUser({email: testUser.email});
@@ -135,6 +150,18 @@ describe("UserDAO", () => {
             expect(mockUserDb.delete).toHaveBeenCalledWith(testUser.id);
             // Testing that we return as expected
             expect(res).toEqual({ deleted: true });
+        });
+    });
+
+    describe("setPasswordExpires", () => {
+        it("should return successfully if db call has on errors", async () => {
+            const updatePartial = {passwordResetExpiresOn: expect.toBeDate()};
+            const res = await userDAO.setPasswordExpires(testUser.id!);
+
+            expect(mockUserDb.update).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.update).toHaveBeenCalledWith({id: testUser.id!}, updatePartial);
+
+            expect(res).toBeUndefined();
         });
     });
 });
