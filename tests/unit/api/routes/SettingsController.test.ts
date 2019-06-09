@@ -21,8 +21,8 @@ describe("SettingsController", () => {
     };
 
     const testSchedule = new ScheduledDowntime({startTime: new Date(), endTime: new Date()});
-    const startDate = new Date("January 1 2019 1:00PM");
-    const endDate = new Date("January 1 2019 5:00PM");
+    const startDate = new Date("January 1 2019 1:00");
+    const endDate = new Date("January 1 2019 5:00");
     const deadline = {status: TradeDeadlineStatus.ON, startTime: startDate, endTime: endDate};
     const testSettings = new GeneralSettings({deadline});
     const settingsController = new SettingsController(mockSettingsDAO as unknown as SettingsDAO);

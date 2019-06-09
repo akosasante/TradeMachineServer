@@ -5,8 +5,8 @@ import GeneralSettings, { TradeDeadlineStatus } from "../../../src/models/genera
 import User, { Role } from "../../../src/models/user";
 
 describe("GeneralSettings Class", () => {
-    const startDate = new Date("January 1 2019 1:00PM");
-    const endDate = new Date("January 1 2019 5:00PM");
+    const startDate = new Date("January 1 2019 1:00");
+    const endDate = new Date("January 1 2019 5:00");
     const deadline = {status: TradeDeadlineStatus.ON, startTime: startDate, endTime: endDate};
     const settingsObj = {deadline};
     const generalSettings = new GeneralSettings(settingsObj);
