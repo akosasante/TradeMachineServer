@@ -58,13 +58,19 @@ describe("TeamDAO", () => {
         expect(res).toEqual(testTeam1);
     });
 
-    it("findTeam - should call the db find once with query", async () => {
+    it("findTeams - should call the db find once with query", async () => {
         mockTeamDb.find.mockReturnValueOnce([testTeam1.parse()]);
         const res = await teamDAO.findTeams({espnId: 1});
 
         expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.find).toHaveBeenCalledWith({where: {espnId: 1}});
         expect(res).toEqual([testTeam1]);
+    });
+
+    it("findTeams - should throw an error if find returns empty array", async () => {
+        mockTeamDb.find.mockReturnValueOnce([]);
+        await expect(teamDAO.findTeams({espnId: 1})).rejects.toThrow(NotFoundError);
+        expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
     });
 
     it("createTeam - should call the db save once with teamObj", async () => {
@@ -120,6 +126,10 @@ describe("TeamDAO", () => {
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(2);
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(1);
         expect(res).toEqual(testTeam1);
+    });
+    it("updateTeamOwners should throw an error if no id is passed", async () => {
+        // @ts-ignore
+        await expect(teamDAO.updateTeamOwners(undefined)).rejects.toThrow(NotFoundError);
     });
 
     it("getTeamsByOwnerStatus - should call the db createQueryBuilder with the correct methods", async () => {

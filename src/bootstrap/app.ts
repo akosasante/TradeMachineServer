@@ -16,6 +16,7 @@ export default async function(): Promise<Express> {
     logger.debug("database setup complete");
 
     logger.debug("setting up mail queue");
+
     mailQueue = await createMailQueue();
     logger.debug("mail queue setup complete");
 

@@ -1,5 +1,6 @@
 import "jest";
 import "jest-extended";
+import { NotFoundError } from "routing-controllers";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import SettingsController from "../../../../src/api/routes/SettingsController";
 import SettingsDAO, { ScheduleGetAllOptions } from "../../../../src/DAO/SettingsDAO";
@@ -208,10 +209,8 @@ describe("SettingsController", () => {
                 expect(res).toEqual(testSettings);
             });
             it("should throw an error if there are no settings", async () => {
-                mockSettingsDAO.getMostRecentSettings.mockImplementation(() => {
-                    throw new EntityNotFoundError(GeneralSettings, "ID not found.");
-                });
-                await expect(settingsController.getMostRecentSettings()).rejects.toThrow(EntityNotFoundError);
+                mockSettingsDAO.getMostRecentSettings.mockReturnValueOnce(undefined);
+                await expect(settingsController.getMostRecentSettings()).rejects.toThrow(NotFoundError);
             });
         });
 
