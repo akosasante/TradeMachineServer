@@ -7,14 +7,14 @@ import { MailQueue, MailQueueMessage } from "../../queue/mailQueue";
 
 @Controller("/email")
 export default class EmailController {
-    private readonly intervalId: NodeJS.Timeout;
+    // private readonly intervalId: NodeJS.Timeout;
     private userDao: UserDAO;
     private readonly mailQueue?: MailQueue;
 
-    constructor() {
-        this.userDao = new UserDAO();
-        this.intervalId = setInterval(this.mailQueueLoaded, 500);
-        this.mailQueue = mailQueue;
+    constructor(userDAO?: UserDAO, fetchedMailQueue?: MailQueue) {
+        this.userDao = userDAO || new UserDAO();
+        // this.intervalId = setInterval(this.mailQueueLoaded, 10);
+        this.mailQueue = fetchedMailQueue || mailQueue;
     }
 
     @Post("/resetEmail")
@@ -63,9 +63,11 @@ export default class EmailController {
         }
     }
 
-    private mailQueueLoaded() {
-        if (typeof this.mailQueue !== "undefined") {
-            clearInterval(this.intervalId);
-        }
-    }
+    // private mailQueueLoaded() {
+    //     logger.debug("Checking if mail queue is loaded");
+    //     if (typeof this.mailQueue !== "undefined") {
+    //         logger.debug("Mail queue is loaded!")
+    //         clearInterval(this.intervalId);
+    //     }
+    // }
 }
