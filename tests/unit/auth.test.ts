@@ -85,6 +85,16 @@ describe("Authorization helper methods", () => {
             expect(cb).toBeCalledTimes(1);
             expect(cb).toBeCalledWith(new ConflictError("Email already in use and signed up."));
         });
+        it("should return any other errors encountered", async () => {
+            const cb = jest.fn();
+            mockUserDb.findOne.mockImplementationOnce(() => {
+                throw new Error("Error while fetching user");
+            });
+
+            await signUpAuthentication(email, testUser.password!, cb);
+            expect(cb).toHaveBeenCalledTimes(1);
+            expect(cb).toHaveBeenCalledWith(new Error("Error while fetching user"));
+        });
     });
 
     describe("signInAuthentication", () => {
