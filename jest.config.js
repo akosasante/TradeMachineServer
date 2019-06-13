@@ -37,7 +37,7 @@ module.exports = {
         "<rootDir>/src/bootstrap/db.ts",
         "<rootDir>/src/bootstrap/logger.ts",
         "<rootDir>/src/api/middlewares/",
-        "mock\\.ts"
+        "<rootDir>/tests/unit/mocks/",
     ],
 
     // A list of reporter names that Jest uses when writing coverage reports
