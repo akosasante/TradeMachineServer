@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 // @ts-ignore
 import SendinBlueTransport from "nodemailer-sendinblue-transport";
 import path from "path";
-import {inspect} from "util";
+import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import User from "../models/user";
 

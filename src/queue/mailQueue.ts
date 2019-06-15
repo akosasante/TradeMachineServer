@@ -1,9 +1,10 @@
-import { inspect } from "util";
+import amqp from "amqplib";
 import logger from "../bootstrap/logger";
 import { Emailer } from "../email/mailer";
-import User from "../models/user";
-import { createConsumer, MessageConsumer } from "./consumer";
-import { createPublisher, MessagePublisher } from "./publisher";
+import { config } from "./config";
+import { MessageConsumer } from "./consumer";
+import { MessagePublisher } from "./publisher";
+
 export interface MailQueueMessage {
     topic: string;
     args: any[];
@@ -39,9 +40,11 @@ export class MailQueue {
 
 export async function createMailQueue() {
     try {
+        const conn = await amqp.connect(config.url);
+        const channel = await conn.createChannel();
         const email = await new Emailer();
-        const publisher = await createPublisher();
-        const consumer = await createConsumer();
+        const publisher = await MessagePublisher.createPublisher(conn, channel);
+        const consumer = await MessageConsumer.createConsumer(conn, channel);
         if (email && publisher && consumer) {
             return new MailQueue(email, publisher, consumer);
         } else {
@@ -50,6 +53,7 @@ export async function createMailQueue() {
     } catch (error) {
         logger.error("error creating mail queue");
         logger.error(error);
+        throw error;
     }
 }
 

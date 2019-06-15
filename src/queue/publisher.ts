@@ -1,36 +1,35 @@
 import amqp from "amqplib";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
-import { config, MessageProtocol } from "./config";
+import { MessageProtocol } from "./config";
 
 export class MessagePublisher extends MessageProtocol {
+    public static async createPublisher(conn: amqp.Connection, channel: amqp.Channel):
+        Promise<MessagePublisher|undefined> {
+        try {
+            logger.debug("creating publisher");
+            return new MessagePublisher(conn, channel);
+        } catch (err) {
+            logger.error(err);
+            throw err;
+            // return process.exit(1); // maybe have the error handled upstream instead?
+        }
+    }
+
     constructor(conn: amqp.Connection, ch: amqp.Channel) {
         super(conn, ch);
         logger.debug("created publisher");
     }
 
     public async sendMessage(queue: string, message: string) {
+        const assertQueueStats = await this.openQueue(queue);
+        logger.debug(inspect(assertQueueStats));
         await this.channel.sendToQueue(queue, Buffer.from(message), {
             persistent: true,
             contentType: "application/json",
         });
         logger.debug("sent message");
     }
-}
-
-export async function createPublisher(): Promise<MessagePublisher|undefined> {
-    logger.debug("creating publisher");
-    return amqp.connect(config.url)
-        .then(async conn => {
-            logger.debug("connected to rabbitmq");
-            const channel = await conn.createChannel();
-            return new MessagePublisher(conn, channel);
-        })
-        .catch(err => {
-            logger.error(err);
-            throw err;
-            // return process.exit(1); // maybe have the error handled upstream instead?
-        });
 }
 
 // async function test() {

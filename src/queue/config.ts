@@ -16,9 +16,10 @@ export class MessageProtocol {
 
     public async openQueue(queueName: string) {
         // durable: ensures that queue is not deleted when server restarts
-        await this.channel.assertQueue(queueName, {durable: true})
+        return this.channel.assertQueue(queueName, {durable: true})
             .catch(err => {
                 logger.error(err);
+                // await this.connection.close();
             });
     }
 }
