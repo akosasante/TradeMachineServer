@@ -76,6 +76,9 @@ export default class User extends BaseModel {
     @Column({nullable: true})
     public passwordResetExpiresOn?: Date;
 
+    @Column({nullable: true})
+    public passwordResetToken?: string;
+
     @Column({type: "enum", enum: UserStatus, default: UserStatus.ACTIVE})
     public status?: UserStatus;
 
@@ -107,6 +110,7 @@ export default class User extends BaseModel {
         this.hasPassword = !!this.password;
         this.userIdToken = userObj.userIdToken;
         this.passwordResetExpiresOn = userObj.passwordResetExpiresOn;
+        this.passwordResetToken = userObj.passwordResetToken;
         this.team = userObj.team;
         this.status = userObj.status || UserStatus.ACTIVE;
         this.createdSchedules = userObj.createdSchedules;
@@ -138,6 +142,16 @@ export default class User extends BaseModel {
         return (this.roles || []).includes(role);
     }
 
+    public passwordResetIsValid(): boolean {
+        if (this.passwordResetExpiresOn) {
+            const dateOfExpiry = new Date(this.passwordResetExpiresOn);
+            logger.debug(dateOfExpiry);
+            return (dateOfExpiry.valueOf() - Date.now()) >= 0;
+        } else {
+            return false;
+        }
+    }
+
     public equals(other: User, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
         logger.debug("User equals check");
         const COMPLEX_FIELDS = {roles: true};
@@ -151,6 +165,8 @@ export default class User extends BaseModel {
             createdSchedules: true,
             updatedSchedules: true,
             updatedSettings: true,
+            passwordResetExpiresOn: true,
+            passwordResetToken: true,
         };
         excludes = bypassDefaults ? excludes : Object.assign(DEFAULT_EXCLUDES, (excludes || {}));
         return BaseModel.equals(this, other, excludes, COMPLEX_FIELDS);

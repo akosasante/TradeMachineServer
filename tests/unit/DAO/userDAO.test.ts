@@ -130,7 +130,7 @@ describe("UserDAO", () => {
 
     describe("updateUser", () => {
 
-        it("should call getUsrsById and associated db call then return single user", async () => {
+        it("should call getUsersById and associated db call then return single user", async () => {
             const res = await userDAO.updateUser(testUser.id!, testUser.parse());
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.update).toHaveBeenCalledTimes(1);
@@ -155,7 +155,7 @@ describe("UserDAO", () => {
 
     describe("setPasswordExpires", () => {
         it("should return successfully if db call has on errors", async () => {
-            const updatePartial = {passwordResetExpiresOn: expect.toBeDate()};
+            const updatePartial = {passwordResetExpiresOn: expect.toBeDate(), passwordResetToken: expect.toBeString()};
             const res = await userDAO.setPasswordExpires(testUser.id!);
 
             expect(mockUserDb.update).toHaveBeenCalledTimes(1);

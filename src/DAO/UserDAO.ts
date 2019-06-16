@@ -1,6 +1,7 @@
 import { NotFoundError } from "routing-controllers";
 import { Connection, DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
 import util from "util";
+import uuidV4 from "uuid/v4";
 import logger from "../bootstrap/logger";
 import User from "../models/user";
 
@@ -90,9 +91,12 @@ export default class UserDAO {
     }
 
     public async setPasswordExpires(id: number): Promise<void> {
+        const passwordResetToken = uuidV4();
         const updateResult = await this.userDb.update(
             {id},
-            {passwordResetExpiresOn: User.generateTimeToPasswordExpires()});
+            {
+                passwordResetExpiresOn: User.generateTimeToPasswordExpires(),
+                passwordResetToken });
         logger.debug(util.inspect(updateResult));
         return;
     }

@@ -8,6 +8,5 @@ async function init() {
 export async function registerUser(user: User) {
     const userDAO = await init();
     const hashedPass = await User.generateHashedPassword("testing123");
-    const updatedUser = await userDAO.updateUser(user.id!, {password: hashedPass, lastLoggedIn: new Date()});
-    return updatedUser;
+    return await userDAO.updateUser(user.id!, {password: hashedPass, lastLoggedIn: new Date()});
 }

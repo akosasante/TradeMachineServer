@@ -14,6 +14,7 @@ describe("AuthController", () => {
     let mockSess: any;
     const mockUserDAO = {
         updateUser: jest.fn(),
+        findUser: jest.fn(),
     };
 
     beforeAll(() => {
@@ -99,11 +100,37 @@ describe("AuthController", () => {
 
     describe("resetPassword method", () => {
         it("should return a successful response and update user", async () => {
-            const res = await authController.resetPassword(1, "lol", mockRes);
+            const date = new Date(Date.now() + (30 * 60 * 1000)); // half an hour from now
+            mockUserDAO.findUser.mockResolvedValueOnce(new User({id: 1, passwordResetExpiresOn: date}));
+            await authController.resetPassword(1, "lol", "xyz-uuid", mockRes);
+            const expectedUserObj = {password: expect.toBeString(),
+                passwordResetExpiresOn: undefined, passwordResetToken: undefined};
+            expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.findUser).toHaveBeenCalledWith({id: 1, passwordResetToken: "xyz-uuid"}, false);
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.updateUser).toHaveBeenCalledWith(1, expect.toBeObject());
+            expect(mockUserDAO.updateUser).toHaveBeenCalledWith(1, expectedUserObj);
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith("success");
+        });
+
+        it("should return a 404 Not Found status if the user with that ID/password token don't exist", async () => {
+            // Actually I think the DAO function will just fail anyway
+            mockUserDAO.findUser.mockResolvedValueOnce(undefined);
+            await authController.resetPassword(1, "lol", "not-found-uuid", mockRes);
+            expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.findUser).toHaveBeenCalledWith({id: 1, passwordResetToken: "not-found-uuid"}, false);
+            expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
+            expect(mockRes.status).toHaveBeenCalledWith(404);
+        });
+
+        it("should return a 403 Forbidden status if the user's reset token has expired", async () => {
+            const date = new Date("January 1 1990");
+            mockUserDAO.findUser.mockResolvedValueOnce(new User({id: 1, passwordResetExpiresOn: date}));
+            await authController.resetPassword(1, "lol", "xyz-uuid", mockRes);
+            expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.findUser).toHaveBeenCalledWith({id: 1, passwordResetToken: "xyz-uuid"}, false);
+            expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
+            expect(mockRes.status).toHaveBeenCalledWith(403);
         });
     });
 });

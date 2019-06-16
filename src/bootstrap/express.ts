@@ -22,14 +22,14 @@ app.use(morgan("dev", { stream: { write: message => logger.info(message.trim()) 
 
 // Session tracking
 const RedisSessionStore = connectRedis(expressSession);
-export const redisClient = redis.createClient();
+export const redisClient = redis.createClient(
+    Number(process.env.REDIS_PORT || 6379),
+    process.env.REDIS_IP || "localhost");
 
 const REDIS_OPTS = {
-    host: process.env.REDIS_IP || "localhost",
-    port: Number(process.env.REDIS_PORT || 6379),
     logErrors: true,
     ttl: 7200000,
-    // client: redisClient,
+    client: redisClient,
 };
 
 // const SESSION_OPTS = {

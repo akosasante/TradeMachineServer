@@ -56,9 +56,21 @@ export default class AuthController {
     @Post("/reset_password")
     public async resetPassword(@BodyParam("id") userId: number,
                                @BodyParam("password") newPassword: string,
+                               @BodyParam("token") passwordResetToken: string,
                                @Res() response: Response): Promise<Response> {
         const hashedPassword = await User.generateHashedPassword(newPassword);
-        const user = await this.userDao.updateUser(userId, {
+        const existingUser = await this.userDao.findUser({id: userId, passwordResetToken}, false);
+
+        if (!existingUser) {
+            logger.debug("did not find user for id and token");
+            return response.status(404).json("user does not exist");
+        }
+        if (!existingUser.passwordResetIsValid()) {
+            logger.debug("user password reset expired");
+            return response.status(403).json("expired");
+        }
+
+        await this.userDao.updateUser(userId, {
             password: hashedPassword,
             passwordResetExpiresOn: undefined });
         return response.status(200).json("success");
