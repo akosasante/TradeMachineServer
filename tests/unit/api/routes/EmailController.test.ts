@@ -15,7 +15,7 @@ describe("EmailController", () => {
         addEmail: jest.fn(),
     };
     const testUser = new User({id: 1, name: "Jatheesh", password: "pswd", email: "jat@example.com"});
-    const emailController = new EmailController(mockUserDAO as UserDAO, mockMailQueue as MailQueue);
+
     const mockRes = {
         status: jest.fn(function() {
             // @ts-ignore
@@ -36,10 +36,11 @@ describe("EmailController", () => {
     });
 
     describe("sendResetEmail method", () => {
-        it("should find a user, set a new password expriy date, and call mailQueue", async () => {
+        it("should find a user, set a new password expiry date, and call mailQueue", async () => {
             mockUserDAO.findUser.mockReturnValueOnce(testUser);
             const expectedQueueMessage = `{"topic":"reset_pass","args":[${JSON.stringify(testUser)}]}`;
 
+            const emailController = new EmailController(mockUserDAO as UserDAO, mockMailQueue as MailQueue);
             await emailController.sendResetEmail(testUser.email!, mockRes as unknown as Response);
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
@@ -58,6 +59,7 @@ describe("EmailController", () => {
                 throw new Error("Generic Error");
             });
 
+            const emailController = new EmailController(mockUserDAO as UserDAO, mockMailQueue as MailQueue);
             await expect(emailController.sendResetEmail(testUser.email!, mockRes as unknown as Response))
                 .rejects.toThrow(Error);
             expect(mockRes.status).toHaveBeenCalledTimes(0);
@@ -70,6 +72,7 @@ describe("EmailController", () => {
             mockUserDAO.findUser.mockReturnValueOnce(testUser);
             const expectedQueueMessage = `{"topic":"test_email","args":[${JSON.stringify(testUser)}]}`;
 
+            const emailController = new EmailController(mockUserDAO as UserDAO, mockMailQueue as MailQueue);
             await emailController.sendTestEmail(testUser.email!, mockRes as unknown as Response);
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
@@ -87,6 +90,7 @@ describe("EmailController", () => {
                 throw new Error("Generic Error");
             });
 
+            const emailController = new EmailController(mockUserDAO as UserDAO, mockMailQueue as MailQueue);
             await expect(emailController.sendTestEmail(testUser.email!, mockRes as unknown as Response))
                 .rejects.toThrow(Error);
             expect(mockRes.status).toHaveBeenCalledTimes(0);
@@ -99,6 +103,7 @@ describe("EmailController", () => {
             mockUserDAO.findUser.mockReturnValueOnce(testUser);
             const expectedQueueMessage = `{"topic":"registration_email","args":[${JSON.stringify(testUser)}]}`;
 
+            const emailController = new EmailController(mockUserDAO as UserDAO, mockMailQueue as MailQueue);
             await emailController.sendRegistrationEmail(testUser.email!, mockRes as unknown as Response);
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
@@ -116,6 +121,7 @@ describe("EmailController", () => {
                 throw new Error("Generic Error");
             });
 
+            const emailController = new EmailController(mockUserDAO as UserDAO, mockMailQueue as MailQueue);
             await expect(emailController.sendRegistrationEmail(testUser.email!, mockRes as unknown as Response))
                 .rejects.toThrow(Error);
             expect(mockRes.status).toHaveBeenCalledTimes(0);

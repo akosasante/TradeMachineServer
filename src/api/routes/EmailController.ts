@@ -1,20 +1,28 @@
 import { Response } from "express";
 import { BodyParam, Controller, Post, Res } from "routing-controllers";
-import { mailQueue } from "../../bootstrap/app";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
-import { MailQueue, MailQueueMessage } from "../../queue/mailQueue";
+import { createMailQueue, MailQueue, MailQueueMessage } from "../../queue/mailQueue";
 
 @Controller("/email")
 export default class EmailController {
     // private readonly intervalId: NodeJS.Timeout;
     private userDao: UserDAO;
-    private readonly mailQueue?: MailQueue;
+    private mailQueue?: MailQueue;
 
     constructor(userDAO?: UserDAO, fetchedMailQueue?: MailQueue) {
         this.userDao = userDAO || new UserDAO();
+        logger.debug("setting up mail queue");
+        if (fetchedMailQueue) {
+            this.mailQueue = fetchedMailQueue;
+            logger.debug("mail queue setup complete [passed in]");
+        } else {
+            createMailQueue().then((mq: MailQueue) => {
+                this.mailQueue = mq;
+                logger.debug("mail queue setup complete [created]");
+            });
+        }
         // this.intervalId = setInterval(this.mailQueueLoaded, 10);
-        this.mailQueue = fetchedMailQueue || mailQueue;
     }
 
     @Post("/resetEmail")
@@ -52,13 +60,14 @@ export default class EmailController {
     public async sendRegistrationEmail(@BodyParam("email") email: string, @Res() response: Response):
         Promise<Response> {
         try {
-            logger.debug(`Finding user with email: ${email}`);
+            logger.debug(`Finding user with email to register: ${email}`);
             const user = await this.userDao.findUser({email});
 
             const queueMessage: MailQueueMessage = {topic: "registration_email", args: [user]};
             await this.mailQueue!.addEmail(JSON.stringify(queueMessage));
             return response.status(202).json({status: "email queued"});
         } catch (error) {
+            logger.error("Error sending registration email", error);
             throw error;
         }
     }
