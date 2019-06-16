@@ -117,5 +117,18 @@ describe("User Class", () => {
                 expect(() => firstUser.equals(otherUser)).toThrow(new Error("Not matching: roles"));
             });
         });
+
+        describe("passwordResetIsValid/0", () => {
+            it("should return true if the passwordResetTime vs currentTime is greater than or equal to 0", () => {
+                const date = new Date(Date.now() + (30 * 60 * 1000)); // half an hour from now
+                const validUser = new User({passwordResetExpiresOn: date});
+                expect(validUser.passwordResetIsValid()).toBeTrue();
+            });
+            it("should return true if the passwordResetTime vs currentTime is greater than or equal to 0", () => {
+                const date = new Date("January 1 1990");
+                const expiredUser = new User({passwordResetExpiresOn: date});
+                expect(expiredUser.passwordResetIsValid()).toBeFalse();
+            });
+        });
     });
 });

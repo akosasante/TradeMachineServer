@@ -106,13 +106,27 @@ describe("Auth API endpoints", () => {
         });
     });
     describe("POST /auth/reset_password", () => {
+        let user: User|undefined;
+        beforeEach(async () => {
+            await userDAO.setPasswordExpires(1);
+            user = await userDAO.getUserById(1);
+        });
+
         it("should successfully update the user with the hashed password", async () => {
-            const resetPasswordObj = {id: 1, password: "okok"};
+            const resetPasswordObj = {id: user!.id, password: "newPass", token: user!.passwordResetToken!};
             const res = await request(app)
                 .post("/auth/reset_password")
                 .send(resetPasswordObj)
                 .expect(200);
             expect(res.body).toEqual("success");
+        });
+
+        it("should return a 404 if there's no user with that passwordResetToken", async () => {
+            const resetPasswordObj = {id: user!.id, password: "newPass", token: "xyz-uuid"};
+            await request(app)
+                .post("/auth/reset_password")
+                .send(resetPasswordObj)
+                .expect(404);
         });
     });
 });
