@@ -58,6 +58,8 @@ function objectsEqual<T extends BaseModel>(props: Array<keyof T>, obj1: T, obj2:
     return props.reduce((bool: boolean, prop: keyof T) => {
         const res = bool && objectEqual(prop, obj1, obj2);
         if (!res) {
+            logger.debug(inspect(obj1[prop]));
+            logger.debug(inspect(obj2[prop]));
             throw new Error("Not matching: " + prop);
         }
         return res;
@@ -75,8 +77,8 @@ function propsEqual<T extends BaseModel>(props: Array<keyof T>, obj1: T, obj2: T
     return props.reduce((bool: boolean, prop: keyof T) => {
         const res = bool && propEqual(prop, obj1, obj2);
         if (!res) {
-            logger.debug(inspect(obj1));
-            logger.debug(inspect(obj2));
+            logger.debug(inspect(obj1[prop]));
+            logger.debug(inspect(obj2[prop]));
             throw new Error("Not matching: " + prop);
         }
         return res;
@@ -137,10 +139,15 @@ function isModel(object: any): object is HasEquals {
 
 function modelEqual<T extends BaseModel>(obj1: T, obj2: T, excludes: Excludes): boolean {
     if (!obj1 && !obj2) {
+        logger.debug("both models are empty");
         return true;
-    } else if (isModel(obj1) && isModel(obj1) && (obj1.constructor.name === obj2.constructor.name)) {
+    } else if (isModel(obj1) && isModel(obj2) && (obj1.constructor.name === obj2.constructor.name)) {
+        logger.debug(`using ${obj1.constructor.name}.equals method with excludes: ${inspect(excludes)}`);
         return obj1.equals(obj2, excludes);
     } else {
+        logger.debug("both are not the same model");
+        logger.debug(obj1.constructor.name);
+        logger.debug(obj2.constructor.name);
         return false;
     }
 }

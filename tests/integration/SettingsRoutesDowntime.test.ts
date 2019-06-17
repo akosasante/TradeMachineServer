@@ -43,7 +43,7 @@ afterAll(async () => {
     await redisClient.quit();
 });
 
-describe("Settings API endpoints", () => {
+describe("Settings API endpoints for scheduled downtime", () => {
     const previousSchedule = new ScheduledDowntime({
         startTime: new Date("01-01-2018"), endTime: new Date("01-01-2019"),
     });

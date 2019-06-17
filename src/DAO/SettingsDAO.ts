@@ -87,8 +87,8 @@ export default class SettingsDAO {
     }
 
     public async insertNewSettingsLine(settingsObj: Partial<GeneralSettings>): Promise<GeneralSettings> {
-        const mostRecentSettings = (await this.getMostRecentSettings()) || {};
-        const newSettingsObj = Object.assign(mostRecentSettings, settingsObj, {id: undefined});
+        const mostRecentSettings = await this.getMostRecentSettings();
+        const newSettingsObj = Object.assign((mostRecentSettings || {}), settingsObj, {id: undefined});
         const dbSettings = await this.settingsDb.save(newSettingsObj);
         return new GeneralSettings(dbSettings);
     }

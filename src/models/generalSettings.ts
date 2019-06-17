@@ -16,6 +16,11 @@ interface TradeDeadlineSetting {
 
 @Entity()
 export default class GeneralSettings extends BaseModel {
+    public static ensureDated(deadline: TradeDeadlineSetting): TradeDeadlineSetting {
+        const startTime = deadline.startTime ? new Date(deadline.startTime) : deadline.startTime;
+        const endTime = deadline.endTime ? new Date(deadline.endTime) : deadline.endTime;
+        return {...deadline, startTime, endTime};
+    }
     @Column("jsonb")
     public deadline: TradeDeadlineSetting;
 
@@ -25,14 +30,16 @@ export default class GeneralSettings extends BaseModel {
     constructor(settingsObj: Partial<GeneralSettings>) {
         super();
         Object.assign(this, {id: (settingsObj || {}).id});
-        this.deadline = (settingsObj || {}).deadline!;
-        this.modifiedBy = (settingsObj || {}).modifiedBy!;
+        this.deadline = settingsObj.deadline ? GeneralSettings.ensureDated(settingsObj.deadline) :
+            ({} as GeneralSettings).deadline;
+        this.modifiedBy = settingsObj.modifiedBy ? new User(settingsObj.modifiedBy!) :
+            ({} as GeneralSettings).modifiedBy;
     }
 
     public toString(): string {
-        const lastModifedString = `Last changed by ${this.modifiedBy}`;
+        const lastModifiedString = `Last changed by ${this.modifiedBy}`;
         return `General Settings: Deadline Status: ${this.deadline.status}, \
-        ${this.modifiedBy ? lastModifedString : ""}`;
+        ${this.modifiedBy ? lastModifiedString : ""}`;
     }
 
     public equals(other: GeneralSettings, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
