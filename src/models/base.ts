@@ -77,8 +77,7 @@ function propsEqual<T extends BaseModel>(props: Array<keyof T>, obj1: T, obj2: T
     return props.reduce((bool: boolean, prop: keyof T) => {
         const res = bool && propEqual(prop, obj1, obj2);
         if (!res) {
-            logger.debug(inspect(obj1[prop]));
-            logger.debug(inspect(obj2[prop]));
+            logger.debug(`Mismatch between obj1: ${inspect(obj1[prop])} and obj2: ${inspect(obj2[prop])}`);
             throw new Error("Not matching: " + prop);
         }
         return res;
@@ -93,6 +92,8 @@ function modelsEqual<T extends BaseModel>(keys: string[], obj1: T, obj2: T, excl
     logger.debug("models equal check");
     return keys.reduce((bool: boolean, key: string) => {
         logger.debug("KEY: " + key);
+        // @ts-ignore
+        logger.debug(`${inspect(obj2[key])}`);
         // @ts-ignore
         if (obj1[key] && obj2[key] && obj1[key] instanceof Array && obj2[key] instanceof Array) {
             logger.debug("Is an array relation");
@@ -126,6 +127,8 @@ function modelsEqual<T extends BaseModel>(keys: string[], obj1: T, obj2: T, excl
             // @ts-ignore
             const res = bool && modelEqual(obj1[key], obj2[key], excludes);
             if (!res) {
+                // @ts-ignore
+                logger.debug(`Mismatch between ${(obj1[key])} and ${(obj2[key])}`);
                 throw new Error("Not matching: " + key);
             }
             return res;
@@ -138,16 +141,18 @@ function isModel(object: any): object is HasEquals {
 }
 
 function modelEqual<T extends BaseModel>(obj1: T, obj2: T, excludes: Excludes): boolean {
+    const obj1Type = obj1 ? obj1.constructor.name : "isUndefined";
+    const obj2Type = obj2 ? obj2.constructor.name : "isUndefined";
     if (!obj1 && !obj2) {
         logger.debug("both models are empty");
         return true;
-    } else if (isModel(obj1) && isModel(obj2) && (obj1.constructor.name === obj2.constructor.name)) {
-        logger.debug(`using ${obj1.constructor.name}.equals method with excludes: ${inspect(excludes)}`);
+    } else if (isModel(obj1) && isModel(obj2) && (obj1Type === obj2Type)) {
+        logger.debug(`using ${obj1Type}.equals method with excludes: ${inspect(excludes)}`);
         return obj1.equals(obj2, excludes);
     } else {
         logger.debug("both are not the same model");
-        logger.debug(obj1.constructor.name);
-        logger.debug(obj2.constructor.name);
+        logger.debug(obj1Type);
+        logger.debug(obj2Type);
         return false;
     }
 }

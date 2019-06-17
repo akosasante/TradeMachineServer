@@ -67,7 +67,7 @@ export default class SettingsDAO {
     }
 
     public async getAllGeneralSettings(): Promise<GeneralSettings[]> {
-        const options: FindManyOptions = {order: {dateCreated: "DESC"}};
+        const options: FindManyOptions = {order: {dateCreated: "DESC"}, relations: ["modifiedBy"]};
         const dbSettings = await this.settingsDb.find(options);
         return dbSettings.map(settings => new GeneralSettings(settings));
     }

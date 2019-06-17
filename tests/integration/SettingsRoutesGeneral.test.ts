@@ -15,7 +15,6 @@ let app: Server;
 let adminLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
 let ownerLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
 let adminUser: User;
-let ownerUser: User;
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -29,6 +28,7 @@ async function shutdown() {
 }
 
 beforeAll(async () => {
+    let ownerUser: User;
     app = await server;
 
     const userDAO = new UserDAO();
@@ -59,6 +59,7 @@ describe("Settings API endpoints for general settings", () => {
         const postRequest = (generalSettingsObj: Partial<GeneralSettings>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<Partial<GeneralSettings>>(agent, "/settings/general", generalSettingsObj, status);
+
         afterEach(async () => {
             await doLogout(request.agent(app));
         });
@@ -68,8 +69,10 @@ describe("Settings API endpoints for general settings", () => {
             expect(testSettings.equals(new GeneralSettings(res.body))).toBeTrue();
         });
         it("should ignore any invalid properties from the object passed in", async () => {
-            const settingsObj = {...testSettings.parse(), blah: "bloop",
-                modifiedBy: adminUser };
+            const startDate2 = new Date("August 1 2019 1:00");
+            const endDate2 = new Date("August 1 2019 5:00");
+            const deadline2 = {status: TradeDeadlineStatus.OFF, startTime: startDate2, endTime: endDate2};
+            const settingsObj = {deadline: deadline2, blah: "bloop", modifiedBy: adminUser };
             const testSettings2 = new GeneralSettings(settingsObj);
             logger.debug(inspect(testSettings2));
             const res = await adminLoggedIn(postRequest(testSettings2));
@@ -90,9 +93,8 @@ describe("Settings API endpoints for general settings", () => {
 
         it("should return an array of all general settings in the db", async () => {
             const res = await getAllRequest();
-            logger.debug(inspect(res.body));
             expect(res.body).toBeArrayOfSize(2);
-            expect(testSettings.equals(new GeneralSettings(res.body[0]))).toBeTrue();
+            expect(testSettings.equals(new GeneralSettings(res.body[1]))).toBeTrue();
         });
     });
 

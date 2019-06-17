@@ -17,8 +17,8 @@ interface TradeDeadlineSetting {
 @Entity()
 export default class GeneralSettings extends BaseModel {
     public static ensureDated(deadline: TradeDeadlineSetting): TradeDeadlineSetting {
-        const startTime = deadline.startTime ? new Date(deadline.startTime) : deadline.startTime;
-        const endTime = deadline.endTime ? new Date(deadline.endTime) : deadline.endTime;
+        const startTime = deadline && deadline.startTime ? new Date(deadline.startTime) : (deadline || {}).startTime;
+        const endTime = deadline && deadline.endTime ? new Date(deadline.endTime) : (deadline || {}).endTime;
         return {...deadline, startTime, endTime};
     }
     @Column("jsonb")
@@ -30,9 +30,9 @@ export default class GeneralSettings extends BaseModel {
     constructor(settingsObj: Partial<GeneralSettings>) {
         super();
         Object.assign(this, {id: (settingsObj || {}).id});
-        this.deadline = settingsObj.deadline ? GeneralSettings.ensureDated(settingsObj.deadline) :
+        this.deadline = settingsObj ? GeneralSettings.ensureDated(settingsObj.deadline!) :
             ({} as GeneralSettings).deadline;
-        this.modifiedBy = settingsObj.modifiedBy ? new User(settingsObj.modifiedBy!) :
+        this.modifiedBy = settingsObj && settingsObj.modifiedBy ? new User(settingsObj.modifiedBy!) :
             ({} as GeneralSettings).modifiedBy;
     }
 
