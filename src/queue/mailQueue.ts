@@ -38,11 +38,11 @@ export class MailQueue {
     }
 }
 
-export async function createMailQueue() {
+export async function createMailQueue(env: string) {
     try {
         const conn = await amqp.connect(config.url);
         const channel = await conn.createChannel();
-        const email = await new Emailer();
+        const email = await new Emailer(env);
         const publisher = await MessagePublisher.createPublisher(conn, channel);
         const consumer = await MessageConsumer.createConsumer(conn, channel);
         if (email && publisher && consumer) {

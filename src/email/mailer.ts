@@ -24,14 +24,14 @@ export class Emailer {
     private transport = nodemailer.createTransport(SendinBlueTransport(this.transportOpts));
     private baseDomain = process.env.BASE_URL;
 
-    constructor() {
+    constructor(env: string) {
         logger.debug("creating Emailer class");
         this.emailer = new Email({
             message: {
                 from: "tradebot@flexfoxfantasy.com",
             },
             preview: false,
-            send: true,
+            send: env !== "test",
             juice: true,
             juiceResources: {
                 preserveImportant: true,

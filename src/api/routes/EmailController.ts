@@ -1,7 +1,8 @@
 import { Response } from "express";
-import { BodyParam, Controller, Post, Res } from "routing-controllers";
+import { Authorized, BodyParam, Controller, Post, Res } from "routing-controllers";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
+import { Role } from "../../models/user";
 import { createMailQueue, MailQueue, MailQueueMessage } from "../../queue/mailQueue";
 
 @Controller("/email")
@@ -16,19 +17,16 @@ export default class EmailController {
         if (fetchedMailQueue) {
             this.mailQueue = fetchedMailQueue;
             logger.debug("mail queue setup complete [passed in]");
-        } else {
-            createMailQueue().then((mq: MailQueue) => {
-                this.mailQueue = mq;
-                logger.debug("mail queue setup complete [created]");
-            });
         }
         // this.intervalId = setInterval(this.mailQueueLoaded, 10);
     }
 
+    @Authorized(Role.OWNER)
     @Post("/resetEmail")
     public async sendResetEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
         try {
             // Update current user with reset request time
+            await this.assertMailQueue();
             logger.debug(`Finding user with email: ${email}`);
             const user = await this.userDao.findUser({email});
             await this.userDao.setPasswordExpires(user!.id!);
@@ -42,9 +40,11 @@ export default class EmailController {
         }
     }
 
+    @Authorized(Role.OWNER)
     @Post("/testEmail")
     public async sendTestEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
         try {
+            await this.assertMailQueue();
             logger.debug(`Finding user with email: ${email}`);
             const user = await this.userDao.findUser({email});
 
@@ -56,10 +56,12 @@ export default class EmailController {
         }
     }
 
+    @Authorized(Role.OWNER)
     @Post("/registrationEmail")
     public async sendRegistrationEmail(@BodyParam("email") email: string, @Res() response: Response):
         Promise<Response> {
         try {
+            await this.assertMailQueue();
             logger.debug(`Finding user with email to register: ${email}`);
             const user = await this.userDao.findUser({email});
 
@@ -69,6 +71,17 @@ export default class EmailController {
         } catch (error) {
             logger.error("Error sending registration email", error);
             throw error;
+        }
+    }
+
+    public async assertMailQueue() {
+        if (this.mailQueue) {
+            logger.debug("Mail queue has already been loaded");
+            return;
+        } else {
+            logger.debug("Need to create new mail queue");
+            this.mailQueue = await createMailQueue(process.env.NODE_ENV || "development");
+            logger.debug("mail queue setup complete [created]");
         }
     }
 
