@@ -35,6 +35,17 @@ const ownerUserObj = {
     roles: [Role.OWNER],
 };
 
+async function shutdown() {
+    await new Promise(resolve => {
+        redisClient.quit(() => {
+            resolve();
+        });
+    });
+    // redis.quit() creates a thread to close the connection.
+    // We wait until all threads have been run once to ensure the connection closes.
+    await new Promise(resolve => setImmediate(resolve));
+}
+
 beforeAll(async () => {
     app = await server;
     const userDAO = new UserDAO();
@@ -43,7 +54,7 @@ beforeAll(async () => {
     ownerUser = await userDAO.createUser({...ownerUserObj});
 });
 afterAll(async () => {
-    await redisClient.quit();
+    await shutdown();
 });
 
 describe("User API endpoints", () => {

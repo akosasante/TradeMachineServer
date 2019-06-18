@@ -20,6 +20,17 @@ let app: Server;
 let adminLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
 let ownerLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
 
+async function shutdown() {
+    await new Promise(resolve => {
+        redisClient.quit(() => {
+            resolve();
+        });
+    });
+    // redis.quit() creates a thread to close the connection.
+    // We wait until all threads have been run once to ensure the connection closes.
+    await new Promise(resolve => setImmediate(resolve));
+}
+
 beforeAll(async () => {
     app = await server;
     let adminUser: User;
@@ -40,7 +51,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    await redisClient.quit();
+    await shutdown();
 });
 
 describe("Settings API endpoints for scheduled downtime", () => {

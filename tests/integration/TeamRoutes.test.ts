@@ -17,6 +17,17 @@ let otherUser: User;
 const adminUserObj = { email: "admin@example.com", password: "lol", name: "Cam", roles: [Role.ADMIN]};
 const ownerUserObj = { email: "owner@example.com", password: "lol", name: "Jatheesh", roles: [Role.OWNER]};
 
+async function shutdown() {
+    await new Promise(resolve => {
+        redisClient.quit(() => {
+            resolve();
+        });
+    });
+    // redis.quit() creates a thread to close the connection.
+    // We wait until all threads have been run once to ensure the connection closes.
+    await new Promise(resolve => setImmediate(resolve));
+}
+
 beforeAll(async () => {
     app = await server;
 
@@ -27,7 +38,7 @@ beforeAll(async () => {
     otherUser = await userDAO.createUser({email: "example@test.ca"});
 });
 afterAll(async () => {
-    await redisClient.quit();
+    await shutdown();
 });
 
 describe("Team API endpoints", () => {

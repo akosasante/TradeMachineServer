@@ -8,12 +8,23 @@ import { makeGetRequest } from "./helpers";
 
 let app: Server;
 
+async function shutdown() {
+    await new Promise(resolve => {
+        redisClient.quit(() => {
+            resolve();
+        });
+    });
+    // redis.quit() creates a thread to close the connection.
+    // We wait until all threads have been run once to ensure the connection closes.
+    await new Promise(resolve => setImmediate(resolve));
+}
+
 beforeAll(async () => {
     app = await server;
 });
 
 afterAll(async () => {
-    await redisClient.quit();
+    await shutdown();
 });
 
 describe("ESPN API endpoints", () => {

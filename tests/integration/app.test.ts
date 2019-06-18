@@ -8,13 +8,24 @@ import server from "../../src/server";
 
 dotenvConfig({path: path.resolve(__dirname, "../.env")});
 
+async function shutdown() {
+    await new Promise(resolve => {
+        redisClient.quit(() => {
+            resolve();
+        });
+    });
+    // redis.quit() creates a thread to close the connection.
+    // We wait until all threads have been run once to ensure the connection closes.
+    await new Promise(resolve => setImmediate(resolve));
+}
+
 describe("GET /random-url", () => {
     let app: Server;
     beforeAll(async () => {
         app = await server;
     });
     afterAll(async () => {
-        await redisClient.quit();
+        await shutdown();
     });
     it("should return 404", done => {
         request(app)
