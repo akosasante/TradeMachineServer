@@ -2,9 +2,7 @@ import { Server } from "http";
 import "jest";
 import "jest-extended";
 import request from "supertest";
-import { inspect } from "util";
 import { redisClient } from "../../src/bootstrap/express";
-import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import GeneralSettings, { TradeDeadlineStatus } from "../../src/models/generalSettings";
 import User, { Role } from "../../src/models/user";
@@ -54,6 +52,7 @@ describe("Settings API endpoints for general settings", () => {
     const endDate = new Date("January 1 2019 5:00");
     const deadline = {status: TradeDeadlineStatus.ON, startTime: startDate, endTime: endDate};
     const testSettings = new GeneralSettings({deadline});
+    let testSettings2: GeneralSettings;
 
     describe("POST /settings/general (insert new general settings line)", () => {
         const postRequest = (generalSettingsObj: Partial<GeneralSettings>, status: number = 200) =>
@@ -73,8 +72,7 @@ describe("Settings API endpoints for general settings", () => {
             const endDate2 = new Date("August 1 2019 5:00");
             const deadline2 = {status: TradeDeadlineStatus.OFF, startTime: startDate2, endTime: endDate2};
             const settingsObj = {deadline: deadline2, blah: "bloop", modifiedBy: adminUser };
-            const testSettings2 = new GeneralSettings(settingsObj);
-            logger.debug(inspect(testSettings2));
+            testSettings2 = new GeneralSettings(settingsObj);
             const res = await adminLoggedIn(postRequest(testSettings2));
 
             expect(testSettings2.equals(new GeneralSettings(res.body))).toBeTrue();
@@ -98,10 +96,26 @@ describe("Settings API endpoints for general settings", () => {
         });
     });
 
-    // describe("GET /settings/general/recent (get most recent general settings line", () => {
-    //     const getOneRequest = (status: number = 200) =>
-    //         makeGetRequest(request(app), "/settings/general/recent", status);
-    //
-    //     it("should return the most rece")
-    // })
+    describe("GET /settings/general/recent (get most recent general settings line)", () => {
+        const getOneRequest = (status: number = 200) =>
+            makeGetRequest(request(app), "/settings/general/recent", status);
+
+        it("should return the most recently entered general settings line", async () => {
+            const res = await getOneRequest();
+            expect(testSettings2.equals(new GeneralSettings(res.body))).toBeTrue();
+        });
+    });
+
+    describe("GET /settings/general/:id (get one settings linen by id)", () => {
+        const getOneRequest = (id: number, status: number = 200) =>
+            makeGetRequest(request(app), `/settings/general/${id}`, status);
+
+        it("should return a single settings line for the given id", async () => {
+            const res = await getOneRequest(1);
+            expect(testSettings.equals(new GeneralSettings(res.body))).toBeTrue();
+        });
+        it("should throw a 404 Not Found error if there is no settings line with that id", async () => {
+            await getOneRequest(999, 404);
+        });
+    });
 });

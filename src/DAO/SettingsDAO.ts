@@ -76,12 +76,12 @@ export default class SettingsDAO {
         if (!id) {
             throw new NotFoundError("Id is required");
         }
-        const dbSettings = await this.settingsDb.findOneOrFail(id);
+        const dbSettings = await this.settingsDb.findOneOrFail(id, {relations: ["modifiedBy"]});
         return new GeneralSettings(dbSettings);
     }
 
     public async getMostRecentSettings(): Promise<GeneralSettings|undefined> {
-        const options: FindManyOptions = {order: {dateCreated: "DESC"}, take: 1};
+        const options: FindManyOptions = {order: {dateCreated: "DESC"}, take: 1, relations: ["modifiedBy"]};
         const dbSettings = await this.settingsDb.find(options);
         return dbSettings.length ? new GeneralSettings(dbSettings[0]) : undefined;
     }
