@@ -1,6 +1,18 @@
 import axios from "axios";
 import { Response } from "express";
-import { Authorized, BodyParam, Controller, Get, NotFoundError, Param, Post, Res } from "routing-controllers";
+import {
+    Authorized,
+    Body,
+    BodyParam,
+    Controller,
+    Get,
+    NotFoundError,
+    OnUndefined,
+    Param,
+    Post,
+    Res
+} from "routing-controllers";
+import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import { Role } from "../../models/user";
@@ -53,6 +65,13 @@ export default class EmailController {
                 reason: ev.reason,
             })),
         };
+    }
+
+    @OnUndefined(204)
+    @Post("/sendInMailWebhook")
+    public async receiveSendInMailWebhook(@Body() event: EmailStatusEvent): Promise<void> {
+        logger.debug(inspect(event));
+        return;
     }
 
     @Post("/resetEmail")
