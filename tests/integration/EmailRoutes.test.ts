@@ -6,10 +6,11 @@ import { redisClient } from "../../src/bootstrap/express";
 import UserDAO from "../../src/DAO/UserDAO";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
-import { doLogout, makeLoggedInRequest, makePostRequest } from "./helpers";
+import { doLogout, makeGetRequest, makeLoggedInRequest, makePostRequest } from "./helpers";
 
 let app: Server;
 let ownerLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
+let adminLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -24,6 +25,7 @@ async function shutdown() {
 
 beforeAll(async () => {
     let ownerUser: User;
+    let adminUser: User;
     app = await server;
 
     const userDAO = new UserDAO();
@@ -33,6 +35,11 @@ beforeAll(async () => {
     });
     ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
         makeLoggedInRequest(request.agent(app), ownerUser.email!, testPassword, requestFn);
+    adminUser = await userDAO.createUser({
+        email: "admin@example.com", password: testPassword, name: "Cam", roles: [Role.ADMIN],
+    });
+    adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
+        makeLoggedInRequest(request.agent(app), adminUser.email!, testPassword, requestFn);
 });
 
 afterAll(async () => {
@@ -46,41 +53,42 @@ describe("Email API endpoints", () => {
     const testEmail = "owner@example.com";
 
     describe("POST /resetEmail (send a reset password email)", () => {
-        afterEach(async () => {
-            await doLogout(request.agent(app));
-        });
-
         it("should return a 202 message if the email is successfully queued", async () => {
-            await ownerLoggedIn(emailPostRequest(testEmail, "resetEmail"));
-        });
-        it("should return a 403 Forbidden error if a non-logged in request is use", async () => {
-            await emailPostRequest(testEmail, "resetEmail", 403)(request(app));
+            await emailPostRequest(testEmail, "resetEmail")(request(app));
         });
     });
 
     describe("POST /testEmail (send a test notification email)", () => {
-        afterEach(async () => {
-            await doLogout(request.agent(app));
-        });
-
         it("should return a 202 message if the email is successfully queued", async () => {
-            await ownerLoggedIn(emailPostRequest(testEmail, "testEmail"));
-        });
-        it("should return a 403 Forbidden error if a non-logged in request is use", async () => {
-            await emailPostRequest(testEmail, "testEmail", 403)(request(app));
+            await emailPostRequest(testEmail, "testEmail")(request(app));
         });
     });
 
     describe("POST /registrationEmail (send a registration email)", () => {
+        it("should return a 202 message if the email is successfully queued", async () => {
+            await emailPostRequest(testEmail, "registrationEmail")(request(app));
+        });
+    });
+
+    describe("GET /:id/status (check on the status of an email by messageID)", async () => {
+        const testMessageId = "<201906150242.34408309655@smtp-relay.sendinblue.com>";
+        const messageStatusRequest = (messageId: string, status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makeGetRequest(agent, `/email/${messageId}/status`, status);
         afterEach(async () => {
             await doLogout(request.agent(app));
         });
-
-        it("should return a 202 message if the email is successfully queued", async () => {
-            await ownerLoggedIn(emailPostRequest(testEmail, "registrationEmail"));
+        it("should return a JSON repr of the the events with that message ID", async () => {
+            const res = await adminLoggedIn(messageStatusRequest(testMessageId));
+            expect(res.body).toBeObject();
+            expect(res.body.id).toEqual(testMessageId);
+            expect(res.body.events).toBeArray();
+        });
+        it("should return a 403 Forbidden error if a non-admin user requests", async () => {
+            await ownerLoggedIn(messageStatusRequest(testMessageId, 403));
         });
         it("should return a 403 Forbidden error if a non-logged in request is use", async () => {
-            await emailPostRequest(testEmail, "registrationEmail", 403)(request(app));
+            await messageStatusRequest(testMessageId, 403)(request(app));
         });
     });
 });

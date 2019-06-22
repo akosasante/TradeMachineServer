@@ -1,15 +1,29 @@
+import axios from "axios";
 import { Response } from "express";
-import { Authorized, BodyParam, Controller, Post, Res } from "routing-controllers";
+import { Authorized, BodyParam, Controller, Get, NotFoundError, Param, Post, Res } from "routing-controllers";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import { Role } from "../../models/user";
 import { createMailQueue, MailQueue, MailQueueMessage } from "../../queue/mailQueue";
+
+interface EmailStatusEvent {
+    date: Date;
+    type: string;
+    reason: string;
+    tag?: string;
+}
+
+interface EmailStatus {
+    id: string;
+    events: EmailStatusEvent[];
+}
 
 @Controller("/email")
 export default class EmailController {
     // private readonly intervalId: NodeJS.Timeout;
     private userDao: UserDAO;
     private mailQueue?: MailQueue;
+    private BASE_URL: string = "https://api.sendinblue.com/v2.0/";
 
     constructor(userDAO?: UserDAO, fetchedMailQueue?: MailQueue) {
         this.userDao = userDAO || new UserDAO();
@@ -21,7 +35,26 @@ export default class EmailController {
         // this.intervalId = setInterval(this.mailQueueLoaded, 10);
     }
 
-    @Authorized(Role.OWNER)
+    @Authorized(Role.ADMIN)
+    @Get("/:id/status")
+    public async getEmailStatus(@Param("id") messageId: string): Promise<EmailStatus> {
+        const {data: {code, data: resEvents}} =
+            await axios.post(`${this.BASE_URL}/report`,
+                {message_id: messageId},
+                {headers: {"api-key": process.env.EMAIL_KEY}});
+        if (code !== "success") {
+            throw new NotFoundError("No email found with that message ID");
+        }
+        return {
+            id: messageId,
+            events: resEvents.map((ev: any) => ({
+                date: new Date(ev.date),
+                type: ev.event,
+                reason: ev.reason,
+            })),
+        };
+    }
+
     @Post("/resetEmail")
     public async sendResetEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
         try {
@@ -40,7 +73,6 @@ export default class EmailController {
         }
     }
 
-    @Authorized(Role.OWNER)
     @Post("/testEmail")
     public async sendTestEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
         try {
@@ -56,7 +88,6 @@ export default class EmailController {
         }
     }
 
-    @Authorized(Role.OWNER)
     @Post("/registrationEmail")
     public async sendRegistrationEmail(@BodyParam("email") email: string, @Res() response: Response):
         Promise<Response> {
