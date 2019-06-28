@@ -14,7 +14,7 @@ export default class Player extends BaseModel {
     public name: string;
 
     @Column({type: "enum", enum: LeagueLevel, nullable: true})
-    public leagueLevel?: LeagueLevel;
+    public league?: LeagueLevel;
 
     @Column({nullable: true})
     public mlbTeam?: string;
@@ -29,7 +29,7 @@ export default class Player extends BaseModel {
         super();
         Object.assign(this, {id: playerObj.id});
         this.name = playerObj.name || "";
-        this.leagueLevel = playerObj.leagueLevel;
+        this.league = playerObj.league;
         this.mlbTeam = playerObj.mlbTeam;
         this.leagueTeam = playerObj.leagueTeam;
         this.meta = playerObj.meta;

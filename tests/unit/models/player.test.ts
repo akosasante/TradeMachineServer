@@ -11,7 +11,7 @@ describe("Player Class", () => {
     describe("constructor", () => {
         it("should construct the object as expected", () => {
             expect(player.name).toEqual(playerObj.name);
-            expect(player.leagueLevel).toEqual(playerObj.leagueLevel);
+            expect(player.league).toEqual(playerObj.leagueLevel);
             expect(player.id).not.toBeDefined();
             expect(player.leagueTeam).toBeUndefined();
             expect(player).toBeInstanceOf(Player);
@@ -27,7 +27,7 @@ describe("Player Class", () => {
 
         describe("equals/2", () => {
             const playerClone = clone(player);
-            const playerWithDiffLevel = new Player({...playerObj, leagueLevel: LeagueLevel.MAJOR});
+            const playerWithDiffLevel = new Player({...playerObj, league: LeagueLevel.MAJOR});
             const team = new Team({name: "Squirtle Squad", espnId: 1});
             const playerWithTeam = new Player({...playerObj, leagueTeam: team});
             const playerWithTeamCloned = clone(playerWithTeam);
