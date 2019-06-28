@@ -41,9 +41,9 @@ describe("Player Class", () => {
             });
 
             it("should return true if the two instances are identical considering the excludes", () => {
-                expect(player.equals(playerWithDiffLevel, {leagueLevel: true}));
-                expect(player.equals(playerWithMeta, {meta: true}));
-                expect(player.equals(playerWithTeam, {leagueTeam: true}));
+                expect(player.equals(playerWithDiffLevel, {leagueLevel: true})).toBeTrue();
+                expect(player.equals(playerWithMeta, {meta: true})).toBeTrue();
+                expect(player.equals(playerWithTeam, {leagueTeam: true})).toBeTrue();
             });
 
             it("should throw a useful error if something doesn't match (simple props)", () => {

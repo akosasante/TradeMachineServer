@@ -125,13 +125,7 @@ function modelsEqual<T extends BaseModel>(keys: string[], obj1: T, obj2: T, excl
         } else {
             logger.debug(`${key} is NOT an array. just check equals`);
             // @ts-ignore
-            const res = bool && modelEqual(obj1[key], obj2[key], excludes);
-            if (!res) {
-                // @ts-ignore
-                logger.debug(`Mismatch between ${(obj1[key])} and ${(obj2[key])}`);
-                throw new Error("Not matching: " + key);
-            }
-            return res;
+            return bool && modelEqual(key, obj1[key], obj2[key], excludes);
         }
     }, true);
 }
@@ -140,19 +134,19 @@ function isModel(object: any): object is HasEquals {
     return object ? "equals" in object : false;
 }
 
-function modelEqual<T extends BaseModel>(obj1: T, obj2: T, excludes: Excludes): boolean {
+function modelEqual<T extends BaseModel>(key: string, obj1: T, obj2: T, excludes: Excludes): boolean {
     const obj1Type = obj1 ? obj1.constructor.name : "isUndefined";
     const obj2Type = obj2 ? obj2.constructor.name : "isUndefined";
     if (!obj1 && !obj2) {
         logger.debug("both models are empty");
         return true;
+    } else if (!obj1 || !obj2) {
+        logger.debug("one of the models is empty");
+        throw new Error(`Not matching: ${key}`);
     } else if (isModel(obj1) && isModel(obj2) && (obj1Type === obj2Type)) {
         logger.debug(`using ${obj1Type}.equals method with excludes: ${inspect(excludes)}`);
         return obj1.equals(obj2, excludes);
     } else {
-        logger.debug("both are not the same model");
-        logger.debug(obj1Type);
-        logger.debug(obj2Type);
-        return false;
+        throw new Error(`Comparing two different models: ${obj1Type} and ${obj2Type}`);
     }
 }

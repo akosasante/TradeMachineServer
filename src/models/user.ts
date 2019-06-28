@@ -2,6 +2,7 @@ import { compare, hash } from "bcryptjs";
 import { Column, Entity, Generated, ManyToOne, OneToMany, Unique } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes } from "./base";
+import DraftPick from "./draftPick";
 import GeneralSettings from "./generalSettings";
 import ScheduledDowntime from "./scheduledDowntime";
 import Team from "./team";
@@ -94,6 +95,9 @@ export default class User extends BaseModel {
     @OneToMany(type => GeneralSettings, setting => setting.modifiedBy)
     public updatedSettings?: GeneralSettings[];
 
+    @OneToMany(type => DraftPick, pick => pick.currentOwner)
+    public draftPicks?: DraftPick[];
+
     public hasPassword?: boolean;
 
     constructor(userObj: Partial<User> = {}) {
@@ -116,6 +120,7 @@ export default class User extends BaseModel {
         this.createdSchedules = userObj.createdSchedules;
         this.updatedSchedules = userObj.updatedSchedules;
         this.updatedSettings = userObj.updatedSettings;
+        this.draftPicks = userObj.draftPicks;
     }
 
     // Couldn't get this to work for whatever reason so just hashing in the DAO itself.
@@ -155,6 +160,13 @@ export default class User extends BaseModel {
     public equals(other: User, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
         logger.debug("User equals check");
         const COMPLEX_FIELDS = {roles: true};
+        const MODEL_FIELDS = {
+            team: true,
+            createdSchedules: true,
+            updatedSchedules: true,
+            updatedSettings: true,
+            draftPicks: true,
+        };
         const DEFAULT_EXCLUDES = {
             id: true,
             password: true,
@@ -169,6 +181,6 @@ export default class User extends BaseModel {
             passwordResetToken: true,
         };
         excludes = bypassDefaults ? excludes : Object.assign(DEFAULT_EXCLUDES, (excludes || {}));
-        return BaseModel.equals(this, other, excludes, COMPLEX_FIELDS);
+        return BaseModel.equals(this, other, excludes, COMPLEX_FIELDS, MODEL_FIELDS);
     }
 }
