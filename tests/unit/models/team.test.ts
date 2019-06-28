@@ -14,6 +14,8 @@ describe("Team Class", () => {
             expect(team.espnId).toEqual(teamObj.espnId);
             expect(team.id).not.toBeDefined();
             expect(team.owners).toBeUndefined();
+            expect(team).toBeInstanceOf(Team);
+            expect(teamObj).not.toBeInstanceOf(Team);
         });
     });
 
@@ -31,7 +33,7 @@ describe("Team Class", () => {
     describe("instance methods", () => {
         it("toString/0", async () => {
             expect(team.toString()).toMatch(team.name);
-            expect(team.toString()).toMatch("Team#");
+            expect(team.toString()).toMatch("Fantasy Team ID#");
         });
 
         describe("equals/2", () => {

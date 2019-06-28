@@ -1,6 +1,7 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity, OneToMany } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes, HasEquals } from "./base";
+import Player from "./player";
 import User from "./user";
 
 export enum TeamStatus {
@@ -30,6 +31,9 @@ export default class Team extends BaseModel implements HasEquals {
     @OneToMany(type => User, user => user.team, { eager: true, onDelete: "SET NULL"})
     public owners?: User[];
 
+    @OneToMany(type => Player, player => player.leagueTeam, { onDelete: "SET NULL"})
+    public players?: Player[];
+
     constructor(teamObj: Partial<Team> = {}) {
         super();
         Object.assign(this, {id: teamObj.id});
@@ -39,10 +43,11 @@ export default class Team extends BaseModel implements HasEquals {
         this.owners = teamObj.owners ? teamObj.owners.map((obj: any) =>
                 new User(obj)).sort((a, b) => (a.id || 0) - (b.id || 0))
             : teamObj.owners;
+        this.players = teamObj.players ? teamObj.players.map((obj: any) => new Player(obj)) : teamObj.players;
     }
 
     public toString(): string {
-        return `Team#${this.id}: ${this.name}`;
+        return `Fantasy Team ID#${this.id}: ${this.name}`;
     }
 
     public equals(other: Team, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
