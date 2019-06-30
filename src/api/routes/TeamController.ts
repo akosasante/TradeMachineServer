@@ -64,7 +64,7 @@ export default class TeamController {
     }
 
     @Authorized(Role.ADMIN)
-    @Delete("/:id")
+    @Delete("/:id([0-9]+)")
     public async deleteTeam(@Param("id") id: number) {
         logger.debug("delete team endpoint");
         const result = await this.dao.deleteTeam(id);
