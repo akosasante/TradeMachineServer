@@ -59,7 +59,7 @@ describe("DraftPickDAO", () => {
         const res = await draftPickDAO.findPicks(query);
 
         expect(mockPickDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.find).toHaveBeenCalledWith({where: query});
+        expect(mockPickDb.find).toHaveBeenCalledWith({where: query, order: {id: "ASC"}});
         expect(res).toEqual([testPick1]);
     });
 

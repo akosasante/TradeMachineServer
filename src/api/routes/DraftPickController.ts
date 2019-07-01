@@ -28,7 +28,7 @@ export default class DraftPickController {
 
     @Get("/")
     public async getAllDraftPicks(@QueryParam("include") include?: string[]): Promise<DraftPick[]> {
-        logger.debug("get all draftPicks endpoint" + `${include ? "with params: " + include : ""}`);
+        logger.debug("get all draftPicks endpoint" + `${include ? " with params: " + include : ""}`);
         let draftPicks: DraftPick[] = [];
         if (include) {
             const params = getAllDraftPicksQuery(include);

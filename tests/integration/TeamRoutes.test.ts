@@ -137,7 +137,7 @@ describe("Team API endpoints", () => {
         });
     });
 
-    describe("UPDATE /teams/:id (update one team)", () => {
+    describe("PUT /teams/:id (update one team)", () => {
         const putTeamRequest = (id: number, teamObj: Partial<Team>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<Team>>(agent, `/teams/${id}`, teamObj, status);

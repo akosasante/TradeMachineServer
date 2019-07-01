@@ -27,7 +27,7 @@ export default class PlayerController {
 
     @Get("/")
     public async getAllPlayers(@QueryParam("include") include?: string[]): Promise<Player[]> {
-        logger.debug("get all players endpoint" + `${include ? "with params: " + include : ""}`);
+        logger.debug("get all players endpoint" + `${include ? " with params: " + include : ""}`);
         let players: Player[] = [];
         if (include) {
             const params = getAllPlayersQuery(include);

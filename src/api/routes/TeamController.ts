@@ -59,7 +59,7 @@ export default class TeamController {
     public async updateTeam(@Param("id") id: number, @Body() teamObj: Partial<Team>): Promise<Team> {
         logger.debug("update team endpoint");
         const team = await this.dao.updateTeam(id, teamObj);
-        logger.debug(`updated team: ${inspect(team)}`);
+        logger.debug(`updated team: ${team}`);
         return team.publicTeam;
     }
 

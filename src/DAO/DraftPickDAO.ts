@@ -26,9 +26,10 @@ export default class DraftPickDAO {
     }
 
     public async findPicks(query: Partial<DraftPick>): Promise<DraftPick[]> {
-        const dbPicks = await this.draftPickDb.find({where: query});
+        // @ts-ignore
+        const dbPicks = await this.draftPickDb.find({order: {id: "ASC"}, where: query});
         if (dbPicks.length) {
-            return dbPicks.map(draftPick => new DraftPick(draftPick));
+            return dbPicks.map((draftPick: DraftPick) => new DraftPick(draftPick));
         } else {
             throw new NotFoundError("No picks found for that query");
         }

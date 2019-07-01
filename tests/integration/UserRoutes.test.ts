@@ -173,7 +173,7 @@ describe("User API endpoints", () => {
         });
     });
 
-    describe("UPDATE /users/:id (update one user)", () => {
+    describe("PUT /users/:id (update one user)", () => {
         const putRequest = (id: number, userObj: Partial<User>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<User>>(agent, `/users/${id}`, userObj, status);

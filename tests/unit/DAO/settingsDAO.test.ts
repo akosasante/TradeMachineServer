@@ -172,7 +172,7 @@ describe("SettingsDAO", () => {
     });
 
     describe("getAllGeneralSettings", () => {
-        const defaultOpts = {order: {dateCreated: "DESC"}};
+        const defaultOpts = {order: {dateCreated: "DESC"}, relations: ["modifiedBy"]};
 
         it("should call the db find method once", async () => {
             mockSettingsDb.find.mockReturnValue([testSettings.parse()]);
@@ -196,14 +196,14 @@ describe("SettingsDAO", () => {
             const res = await settingsDAO.getSettingsById(ID);
 
             expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
-            expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith(ID);
+            expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith(ID, {relations: ["modifiedBy"]});
             expect(res).toEqual(testSettings);
         });
     });
 
     describe("getMostRecentSettings", () => {
         it("should call find with the appropriate query params", async () => {
-            const opts = {order: {dateCreated: "DESC"}, take: 1};
+            const opts = {order: {dateCreated: "DESC"}, take: 1, relations: ["modifiedBy"]};
             mockSettingsDb.find.mockRejectedValueOnce([testSettings.parse()]);
             const res = await settingsDAO.getMostRecentSettings();
 

@@ -88,7 +88,7 @@ describe("Player API endpoints", () => {
         });
     });
 
-    describe("GET /players (get all players)", () => {
+    describe("GET /players[?include=playerLeagueLevel] (get all players)", () => {
         const getAllRequest = (param: string = "", status: number = 200) =>
             makeGetRequest(request(app), `/players${param}`, status);
 
@@ -110,6 +110,21 @@ describe("Player API endpoints", () => {
         });
     });
 
+    describe("GET /players/:id (get one player)", () => {
+        const getOneRequest = (id: number, status: number = 200) =>
+            makeGetRequest(request(app), `/players/${id}`, status);
+
+        it("should return a single player for the given id", async () => {
+            const res = await getOneRequest(1);
+            expect(res.body).toBeObject();
+            expect(testPlayer.equals(res.body)).toBeTrue();
+            expect(res.body.id).toEqual(1);
+        });
+        it("should throw a 404 Not Found error if there is no player with that ID", async () => {
+            await getOneRequest(999, 404);
+        });
+    });
+
     describe("GET /players/search?queryOpts (get players by query)", () => {
         const findRequest = (query: Partial<Player>, status: number = 200) =>
             makeGetRequest(request(app), `/players/search${stringifyQuery(query)}`, status);
@@ -122,12 +137,12 @@ describe("Player API endpoints", () => {
             expect(testPlayer2.equals(res.body[0])).toBeTrue();
             expect(res.body[0].id).toEqual(2);
         });
-        it("should throw a 404 error if no team with that query is found", async () => {
+        it("should throw a 404 error if no player with that query is found", async () => {
             await findRequest({ mlbTeam: "Toronto Blue Jays" }, 404);
         });
     });
 
-    describe("UPDATE /players/:id (update one player)", () => {
+    describe("PUT /players/:id (update one player)", () => {
         const putRequest = (id: number, playerObj: Partial<Player>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<Player>>(agent, `/players/${id}`, playerObj, status);
@@ -180,12 +195,12 @@ describe("Player API endpoints", () => {
             const getAllRes = await request(app).get("/players").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(1);
         });
-        it("should throw a 404 Not Found error if there is no team with that ID", async () => {
+        it("should throw a 404 Not Found error if there is no player with that ID", async () => {
             await adminLoggedIn(deleteRequest(1, 404));
             const getAllRes = await request(app).get("/players").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(1);
         });
-        it("should throw a 403 Forbidden error if a non-admin tries to delete a team", async () => {
+        it("should throw a 403 Forbidden error if a non-admin tries to delete a player", async () => {
             await ownerLoggedIn(deleteRequest(2, 403));
             const getAllRes = await request(app).get("/players").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(1);

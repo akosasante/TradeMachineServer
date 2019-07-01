@@ -24,7 +24,7 @@ describe("Emailer Class", () => {
             send: sendSpy,
         };
     });
-    const emailer = new Emailer();
+    const emailer = new Emailer(process.env.NODE_ENV || "tests");
 
     afterEach(() => {
         mockedEmail.mockClear();

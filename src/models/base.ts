@@ -93,29 +93,26 @@ function modelsEqual<T extends BaseModel>(keys: string[], obj1: T, obj2: T, excl
     return keys.reduce((bool: boolean, key: string) => {
         logger.debug("KEY: " + key);
         // @ts-ignore
-        logger.debug(`${inspect(obj2[key])}`);
+        logger.debug(`${obj2[key]}`);
         // @ts-ignore
         if (obj1[key] && obj2[key] && obj1[key] instanceof Array && obj2[key] instanceof Array) {
             logger.debug("Is an array relation");
             let res;
             // @ts-ignore
-            if (obj1[key].length < obj2[key].length) {
-                logger.debug(`obj1 has less of ${key} then obj2`);
-                // @ts-ignore
-                res = obj1[key].every((obj: T, index: number) => {
-                    // @ts-ignore
-                    logger.debug(`comparing ${obj} vs ${obj2[key][index]}`);
-                    // @ts-ignore
-                    return modelEqual(obj, obj2[key][index], excludes);
-                });
+            const obj1Length = obj1[key].length;
+            // @ts-ignore
+            const obj2Length = obj2[key].length;
+            if (obj1Length !== obj2Length) {
+                logger.debug(`obj1 (${obj1Length}) has a different amount of ${key} then obj2 (${obj2Length})`);
+                throw new Error("Not matching: " + key);
             } else {
-                logger.debug(`obj2 has less or equal num of ${key} as obj1`);
+                logger.debug(`both objects have the same length of ${key}`);
                 // @ts-ignore
                 res = obj2[key].every((obj: T, index: number) => {
                     // @ts-ignore
                     logger.debug(`comparing ${obj} vs ${obj1[key][index]}`);
                     // @ts-ignore
-                    return modelEqual(obj, obj1[key][index], excludes);
+                    return modelEqual(key, obj, obj1[key][index], excludes);
                 });
             }
             if (!res) {

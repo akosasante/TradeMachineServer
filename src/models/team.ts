@@ -40,8 +40,9 @@ export default class Team extends BaseModel implements HasEquals {
         this.name = teamObj.name || "";
         this.espnId = teamObj.espnId;
         this.status = teamObj.status || TeamStatus.DISABLED;
-        this.owners = teamObj.owners ? teamObj.owners.map((obj: any) =>
-                new User(obj)).sort((a, b) => (a.id || 0) - (b.id || 0))
+        this.owners = teamObj.owners ? teamObj.owners
+                .map((obj: any) => new User(obj))
+                .sort((a, b) => (a.id || 0) - (b.id || 0))
             : teamObj.owners;
         this.players = teamObj.players ? teamObj.players.map((obj: any) => new Player(obj)) : teamObj.players;
     }

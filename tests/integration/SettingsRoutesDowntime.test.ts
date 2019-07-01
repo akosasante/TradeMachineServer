@@ -154,7 +154,7 @@ describe("Settings API endpoints for scheduled downtime", () => {
         });
     });
 
-    describe("UPDATE /settings/downtime/:id (update one schedule)", () => {
+    describe("PUT /settings/downtime/:id (update one schedule)", () => {
         const putScheduleRequest = (id: number, scheduleObj: Partial<ScheduledDowntime>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<ScheduledDowntime>>(agent, `/settings/downtime/${id}`, scheduleObj, status);

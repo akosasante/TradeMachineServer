@@ -15,7 +15,7 @@ describe("DraftPickController", () => {
         updatePick: jest.fn(),
         deletePick: jest.fn(),
     };
-    const testDraftPick = new DraftPick({round: 1, pickNumber: 12, type: LeagueLevel.LOW});
+    const testDraftPick = new DraftPick({id: 1, round: 1, pickNumber: 12, type: LeagueLevel.LOW});
     const draftPickController = new DraftPickController(mockDraftPickDAO as unknown as DraftPickDAO);
 
     afterEach(() => {
@@ -41,8 +41,8 @@ describe("DraftPickController", () => {
             expect(mockDraftPickDAO.getAllPicks).toHaveBeenCalledTimes(0);
             expect(mockDraftPickDAO.findPicks).toHaveBeenCalledTimes(1);
             expect(mockDraftPickDAO.findPicks).toHaveBeenCalledWith([
-                {league: LeagueLevel.HIGH},
-                {league: LeagueLevel.MAJOR}]);
+                {type: LeagueLevel.HIGH},
+                {type: LeagueLevel.MAJOR}]);
             expect(res).toEqual([testDraftPick]);
         });
         it("should bubble up any errors from the DAO", async () => {
