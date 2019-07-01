@@ -5,13 +5,13 @@ import Player, { LeagueLevel } from "../../../src/models/player";
 import Team from "../../../src/models/team";
 
 describe("Player Class", () => {
-    const playerObj = {name: "Honus Wiener", leagueLevel: LeagueLevel.HIGH};
+    const playerObj = {name: "Honus Wiener", league: LeagueLevel.HIGH};
     const player = new Player(playerObj);
 
     describe("constructor", () => {
         it("should construct the object as expected", () => {
             expect(player.name).toEqual(playerObj.name);
-            expect(player.league).toEqual(playerObj.leagueLevel);
+            expect(player.league).toEqual(playerObj.league);
             expect(player.id).not.toBeDefined();
             expect(player.leagueTeam).toBeUndefined();
             expect(player).toBeInstanceOf(Player);
@@ -41,13 +41,13 @@ describe("Player Class", () => {
             });
 
             it("should return true if the two instances are identical considering the excludes", () => {
-                expect(player.equals(playerWithDiffLevel, {leagueLevel: true})).toBeTrue();
+                expect(player.equals(playerWithDiffLevel, {league: true})).toBeTrue();
                 expect(player.equals(playerWithMeta, {meta: true})).toBeTrue();
                 expect(player.equals(playerWithTeam, {leagueTeam: true})).toBeTrue();
             });
 
             it("should throw a useful error if something doesn't match (simple props)", () => {
-                expect(() => player.equals(playerWithDiffLevel)).toThrowWithMessage(Error, "Not matching: leagueLevel");
+                expect(() => player.equals(playerWithDiffLevel)).toThrowWithMessage(Error, "Not matching: league");
             });
 
             it("should throw a useful error if something doesn't match (complex fields)", () => {

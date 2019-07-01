@@ -91,6 +91,7 @@ describe("Team API endpoints", () => {
 
         it("should return an array of all teams (public vers.) in the db", async () => {
             const res = await getAllRequest();
+            expect(res.body).toBeArrayOfSize(2);
             expect(testTeam.publicTeam.equals(res.body[0])).toBeTrue();
         });
         it("should return an array of all teams with owners or empty array otherwise", async () => {
@@ -213,13 +214,13 @@ describe("Team API endpoints", () => {
     });
 
     describe("DELETE /teams/:id (delete one team)", () => {
-        const deleteTeamRequest = (id: number, status: number = 200) =>
-            (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/teams/${id}`, status);
-        afterEach(async () => {
-            await doLogout(request.agent(app));
-        });
+            const deleteTeamRequest = (id: number, status: number = 200) =>
+                (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/teams/${id}`, status);
+            afterEach(async () => {
+                await doLogout(request.agent(app));
+            });
 
-        it("should return a delete result if successful", async () => {
+            it("should return a delete result if successful", async () => {
             const res = await adminLoggedIn(deleteTeamRequest(1));
             expect(res.body).toEqual({ deleteResult: true, id: 1 });
 
@@ -230,13 +231,13 @@ describe("Team API endpoints", () => {
             // Confirm that users that were previously owners of this team have their TeamID set to none
             // lo
         });
-        it("should throw a 404 Not Found error if there is no team with that ID", async () => {
+            it("should throw a 404 Not Found error if there is no team with that ID", async () => {
             await adminLoggedIn(deleteTeamRequest(1, 404));
         });
-        it("should throw a 403 Forbidden error if a non-admin tries to delete a team", async () => {
+            it("should throw a 403 Forbidden error if a non-admin tries to delete a team", async () => {
             await ownerLoggedIn(deleteTeamRequest(2, 403));
         });
-        it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
+            it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await deleteTeamRequest(2, 403)(request(app));
         });
     });
