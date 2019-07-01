@@ -40,6 +40,11 @@ export default class DraftPickDAO {
         return new DraftPick(dbPick);
     }
 
+    public async batchCreatePicks(pickObjs: Array<Partial<DraftPick>>): Promise<DraftPick[]> {
+        const dbPicks = await this.draftPickDb.save(pickObjs, {chunk: 10});
+        return dbPicks.map(pick => new DraftPick(pick));
+    }
+
     public async updatePick(id: number, pickObj: Partial<DraftPick>): Promise<DraftPick> {
         await this.draftPickDb.update({ id }, pickObj);
         return await this.getPickById(id);

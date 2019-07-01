@@ -1,6 +1,18 @@
+import multer from "multer";
 import { FindOperator, IsNull, Not } from "typeorm";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
+
+const storage: multer.DiskStorageOptions = {
+    destination: (req: any, file: any, cb: any) => cb(undefined, "/tmp/trade_machine_2_csvs"),
+    filename: (req: any, file: any, cb: any) => cb(undefined, `${file.fieldname} - ${Date.now()}.csv`),
+};
+
+export const fileUploadOptions = {
+    storage: multer.diskStorage(storage),
+    fileFilter: (req: any, file: any, cb: any) => cb(undefined, file.mimetype === "text/csv"),
+    limits: { fieldNameSize: 255, fileSize: 1024 * 1024 * 2 },
+};
 
 export function cleanupQuery(initQuery: {[key: string]: string}) {
     const query = {...initQuery}; // clone so that we don't cause weird stuff to inadvertently happen by

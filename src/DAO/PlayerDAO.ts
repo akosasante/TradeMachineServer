@@ -39,6 +39,11 @@ export default class PlayerDAO {
         return new Player(dbPlayer);
     }
 
+    public async batchCreatePlayers(playerObjs: Array<Partial<Player>>): Promise<Player[]> {
+        const dbPlayers = await this.playerDb.save(playerObjs, {chunk: 10});
+        return dbPlayers.map(player => new Player(player));
+    }
+
     public async updatePlayer(id: number, playerObj: Partial<Player>): Promise<Player> {
         await this.playerDb.update({ id }, playerObj);
         return await this.getPlayerById(id);

@@ -9,8 +9,8 @@ export default class DraftPick extends BaseModel implements HasEquals {
     @Column()
     public round: number; // can we force only inserting unique round+picknum+season?
 
-    @Column()
-    public pickNumber: number;
+    @Column({nullable: true})
+    public pickNumber?: number;
 
     @Column({nullable: true})
     public season?: number;
@@ -21,14 +21,18 @@ export default class DraftPick extends BaseModel implements HasEquals {
     @ManyToOne(type => User, user => user.draftPicks, {eager: true, onDelete: "SET NULL"})
     public currentOwner?: User;
 
+    @ManyToOne(type => User, user => user.originalDraftPicks, {eager: true, onDelete: "SET NULL"})
+    public originalOwner?: User;
+
     constructor(draftPickObj: Partial<DraftPick> = {}) {
         super();
         Object.assign(this, {id: draftPickObj.id});
         this.round = draftPickObj.round!;
-        this.pickNumber = draftPickObj.pickNumber!;
+        this.pickNumber = draftPickObj.pickNumber;
         this.season = draftPickObj.season;
         this.type = draftPickObj.type!;
         this.currentOwner = draftPickObj.currentOwner;
+        this.originalOwner = draftPickObj.originalOwner;
     }
 
     public toString(): string {
@@ -39,7 +43,7 @@ export default class DraftPick extends BaseModel implements HasEquals {
     public equals(other: DraftPick, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
         logger.debug("Draft pick equals check");
         const COMPLEX_FIELDS = {};
-        const MODEL_FIELDS = {currentOwner: true};
+        const MODEL_FIELDS = {currentOwner: true, originalOwner: true};
         const DEFAULT_EXCLUDES = {
             id: true,
             dateCreated: true,

@@ -64,6 +64,9 @@ export default class User extends BaseModel {
     @Column({nullable: true})
     public username?: string;
 
+    @Column({nullable: true})
+    public shortName?: string;
+
     @Column({type: "enum", enum: Role, array: true, default: [Role.OWNER]})
     public roles?: Role[];
 
@@ -98,12 +101,16 @@ export default class User extends BaseModel {
     @OneToMany(type => DraftPick, pick => pick.currentOwner)
     public draftPicks?: DraftPick[];
 
+    @OneToMany(type => DraftPick, pick => pick.originalOwner)
+    public originalDraftPicks?: DraftPick[];
+
     public hasPassword?: boolean;
 
     constructor(userObj: Partial<User> = {}) {
         super();
         this.password = userObj.password;
         this.username = userObj.username;
+        this.shortName = userObj.shortName;
         this.lastLoggedIn = userObj.lastLoggedIn;
         this.email = userObj.email;
         this.dateCreated = userObj.dateCreated;
@@ -121,6 +128,7 @@ export default class User extends BaseModel {
         this.updatedSchedules = userObj.updatedSchedules;
         this.updatedSettings = userObj.updatedSettings;
         this.draftPicks = userObj.draftPicks;
+        this.originalDraftPicks = userObj.originalDraftPicks;
     }
 
     // Couldn't get this to work for whatever reason so just hashing in the DAO itself.
@@ -166,6 +174,7 @@ export default class User extends BaseModel {
             updatedSchedules: true,
             updatedSettings: true,
             draftPicks: true,
+            originalDraftPicks: true,
         };
         const DEFAULT_EXCLUDES = {
             id: true,

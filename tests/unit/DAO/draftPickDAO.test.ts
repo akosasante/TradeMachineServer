@@ -101,4 +101,13 @@ describe("DraftPickDAO", () => {
         expect(mockPickDb.delete).toHaveBeenCalledWith(1);
         expect(res).toEqual(deleteResult);
     });
+
+    it("batchCreatePicks - should call the db save once with pickObjs", async () => {
+        mockPickDb.save.mockReturnValueOnce([testPick1.parse()]);
+        const res = await draftPickDAO.batchCreatePicks([testPick1.parse()]);
+
+        expect(mockPickDb.save).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.save).toHaveBeenCalledWith([testPick1.parse()], {chunk: 10});
+        expect(res).toEqual([testPick1]);
+    });
 });

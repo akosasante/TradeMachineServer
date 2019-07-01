@@ -3,6 +3,7 @@ import "jest-extended";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import DraftPickController from "../../../../src/api/routes/DraftPickController";
 import DraftPickDAO from "../../../../src/DAO/DraftPickDAO";
+import UserDAO from "../../../../src/DAO/UserDAO";
 import DraftPick from "../../../../src/models/draftPick";
 import { LeagueLevel } from "../../../../src/models/player";
 
@@ -15,8 +16,10 @@ describe("DraftPickController", () => {
         updatePick: jest.fn(),
         deletePick: jest.fn(),
     };
+    const mockUserDAO = {};
     const testDraftPick = new DraftPick({id: 1, round: 1, pickNumber: 12, type: LeagueLevel.LOW});
-    const draftPickController = new DraftPickController(mockDraftPickDAO as unknown as DraftPickDAO);
+    const draftPickController = new DraftPickController(
+        mockDraftPickDAO as unknown as DraftPickDAO, mockUserDAO as unknown as UserDAO);
 
     afterEach(() => {
         Object.entries(mockDraftPickDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {

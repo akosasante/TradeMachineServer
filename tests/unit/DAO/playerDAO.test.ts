@@ -100,4 +100,13 @@ describe("PlayerDAO", () => {
         expect(mockPlayerDb.delete).toHaveBeenCalledWith(1);
         expect(res).toEqual(deleteResult);
     });
+
+    it("batchCreatePlayers - should call the db save once with playerObjs", async () => {
+        mockPlayerDb.save.mockReturnValueOnce([testPlayer1.parse()]);
+        const res = await playerDAO.batchCreatePlayers([testPlayer1.parse()]);
+
+        expect(mockPlayerDb.save).toHaveBeenCalledTimes(1);
+        expect(mockPlayerDb.save).toHaveBeenCalledWith([testPlayer1.parse()], {chunk: 10});
+        expect(res).toEqual([testPlayer1]);
+    });
 });
