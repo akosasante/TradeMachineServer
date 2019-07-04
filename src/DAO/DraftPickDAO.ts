@@ -54,4 +54,8 @@ export default class DraftPickDAO {
         await this.getPickById(id);
         return await this.draftPickDb.delete(id);
     }
+
+    public async deleteAllPicks(): Promise<any> {
+        return await this.draftPickDb.clear();
+    }
 }

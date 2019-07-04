@@ -12,6 +12,7 @@ const mockPickDb = {
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    clear: jest.fn(),
 };
 
 // @ts-ignore
@@ -100,6 +101,12 @@ describe("DraftPickDAO", () => {
         expect(mockPickDb.delete).toHaveBeenCalledTimes(1);
         expect(mockPickDb.delete).toHaveBeenCalledWith(1);
         expect(res).toEqual(deleteResult);
+    });
+
+    it("deleteAllPick - should call the db clear method to do Truncate command", async () => {
+        await draftPickDAO.deleteAllPicks();
+        expect(mockPickDb.clear).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.clear).toHaveBeenCalledWith();
     });
 
     it("batchCreatePicks - should call the db save once with pickObjs", async () => {
