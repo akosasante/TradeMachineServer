@@ -1,11 +1,12 @@
 import csv from "fast-csv";
 import * as fs from "fs";
+import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import DraftPickDAO from "../DAO/DraftPickDAO";
 import DraftPick from "../models/draftPick";
 import { LeagueLevel } from "../models/player";
 import User from "../models/user";
-import { validateRow } from "./CsvUtils";
+import { validateRow, WriteMode } from "./CsvUtils";
 
 interface DraftPickCSVRow {
     Owner: string;
@@ -14,18 +15,25 @@ interface DraftPickCSVRow {
     Type: "Major"|"High"|"Low";
 }
 
-const dao = new DraftPickDAO();
-
-export async function processDraftPickCsv(csvFile: any, users: User[]) {
+export async function processDraftPickCsv(csvFilePath: string, users: User[], dao: DraftPickDAO, mode?: WriteMode) {
     let parsedPicks: Array<Partial<DraftPick>> = [];
     let promisedPicks: Array<Promise<DraftPick[]>> = [];
 
+    if (mode === "overwrite") {
+        try {
+            await dao.deleteAllPicks();
+        } catch (e) {
+            logger.error(inspect(e));
+            throw e;
+        }
+    }
+
     const promisedStream = new Promise((resolve, reject) => {
         logger.debug("----------- starting to read csv ----------");
-        fs.createReadStream(csvFile.path)
+        fs.createReadStream(csvFilePath)
             .pipe(csv.parse({headers: true}))
             .on("data", (row: DraftPickCSVRow) => {
-                [parsedPicks, promisedPicks] = parseDraftPicks(row, parsedPicks, promisedPicks, users);
+                [parsedPicks, promisedPicks] = parseDraftPicks(row, parsedPicks, promisedPicks, users, dao);
                 // logger.debug(`parsed: ${parsedPicks.length}, promised: ${promisedPicks.length}`);
             })
             .on("error", (e: any) => reject(e))
@@ -38,14 +46,14 @@ export async function processDraftPickCsv(csvFile: any, users: User[]) {
     return promisedStream.then(() => {
         promisedPicks.push(dao.batchCreatePicks(parsedPicks.splice(0)));
         return Promise.all(promisedPicks).then(draftPicks => {
-            // @ts-ignore typscript does not seem to know about "flat"
-            return draftPicks.flat();
+            // @ts-ignore typescript does not seem to know about "flat"
+            return draftPicks.flat().filter(pick => !!pick);
         });
     });
 }
 
 function parseDraftPicks(row: DraftPickCSVRow, parsedPicks: Array<Partial<DraftPick>>,
-                         promisedPicks: Array<Promise<DraftPick[]>>, users: User[]):
+                         promisedPicks: Array<Promise<DraftPick[]>>, users: User[], dao: DraftPickDAO):
     [Array<Partial<DraftPick>>, Array<Promise<DraftPick[]>>] {
     const parsed = Array.from(parsedPicks);
     const promised = Array.from(promisedPicks);
