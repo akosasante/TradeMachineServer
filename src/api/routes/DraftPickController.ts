@@ -1,4 +1,3 @@
-import { Response } from "express";
 import {
     Authorized,
     Body,
@@ -10,11 +9,11 @@ import {
     Put,
     QueryParam,
     QueryParams,
-    Res,
     UploadedFile
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
+import { WriteMode } from "../../csv/CsvUtils";
 import { processDraftPickCsv } from "../../csv/DraftPickParser";
 import DraftPickDAO from "../../DAO/DraftPickDAO";
 import UserDAO from "../../DAO/UserDAO";
@@ -69,15 +68,9 @@ export default class DraftPickController {
     @Authorized(Role.ADMIN)
     @Post("/batch")
     public async batchUploadDraftPicks(@UploadedFile("picks", {required: false, options: uploadOpts}) file: any,
-                                       @Res() response: Response): Promise<Response> {
-        try {
-            const users = await this.userDAO.getAllUsers();
-            const picks = await processDraftPickCsv(file, users);
-            return response.status(200).json(picks);
-        } catch (e) {
-            logger.error(e);
-            return response.status(500).json(e);
-        }
+                                       @QueryParam("mode") mode: WriteMode): Promise<DraftPick[]> {
+        const users = await this.userDAO.getAllUsers();
+        return await processDraftPickCsv(file.path, users, this.dao, mode);
     }
 
     @Authorized(Role.ADMIN)

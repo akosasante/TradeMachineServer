@@ -1,11 +1,17 @@
 import "jest";
 import "jest-extended";
+import { mocked } from "ts-jest/utils";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import DraftPickController from "../../../../src/api/routes/DraftPickController";
+import { processDraftPickCsv } from "../../../../src/csv/DraftPickParser";
 import DraftPickDAO from "../../../../src/DAO/DraftPickDAO";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import DraftPick from "../../../../src/models/draftPick";
 import { LeagueLevel } from "../../../../src/models/player";
+import User from "../../../../src/models/user";
+
+jest.mock("../../../../src/csv/DraftPickParser");
+const mockedCsvParser = mocked(processDraftPickCsv);
 
 describe("DraftPickController", () => {
     const mockDraftPickDAO = {
@@ -16,15 +22,19 @@ describe("DraftPickController", () => {
         updatePick: jest.fn(),
         deletePick: jest.fn(),
     };
-    const mockUserDAO = {};
+    const mockUserDAO = {
+        getAllUsers: jest.fn(),
+    };
     const testDraftPick = new DraftPick({id: 1, round: 1, pickNumber: 12, type: LeagueLevel.LOW});
     const draftPickController = new DraftPickController(
         mockDraftPickDAO as unknown as DraftPickDAO, mockUserDAO as unknown as UserDAO);
 
     afterEach(() => {
-        Object.entries(mockDraftPickDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
+        [mockDraftPickDAO, mockUserDAO].map(mockedThing =>
+            Object.entries(mockedThing).forEach((kvp: [string, jest.Mock<any, any>]) => {
             kvp[1].mockClear();
-        });
+        }));
+        mockedCsvParser.mockClear();
     });
 
     describe("getAllDraftPicks method", () => {
@@ -144,6 +154,42 @@ describe("DraftPickController", () => {
             });
             await expect(draftPickController.deleteDraftPick(9999))
                 .rejects.toThrow(EntityNotFoundError);
+        });
+    });
+
+    describe("batchUploadDraftPicks method", () => {
+        const overwriteMode = "overwrite";
+        const testFile = {path: "/test/path/to.csv"};
+
+        it("should get all existing users from the db", async () => {
+            await draftPickController.batchUploadDraftPicks(testFile, overwriteMode);
+            expect(mockUserDAO.getAllUsers).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.getAllUsers).toHaveBeenCalledWith();
+        });
+        it("should call the draft pick processor method", async () => {
+            const users = [new User({shortName: "Akos"})];
+            mockUserDAO.getAllUsers.mockResolvedValueOnce(users);
+            await draftPickController.batchUploadDraftPicks(testFile, overwriteMode);
+            expect(mockedCsvParser).toHaveBeenCalledTimes(1);
+            expect(mockedCsvParser).toHaveBeenCalledWith(testFile.path, users, mockDraftPickDAO, overwriteMode);
+        });
+        it("should call the return an array of draft picks", async () => {
+            const picks = [new DraftPick({round: 1, pickNumber: 12, type: LeagueLevel.HIGH})];
+            mockedCsvParser.mockResolvedValueOnce(picks);
+            const res = await draftPickController.batchUploadDraftPicks(testFile, overwriteMode);
+            expect(res).toEqual(picks);
+        });
+        it("should reject if userDAO throws an error", async () => {
+            mockUserDAO.getAllUsers.mockImplementationOnce(() => {
+                throw new Error();
+            });
+            await expect(draftPickController.batchUploadDraftPicks(testFile, overwriteMode)).rejects.toThrow(Error);
+        });
+        it("should reject if processDraftPickCsv throws an error", async () => {
+            mockedCsvParser.mockImplementationOnce(() => {
+                throw new Error();
+            });
+            await expect(draftPickController.batchUploadDraftPicks(testFile, overwriteMode)).rejects.toThrow(Error);
         });
     });
 });

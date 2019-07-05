@@ -15,7 +15,8 @@ interface DraftPickCSVRow {
     Type: "Major"|"High"|"Low";
 }
 
-export async function processDraftPickCsv(csvFilePath: string, users: User[], dao: DraftPickDAO, mode?: WriteMode) {
+export async function processDraftPickCsv(csvFilePath: string, users: User[], dao: DraftPickDAO, mode?: WriteMode)
+    : Promise<DraftPick[]> {
     let parsedPicks: Array<Partial<DraftPick>> = [];
     let promisedPicks: Array<Promise<DraftPick[]>> = [];
 
