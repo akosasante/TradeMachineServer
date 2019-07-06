@@ -11,6 +11,7 @@ const mockPlayerDb = {
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    clear: jest.fn(),
 };
 
 // @ts-ignore
@@ -99,6 +100,12 @@ describe("PlayerDAO", () => {
         expect(mockPlayerDb.delete).toHaveBeenCalledTimes(1);
         expect(mockPlayerDb.delete).toHaveBeenCalledWith(1);
         expect(res).toEqual(deleteResult);
+    });
+
+    it("deleteAllPick - should call the db clear method to do Truncate command", async () => {
+        await playerDAO.deleteAllPicks();
+        expect(mockPlayerDb.clear).toHaveBeenCalledTimes(1);
+        expect(mockPlayerDb.clear).toHaveBeenCalledWith();
     });
 
     it("batchCreatePlayers - should call the db save once with playerObjs", async () => {

@@ -53,4 +53,8 @@ export default class PlayerDAO {
         await this.getPlayerById(id);
         return await this.playerDb.delete(id);
     }
+
+    public async deleteAllPicks(): Promise<void> {
+        return await this.playerDb.clear();
+    }
 }
