@@ -2,9 +2,8 @@ import { Server } from "http";
 import "jest";
 import "jest-extended";
 import request from "supertest";
-import { inspect } from "util";
 import { redisClient } from "../../src/bootstrap/express";
-import logger from "../../src/bootstrap/logger";
+import { WriteMode } from "../../src/csv/CsvUtils";
 import UserDAO from "../../src/DAO/UserDAO";
 import DraftPick from "../../src/models/draftPick";
 import { LeagueLevel } from "../../src/models/player";
@@ -23,8 +22,9 @@ import {
 let app: Server;
 let adminUser: User;
 let ownerUser: User;
-const adminUserObj = { email: "admin@example.com", password: "lol", name: "Cam", roles: [Role.ADMIN]};
-const ownerUserObj = { email: "owner@example.com", password: "lol", name: "Jatheesh", roles: [Role.OWNER]};
+const adminUserObj = { email: "admin@example.com", password: "lol", name: "Cam", roles: [Role.ADMIN], shortName: "Cam"};
+const ownerUserObj = { email: "owner@example.com", password: "lol", name: "A", roles: [Role.OWNER], shortName: "Akos"};
+const extraUserObj = { email: "kwasi@example.com", password: "lol", name: "K", roles: [Role.OWNER], shortName: "Kwasi"};
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -44,6 +44,7 @@ beforeAll(async () => {
     const userDAO = new UserDAO();
     adminUser = await userDAO.createUser({...adminUserObj});
     ownerUser = await userDAO.createUser({...ownerUserObj});
+    await userDAO.createUser({...extraUserObj});
 });
 afterAll(async () => {
     await shutdown();
@@ -106,7 +107,6 @@ describe("Pick API endpoints", () => {
 
             expect(res1.body).toBeArrayOfSize(1);
             expect(res2.body).toBeArrayOfSize(2);
-            logger.debug(inspect(res2.body));
             expect(testPick.equals(res2.body[0])).toBeTrue();
         });
         it("should throw a 404 error if no picks in a given league found", async () => {
@@ -213,6 +213,60 @@ describe("Pick API endpoints", () => {
             await deleteRequest(2, 403)(request(app));
             const getAllRes = await request(app).get("/picks").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(1);
+        });
+    });
+
+    describe("PUT /batch (batch add new draft picks via csv file)", () => {
+        const csv = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks.csv`;
+        const postFileRequest = (filePath: string, mode?: WriteMode, status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                agent
+                    .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
+                    .attach("picks", filePath)
+                    .expect("Content-Type", /json/)
+                    .expect(status);
+        const requestWithoutFile = (mode?: WriteMode, status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                agent
+                    .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
+                    .expect("Content-Type", /json/)
+                    .expect(status);
+
+        it("should append by default", async () => {
+            const getAllRes = await request(app).get("/picks").expect(200);
+            expect(getAllRes.body).toBeArrayOfSize(1);
+
+            const batchPutRes = await adminLoggedIn(postFileRequest(csv));
+            expect(batchPutRes.body).toBeArrayOfSize(50);
+            const afterGetAllRes = await request(app).get("/picks").expect(200);
+            expect(afterGetAllRes.body).toBeArrayOfSize(51);
+        });
+        it("should append with the given mode passed in", async () => {
+            const getAllRes = await request(app).get("/picks").expect(200);
+            expect(getAllRes.body).toBeArrayOfSize(51);
+
+            const batchPutRes = await adminLoggedIn(postFileRequest(csv, "append"));
+            expect(batchPutRes.body).toBeArrayOfSize(50);
+            const afterGetAllRes = await request(app).get("/picks").expect(200);
+            expect(afterGetAllRes.body).toBeArrayOfSize(101);
+        });
+        it("should overwrite with the given mode passed in", async () => {
+            const getAllRes = await request(app).get("/picks").expect(200);
+            expect(getAllRes.body).toBeArrayOfSize(101);
+
+            const batchPutRes = await adminLoggedIn(postFileRequest(csv, "overwrite"));
+            expect(batchPutRes.body).toBeArrayOfSize(50);
+            const afterGetAllRes = await request(app).get("/picks").expect(200);
+            expect(afterGetAllRes.body).toBeArrayOfSize(50);
+        });
+        it("should return a 400 Bad Request if no file is passed in", async () => {
+            await (adminLoggedIn(requestWithoutFile("overwrite", 400)));
+        });
+        it("should return a 403 Forbidden error if a non-admin tries to upload new picks", async () => {
+            await ownerLoggedIn(postFileRequest(csv, "overwrite", 403));
+        });
+        it("should return a 403 Forbidden error if a non-logged-in request is used", async () => {
+            await postFileRequest(csv, "overwrite", 403)(request(app));
         });
     });
 });

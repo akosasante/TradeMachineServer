@@ -67,7 +67,7 @@ export default class DraftPickController {
 
     @Authorized(Role.ADMIN)
     @Post("/batch")
-    public async batchUploadDraftPicks(@UploadedFile("picks", {required: false, options: uploadOpts}) file: any,
+    public async batchUploadDraftPicks(@UploadedFile("picks", {required: true, options: uploadOpts}) file: any,
                                        @QueryParam("mode") mode: WriteMode): Promise<DraftPick[]> {
         const users = await this.userDAO.getAllUsers();
         return await processDraftPickCsv(file.path, users, this.dao, mode);
