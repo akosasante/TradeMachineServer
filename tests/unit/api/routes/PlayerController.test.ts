@@ -1,9 +1,16 @@
 import "jest";
 import "jest-extended";
+import { mocked } from "ts-jest/utils";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import PlayerController from "../../../../src/api/routes/PlayerController";
+import { processMinorLeagueCsv } from "../../../../src/csv/PlayerParser";
 import PlayerDAO from "../../../../src/DAO/PlayerDAO";
+import TeamDAO from "../../../../src/DAO/TeamDAO";
 import Player, { LeagueLevel } from "../../../../src/models/player";
+import Team from "../../../../src/models/team";
+
+jest.mock("../../../../src/csv/PlayerParser");
+const mockedCsvParser = mocked(processMinorLeagueCsv);
 
 describe("PlayerController", () => {
     const mockPlayerDAO = {
@@ -14,13 +21,19 @@ describe("PlayerController", () => {
         updatePlayer: jest.fn(),
         deletePlayer: jest.fn(),
     };
+    const mockTeamDAO = {
+        getAllTeams: jest.fn(),
+    };
     const testPlayer = new Player({id: 1, name: "Honus Wiener", league: LeagueLevel.HIGH});
-    const playerController = new PlayerController(mockPlayerDAO as unknown as PlayerDAO);
+    const playerController = new PlayerController(mockPlayerDAO as unknown as PlayerDAO,
+        mockTeamDAO as unknown as TeamDAO);
 
     afterEach(() => {
-        Object.entries(mockPlayerDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockClear();
-        });
+        [mockPlayerDAO, mockTeamDAO].map(mockedThing =>
+            Object.entries(mockedThing).forEach((kvp: [string, jest.Mock<any, any>]) => {
+                kvp[1].mockClear();
+            }));
+        mockedCsvParser.mockClear();
     });
 
     describe("getAllPlayers method", () => {
@@ -140,6 +153,43 @@ describe("PlayerController", () => {
             });
             await expect(playerController.deletePlayer(9999))
                 .rejects.toThrow(EntityNotFoundError);
+        });
+    });
+
+    describe("batchUploadMinorLeaguePlayers method", () => {
+        const overwriteMode = "overwrite";
+        const testFile = {path: "/test/path/to.csv"};
+
+        it("should get all existing teams from the db", async () => {
+            await playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode);
+            expect(mockTeamDAO.getAllTeams).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.getAllTeams).toHaveBeenCalledWith();
+        });
+        it("should call the minor league player processor method", async () => {
+            const teams = [new Team({name: "Squirtle Squad", espnId: 1})];
+            mockTeamDAO.getAllTeams.mockResolvedValueOnce(teams);
+            await playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode);
+            expect(mockedCsvParser).toHaveBeenCalledTimes(1);
+            expect(mockedCsvParser).toHaveBeenCalledWith(testFile.path, teams, mockPlayerDAO, overwriteMode);
+        });
+        it("should call the return an array of players", async () => {
+            mockedCsvParser.mockResolvedValueOnce([testPlayer]);
+            const res = await playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode);
+            expect(res).toEqual([testPlayer]);
+        });
+        it("should reject if userDAO throws an error", async () => {
+            mockTeamDAO.getAllTeams.mockImplementationOnce(() => {
+                throw new Error();
+            });
+            await expect(playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode))
+                .rejects.toThrow(Error);
+        });
+        it("should reject if processMinorLeagueCsv throws an error", async () => {
+            mockedCsvParser.mockImplementationOnce(() => {
+                throw new Error();
+            });
+            await expect(playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode))
+                .rejects.toThrow(Error);
         });
     });
 });

@@ -8,21 +8,27 @@ import {
     Post,
     Put,
     QueryParam,
-    QueryParams
+    QueryParams,
+    UploadedFile
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
+import { WriteMode } from "../../csv/CsvUtils";
+import { processMinorLeagueCsv } from "../../csv/PlayerParser";
 import PlayerDAO from "../../DAO/PlayerDAO";
+import TeamDAO from "../../DAO/TeamDAO";
 import Player, { LeagueLevel } from "../../models/player";
 import { Role } from "../../models/user";
-import { cleanupQuery } from "../ApiHelpers";
+import { cleanupQuery, fileUploadOptions as uploadOpts } from "../ApiHelpers";
 
 @JsonController("/players")
 export default class PlayerController {
-    private dao: PlayerDAO;
+    private readonly dao: PlayerDAO;
+    private teamDAO: TeamDAO;
 
-    constructor(DAO?: PlayerDAO) {
+    constructor(DAO?: PlayerDAO, TeamDao?: TeamDAO) {
         this.dao = DAO || new PlayerDAO();
+        this.teamDAO = TeamDao || new TeamDAO();
     }
 
     @Get("/")
@@ -56,6 +62,14 @@ export default class PlayerController {
     public async createPlayer(@Body() playerObj: Partial<Player>): Promise<Player> {
         logger.debug("create team endpoint");
         return await this.dao.createPlayer(playerObj);
+    }
+
+    @Authorized(Role.ADMIN)
+    @Post("/batch")
+    public async batchUploadMinorLeaguePlayers(@UploadedFile("minors", {required: true, options: uploadOpts}) file: any,
+                                               @QueryParam("mode") mode: WriteMode): Promise<Player[]> {
+        const teams = await this.teamDAO.getAllTeams();
+        return await processMinorLeagueCsv(file.path, teams, this.dao, mode);
     }
 
     @Authorized(Role.ADMIN)
