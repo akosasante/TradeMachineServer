@@ -103,9 +103,28 @@ describe("PlayerDAO", () => {
     });
 
     it("deleteAllPick - should call the db clear method to do Truncate command", async () => {
-        await playerDAO.deleteAllPicks();
+        await playerDAO.deleteAllPlayers();
         expect(mockPlayerDb.clear).toHaveBeenCalledTimes(1);
         expect(mockPlayerDb.clear).toHaveBeenCalledWith();
+    });
+
+    describe("deleteAllPick - should pass in the appropriate query parameter if required",  () => {
+        it("should handle the case 'major' correctly", async () => {
+            await playerDAO.deleteAllPlayers("major");
+            expect(mockPlayerDb.delete).toHaveBeenCalledTimes(1);
+            expect(mockPlayerDb.delete).toHaveBeenCalledWith({league: LeagueLevel.MAJOR}, {chunk: 10});
+        });
+        it("should handle the case 'minor' correctly", async () => {
+            await playerDAO.deleteAllPlayers("minor");
+            expect(mockPlayerDb.delete).toHaveBeenCalledTimes(1);
+            expect(mockPlayerDb.delete).toHaveBeenCalledWith([{league: LeagueLevel.HIGH}, {league: LeagueLevel.LOW}],
+                {chunk: 10});
+        });
+        it("should handle the case with specific LeagueLevels correctly", async () => {
+            await playerDAO.deleteAllPlayers(LeagueLevel.LOW);
+            expect(mockPlayerDb.delete).toHaveBeenCalledTimes(1);
+            expect(mockPlayerDb.delete).toHaveBeenCalledWith({league: LeagueLevel.LOW}, {chunk: 10});
+        });
     });
 
     it("batchCreatePlayers - should call the db save once with playerObjs", async () => {

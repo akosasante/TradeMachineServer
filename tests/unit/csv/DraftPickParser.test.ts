@@ -47,6 +47,7 @@ describe("DraftPickParser", () => {
         await expect(processDraftPickCsv(csv, [testUser1, testUser2, testUser3],
             mockDAO as unknown as DraftPickDAO, "overwrite")).rejects.toThrow(Error);
         expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(1);
+        expect(mockDAO.batchCreatePicks).toHaveBeenCalledTimes(0);
     });
     it("should call DAO.batchCreatePicks once if less than 50 rows", async () => {
         const csv = `${process.env.BASE_DIR}/tests/resources/two-player-less-picks.csv`;

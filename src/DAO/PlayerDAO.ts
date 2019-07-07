@@ -1,6 +1,6 @@
 import { NotFoundError } from "routing-controllers";
-import { Connection, DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
-import Player from "../models/player";
+import { Connection, DeleteResult, FindConditions, FindManyOptions, getConnection, Repository } from "typeorm";
+import Player, { LeagueLevel } from "../models/player";
 
 export default class PlayerDAO {
     public connection: Connection;
@@ -54,7 +54,13 @@ export default class PlayerDAO {
         return await this.playerDb.delete(id);
     }
 
-    public async deleteAllPicks(): Promise<void> {
-        return await this.playerDb.clear();
+    public async deleteAllPlayers(type?: "major"|"minor"|LeagueLevel): Promise<void> {
+        if (!type) {
+            await this.playerDb.clear();
+        } else {
+            const query: FindConditions<Player> = type === "major" ? {league: LeagueLevel.MAJOR} : type === "minor" ?
+                [{league: LeagueLevel.HIGH}, {league: LeagueLevel.LOW}] : {league: type};
+            await this.playerDb.delete(query, {chunk: 10});
+        }
     }
 }
