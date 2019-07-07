@@ -3,8 +3,11 @@ import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
+import { WriteMode } from "../../src/csv/CsvUtils";
+import TeamDAO from "../../src/DAO/TeamDAO";
 import UserDAO from "../../src/DAO/UserDAO";
 import Player, { LeagueLevel } from "../../src/models/player";
+import Team from "../../src/models/team";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
 import {
@@ -20,8 +23,13 @@ import {
 let app: Server;
 let adminUser: User;
 let ownerUser: User;
-const adminUserObj = { email: "admin@example.com", password: "lol", name: "Cam", roles: [Role.ADMIN]};
-const ownerUserObj = { email: "owner@example.com", password: "lol", name: "Jatheesh", roles: [Role.OWNER]};
+let team1: Team;
+let team2: Team;
+let team3: Team;
+const adminUserObj = { email: "admin@example.com", password: "lol", name: "Cam", shortName: "Cam", roles: [Role.ADMIN]};
+const ownerUserObj = { email: "owner@example.com", password: "lol", name: "J", shortName: "Squad", roles: [Role.OWNER]};
+const userObj3 = { email: "akos@example.com", password: "lol", name: "A", roles: [Role.OWNER], shortName: "Akos"};
+const userObj4 = { email: "kwasi@example.com", password: "lol", name: "K", roles: [Role.OWNER], shortName: "Kwasi"};
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -37,10 +45,17 @@ async function shutdown() {
 beforeAll(async () => {
     app = await server;
 
-    // Create admin and owner users in db for rest of this suite's use
     const userDAO = new UserDAO();
+    const teamDAO = new TeamDAO();
+    // Create admin and owner users in db for rest of this suite's use
     adminUser = await userDAO.createUser({...adminUserObj});
     ownerUser = await userDAO.createUser({...ownerUserObj});
+    // Create users and teams for batch upload tests
+    const user3 = await userDAO.createUser({...userObj3});
+    const user4 = await userDAO.createUser({...userObj4});
+    team1 = await teamDAO.createTeam({name: "Camtastic", owners: [adminUser]});
+    team2 = await teamDAO.createTeam({name: "Squad", owners: [ownerUser]});
+    team3 = await teamDAO.createTeam({name: "Asantes", owners: [user3, user4]});
 });
 afterAll(async () => {
     await shutdown();
@@ -211,4 +226,59 @@ describe("Player API endpoints", () => {
             expect(getAllRes.body).toBeArrayOfSize(1);
         });
     });
+
+    describe("POST /batch (batch add new minor league players via csv file)", () => {
+        const csv = `${process.env.BASE_DIR}/tests/resources/three-teams-four-owners-minor-players.csv`;
+        const postFileRequest = (filePath: string, mode?: WriteMode, status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                agent
+                    .post(`/players/batch${mode ? "?mode=" + mode : ""}`)
+                    .attach("minors", filePath)
+                    .expect("Content-Type", /json/)
+                    .expect(status);
+        const requestWithoutFile = (mode?: WriteMode, status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                agent
+                    .post(`/players/batch${mode ? "?mode=" + mode : ""}`)
+                    .expect("Content-Type", /json/)
+                    .expect(status);
+
+        it("should append by default", async () => {
+            const getAllRes = await request(app).get("/players").expect(200);
+            expect(getAllRes.body).toBeArrayOfSize(1); // This one is a major league player so it'll neverr get deleted
+
+            const batchPutRes = await adminLoggedIn(postFileRequest(csv));
+            expect(batchPutRes.body).toBeArrayOfSize(99);
+            const afterGetAllRes = await request(app).get("/players").expect(200);
+            expect(afterGetAllRes.body).toBeArrayOfSize(100);
+        });
+        it("should append with the given mode passed in", async () => {
+            const getAllRes = await request(app).get("/players").expect(200);
+            expect(getAllRes.body).toBeArrayOfSize(100);
+
+            const batchPutRes = await adminLoggedIn(postFileRequest(csv, "append"));
+            expect(batchPutRes.body).toBeArrayOfSize(99);
+            const afterGetAllRes = await request(app).get("/players").expect(200);
+            expect(afterGetAllRes.body).toBeArrayOfSize(199);
+        });
+        it("should overwrite with the given mode passed in", async () => {
+            const getAllRes = await request(app).get("/players").expect(200);
+            expect(getAllRes.body).toBeArrayOfSize(199);
+
+            const batchPutRes = await adminLoggedIn(postFileRequest(csv, "overwrite"));
+            expect(batchPutRes.body).toBeArrayOfSize(99);
+            const afterGetAllRes = await request(app).get("/players").expect(200);
+            expect(afterGetAllRes.body).toBeArrayOfSize(100);
+        });
+        it("should return a 400 Bad Request if no file is passed in", async () => {
+            await (adminLoggedIn(requestWithoutFile("overwrite", 400)));
+        });
+        it("should return a 403 Forbidden error if a non-admin tries to upload new players", async () => {
+            await ownerLoggedIn(postFileRequest(csv, "overwrite", 403));
+        });
+        it("should return a 403 Forbidden error if a non-logged-in request is used", async () => {
+            await postFileRequest(csv, "overwrite", 403)(request(app));
+        });
+    });
+
 });

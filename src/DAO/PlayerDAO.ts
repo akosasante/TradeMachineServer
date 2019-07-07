@@ -1,5 +1,5 @@
 import { NotFoundError } from "routing-controllers";
-import { Connection, DeleteResult, FindConditions, FindManyOptions, getConnection, Repository } from "typeorm";
+import { Connection, DeleteResult, FindConditions, FindManyOptions, getConnection, In, Repository } from "typeorm";
 import Player, { LeagueLevel } from "../models/player";
 
 export default class PlayerDAO {
@@ -59,7 +59,7 @@ export default class PlayerDAO {
             await this.playerDb.clear();
         } else {
             const query: FindConditions<Player> = type === "major" ? {league: LeagueLevel.MAJOR} : type === "minor" ?
-                [{league: LeagueLevel.HIGH}, {league: LeagueLevel.LOW}] : {league: type};
+                {league: In([LeagueLevel.HIGH, LeagueLevel.LOW])} : {league: type};
             await this.playerDb.delete(query, {chunk: 10});
         }
     }

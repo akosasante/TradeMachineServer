@@ -95,7 +95,7 @@ describe("DraftPickParser", () => {
         const csv1 = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks-with-invalid.csv`;
         const res1 = await processDraftPickCsv(csv1, [testUser1, testUser2, testUser3],
             mockDAO as unknown as DraftPickDAO);
-        await expect(res1).toBeArrayOfSize(47);
+        await expect(res1).toBeArrayOfSize(46);
 
         const csv2 = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks-invalid-headers.csv`;
         const res2 = await processDraftPickCsv(csv2, [testUser1, testUser2, testUser3],

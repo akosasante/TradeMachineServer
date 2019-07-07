@@ -216,7 +216,7 @@ describe("Pick API endpoints", () => {
         });
     });
 
-    describe("PUT /batch (batch add new draft picks via csv file)", () => {
+    describe("POST /batch (batch add new draft picks via csv file)", () => {
         const csv = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks.csv`;
         const postFileRequest = (filePath: string, mode?: WriteMode, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>

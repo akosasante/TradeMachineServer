@@ -109,6 +109,8 @@ describe("PlayerDAO", () => {
     });
 
     describe("deleteAllPick - should pass in the appropriate query parameter if required",  () => {
+        const findMinorLeaguesCondition = {league:
+                {_multipleParameters: true, _type: "in", _useParameter: true, _value: ["High Minors", "Low Minors"]}};
         it("should handle the case 'major' correctly", async () => {
             await playerDAO.deleteAllPlayers("major");
             expect(mockPlayerDb.delete).toHaveBeenCalledTimes(1);
@@ -117,8 +119,7 @@ describe("PlayerDAO", () => {
         it("should handle the case 'minor' correctly", async () => {
             await playerDAO.deleteAllPlayers("minor");
             expect(mockPlayerDb.delete).toHaveBeenCalledTimes(1);
-            expect(mockPlayerDb.delete).toHaveBeenCalledWith([{league: LeagueLevel.HIGH}, {league: LeagueLevel.LOW}],
-                {chunk: 10});
+            expect(mockPlayerDb.delete).toHaveBeenCalledWith(findMinorLeaguesCondition, {chunk: 10});
         });
         it("should handle the case with specific LeagueLevels correctly", async () => {
             await playerDAO.deleteAllPlayers(LeagueLevel.LOW);
