@@ -2,6 +2,8 @@ import { Column, Entity, OneToMany } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes, HasEquals } from "./base";
 import Player from "./player";
+import TradeItem from "./tradeItems";
+import TradeParticipant from "./tradeParticipants";
 import User from "./user";
 
 export enum TeamStatus {
@@ -34,6 +36,15 @@ export default class Team extends BaseModel implements HasEquals {
     @OneToMany(type => Player, player => player.leagueTeam, { onDelete: "SET NULL"})
     public players?: Player[];
 
+    @OneToMany(type => TradeParticipant, tradeParticipant => tradeParticipant.team)
+    public tradeParticipants?: TradeParticipant[];
+
+    @OneToMany(type => TradeItem, tradeItem => tradeItem.sender)
+    public tradeItemsSent?: TradeItem[];
+
+    @OneToMany(type => TradeItem, tradeItem => tradeItem.recipient)
+    public tradeItemsReceived?: TradeItem[];
+
     constructor(teamObj: Partial<Team> = {}) {
         super();
         Object.assign(this, {id: teamObj.id});
@@ -45,6 +56,9 @@ export default class Team extends BaseModel implements HasEquals {
                 .sort((a, b) => (a.id || 0) - (b.id || 0))
             : teamObj.owners;
         this.players = teamObj.players ? teamObj.players.map((obj: any) => new Player(obj)) : teamObj.players;
+        this.tradeParticipants = teamObj.tradeParticipants;
+        this.tradeItemsReceived = teamObj.tradeItemsReceived;
+        this.tradeItemsSent = teamObj.tradeItemsSent;
     }
 
     public toString(): string {
@@ -53,7 +67,7 @@ export default class Team extends BaseModel implements HasEquals {
 
     public equals(other: Team, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
         logger.debug("Team equals check");
-        const COMPLEX_FIELDS = {};
+        const COMPLEX_FIELDS = {tradeParticipants: true, tradeItemsReceived: true, tradeItemsSent: true};
         const MODEL_FIELDS = {owners: true};
         const DEFAULT_EXCLUDES = {
             id: true,

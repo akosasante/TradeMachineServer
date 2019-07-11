@@ -1,7 +1,8 @@
-import { Column, Entity, ManyToOne } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes, HasEquals } from "./base";
 import { LeagueLevel } from "./player";
+import TradeItem from "./tradeItems";
 import User from "./user";
 
 @Entity()
@@ -24,6 +25,9 @@ export default class DraftPick extends BaseModel implements HasEquals {
     @ManyToOne(type => User, user => user.originalDraftPicks, {eager: true, onDelete: "SET NULL"})
     public originalOwner?: User;
 
+    @OneToMany(type => TradeItem, tradeItem => tradeItem.pick)
+    public tradeItems?: TradeItem[];
+
     constructor(draftPickObj: Partial<DraftPick> = {}) {
         super();
         Object.assign(this, {id: draftPickObj.id});
@@ -33,6 +37,7 @@ export default class DraftPick extends BaseModel implements HasEquals {
         this.type = draftPickObj.type!;
         this.currentOwner = draftPickObj.currentOwner;
         this.originalOwner = draftPickObj.originalOwner;
+        this.tradeItems = draftPickObj.tradeItems;
     }
 
     public toString(): string {
@@ -42,7 +47,7 @@ export default class DraftPick extends BaseModel implements HasEquals {
 
     public equals(other: DraftPick, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
         logger.debug("Draft pick equals check");
-        const COMPLEX_FIELDS = {};
+        const COMPLEX_FIELDS = {tradeItems: true};
         const MODEL_FIELDS = {currentOwner: true, originalOwner: true};
         const DEFAULT_EXCLUDES = {
             id: true,
