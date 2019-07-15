@@ -57,4 +57,8 @@ export default class TradeItem {
         const entityId = this.entity ? `#${this.entity.id}` : "";
         return `TI#${this.tradeItemId}: ${this.tradeItemType}${entityId} for trade#${this.trade.id}`;
     }
+
+    public isValid(): boolean {
+        return !!this.entity;
+    }
 }
