@@ -47,7 +47,7 @@ describe("Team Class", () => {
             });
 
             it("should return true if the two instances are identical considering the excludes", async () => {
-                expect(team.equals(team3, {espnId: true}));
+                expect(team.equals(team3, {espnId: true})).toBeTrue();
             });
 
             it("should throw a useful error if something doesn't match (props)", async () => {

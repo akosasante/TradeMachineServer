@@ -2,7 +2,7 @@ import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes, HasEquals } from "./base";
 import Team from "./team";
-import TradeItem from "./tradeItems";
+import TradeItem from "./tradeItem";
 
 export enum LeagueLevel {
     MAJOR = "Majors",

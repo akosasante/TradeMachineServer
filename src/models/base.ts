@@ -55,6 +55,7 @@ export class BaseModel {
 }
 
 function objectsEqual<T extends BaseModel>(props: Array<keyof T>, obj1: T, obj2: T): boolean {
+    logger.debug("comparing complex objects");
     return props.reduce((bool: boolean, prop: keyof T) => {
         const res = bool && objectEqual(prop, obj1, obj2);
         if (!res) {

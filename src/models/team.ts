@@ -2,8 +2,8 @@ import { Column, Entity, OneToMany } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes, HasEquals } from "./base";
 import Player from "./player";
-import TradeItem from "./tradeItems";
-import TradeParticipant from "./tradeParticipants";
+import TradeItem from "./tradeItem";
+import TradeParticipant from "./tradeParticipant";
 import User from "./user";
 
 export enum TeamStatus {
