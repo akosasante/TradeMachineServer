@@ -60,7 +60,7 @@ export default class PlayerController {
     @Authorized(Role.ADMIN)
     @Post("/")
     public async createPlayer(@Body() playerObj: Partial<Player>): Promise<Player> {
-        logger.debug("create team endpoint");
+        logger.debug("create player endpoint");
         return await this.dao.createPlayer(playerObj);
     }
 

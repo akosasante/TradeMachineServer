@@ -61,7 +61,7 @@ export default class DraftPickController {
     @Authorized(Role.ADMIN)
     @Post("/")
     public async createDraftPick(@Body() draftPickObj: Partial<DraftPick>): Promise<DraftPick> {
-        logger.debug("create team endpoint");
+        logger.debug("create draft pick endpoint");
         return await this.dao.createPick(draftPickObj);
     }
 
