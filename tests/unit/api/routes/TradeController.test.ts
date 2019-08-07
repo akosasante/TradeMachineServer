@@ -15,7 +15,8 @@ describe("TradeController", () => {
         getAllTrades: jest.fn(),
         getTradeById: jest.fn(),
         createTrade: jest.fn(),
-        updateTrade: jest.fn(),
+        updateParticipants: jest.fn(),
+        updateItems: jest.fn(),
         deleteTrade: jest.fn(),
 
     };
@@ -24,13 +25,15 @@ describe("TradeController", () => {
     const pick = new DraftPick({round: 1, pickNumber: 12, type: LeagueLevel.LOW});
     const creatorTeam = new Team({name: "Squirtle Squad", espnId: 1});
     const recipientTeam = new Team({name: "Ditto Duo", espnId: 2});
-    const sender = new TradeParticipant({participantType: TradeParticipantType.RECIPIENT, team: recipientTeam});
-    const recipient = new TradeParticipant({participantType: TradeParticipantType.CREATOR, team: creatorTeam});
-    const tradedMajorPlayer = new TradeItem({tradeItemType: TradeItemType.PLAYER, player: majorPlayer,
+    const sender = new TradeParticipant({tradeParticipantId: 1, participantType: TradeParticipantType.CREATOR,
+        team: recipientTeam});
+    const recipient = new TradeParticipant({tradeParticipantId: 2, participantType: TradeParticipantType.RECIPIENT,
+        team: creatorTeam});
+    const tradedMajorPlayer = new TradeItem({tradeItemId: 1, tradeItemType: TradeItemType.PLAYER, player: majorPlayer,
         sender: creatorTeam, recipient: recipientTeam });
-    const tradedMinorPlayer = new TradeItem({tradeItemType: TradeItemType.PLAYER, player: minorPlayer,
+    const tradedMinorPlayer = new TradeItem({tradeItemId: 2, tradeItemType: TradeItemType.PLAYER, player: minorPlayer,
         sender: creatorTeam, recipient: recipientTeam });
-    const tradedPick = new TradeItem({tradeItemType: TradeItemType.PICK, pick,
+    const tradedPick = new TradeItem({tradeItemId: 3, tradeItemType: TradeItemType.PICK, pick,
         sender: recipientTeam, recipient: creatorTeam });
     const tradeItems = [tradedMajorPlayer, tradedMinorPlayer, tradedPick];
     const testTrade = new Trade({id: 1, tradeItems, tradeParticipants: [sender, recipient]});
@@ -97,16 +100,42 @@ describe("TradeController", () => {
     });
 
     describe("updateTrade method", () => {
-        it("should return updated trade with the given id", async () => {
-            mockTradeDAO.updateTrade.mockReturnValue(testTrade);
+        it("should call getTradeById twice", async () => {
+            mockTradeDAO.getTradeById.mockReturnValue(testTrade);
             const res = await tradeController.updateTrade(testTrade.id!, testTrade.parse());
 
-            expect(mockTradeDAO.updateTrade).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.updateTrade).toHaveBeenCalledWith(testTrade.id, testTrade.parse());
+            expect(mockTradeDAO.getTradeById).toHaveBeenCalledTimes(2);
+            expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id);
             expect(res).toEqual(testTrade);
         });
+        it("should call the updateParticipants method", async () => {
+            mockTradeDAO.getTradeById.mockReturnValue(testTrade);
+            const newSender = new TradeParticipant({ participantType: TradeParticipantType.CREATOR,
+                team: recipientTeam});
+            const updatedTrade = new Trade({id: 1, tradeItems, tradeParticipants: [newSender, recipient]});
+            await tradeController.updateTrade(updatedTrade.id!, updatedTrade.parse());
+
+            expect(mockTradeDAO.updateParticipants).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.updateItems).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.updateParticipants).toHaveBeenCalledWith(testTrade.id, [newSender], [sender]);
+            expect(mockTradeDAO.updateItems).toHaveBeenCalledWith(testTrade.id, [], []);
+        });
+        it("should call the updateItems method", async () => {
+            mockTradeDAO.getTradeById.mockReturnValue(testTrade);
+            const newMinorPlayer = new TradeItem({tradeItemId: 4, tradeItemType: TradeItemType.PLAYER,
+                player: minorPlayer, sender: creatorTeam, recipient: recipientTeam });
+            const updatedTrade = new Trade({id: 1, tradeItems: [tradedMajorPlayer, newMinorPlayer, tradedPick],
+                tradeParticipants: [sender, recipient]});
+            await tradeController.updateTrade(updatedTrade.id!, updatedTrade.parse());
+
+            expect(mockTradeDAO.updateItems).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.updateParticipants).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.updateItems).toHaveBeenCalledWith(testTrade.id,
+                [newMinorPlayer], [tradedMinorPlayer]);
+            expect(mockTradeDAO.updateParticipants).toHaveBeenCalledWith(testTrade.id, [], []);
+        });
         it("should throw an error if entity is not found in db", async () => {
-            mockTradeDAO.updateTrade.mockImplementation(() => {
+            mockTradeDAO.getTradeById.mockImplementation(() => {
                 throw new EntityNotFoundError(Trade, "ID not found.");
             });
             await expect(tradeController.updateTrade(9999, testTrade.parse()))

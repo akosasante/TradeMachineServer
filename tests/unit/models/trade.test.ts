@@ -14,8 +14,8 @@ describe("Trade Class", () => {
     const pick = new DraftPick({round: 1, pickNumber: 12, type: LeagueLevel.LOW});
     const creatorTeam = new Team({name: "Squirtle Squad", espnId: 1});
     const recipientTeam = new Team({name: "Ditto Duo", espnId: 2});
-    const sender = new TradeParticipant({participantType: TradeParticipantType.RECIPIENT, team: recipientTeam});
-    const recipient = new TradeParticipant({participantType: TradeParticipantType.CREATOR, team: creatorTeam});
+    const sender = new TradeParticipant({participantType: TradeParticipantType.CREATOR, team: creatorTeam});
+    const recipient = new TradeParticipant({participantType: TradeParticipantType.RECIPIENT, team: recipientTeam});
     const tradedMajorPlayer = new TradeItem({tradeItemType: TradeItemType.PLAYER, player: majorPlayer,
         sender: creatorTeam, recipient: recipientTeam });
     const tradedMinorPlayer = new TradeItem({tradeItemType: TradeItemType.PLAYER, player: minorPlayer,

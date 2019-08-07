@@ -48,37 +48,37 @@ export default class TradeItem {
     @Column({type: "enum", enum: TradeItemType, default: TradeItemType.PLAYER})
     public tradeItemType: TradeItemType;
 
-    @ManyToOne(type => Trade, trade => trade.tradeParticipants)
+    @ManyToOne(type => Trade, trade => trade.tradeParticipants, {onDelete: "CASCADE"})
     public trade: Trade;
 
-    @ManyToOne(type => Player, player => player.tradeItems)
+    @ManyToOne(type => Player, player => player.tradeItems, {cascade: true, eager: true})
     public player?: Player;
 
-    @ManyToOne(type => DraftPick, pick => pick.tradeItems)
+    @ManyToOne(type => DraftPick, pick => pick.tradeItems, {cascade: true, eager: true})
     public pick?: DraftPick;
 
-    @ManyToOne(type => Team, team => team.tradeItemsSent)
+    @ManyToOne(type => Team, team => team.tradeItemsSent, {cascade: true, eager: true})
     public sender: Team;
 
-    @ManyToOne(type => Team, team => team.tradeItemsReceived)
+    @ManyToOne(type => Team, team => team.tradeItemsReceived, {cascade: true, eager: true})
     public recipient: Team;
 
     constructor(tradeItemObj: Partial<TradeItem> = {}) {
         this.tradeItemId = tradeItemObj.tradeItemId!;
         this.tradeItemType = tradeItemObj.tradeItemType!;
         this.trade = tradeItemObj.trade!;
-        this.player = tradeItemObj.player;
-        this.pick = tradeItemObj.pick;
-        this.sender = tradeItemObj.sender!;
-        this.recipient = tradeItemObj.recipient!;
+        this.player = tradeItemObj.player ? new Player(tradeItemObj.player) : undefined;
+        this.pick = tradeItemObj.pick ? new DraftPick(tradeItemObj.pick) : undefined;
+        this.sender = new Team(tradeItemObj.sender!);
+        this.recipient = new Team(tradeItemObj.recipient!);
     }
 
-    public get entity() {
+    public get entity(): Player|DraftPick {
         switch (this.tradeItemType) {
             case TradeItemType.PLAYER:
-                return this.player;
+                return this.player instanceof Player ? this.player : new Player(this.player);
             case TradeItemType.PICK:
-                return this.pick;
+                return this.pick instanceof  DraftPick ? this.pick : new DraftPick(this.pick);
         }
     }
 

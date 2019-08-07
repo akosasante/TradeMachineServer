@@ -68,7 +68,7 @@ export default class TeamDAO {
             throw new NotFoundError("Id is required");
         }
         await this.teamDb.findOneOrFail(id);
-        const res = await this.teamDb
+        await this.teamDb
             .createQueryBuilder()
             .relation("owners")
             .of(id)

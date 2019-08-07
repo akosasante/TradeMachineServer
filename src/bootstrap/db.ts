@@ -13,6 +13,7 @@ export default async function initializeDb(logQueries: boolean = false) {
             logger: logQueries ? new CustomQueryLogger(logger) : undefined,
         });
         const pgClient = (await connection.driver.obtainMasterConnection())[0];
+
         pgClient.on("error", (dbErr: any) => {
             logger.error(`DBERROR: ${inspect(dbErr)}`);
             setTimeout(async () => {
@@ -26,9 +27,11 @@ export default async function initializeDb(logQueries: boolean = false) {
                 }
             }, 5000);
         });
+
         pgClient.on("end", () => {
             logger.debug("PgClient ended");
         });
+
         return connection;
     } catch (error) {
         logger.error("Error while initializing db connection.");

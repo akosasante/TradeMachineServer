@@ -1,3 +1,4 @@
+import { differenceBy } from "lodash";
 import { Authorized, Body, Delete, Get, JsonController, Param, Post, Put } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -38,7 +39,28 @@ export default class TradeController {
     @Put("/:id([0-9]+)")
     public async updateTrade(@Param("id") id: number, @Body() tradeObj: Partial<Trade>): Promise<Trade> {
         logger.debug("update trade endpoint");
-        return await this.dao.updateTrade(id, tradeObj);
+        const existingTrade = await this.dao.getTradeById(id);
+        const participantsToAdd = differenceBy(
+            (tradeObj.tradeParticipants || []),
+            (existingTrade.tradeParticipants || []),
+            "tradeParticipantId");
+        const participantsToRemove = differenceBy(
+            (existingTrade.tradeParticipants || []),
+            (tradeObj.tradeParticipants || []),
+            "tradeParticipantId");
+
+        const itemsToAdd = differenceBy(
+            (tradeObj.tradeItems || []),
+            (existingTrade.tradeItems || []),
+            "tradeItemId");
+        const itemsToRemove = differenceBy(
+            (existingTrade.tradeItems || []),
+            (tradeObj.tradeItems || []),
+            "tradeItemId");
+
+        await this.dao.updateParticipants(id, participantsToAdd, participantsToRemove);
+        await this.dao.updateItems(id, itemsToAdd, itemsToRemove);
+        return await this.dao.getTradeById(id);
     }
 
     @Authorized(Role.ADMIN)

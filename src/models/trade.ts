@@ -41,10 +41,11 @@ export default class Trade extends BaseModel implements HasEquals {
         return TradeItem.filterPicks(this.tradeItems)
             .map(item => item.entity as DraftPick);
     }
-    @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade)
+    @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade,
+        {cascade: true, eager: true})
     public tradeParticipants: TradeParticipant[];
 
-    @OneToMany(type => TradeItem, tradeItem => tradeItem.trade)
+    @OneToMany(type => TradeItem, tradeItem => tradeItem.trade, {cascade: true, eager: true})
     public tradeItems: TradeItem[];
 
     constructor(tradeObj: Partial<Trade> = {}) {
@@ -68,7 +69,7 @@ export default class Trade extends BaseModel implements HasEquals {
             dateModified: true,
         };
         excludes = bypassDefaults ? excludes : Object.assign(DEFAULT_EXCLUDES, (excludes || {}));
-        return BaseModel.equals(this, other, excludes, COMPLEX_FIELDS, MODEL_FIELDS);
+        return equals(this, other, excludes, COMPLEX_FIELDS, MODEL_FIELDS);
     }
 
     public isValid(): boolean {
@@ -83,6 +84,11 @@ export default class Trade extends BaseModel implements HasEquals {
             part.participantType === TradeParticipantType.CREATOR).length === 1;
         return participantsAndItemsExist && participantsAndItemsLength &&
             recipientExists && creatorExists && onlyOneCreator;
+    }
+
+    public constructRelations(): void {
+        this.tradeParticipants = (this.tradeParticipants || []).map(part => new TradeParticipant(part));
+        this.tradeItems = (this.tradeItems || []).map(item => new TradeItem(item));
     }
 
     /*
@@ -134,4 +140,91 @@ export default class Trade extends BaseModel implements HasEquals {
             return tradeMap;
         }, { tradeId: this.id });
     }
+}
+
+function equals(self: Trade, other: Trade, excludes: Excludes = {},
+                complexFields: Excludes = {}, modelFields = {}): boolean {
+    let validParticipants: boolean;
+    let validItems: boolean;
+
+    if (excludes.tradeParticipants) {
+        validParticipants = true;
+    } else {
+        validParticipants = compareParticipants(self.tradeParticipants, other.tradeParticipants);
+    }
+
+    if (excludes.tradeItems) {
+        validItems = true;
+    } else {
+        validItems = compareItems(self.tradeItems, other.tradeItems);
+    }
+
+    return validParticipants && validItems;
+}
+
+function compareParticipants(selfParts: TradeParticipant[], otherParts: TradeParticipant[]) {
+    logger.debug("comparing trade participants");
+    const participantSort = (a: any, b: any) => (a.tradeParticipantId || 0) - (b.tradeParticipantId || 0);
+    selfParts.sort(participantSort);
+    otherParts.sort(participantSort);
+
+    if (selfParts.length !== otherParts.length) {
+        throw new Error("Not matching (different lengths): tradeParticipants");
+    }
+    // const keysNotId = Object.keys(selfParts).filter(key => key !== "tradeParticipantId");
+    // let same = true;
+
+    selfParts.forEach((part: TradeParticipant, index) => {
+        const other = otherParts[index];
+        if (part.participantType !== other.participantType) {
+            throw new Error(`Not matching, participantType: ${part.participantType} \n ${other.participantType}`);
+        }
+        if (!(new Team(part.team).equals(new Team(other.team), {players: true}))) {
+            throw new Error(`Not matching,teams: ${part.team} \n ${other.team}`);
+        }
+        // same = same && keysNotId.reduce((bool: boolean, prop: string) => {
+        //     const res = bool && part[prop as keyof TradeParticipant] === other[prop as keyof TradeParticipant];
+        //     if (!res) {
+        //         throw new Error("Not matching: " + prop);
+        //     }
+        //     return res;
+        // }, true);
+        // if (!same) {
+        //     throw new Error("Not matching: tradeParticipants at index: " + index);
+        // }
+    });
+    return true;
+}
+
+function compareItems(selfItems: TradeItem[], otherItems: TradeItem[]) {
+    logger.debug("comparing trade items");
+    const itemSort = (a: any, b: any) => (a.tradeItemId || 0) - (b.tradeItemId || 0);
+    selfItems.sort(itemSort);
+    otherItems.sort(itemSort);
+
+    if (selfItems.length !== otherItems.length) {
+        throw new Error("Not matching (different lengths): tradeItems");
+    }
+
+    selfItems.forEach((item: TradeItem, index) => {
+        const other = otherItems[index];
+        if (item.tradeItemType !== other.tradeItemType) {
+            throw new Error(`Not matching, tradeItemType: ${item.tradeItemType} \n ${other.tradeItemType}`);
+        }
+
+        if (!(item.sender.equals(other.sender, {players: true}))) {
+            throw new Error(`Not matching, sender: ${item.sender} \n ${other.sender}`);
+        }
+
+        if (!(item.recipient.equals(other.recipient, {players: true}))) {
+            throw new Error(`Not matching, recipient: ${item.recipient} \n ${other.recipient}`);
+        }
+
+        // @ts-ignore
+        if (!item.entity || !other.entity || !(item.entity.equals(other.entity))) {
+            throw new Error(`Not matching, entity: ${item.entity} \n ${other.entity}`);
+        }
+    });
+
+    return true;
 }

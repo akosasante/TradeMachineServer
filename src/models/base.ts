@@ -11,6 +11,15 @@ export interface HasEquals {
     equals(other: any, excludes?: Excludes, bypass?: boolean): boolean;
 }
 
+export class ConstructorError extends Error {
+    constructor(message: string) {
+        super(message);
+
+        // Set the prototype explicitly.
+        Object.setPrototypeOf(this, ConstructorError.prototype);
+    }
+}
+
 export class BaseModel {
 
     public static equals<T extends BaseModel>(self: T, other: T,
@@ -29,9 +38,11 @@ export class BaseModel {
         // model fields are things that extend BaseModel and have an .equals method themselves
         const models = includeOnly.filter(field => modelFields[field]);
 
-        return propsEqual(props as Array<keyof T>, self, other) &&
+        const res = propsEqual(props as Array<keyof T>, self, other) &&
             objectsEqual(objects as Array<keyof T>, self, other) &&
             modelsEqual(models as string[], self, other, excludes);
+        logger.debug("RESULT: " + res);
+        return res;
     }
     @PrimaryGeneratedColumn()
     public readonly id?: number;

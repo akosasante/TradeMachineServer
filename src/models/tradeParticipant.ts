@@ -15,17 +15,17 @@ export default class TradeParticipant {
     @Column({type: "enum", enum: TradeParticipantType, default: TradeParticipantType.RECIPIENT})
     public participantType: TradeParticipantType;
 
-    @ManyToOne(type => Trade, trade => trade.tradeParticipants)
+    @ManyToOne(type => Trade, trade => trade.tradeParticipants, {onDelete: "CASCADE"})
     public trade: Trade;
 
-    @ManyToOne(type => Team, team => team.tradeParticipants)
+    @ManyToOne(type => Team, team => team.tradeParticipants, {cascade: true, eager: true})
     public team: Team;
 
     constructor(tradeParticipantObj: Partial<TradeParticipant> = {}) {
         this.tradeParticipantId = tradeParticipantObj.tradeParticipantId!;
         this.participantType = tradeParticipantObj.participantType!;
         this.trade = tradeParticipantObj.trade!;
-        this.team = tradeParticipantObj.team!;
+        this.team = new Team(tradeParticipantObj.team!);
     }
 
     public toString(): string {
