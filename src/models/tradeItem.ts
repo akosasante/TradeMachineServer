@@ -73,12 +73,18 @@ export default class TradeItem {
         this.recipient = new Team(tradeItemObj.recipient!);
     }
 
-    public get entity(): Player|DraftPick {
+    public get entity(): Player|DraftPick|undefined {
         switch (this.tradeItemType) {
             case TradeItemType.PLAYER:
-                return this.player instanceof Player ? this.player : new Player(this.player);
+                if (this.player) {
+                    return this.player instanceof Player ? this.player : new Player(this.player);
+                }
+                break;
             case TradeItemType.PICK:
-                return this.pick instanceof  DraftPick ? this.pick : new DraftPick(this.pick);
+                if (this.pick) {
+                    return this.pick instanceof DraftPick ? this.pick : new DraftPick(this.pick);
+                }
+                break;
         }
     }
 
