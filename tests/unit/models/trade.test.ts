@@ -110,6 +110,26 @@ describe("Trade Class", () => {
             });
         });
 
+        describe("constructRelations/0", () => {
+            // @ts-ignore
+            const trade = new Trade({
+                tradeItems: [
+                    {tradeItemType: TradeItemType.PLAYER, player: majorPlayer, sender: creatorTeam,
+                        recipient: recipientTeam },
+                    {tradeItemType: TradeItemType.PICK, pick, sender: recipientTeam, recipient: creatorTeam },
+                    ],
+                tradeParticipants: [
+                    {participantType: TradeParticipantType.RECIPIENT, team: recipientTeam},
+                    {participantType: TradeParticipantType.CREATOR, team: creatorTeam},
+                ],
+            });
+            expect(trade.tradeItems[0]).not.toBeInstanceOf(TradeItem);
+            expect(trade.tradeParticipants[0]).not.toBeInstanceOf(TradeParticipant);
+            trade.constructRelations();
+            expect(trade.tradeItems[0]).toBeInstanceOf(TradeItem);
+            expect(trade.tradeParticipants[0]).toBeInstanceOf(TradeParticipant);
+        });
+
         describe("equals/2", () => {
             const copyTrade = clone(testTrade);
 
