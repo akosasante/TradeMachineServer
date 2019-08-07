@@ -130,8 +130,8 @@ describe("Trade Class", () => {
             });
             it("should throw a useful error if something doesn't match (complex props)", () => {
                 expect(() => testTrade.equals(diffParticipants))
-                    .toThrowWithMessage(Error, "Not matching: tradeParticipants");
-                expect(() => testTrade.equals(diffItems)).toThrowWithMessage(Error, "Not matching: tradeItems");
+                    .toThrowWithMessage(Error, /Not matching: tradeParticipants/);
+                expect(() => testTrade.equals(diffItems)).toThrowWithMessage(Error, /Not matching: tradeItems/);
             });
         });
 

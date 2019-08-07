@@ -19,10 +19,12 @@ const mockTradeDb = {
     createQueryBuilder: jest.fn(),
 };
 
+const mockTransaction = jest.fn();
+
 // @ts-ignore
 jest.spyOn(typeorm, "getConnection").mockReturnValue({
     getRepository: jest.fn().mockReturnValue(mockTradeDb),
-    transaction: jest.fn(),
+    transaction: mockTransaction,
 });
 
 describe("TradeDAO", () => {
@@ -85,11 +87,9 @@ describe("TradeDAO", () => {
     });
 
     it("createTrade - should call the db save once with tradeObj", async () => {
-        mockTradeDb.save.mockReturnValueOnce(testTrade.parse());
+        mockTransaction.mockReturnValueOnce(testTrade);
         const res = await tradeDAO.createTrade(testTrade.parse());
 
-        expect(mockTradeDb.save).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.save).toHaveBeenCalledWith(testTrade.parse());
         expect(res).toEqual(testTrade);
     });
 
