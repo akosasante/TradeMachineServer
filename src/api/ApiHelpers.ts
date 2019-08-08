@@ -1,10 +1,15 @@
+import { mkdirSync } from "fs";
 import multer from "multer";
 import { FindOperator, IsNull, Not } from "typeorm";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 
 const storage: multer.DiskStorageOptions = {
-    destination: (req: any, file: any, cb: any) => cb(undefined, "/tmp/trade_machine_2_csvs"),
+    destination: (req: any, file: any, cb: any) => {
+        const dir = "/tmp/trade_machine_2_csvs";
+        mkdirSync(dir, {recursive: true});
+        return cb(undefined, dir);
+    },
     filename: (req: any, file: any, cb: any) => cb(undefined, `${file.fieldname} - ${Date.now()}.csv`),
 };
 

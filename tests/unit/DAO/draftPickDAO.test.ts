@@ -2,6 +2,7 @@ import "jest";
 import "jest-extended";
 import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
+import { IsNull, Not } from "typeorm";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import DraftPick from "../../../src/models/draftPick";
 import { LeagueLevel } from "../../../src/models/player";
@@ -12,7 +13,6 @@ const mockPickDb = {
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
-    clear: jest.fn(),
 };
 
 // @ts-ignore
@@ -104,9 +104,10 @@ describe("DraftPickDAO", () => {
     });
 
     it("deleteAllPick - should call the db clear method to do Truncate command", async () => {
+        const expectedQuery = {id: Not(IsNull())};
         await draftPickDAO.deleteAllPicks();
-        expect(mockPickDb.clear).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.clear).toHaveBeenCalledWith();
+        expect(mockPickDb.delete).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.delete).toHaveBeenCalledWith(expectedQuery, {chunk: 10});
     });
 
     it("batchCreatePicks - should call the db save once with pickObjs", async () => {

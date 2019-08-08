@@ -1,5 +1,5 @@
 import { NotFoundError } from "routing-controllers";
-import { Connection, DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
+import { Connection, DeleteResult, FindManyOptions, getConnection, IsNull, Not, Repository } from "typeorm";
 import DraftPick from "../models/draftPick";
 
 export default class DraftPickDAO {
@@ -56,6 +56,6 @@ export default class DraftPickDAO {
     }
 
     public async deleteAllPicks(): Promise<void> {
-        return await this.draftPickDb.clear();
+        await this.draftPickDb.delete({id: Not(IsNull())}, {chunk: 10});
     }
 }

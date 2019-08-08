@@ -2,6 +2,7 @@ import "jest";
 import "jest-extended";
 import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
+import { IsNull, Not } from "typeorm";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import Player, { LeagueLevel } from "../../../src/models/player";
 
@@ -11,7 +12,6 @@ const mockPlayerDb = {
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
-    clear: jest.fn(),
 };
 
 // @ts-ignore
@@ -103,9 +103,10 @@ describe("PlayerDAO", () => {
     });
 
     it("deleteAllPick - should call the db clear method to do Truncate command", async () => {
+        const expectedQuery = {id: Not(IsNull())};
         await playerDAO.deleteAllPlayers();
-        expect(mockPlayerDb.clear).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.clear).toHaveBeenCalledWith();
+        expect(mockPlayerDb.delete).toHaveBeenCalledTimes(1);
+        expect(mockPlayerDb.delete).toHaveBeenCalledWith(expectedQuery, {chunk: 10});
     });
 
     describe("deleteAllPick - should pass in the appropriate query parameter if required",  () => {
