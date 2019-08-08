@@ -84,6 +84,7 @@ describe("Player API endpoints", () => {
             expect(testPlayer.equals(res.body)).toBeTrue();
         });
         it("should ignore any invalid properties from the object passed in", async () => {
+            jest.setTimeout(30000);
             const playerObj = {...testPlayerObj2, blah: "Hello"};
             const testInvalidProps = new Player(playerObj);
             const res = await adminLoggedIn(postRequest(testInvalidProps));
