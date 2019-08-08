@@ -4,13 +4,12 @@ services:
   - postgresql
   - redis-server
 before_script:
-  - psql -c 'create database trade_machine owner postgres;' -U postgres -a
+  - echo $NODE_ENV
+  - echo "$BASE_DIR"
+  - psql -f ci_db_setup.sql --set user="$PG_USER" --set password="$PG_PASSWORD" --set db_name="$PG_DB" -U postgres -a
   - psql -l -U postgres -a
-  - psql -c 'create schema test;' -U postgres -d trade_machine -a
   - echo '\dn' | psql -U postgres -d trade_machine -a
   - echo '\dt' | psql -U postgres -d trade_machine -a
-  - echo '$NODE_ENV'
-  - echo '$BASE_DIR'
   - npm run ts-fix
   - npm run gen-migrate-test-empty
   - ls src/db/migrations -la
