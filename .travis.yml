@@ -1,11 +1,13 @@
 language: node_js
 node_js: "11"
+addons:
+  apt:
+    packages:
+      - rabbitmq-server
 services:
   - postgresql
   - redis-server
-  - rabbitmq
 before_script:
-  - echo "$TRAVIS_BUILD_DIR"
   - psql -f ci_db_setup.sql --set user="$PG_USER" --set password="$PG_PASSWORD" --set db_name="$PG_DB" -U postgres -a
   - psql -l -U postgres -a
   - echo '\dn' | psql -U postgres -d trade_machine -a
