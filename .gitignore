@@ -28,4 +28,5 @@ node_modules
 .npm
 
 # Ignore migrations for now
-db/migrations
+src/db/migrations
+tests/coverage
