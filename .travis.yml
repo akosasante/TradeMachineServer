@@ -20,4 +20,4 @@ before_script:
   - ls dist/db/migrations -la
   - npm run run-migrate-test
   - echo '\dt test.*' | psql -U $PG_USER -d $PG_DB -a
-script: npm run test-debug
+script: npm run test-debug -- --testPathPattern=PlayerRoutes
