@@ -180,7 +180,7 @@ describe("Player API endpoints", () => {
             await adminLoggedIn(putRequest(invalidObj.id, invalidObj, 400));
 
             // Confirm db was not updated:
-            const existingPlayer = await request(app).get(`/players/${invalidObj.id}`).expect(200);
+            const existingPlayer = await request(app).get(`/playezrs/${invalidObj.id}`).expect(200);
             expect(updatedPlayer.equals(existingPlayer.body)).toBeTrue();
             expect(existingPlayer.body.blah).toBeUndefined();
         });
