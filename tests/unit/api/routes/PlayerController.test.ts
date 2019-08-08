@@ -140,12 +140,12 @@ describe("PlayerController", () => {
 
     describe("deletePlayer method", () => {
         it("should delete a player by id from the db", async () => {
-            mockPlayerDAO.deletePlayer.mockReturnValue({raw: [ [], testPlayer.id ]});
+            mockPlayerDAO.deletePlayer.mockReturnValue({raw: [ {id: testPlayer.id} ], affected: 1});
             const res = await playerController.deletePlayer(testPlayer.id!);
 
             expect(mockPlayerDAO.deletePlayer).toHaveBeenCalledTimes(1);
             expect(mockPlayerDAO.deletePlayer).toHaveBeenCalledWith(testPlayer.id);
-            expect(res).toEqual({deleteResult: true, id: testPlayer.id});
+            expect(res).toEqual({deleteCount: 1, id: testPlayer.id});
         });
         it("should throw an error if entity is not found in db", async () => {
             mockPlayerDAO.deletePlayer.mockImplementation(() => {

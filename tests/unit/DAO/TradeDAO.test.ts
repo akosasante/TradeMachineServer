@@ -10,12 +10,12 @@ import Team from "../../../src/models/team";
 import Trade from "../../../src/models/trade";
 import TradeItem, { TradeItemType } from "../../../src/models/tradeItem";
 import TradeParticipant, { TradeParticipantType } from "../../../src/models/tradeParticipant";
+import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 
 const mockTradeDb = {
     find: jest.fn(),
     findOneOrFail: jest.fn(),
     save: jest.fn(),
-    delete: jest.fn(),
     createQueryBuilder: jest.fn(),
 };
 
@@ -49,6 +49,8 @@ describe("TradeDAO", () => {
         Object.entries(mockTradeDb).forEach((kvp: [string, jest.Mock<any, any>]) => {
             kvp[1].mockClear();
         });
+        mockExecute.mockClear();
+        mockWhereInIds.mockClear();
     });
 
     afterAll(async () => {
@@ -149,20 +151,22 @@ describe("TradeDAO", () => {
     });
 
     it("deleteTrade - should call the db delete once with id", async () => {
-        const deleteResult = { raw: [ [], 1 ]};
-        mockTradeDb.delete.mockReturnValueOnce(deleteResult);
+        mockTradeDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+        const deleteResult = { raw: [{id: 1}], affected: 1};
+        mockExecute.mockReturnValueOnce(deleteResult);
         const res = await tradeDAO.deleteTrade(1);
 
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(1);
-        expect(mockTradeDb.delete).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.delete).toHaveBeenCalledWith(1);
+        expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockWhereInIds).toHaveBeenCalledWith(1);
         expect(res).toEqual(deleteResult);
     });
 
     it("deleteTrade - should throw NotFoundError if no id is passed", async () => {
         // @ts-ignore
         await expect(tradeDAO.deleteTrade(undefined)).rejects.toThrow(NotFoundError);
-        expect(mockTradeDb.delete).toHaveBeenCalledTimes(0);
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(0);
+        expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledTimes(0);
     });
 });

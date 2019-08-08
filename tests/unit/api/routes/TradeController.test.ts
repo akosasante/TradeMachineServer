@@ -145,12 +145,12 @@ describe("TradeController", () => {
 
     describe("deleteTrade method", () => {
         it("should delete a trade by id from the db", async () => {
-            mockTradeDAO.deleteTrade.mockReturnValue({raw: [ [], testTrade.id ]});
+            mockTradeDAO.deleteTrade.mockReturnValue({raw: [ {id: testTrade.id} ], affected: 1});
             const res = await tradeController.deleteTrade(testTrade.id!);
 
             expect(mockTradeDAO.deleteTrade).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.deleteTrade).toHaveBeenCalledWith(testTrade.id);
-            expect(res).toEqual({deleteResult: true, id: testTrade.id});
+            expect(res).toEqual({deleteCount: 1, id: testTrade.id});
         });
         it("should throw an error if entity is not found in db", async () => {
             mockTradeDAO.deleteTrade.mockImplementation(() => {

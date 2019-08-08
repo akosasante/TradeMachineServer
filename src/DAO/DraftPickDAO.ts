@@ -52,7 +52,11 @@ export default class DraftPickDAO {
 
     public async deletePick(id: number): Promise<DeleteResult> {
         await this.getPickById(id);
-        return await this.draftPickDb.delete(id);
+        return await this.draftPickDb.createQueryBuilder()
+            .delete()
+            .whereInIds(id)
+            .returning("id")
+            .execute();
     }
 
     public async deleteAllPicks(): Promise<void> {

@@ -41,4 +41,8 @@ export default {
         .mockImplementation(async id => {
             return { deleted: true };
         }),
+    createQueryBuilder: jest.fn()
+        .mockImplementation(async () => {
+            return { affected: 1, raw: [{id: 1}]};
+        }),
 };

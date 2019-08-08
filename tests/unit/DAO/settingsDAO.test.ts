@@ -6,13 +6,14 @@ import SettingsDAO, { ScheduleGetAllOptions } from "../../../src/DAO/SettingsDAO
 import GeneralSettings, { TradeDeadlineStatus } from "../../../src/models/generalSettings";
 import ScheduledDowntime from "../../../src/models/scheduledDowntime";
 import User, { Role } from "../../../src/models/user";
+import { mockDeleteChain, mockWhereInIds } from "./daoHelpers";
 
 const mockSettingsDb = {
     find: jest.fn(),
     findOneOrFail: jest.fn(),
     save: jest.fn(),
     update: jest.fn(),
-    delete: jest.fn(),
+    createQueryBuilder: jest.fn(),
 };
 
 // @ts-ignore
@@ -30,6 +31,8 @@ describe("SettingsDAO", () => {
         Object.entries(mockSettingsDb).forEach((kvp: [string, jest.Mock<any, any>]) => {
             kvp[1].mockClear();
         });
+
+        mockWhereInIds.mockClear();
     });
 
     afterAll(async () => {
@@ -156,18 +159,22 @@ describe("SettingsDAO", () => {
         it("should throw NotFoundError if no id is passed", async () => {
             // @ts-ignore
             await expect(settingsDAO.deleteScheduledDowntime(undefined)).rejects.toThrow(NotFoundError);
-            expect(mockSettingsDb.delete).toHaveBeenCalledTimes(0);
+            expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(0);
+            expect(mockSettingsDb.createQueryBuilder).toHaveBeenCalledTimes(0);
         });
 
         it("should call the db delete once with id", async () => {
+            mockSettingsDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
             const ID = 1;
             await settingsDAO.deleteScheduledDowntime(ID);
 
             expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith(ID);
 
-            expect(mockSettingsDb.delete).toHaveBeenCalledTimes(1);
-            expect(mockSettingsDb.delete).toHaveBeenCalledWith(ID);
+            expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
+            expect(mockSettingsDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+            expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith(ID);
+            expect(mockWhereInIds).toHaveBeenCalledWith(1);
         });
     });
 

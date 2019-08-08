@@ -5,13 +5,13 @@ import * as typeorm from "typeorm";
 import TeamDAO from "../../../src/DAO/TeamDAO";
 import Team from "../../../src/models/team";
 import User from "../../../src/models/user";
+import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 
 const mockTeamDb = {
     find: jest.fn(),
     findOneOrFail: jest.fn(),
     save: jest.fn(),
     update: jest.fn(),
-    delete: jest.fn(),
     createQueryBuilder: jest.fn(),
 };
 
@@ -27,6 +27,9 @@ describe("TeamDAO", () => {
         Object.entries(mockTeamDb).forEach((kvp: [string, jest.Mock<any, any>]) => {
             kvp[1].mockClear();
         });
+
+        mockWhereInIds.mockClear();
+        mockExecute.mockClear();
     });
 
     afterAll(async () => {
@@ -94,21 +97,23 @@ describe("TeamDAO", () => {
     });
 
     it("deleteTeam - should call the db delete once with id", async () => {
-        const deleteResult = { raw: [ [], 1 ]};
-        mockTeamDb.delete.mockReturnValueOnce(deleteResult);
+        mockTeamDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+        const deleteResult = { raw: [{id: 1}], affected: 1};
+        mockExecute.mockReturnValueOnce(deleteResult);
         const res = await teamDAO.deleteTeam(1);
 
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(1);
-        expect(mockTeamDb.delete).toHaveBeenCalledTimes(1);
-        expect(mockTeamDb.delete).toHaveBeenCalledWith(1);
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockWhereInIds).toHaveBeenCalledWith(1);
         expect(res).toEqual(deleteResult);
     });
 
     it("deleteTeam - should throw NotFoundError if no id is passed", async () => {
         // @ts-ignore
         await expect(teamDAO.deleteTeam(undefined)).rejects.toThrow(NotFoundError);
-        expect(mockTeamDb.delete).toHaveBeenCalledTimes(0);
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(0);
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(0);
     });
 
     it("updateOwners - should call the db createQueryBuilder and findOneOrFail with id and owner objects", async () => {

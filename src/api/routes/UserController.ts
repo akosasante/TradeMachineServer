@@ -75,6 +75,6 @@ export default class UserController {
         logger.debug("delete user endpoint");
         const result = await this.dao.deleteUser(id);
         logger.debug(`delete successful: ${inspect(result)}`);
-        return await {deleteResult: !!result.raw[1], id};
+        return await {deleteCount: result.affected, id: result.raw[0].id};
     }
 }

@@ -92,6 +92,6 @@ export default class SettingsController {
     public async deleteScheduledDowntime(@Param("id") id: number) {
         logger.debug("delete downtime endpoint");
         const result = await this.dao.deleteScheduledDowntime(id);
-        return { deleteResult: !!result.raw[1], id };
+        return {deleteCount: result.affected, id: result.raw[0].id};
     }
 }

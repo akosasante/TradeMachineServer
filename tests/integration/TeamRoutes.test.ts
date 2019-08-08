@@ -3,12 +3,21 @@ import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
+import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import Team from "../../src/models/team";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
-import { doLogout, makeDeleteRequest, makeGetRequest, makeLoggedInRequest, makePatchRequest,
-    makePostRequest, makePutRequest, stringifyQuery } from "./helpers";
+import {
+    doLogout,
+    makeDeleteRequest,
+    makeGetRequest,
+    makeLoggedInRequest,
+    makePatchRequest,
+    makePostRequest,
+    makePutRequest,
+    stringifyQuery
+} from "./helpers";
 
 let app: Server;
 let adminUser: User;
@@ -39,6 +48,9 @@ beforeAll(async () => {
 });
 afterAll(async () => {
     await shutdown();
+    app.close(() => {
+        logger.debug("CLOSED SERVER");
+    });
 });
 
 describe("Team API endpoints", () => {
@@ -222,7 +234,7 @@ describe("Team API endpoints", () => {
 
             it("should return a delete result if successful", async () => {
             const res = await adminLoggedIn(deleteTeamRequest(1));
-            expect(res.body).toEqual({ deleteResult: true, id: 1 });
+            expect(res.body).toEqual({ deleteCount: 1, id: 1 });
 
             // Confirm that it was deleted from the db:
             const getAllRes = await request(app).get("/teams").expect(200);

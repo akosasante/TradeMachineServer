@@ -3,6 +3,7 @@ import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
+import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import ScheduledDowntime from "../../src/models/scheduledDowntime";
 import User, { Role } from "../../src/models/user";
@@ -52,6 +53,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await shutdown();
+    app.close(() => {
+        logger.debug("CLOSED SERVER");
+    });
 });
 
 describe("Settings API endpoints for scheduled downtime", () => {
@@ -207,7 +211,7 @@ describe("Settings API endpoints for scheduled downtime", () => {
 
         it("should return a delete result if successful", async () => {
             const res = await adminLoggedIn(deleteScheduleRequest(ID));
-            expect(res.body).toEqual({ deleteResult: true, id: ID });
+            expect(res.body).toEqual({ deleteCount: 1, id: ID });
 
             // Confirm that it was deleted from the db:
             const getAllFuture = await request(app).get("/settings/downtime?option=future").expect(200);

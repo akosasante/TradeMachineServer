@@ -63,7 +63,11 @@ export default class SettingsDAO {
             throw new NotFoundError("Id is required");
         }
         await this.scheduleDb.findOneOrFail(id);
-        return await this.scheduleDb.delete(id);
+        return await this.scheduleDb.createQueryBuilder()
+            .delete()
+            .whereInIds(id)
+            .returning("id")
+            .execute();
     }
 
     public async getAllGeneralSettings(): Promise<GeneralSettings[]> {

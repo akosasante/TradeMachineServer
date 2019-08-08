@@ -87,7 +87,11 @@ export default class UserDAO {
 
     public async deleteUser(id: number): Promise<DeleteResult> {
         await this.getUserById(id); // This should throw error if the id does not exist
-        return await this.userDb.delete(id);
+        return await this.userDb.createQueryBuilder()
+            .delete()
+            .whereInIds(id)
+            .returning("id")
+            .execute();
     }
 
     public async setPasswordExpires(id: number): Promise<void> {

@@ -5,6 +5,7 @@ import * as typeorm from "typeorm";
 import { IsNull, Not } from "typeorm";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import Player, { LeagueLevel } from "../../../src/models/player";
+import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 
 const mockPlayerDb = {
     find: jest.fn(),
@@ -12,6 +13,7 @@ const mockPlayerDb = {
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    createQueryBuilder: jest.fn(),
 };
 
 // @ts-ignore
@@ -26,6 +28,9 @@ describe("PlayerDAO", () => {
         Object.entries(mockPlayerDb).forEach((kvp: [string, jest.Mock<any, any>]) => {
             kvp[1].mockClear();
         });
+
+        mockExecute.mockClear();
+        mockWhereInIds.mockClear();
     });
 
     it("getAllPlayers - should call the db find method once with no args", async () => {
@@ -87,29 +92,30 @@ describe("PlayerDAO", () => {
         // @ts-ignore
         await expect(playerDAO.deletePlayer(undefined)).rejects.toThrow(NotFoundError);
         expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledTimes(0);
-        expect(mockPlayerDb.delete).toHaveBeenCalledTimes(0);
+        expect(mockPlayerDb.createQueryBuilder).toHaveBeenCalledTimes(0);
     });
 
     it("deletePlayer - should call the db delete once with id", async () => {
-        const deleteResult = { raw: [[], 1 ]};
-        mockPlayerDb.delete.mockReturnValueOnce(deleteResult);
+        mockPlayerDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+        const deleteResult = { raw: [{id: 1}], affected: 1};
+        mockExecute.mockReturnValueOnce(deleteResult);
         const res = await playerDAO.deletePlayer(1);
 
         expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledWith(1);
-        expect(mockPlayerDb.delete).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.delete).toHaveBeenCalledWith(1);
+        expect(mockPlayerDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockWhereInIds).toHaveBeenCalledWith(1);
         expect(res).toEqual(deleteResult);
     });
 
-    it("deleteAllPick - should call the db clear method to do Truncate command", async () => {
+    it("deleteAllPlayers - should delete the players in chunks", async () => {
         const expectedQuery = {id: Not(IsNull())};
         await playerDAO.deleteAllPlayers();
         expect(mockPlayerDb.delete).toHaveBeenCalledTimes(1);
         expect(mockPlayerDb.delete).toHaveBeenCalledWith(expectedQuery, {chunk: 10});
     });
 
-    describe("deleteAllPick - should pass in the appropriate query parameter if required",  () => {
+    describe("deleteAllPlayers - should pass in the appropriate query parameter if required",  () => {
         const findMinorLeaguesCondition = {league:
                 {_multipleParameters: true, _type: "in", _useParameter: true, _value: ["High Minors", "Low Minors"]}};
         it("should handle the case 'major' correctly", async () => {

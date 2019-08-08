@@ -66,7 +66,11 @@ export default class TradeDAO {
             throw new NotFoundError("Id is required");
         }
         await this.tradeDb.findOneOrFail(id);
-        return await this.tradeDb.delete(id);
+        return await this.tradeDb.createQueryBuilder()
+            .delete()
+            .whereInIds(id)
+            .returning("id")
+            .execute();
     }
 
     public async updateParticipants(id: number, participantsToAdd: TradeParticipant[],

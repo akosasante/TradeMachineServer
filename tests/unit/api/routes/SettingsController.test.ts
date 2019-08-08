@@ -147,12 +147,12 @@ describe("SettingsController", () => {
         describe("deleteScheduledDowntime", () => {
             it("should return out custom delete result", async () => {
                 const ID = 1;
-                mockSettingsDAO.deleteScheduledDowntime.mockReturnValueOnce({ raw: [ [], ID ] });
+                mockSettingsDAO.deleteScheduledDowntime.mockReturnValueOnce({ raw: [ {id: ID} ], affected: 1 });
                 const res = await settingsController.deleteScheduledDowntime(ID);
 
                 expect(mockSettingsDAO.deleteScheduledDowntime).toHaveBeenCalledTimes(1);
                 expect(mockSettingsDAO.deleteScheduledDowntime).toHaveBeenCalledWith(ID);
-                expect(res).toEqual({ deleteResult: true, id: ID });
+                expect(res).toEqual({ deleteCount: 1, id: ID });
             });
 
             it("should throw an error if entity is not found in db", async () => {
