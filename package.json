@@ -10,7 +10,7 @@
     "watch-server": "concurrently -k -p \"[{name} - {time}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
     "build": "npm run build-ts && npm run tslint",
     "serve": "node -r dotenv/config ./dist/server.js",
-    "test-debug": "NODE_ENV=test ENABLE_LOGS=true DB_LOGS=false jest --config ./jest.config.js --detectOpenHandles --runInBand --forceExit",
+    "test-debug": "NODE_ENV=test ENABLE_LOGS=true DB_LOGS=true jest --config ./jest.config.js --detectOpenHandles --runInBand --forceExit",
     "test": "ENABLE_LOGS=false NODE_ENV=test jest --config ./jest.debug-config.js --detectOpenHandles --runInBand --silent --forceExit",
     "watch-node": "NODE_ENV=development DEBUG=connect:redis nodemon -- -r dotenv/config ./dist/server.js",
     "build-ts": "tsc",
