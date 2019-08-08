@@ -12,6 +12,7 @@ before_script:
   - npm run ts-fix
   - npm run gen-migrate-test-empty
   - ls src/db/migrations -la
+  - npm run build
   - ls dist/db/migrations -la
   - npm run gen-migrate-test -- "init"
   - npm run run-migrate-test
