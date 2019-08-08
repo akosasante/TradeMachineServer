@@ -9,7 +9,9 @@ before_script:
   - psql -c 'create schema test;' -U postgres -d trade_machine -a
   - echo '\dn' | psql -U postgres -d trade_machine -a
   - echo '\dt' | psql -U postgres -d trade_machine -a
+  - ls src -la
   - npm run ts-fix
-  - npm run gen-migrate-test -- "init_ci_schema"
+  - npm run gen-migrate-test-empty
+  - npm run gen-migrate-test -- "init"
   - npm run run-migrate-test
   - echo '\dt' | psql -U postgres -d trade_machine -a
