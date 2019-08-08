@@ -84,13 +84,12 @@ describe("Player API endpoints", () => {
             expect(testPlayer.equals(res.body)).toBeTrue();
         });
         it("should ignore any invalid properties from the object passed in", async () => {
-            jest.setTimeout(30000);
             const playerObj = {...testPlayerObj2, blah: "Hello"};
             const testInvalidProps = new Player(playerObj);
             const res = await adminLoggedIn(postRequest(testInvalidProps));
             expect(testInvalidProps.equals(res.body)).toBeTrue();
             expect(res.body.blah).toBeUndefined();
-        });
+        }, 30000);
         it("should return a 400 Bad Request error if missing a required property", async () => {
             const playerObj = { mlbTeam: "Boston Red Sox" };
             const res = await adminLoggedIn(postRequest(playerObj, 400));
