@@ -171,12 +171,12 @@ describe("UserController", () => {
 
     describe("deleteUser method", () => {
         it("should delete a user by id", async () => {
-            mockUserDAO.deleteUser.mockReturnValue({raw: [ [], testUser.id!]});
+            mockUserDAO.deleteUser.mockReturnValue({raw: [{id: testUser.id!}], affected: 1});
             const res = await userController.deleteUser(testUser.id!);
 
             expect(mockUserDAO.deleteUser).toBeCalledTimes(1);
             expect(mockUserDAO.deleteUser).toBeCalledWith(testUser.id!);
-            expect(res).toEqual({deleteResult: true, id: testUser.id});
+            expect(res).toEqual({deleteCount: 1, id: testUser.id});
         });
         it("should throw an error", async () => {
             mockUserDAO.deleteUser.mockImplementation(() => {

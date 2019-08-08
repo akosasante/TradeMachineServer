@@ -3,6 +3,7 @@ import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
+import logger from "../../src/bootstrap/logger";
 import server from "../../src/server";
 import { makeGetRequest } from "./helpers";
 
@@ -25,6 +26,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await shutdown();
+    app.close(() => {
+        logger.debug("CLOSED SERVER");
+    });
 });
 
 describe("ESPN API endpoints", () => {

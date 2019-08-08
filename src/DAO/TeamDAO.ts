@@ -60,7 +60,11 @@ export default class TeamDAO {
             throw new NotFoundError("Id is required");
         }
         await this.teamDb.findOneOrFail(id);
-        return await this.teamDb.delete(id);
+        return await this.teamDb.createQueryBuilder()
+            .delete()
+            .whereInIds(id)
+            .returning("id")
+            .execute();
     }
 
     public async updateTeamOwners(id: number, ownersToAdd: User[], ownersToRemove: User[]): Promise<Team> {

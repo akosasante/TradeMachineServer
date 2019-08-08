@@ -6,6 +6,7 @@ import { IsNull, Not } from "typeorm";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import DraftPick from "../../../src/models/draftPick";
 import { LeagueLevel } from "../../../src/models/player";
+import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 
 const mockPickDb = {
     find: jest.fn(),
@@ -13,6 +14,7 @@ const mockPickDb = {
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    createQueryBuilder: jest.fn(),
 };
 
 // @ts-ignore
@@ -27,6 +29,9 @@ describe("DraftPickDAO", () => {
         Object.entries(mockPickDb).forEach((kvp: [string, jest.Mock<any, any>]) => {
             kvp[1].mockClear();
         });
+
+        mockExecute.mockClear();
+        mockWhereInIds.mockClear();
     });
 
     it("getAllPicks - should call the db find method once with no args", async () => {
@@ -88,22 +93,23 @@ describe("DraftPickDAO", () => {
         // @ts-ignore
         await expect(draftPickDAO.deletePick(undefined)).rejects.toThrow(NotFoundError);
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(0);
-        expect(mockPickDb.delete).toHaveBeenCalledTimes(0);
+        expect(mockPickDb.createQueryBuilder).toHaveBeenCalledTimes(0);
     });
 
     it("deletePick - should call the db delete once with id", async () => {
-        const deleteResult = { raw: [[], 1 ]};
-        mockPickDb.delete.mockReturnValueOnce(deleteResult);
+        mockPickDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+        const deleteResult = { raw: [ {id: 1} ], affected: 1};
+        mockExecute.mockReturnValueOnce(deleteResult);
         const res = await draftPickDAO.deletePick(1);
 
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(1);
-        expect(mockPickDb.delete).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.delete).toHaveBeenCalledWith(1);
+        expect(mockPickDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockWhereInIds).toHaveBeenCalledWith(1);
         expect(res).toEqual(deleteResult);
     });
 
-    it("deleteAllPick - should call the db clear method to do Truncate command", async () => {
+    it("deleteAllPicks - delete all the picks in chunks", async () => {
         const expectedQuery = {id: Not(IsNull())};
         await draftPickDAO.deleteAllPicks();
         expect(mockPickDb.delete).toHaveBeenCalledTimes(1);

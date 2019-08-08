@@ -4,6 +4,7 @@ import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
 import UserDAO from "../../../src/DAO/UserDAO";
 import mockUserDb, { testUser } from "../mocks/mockUserDb";
+import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 
 // @ts-ignore
 jest.spyOn(typeorm, "getConnection").mockReturnValue({getRepository: jest.fn().mockReturnValue(mockUserDb)});
@@ -14,6 +15,9 @@ describe("UserDAO", () => {
             // @ts-ignore
             (mockUserDb[action] as jest.Mock).mockClear();
         });
+
+        mockExecute.mockClear();
+        mockWhereInIds.mockClear();
     });
     afterAll(async () => {
         await userDAO.connection.close();
@@ -144,12 +148,17 @@ describe("UserDAO", () => {
 
     describe("deleteUser", () => {
         it("should return a delete result", async () => {
+            mockUserDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+            const deleteResult = { affected: 1, raw: {id: testUser.id!} };
+            mockExecute.mockReturnValueOnce(deleteResult);
             const res = await userDAO.deleteUser(testUser.id!);
             // Testing that the correct db function is called with the correct params
-            expect(mockUserDb.delete).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.delete).toHaveBeenCalledWith(testUser.id);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id!);
+            expect(mockUserDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+            expect(mockWhereInIds).toHaveBeenCalledWith(testUser.id!);
             // Testing that we return as expected
-            expect(res).toEqual({ deleted: true });
+            expect(res).toEqual(deleteResult);
         });
     });
 

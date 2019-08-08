@@ -69,7 +69,7 @@ export default class TeamController {
         logger.debug("delete team endpoint");
         const result = await this.dao.deleteTeam(id);
         logger.debug(`delete successful: ${inspect(result)}`);
-        return await {deleteResult: !!result.raw[1], id};
+        return await {deleteCount: result.affected, id: result.raw[0].id};
     }
 
     @Authorized(Role.ADMIN)

@@ -3,6 +3,7 @@ import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
+import logger from "../../src/bootstrap/logger";
 import { WriteMode } from "../../src/csv/CsvUtils";
 import TeamDAO from "../../src/DAO/TeamDAO";
 import UserDAO from "../../src/DAO/UserDAO";
@@ -59,6 +60,9 @@ beforeAll(async () => {
 });
 afterAll(async () => {
     await shutdown();
+    app.close(() => {
+        logger.debug("CLOSED SERVER");
+    });
 });
 
 describe("Player API endpoints", () => {
@@ -180,7 +184,7 @@ describe("Player API endpoints", () => {
             await adminLoggedIn(putRequest(invalidObj.id, invalidObj, 400));
 
             // Confirm db was not updated:
-            const existingPlayer = await request(app).get(`/playezrs/${invalidObj.id}`).expect(200);
+            const existingPlayer = await request(app).get(`/players/${invalidObj.id}`).expect(200);
             expect(updatedPlayer.equals(existingPlayer.body)).toBeTrue();
             expect(existingPlayer.body.blah).toBeUndefined();
         });
@@ -204,7 +208,7 @@ describe("Player API endpoints", () => {
 
         it("should return a delete result if successful", async () => {
             const res = await adminLoggedIn(deleteRequest(1));
-            expect(res.body).toEqual({deleteResult: true, id: 1});
+            expect(res.body).toEqual({deleteCount: 1, id: 1});
 
             // Confirm that it was deleted from the db:
             const getAllRes = await request(app).get("/players").expect(200);

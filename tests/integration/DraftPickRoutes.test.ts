@@ -3,6 +3,7 @@ import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
+import logger from "../../src/bootstrap/logger";
 import { WriteMode } from "../../src/csv/CsvUtils";
 import UserDAO from "../../src/DAO/UserDAO";
 import DraftPick from "../../src/models/draftPick";
@@ -48,6 +49,9 @@ beforeAll(async () => {
 });
 afterAll(async () => {
     await shutdown();
+    app.close(() => {
+        logger.debug("CLOSED SERVER");
+    });
 });
 
 describe("Pick API endpoints", () => {
@@ -193,7 +197,7 @@ describe("Pick API endpoints", () => {
 
         it("should return a delete result if successful", async () => {
             const res = await adminLoggedIn(deleteRequest(1));
-            expect(res.body).toEqual({deleteResult: true, id: 1});
+            expect(res.body).toEqual({deleteCount: 1, id: 1});
 
             // Confirm that it was deleted from the db:
             const getAllRes = await request(app).get("/picks").expect(200);

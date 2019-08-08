@@ -113,12 +113,12 @@ describe("TeamController", () => {
     });
     describe("deleteTeam method", () => {
         it("should delete a team by id from the db", async () => {
-            mockTeamDAO.deleteTeam.mockReturnValue({raw: [ [], testTeam.id ]});
+            mockTeamDAO.deleteTeam.mockReturnValue({raw: [ {id: testTeam.id} ], affected: 1});
             const res = await teamController.deleteTeam(testTeam.id!);
 
             expect(mockTeamDAO.deleteTeam).toHaveBeenCalledTimes(1);
             expect(mockTeamDAO.deleteTeam).toHaveBeenCalledWith(testTeam.id);
-            expect(res).toEqual({deleteResult: true, id: testTeam.id});
+            expect(res).toEqual({deleteCount: 1, id: testTeam.id});
         });
         it("should throw an error if entity is not found in db", async () => {
             mockTeamDAO.deleteTeam.mockImplementation(() => {

@@ -85,7 +85,7 @@ export default class PlayerController {
         logger.debug("delete player endpoint");
         const result = await this.dao.deletePlayer(id);
         logger.debug(`delete successful: ${inspect(result)}`);
-        return await {deleteResult: !!result.raw[1], id};
+        return await {deleteCount: result.affected, id: result.raw[0].id};
     }
 }
 

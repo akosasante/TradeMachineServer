@@ -3,6 +3,7 @@ import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
+import logger from "../../src/bootstrap/logger";
 import DraftPickDAO from "../../src/DAO/DraftPickDAO";
 import PlayerDAO from "../../src/DAO/PlayerDAO";
 import TeamDAO from "../../src/DAO/TeamDAO";
@@ -76,6 +77,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await shutdown();
+    app.close(() => {
+        logger.debug("CLOSED SERVER");
+    });
 });
 
 describe("Trade API endpoints", () => {
@@ -237,7 +241,7 @@ describe("Trade API endpoints", () => {
 
         it("should return a delete result if successful", async () => {
             const res = await adminLoggedIn(deleteTradeRequest(1));
-            expect(res.body).toEqual({ deleteResult: true, id: 1 });
+            expect(res.body).toEqual({ deleteCount: 1, id: 1 });
 
             // Confirm that it was deleted from the db:
             const getAll = await request(app).get("/trades").expect(200);

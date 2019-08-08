@@ -141,12 +141,12 @@ describe("DraftPickController", () => {
 
     describe("deleteDraftPick method", () => {
         it("should delete a draftPick by id from the db", async () => {
-            mockDraftPickDAO.deletePick.mockReturnValue({raw: [ [], testDraftPick.id ]});
+            mockDraftPickDAO.deletePick.mockReturnValue({raw: [{id: testDraftPick.id}], affected: 1});
             const res = await draftPickController.deleteDraftPick(testDraftPick.id!);
 
             expect(mockDraftPickDAO.deletePick).toHaveBeenCalledTimes(1);
             expect(mockDraftPickDAO.deletePick).toHaveBeenCalledWith(testDraftPick.id);
-            expect(res).toEqual({deleteResult: true, id: testDraftPick.id});
+            expect(res).toEqual({deleteCount: 1, id: testDraftPick.id});
         });
         it("should throw an error if entity is not found in db", async () => {
             mockDraftPickDAO.deletePick.mockImplementation(() => {

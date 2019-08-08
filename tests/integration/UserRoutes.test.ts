@@ -3,6 +3,7 @@ import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
+import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
@@ -55,6 +56,9 @@ beforeAll(async () => {
 });
 afterAll(async () => {
     await shutdown();
+    app.close(() => {
+        logger.debug("CLOSED SERVER");
+    });
 });
 
 describe("User API endpoints", () => {
@@ -224,7 +228,7 @@ describe("User API endpoints", () => {
         it("should return a delete result when logged in", async () => {
             const id = 4;
             const res = await adminLoggedIn(deleteRequest(id));
-            expect(res.body).toEqual({ deleteResult: true, id });
+            expect(res.body).toEqual({ deleteCount: 1, id });
 
             // Confirm that one was deleted from db
             const getAllRes = await getAllRequest();

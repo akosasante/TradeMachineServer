@@ -3,6 +3,7 @@ import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
+import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import GeneralSettings, { TradeDeadlineStatus } from "../../src/models/generalSettings";
 import User, { Role } from "../../src/models/user";
@@ -45,6 +46,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await shutdown();
+    app.close(() => {
+        logger.debug("CLOSED SERVER");
+    });
 });
 
 describe("Settings API endpoints for general settings", () => {

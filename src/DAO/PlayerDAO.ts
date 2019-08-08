@@ -60,7 +60,11 @@ export default class PlayerDAO {
 
     public async deletePlayer(id: number): Promise<DeleteResult> {
         await this.getPlayerById(id);
-        return await this.playerDb.delete(id);
+        return await this.playerDb.createQueryBuilder()
+            .delete()
+            .whereInIds(id)
+            .returning("id")
+            .execute();
     }
 
     public async deleteAllPlayers(type?: "major"|"minor"|LeagueLevel): Promise<void> {
