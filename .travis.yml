@@ -3,6 +3,7 @@ node_js: "11"
 services:
   - postgresql
   - redis-server
+  - rabbitmq
 before_script:
   - echo "$TRAVIS_BUILD_DIR"
   - psql -f ci_db_setup.sql --set user="$PG_USER" --set password="$PG_PASSWORD" --set db_name="$PG_DB" -U postgres -a
@@ -15,4 +16,4 @@ before_script:
   - ls src/db/migrations -la
   - ls dist/db/migrations -la
   - npm run run-migrate-test
-  - echo '\dt' | psql -U $PG_USER -d $PG_DB -a
+  - echo '\dt test.*' | psql -U $PG_USER -d $PG_DB -a
