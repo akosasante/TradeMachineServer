@@ -70,7 +70,7 @@ describe("Email API endpoints", () => {
         });
     });
 
-    describe("GET /:id/status (check on the status of an email by messageID)", async () => {
+    describe("GET /:id/status (check on the status of an email by messageID)", () => {
         const testMessageId = "<201906150242.34408309655@smtp-relay.sendinblue.com>";
         const messageStatusRequest = (messageId: string, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
