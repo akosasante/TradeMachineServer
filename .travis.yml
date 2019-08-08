@@ -11,3 +11,5 @@ before_script:
   - echo '\dt' | psql -U postgres -d trade_machine -a
   - npm run ts-fix
   - npm run gen-migrate-test -- "init_ci_schema"
+  - echo '\dt' | psql -U postgres -d trade_machine -a
+  - npm run run-migrate-test
