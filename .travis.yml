@@ -9,11 +9,14 @@ before_script:
   - psql -c 'create schema test;' -U postgres -d trade_machine -a
   - echo '\dn' | psql -U postgres -d trade_machine -a
   - echo '\dt' | psql -U postgres -d trade_machine -a
+  - echo '$NODE_ENV'
+  - echo '$BASE_DIR'
   - npm run ts-fix
   - npm run gen-migrate-test-empty
   - ls src/db/migrations -la
   - npm run build
   - ls dist/db/migrations -la
   - npm run gen-migrate-test -- "init"
+  - ls src/db/migrations -la
   - npm run run-migrate-test
   - echo '\dt' | psql -U postgres -d trade_machine -a
