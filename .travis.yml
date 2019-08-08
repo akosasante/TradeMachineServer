@@ -4,6 +4,9 @@ services:
   - postgresql
   - redis-server
 before_script:
+  - set -o allexport
+    [[ -f .env ]] && source .env
+    set +o allexport
   - echo $NODE_ENV
   - echo "$BASE_DIR"
   - psql -f ci_db_setup.sql --set user="$PG_USER" --set password="$PG_PASSWORD" --set db_name="$PG_DB" -U postgres -a
