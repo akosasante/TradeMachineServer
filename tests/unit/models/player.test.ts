@@ -5,14 +5,13 @@ import Player, { LeagueLevel } from "../../../src/models/player";
 import Team from "../../../src/models/team";
 
 describe("Player Class", () => {
-    const playerObj = {name: "Honus Wiener", league: LeagueLevel.HIGH};
+    const playerObj = {id: 1, name: "Honus Wiener", league: LeagueLevel.HIGH};
     const player = new Player(playerObj);
 
     describe("constructor", () => {
         it("should construct the object as expected", () => {
             expect(player.name).toEqual(playerObj.name);
             expect(player.league).toEqual(playerObj.league);
-            expect(player.id).not.toBeDefined();
             expect(player.leagueTeam).toBeUndefined();
             expect(player).toBeInstanceOf(Player);
             expect(playerObj).not.toBeInstanceOf(Player);
@@ -21,8 +20,8 @@ describe("Player Class", () => {
 
     describe("instance methods", () => {
         it("toString/0", () => {
-            expect(player.toString()).toMatch(player.name);
-            expect(player.toString()).toMatch("MLB Player ID#");
+            const pattern = new RegExp(`MLB Player ID#\\d+: ${player.name}`);
+            expect(player.toString()).toMatch(pattern);
         });
 
         describe("equals/2", () => {

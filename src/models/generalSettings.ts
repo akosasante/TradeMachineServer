@@ -38,8 +38,8 @@ export default class GeneralSettings extends BaseModel {
 
     public toString(): string {
         const lastModifiedString = `Last changed by ${this.modifiedBy}`;
-        return `General Settings: Deadline Status: ${this.deadline.status}, \
-        ${this.modifiedBy ? lastModifiedString : ""}`;
+        // tslint:disable-next-line:max-line-length
+        return `General Settings: Deadline Status: ${this.deadline.status}${this.modifiedBy ? ", " + lastModifiedString : ""}`;
     }
 
     public equals(other: GeneralSettings, excludes?: Excludes, bypassDefaults: boolean = false): boolean {

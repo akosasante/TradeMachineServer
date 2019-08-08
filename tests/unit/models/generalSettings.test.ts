@@ -21,9 +21,9 @@ describe("GeneralSettings Class", () => {
 
     describe("instance methods", () => {
         it("toString/0", () => {
-            expect(generalSettings.toString()).toMatch(generalSettings.deadline.status);
-            expect(generalSettings.toString()).not.toMatch("Last changed by");
-            expect(generalSettings.toString()).toMatch("General Settings: Deadline Status");
+            // tslint:disable-next-line:max-line-length
+            const pattern = new RegExp(`General Settings: Deadline Status: ${generalSettings.deadline.status}`);
+            expect(generalSettings.toString()).toMatch(pattern);
         });
 
         describe("equals/2", () => {

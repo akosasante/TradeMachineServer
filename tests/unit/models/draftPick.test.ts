@@ -21,11 +21,9 @@ describe("DraftPick Class", () => {
 
     describe("instance methods", () => {
         it("toString/0", () => {
-            expect(draftPick.toString()).toMatch(draftPick.type);
-            expect(draftPick.toString()).toMatch(`${draftPick.round}`);
-            expect(draftPick.toString()).toMatch(`${draftPick.pickNumber}`);
-            expect(draftPick.toString()).toMatch("draft pick, round:");
-            expect(draftPick.toString()).toMatch("pick #");
+            // tslint:disable-next-line:max-line-length
+            const pattern = new RegExp(`${draftPick.type} draft pick, round: ${draftPick.round}, pick #${draftPick.pickNumber}`);
+            expect(draftPick.toString()).toMatch(pattern);
             expect(draftPick.toString()).not.toMatch("Currently owned");
         });
 

@@ -24,9 +24,9 @@ describe("ScheduledDowntime Class", () => {
 
     describe("instance methods", () => {
         it("toString/0", () => {
-            expect(scheduledDowntime.toString()).toMatch(scheduledDowntime.startTime.toISOString());
-            expect(scheduledDowntime.toString()).toMatch(scheduledDowntime.endTime.toISOString());
-            expect(scheduledDowntime.toString()).toMatch("Downtime from");
+            // tslint:disable-next-line:max-line-length
+            const pattern = new RegExp(`Downtime from ${scheduledDowntime.startTime.toISOString()} to ${scheduledDowntime.endTime.toISOString()}`);
+            expect(scheduledDowntime.toString()).toMatch(pattern);
         });
 
         describe("equals/2", () => {

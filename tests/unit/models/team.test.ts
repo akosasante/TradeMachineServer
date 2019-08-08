@@ -5,14 +5,13 @@ import Team from "../../../src/models/team";
 import User, { Role } from "../../../src/models/user";
 
 describe("Team Class", () => {
-    const teamObj = {name: "Squirtle Squad", espnId: 1};
+    const teamObj = {id: 1, name: "Squirtle Squad", espnId: 1};
     const team = new Team(teamObj);
 
     describe("constructor", () => {
         it("should construct the obj as expected", async () => {
             expect(team.name).toEqual(teamObj.name);
             expect(team.espnId).toEqual(teamObj.espnId);
-            expect(team.id).not.toBeDefined();
             expect(team.owners).toBeUndefined();
             expect(team).toBeInstanceOf(Team);
             expect(teamObj).not.toBeInstanceOf(Team);
@@ -32,8 +31,8 @@ describe("Team Class", () => {
 
     describe("instance methods", () => {
         it("toString/0", async () => {
-            expect(team.toString()).toMatch(team.name);
-            expect(team.toString()).toMatch("Fantasy Team ID#");
+            const pattern = new RegExp(`Fantasy Team ID#${team.id}: ${team.name}`);
+            expect(team.toString()).toMatch(pattern);
         });
 
         describe("equals/2", () => {
