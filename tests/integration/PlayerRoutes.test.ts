@@ -44,6 +44,7 @@ async function shutdown() {
 }
 
 beforeAll(async () => {
+    logger.debug("~~~~~~PLAYER ROUTES BEFORE ALL~~~~~~");
     app = await server;
 
     const userDAO = new UserDAO();
@@ -59,6 +60,7 @@ beforeAll(async () => {
     team3 = await teamDAO.createTeam({name: "Asantes", owners: [user3, user4]});
 });
 afterAll(async () => {
+    logger.debug("~~~~~~PLAYER ROUTES AFTER ALL~~~~~~");
     await shutdown();
     app.close(() => {
         logger.debug("CLOSED SERVER");

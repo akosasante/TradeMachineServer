@@ -38,6 +38,7 @@ async function shutdown() {
 }
 
 beforeAll(async () => {
+    logger.debug("~~~~~~TEAM ROUTES BEFORE ALL~~~~~~");
     app = await server;
 
     // Create admin and owner users in db for rest of this suite's use
@@ -47,6 +48,7 @@ beforeAll(async () => {
     otherUser = await userDAO.createUser({email: "example@test.ca"});
 });
 afterAll(async () => {
+    logger.debug("~~~~~~TEAM ROUTES AFTER ALL~~~~~~");
     await shutdown();
     app.close(() => {
         logger.debug("CLOSED SERVER");

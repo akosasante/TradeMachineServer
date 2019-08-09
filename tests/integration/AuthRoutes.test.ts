@@ -23,10 +23,12 @@ async function shutdown() {
 }
 
 beforeAll(async () => {
+    logger.debug("~~~~~~AUTH ROUTES BEFORE ALL~~~~~~");
     app = await server;
     userDAO = new UserDAO();
 });
 afterAll(async () => {
+    logger.debug("~~~~~~AUTH ROUTES AFTER ALL~~~~~~");
     await shutdown();
     app.close(() => {
         logger.debug("CLOSED SERVER");

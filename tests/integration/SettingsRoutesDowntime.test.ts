@@ -33,6 +33,7 @@ async function shutdown() {
 }
 
 beforeAll(async () => {
+    logger.debug("~~~~~~DOWNTIME SETTINGS ROUTES BEFORE ALL~~~~~~");
     app = await server;
     let adminUser: User;
     let ownerUser: User;
@@ -52,6 +53,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+    logger.debug("~~~~~~DOWNTIME SETTINGS ROUTES AFTER ALL~~~~~~");
     await shutdown();
     app.close(() => {
         logger.debug("CLOSED SERVER");

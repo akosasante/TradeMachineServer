@@ -48,6 +48,7 @@ async function shutdown() {
 }
 
 beforeAll(async () => {
+    logger.debug("~~~~~~USER ROUTES BEFORE ALL~~~~~~");
     app = await server;
     const userDAO = new UserDAO();
     // Create admin and owner users in db for rest of this suite's use
@@ -55,6 +56,7 @@ beforeAll(async () => {
     ownerUser = await userDAO.createUser({...ownerUserObj});
 });
 afterAll(async () => {
+    logger.debug("~~~~~~USER ROUTES AFTER ALL~~~~~~");
     await shutdown();
     app.close(() => {
         logger.debug("CLOSED SERVER");
