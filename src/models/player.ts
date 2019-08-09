@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes, HasEquals } from "./base";
 import Team from "./team";
@@ -13,6 +13,7 @@ export enum LeagueLevel {
 @Entity()
 export default class Player extends BaseModel implements HasEquals {
     @Column()
+    @Index()
     public name: string;
 
     @Column({type: "enum", enum: LeagueLevel, nullable: true})

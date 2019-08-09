@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import DraftPick from "./draftPick";
 import Player, { LeagueLevel } from "./player";
 import Team from "./team";
@@ -10,6 +10,7 @@ export enum TradeItemType {
 }
 
 @Entity()
+@Index(["trade", "sender", "recipient", "player", "pick"], {unique: true})
 export default class TradeItem {
     public static filterPlayers(tradeItems: TradeItem[]): TradeItem[] {
         return tradeItems.filter(item =>

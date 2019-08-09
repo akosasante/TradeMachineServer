@@ -1,5 +1,5 @@
 import { compare, hash } from "bcryptjs";
-import { Column, Entity, Generated, ManyToOne, OneToMany, Unique } from "typeorm";
+import { Column, Entity, Generated, Index, ManyToOne, OneToMany, Unique } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes } from "./base";
 import DraftPick from "./draftPick";
@@ -53,6 +53,7 @@ export default class User extends BaseModel {
     // }
 
     @Column()
+    @Index({unique: true})
     public email?: string;
 
     @Column({nullable: true})

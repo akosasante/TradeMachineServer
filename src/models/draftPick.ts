@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes, HasEquals } from "./base";
 import { LeagueLevel } from "./player";
@@ -6,6 +6,7 @@ import TradeItem from "./tradeItem";
 import User from "./user";
 
 @Entity()
+@Index(["season", "round", "pickNumber"], {unique: true})
 export default class DraftPick extends BaseModel implements HasEquals {
     @Column()
     public round: number; // can we force only inserting unique round+picknum+season?
