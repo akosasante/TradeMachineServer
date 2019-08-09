@@ -39,6 +39,7 @@ async function shutdown() {
 }
 
 beforeAll(async () => {
+    logger.debug("~~~~~~DRAFT PICK ROUTES BEFORE ALL~~~~~~");
     app = await server;
 
     // Create admin and owner users in db for rest of this suite's use
@@ -48,6 +49,7 @@ beforeAll(async () => {
     await userDAO.createUser({...extraUserObj});
 });
 afterAll(async () => {
+    logger.debug("~~~~~~DRAFT PICK ROUTES AFTER ALL~~~~~~");
     await shutdown();
     app.close(() => {
         logger.debug("CLOSED SERVER");

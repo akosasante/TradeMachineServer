@@ -27,6 +27,7 @@ async function shutdown() {
 }
 
 beforeAll(async () => {
+    logger.debug("~~~~~~GENERAL SETTINGS ROUTES BEFORE ALL~~~~~~");
     let ownerUser: User;
     app = await server;
 
@@ -45,6 +46,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+    logger.debug("~~~~~~GENERAL SETTINGS ROUTES AFTER ALL~~~~~~");
     await shutdown();
     app.close(() => {
         logger.debug("CLOSED SERVER");

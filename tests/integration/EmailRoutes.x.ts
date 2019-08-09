@@ -25,6 +25,7 @@ async function shutdown() {
 }
 
 beforeAll(async () => {
+    logger.debug("~~~~~~EMAIL ROUTES BEFORE ALL~~~~~~");
     let ownerUser: User;
     let adminUser: User;
     app = await server;
@@ -44,6 +45,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+    logger.debug("~~~~~~EMAIL ROUTES AFTER ALL~~~~~~");
     await shutdown();
     app.close(() => {
         logger.debug("CLOSED SERVER");
