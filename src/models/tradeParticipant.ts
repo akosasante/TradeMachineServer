@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import Team from "./team";
 import Trade from "./trade";
 
@@ -8,6 +8,7 @@ export enum TradeParticipantType {
 }
 
 @Entity()
+@Index(["trade", "team"], {unique: true})
 export default class TradeParticipant {
     @PrimaryGeneratedColumn()
     public readonly tradeParticipantId: number;
