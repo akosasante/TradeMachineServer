@@ -7,6 +7,7 @@ import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
+import { UserFactory } from "../factories/UserFactory";
 import {
     doLogout,
     makeDeleteRequest,
@@ -18,23 +19,8 @@ import {
 } from "./helpers";
 
 let app: Server;
-let ownerUser: User;
-const ADMIN_EMAIL = "admin@example.com";
-const OWNER_EMAIL = "owner@example.com";
-const testUserObj = (email: string) => ({
-    email,
-    password: "lol",
-    name: "Jatheesh",
-    roles: [Role.OWNER],
-});
-const adminUserObj = {
-    ...testUserObj(ADMIN_EMAIL),
-    roles: [Role.ADMIN],
-};
-const ownerUserObj = {
-    ...testUserObj(OWNER_EMAIL),
-    roles: [Role.OWNER],
-};
+let ownerUser = UserFactory.getOwnerUser();
+let adminUser = UserFactory.getAdminUser();
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -52,7 +38,7 @@ beforeAll(async () => {
     app = await server;
     const userDAO = new UserDAO();
     // Create admin and owner users in db for rest of this suite's use
-    await userDAO.createUser({...adminUserObj});
+    adminUser = await userDAO.createUser(adminUser.parse());
     ownerUser = await userDAO.createUser({...ownerUserObj});
 });
 afterAll(async () => {
@@ -65,14 +51,14 @@ afterAll(async () => {
 
 describe("User API endpoints", () => {
     const testUser = (email: string) => new User(testUserObj(email));
-    const adminUser: User = new User(adminUserObj);
 
     const adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), adminUserObj.email, adminUserObj.password, requestFn);
+        makeLoggedInRequest(request.agent(app), adminUser.email!, adminUser.password!, requestFn);
     const ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), ownerUserObj.email, ownerUserObj.password, requestFn);
+        makeLoggedInRequest(request.agent(app), ownerUser.email!, ownerUser.password!, requestFn);
 
     describe("POST /users (create new user)", () => {
+        const jatheeshUser = UserFactory.getUser("jatheesh@example.com");
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
         const postRequest = (userObj: Partial<User>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
@@ -82,14 +68,13 @@ describe("User API endpoints", () => {
         });
 
         it("should return a single user object instance to the object passed in", async () => {
-            const email = "jatheeshx@example.com";
-            const res = await adminLoggedIn(postRequest(testUserObj(email)));
-            expect((testUser(email).publicUser).equals(res.body)).toBeTrue();
+            const res = await adminLoggedIn(postRequest(jatheeshUser.parse()));
+            expect(jatheeshUser.publicUser.equals(res.body)).toBeTrue();
         });
         it("should ignore any invalid properties from the object passed in", async () => {
             const email = "invalid@gmail.com";
             const invalidPropsObj = {
-                ...testUserObj(email),
+                ...jatheeshUser.parse(),
                 blah: "Hello",
                 bloop: "yeeeah",
             };
@@ -102,15 +87,14 @@ describe("User API endpoints", () => {
             expect(res.body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should return a 400 Bad Request error if user with this email already exists in db", async () => {
-            const email = "jatheeshx@example.com";
-            const res = await adminLoggedIn(postRequest(testUserObj(email), 400));
+            const res = await adminLoggedIn(postRequest(jatheeshUser, 400));
             expect(res.body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should throw a 403 Forbidden Error if a non-admin tries to create a user", async () => {
-            await ownerLoggedIn(postRequest(testUserObj("email@example.com"), 403));
+            await ownerLoggedIn(postRequest(jatheeshUser, 403));
         });
         it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
-            await postRequest(testUserObj("email@example.com"), 403)(request(app));
+            await postRequest(jatheeshUser, 403)(request(app));
         });
     });
 
@@ -161,7 +145,7 @@ describe("User API endpoints", () => {
             makeGetRequest(request(app), `/users/search${stringifyQuery(query)}`, status);
 
         it("should return a single public user for the given query", async () => {
-            const res = await findRequest({ email: ownerUserObj.email });
+            const res = await findRequest({ email: ownerUser.email });
             expect(res.body).toBeObject();
             expect(ownerUser.publicUser.equals(res.body)).toBeTrue();
         });
@@ -169,7 +153,7 @@ describe("User API endpoints", () => {
             await findRequest({ email: "nonono@test.com" }, 404);
         });
         it("should return an array of users if given query includes the key 'multiple'", async () => {
-            const res = await findRequest({email: ownerUserObj.email, multiple: "true"});
+            const res = await findRequest({email: ownerUser.email, multiple: "true"});
             expect(res.body).toBeArrayOfSize(1);
             expect(res.body[0]).toBeObject();
             expect(ownerUser.publicUser.equals(res.body[0])).toBeTrue();
@@ -185,7 +169,7 @@ describe("User API endpoints", () => {
                 makePutRequest<Partial<User>>(agent, `/users/${id}`, userObj, status);
         const getOneRequest = (id: number) => makeGetRequest(request(app), `/users/${id}`, 200);
         const username = "MrMeSeeks92";
-        const updatedAdmin = new User({...adminUserObj, username});
+        const updatedAdmin = new User({...adminUser.parse(), username});
         afterEach(async () => {
             await doLogout(request.agent(app));
         });
