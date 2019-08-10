@@ -2,6 +2,7 @@ import "jest";
 import "jest-extended";
 import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
+import logger from "../../../src/bootstrap/logger";
 import UserDAO from "../../../src/DAO/UserDAO";
 import mockUserDb, { testUser } from "../mocks/mockUserDb";
 import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
@@ -20,6 +21,7 @@ describe("UserDAO", () => {
         mockWhereInIds.mockClear();
     });
     afterAll(async () => {
+        logger.debug("~~~~~~USER DAO AFTER ALL~~~~~~");
         await userDAO.connection.close();
     });
 

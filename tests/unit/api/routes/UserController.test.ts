@@ -5,6 +5,7 @@ import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import UserController from "../../../../src/api/routes/UserController";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import User from "../../../../src/models/user";
+import { UserFactory } from "../../../factories/UserFactory";
 
 describe("UserController", () => {
     const mockUserDAO = {
@@ -19,7 +20,8 @@ describe("UserController", () => {
         findUsers: jest.fn(),
     };
     const userController = new UserController(mockUserDAO as unknown as UserDAO);
-    const testUser = new User({id: 1, name: "Jatheesh", password: "pswd", userIdToken: "ra-ndom-string"});
+    const testUser = UserFactory.getUser("Jatheesh", "pswd", undefined,
+        {id: 1, userIdToken: "ra-ndom-string"});
 
     afterEach(() => {
         Object.entries(mockUserDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {

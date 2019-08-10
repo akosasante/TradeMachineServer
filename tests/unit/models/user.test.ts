@@ -1,9 +1,10 @@
 import "jest";
 import "jest-extended";
 import User, { Role } from "../../../src/models/user";
+import { UserFactory } from "../../factories/UserFactory";
 
 describe("User Class", () => {
-    const userObj = {email: "test@example.com", password: "lol", roles: [Role.ADMIN]};
+    const userObj = UserFactory.getUserObject();
     const user = new User(userObj);
 
     describe("constructor", () => {
