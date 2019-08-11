@@ -23,6 +23,7 @@ export default async function initializeDb(logQueries: boolean = false) {
                     await connection!.connect();
                     logger.debug("Reconnected");
                 } catch (reconnectError) {
+                    logger.error("Reconnection error");
                     logger.error(reconnectError);
                 }
             }, 5000);
