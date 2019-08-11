@@ -1,4 +1,7 @@
+import { Server } from "http";
 import request from "supertest";
+import UserDAO from "../../src/DAO/UserDAO";
+import { UserFactory } from "../factories/UserFactory";
 
 export async function makeLoggedInRequest(agent: request.SuperTest<request.Test>, email: string, password: string,
                                           req: (ag: request.SuperTest<request.Test>) => any) {
@@ -61,3 +64,17 @@ export function stringifyQuery(query: any) {
     return Object.entries(query).reduce((queryString: string, kvp: any) =>
         `${queryString}${kvp[0]}=${kvp[1]}&`, "?");
 }
+
+export async function setupOwnerAndAdminUsers() {
+    const userDAO = new UserDAO();
+    const ownerUser = UserFactory.getOwnerUser();
+    const adminUser = UserFactory.getAdminUser();
+    const savedAdmin = await userDAO.createUser(adminUser.parse());
+    const savedOwner = await userDAO.createUser(ownerUser.parse());
+    return [savedAdmin, savedOwner];
+}
+
+export const adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any, app: Server) =>
+    makeLoggedInRequest(request.agent(app), UserFactory.ADMIN_EMAIL, UserFactory.GENERIC_PASSWORD, requestFn);
+export const ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any, app: Server) =>
+    makeLoggedInRequest(request.agent(app), UserFactory.OWNER_EMAIL, UserFactory.GENERIC_PASSWORD, requestFn);
