@@ -5,6 +5,8 @@ import TeamController from "../../../../src/api/routes/TeamController";
 import TeamDAO from "../../../../src/DAO/TeamDAO";
 import Team from "../../../../src/models/team";
 import User from "../../../../src/models/user";
+import { TeamFactory } from "../../../factories/TeamFactory";
+import { UserFactory } from "../../../factories/UserFactory";
 
 describe("TeamController", () => {
     const mockTeamDAO = {
@@ -17,8 +19,8 @@ describe("TeamController", () => {
         updateTeamOwners: jest.fn(),
         getTeamsByOwnerStatus: jest.fn(),
     };
-    const testUser = new User({id: 1, name: "Jatheesh", password: "pswd", userIdToken: "ra-ndom-string"});
-    const testTeam = new Team({id: 1, name: "Squirtle Squad", espnId: 209, owners: [testUser.publicUser]});
+    const testUser = UserFactory.getUser(undefined, undefined, undefined, {id: 1});
+    const testTeam = TeamFactory.getTeam(undefined, undefined, {owners: [testUser.publicUser]});
     const teamController = new TeamController(mockTeamDAO as unknown as TeamDAO);
 
     afterEach(() => {

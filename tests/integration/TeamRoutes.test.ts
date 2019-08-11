@@ -6,8 +6,10 @@ import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import Team from "../../src/models/team";
-import User, { Role } from "../../src/models/user";
+import User from "../../src/models/user";
 import server from "../../src/server";
+import { TeamFactory } from "../factories/TeamFactory";
+import { UserFactory } from "../factories/UserFactory";
 import {
     doLogout,
     makeDeleteRequest,
@@ -20,11 +22,9 @@ import {
 } from "./helpers";
 
 let app: Server;
-let adminUser: User;
-let ownerUser: User;
-let otherUser: User;
-const adminUserObj = { email: "admin@example.com", password: "lol", name: "Cam", roles: [Role.ADMIN]};
-const ownerUserObj = { email: "owner@example.com", password: "lol", name: "Jatheesh", roles: [Role.OWNER]};
+let ownerUser = UserFactory.getOwnerUser();
+let adminUser = UserFactory.getAdminUser();
+let otherUser = UserFactory.getUser();
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -43,9 +43,9 @@ beforeAll(async () => {
 
     // Create admin and owner users in db for rest of this suite's use
     const userDAO = new UserDAO();
-    adminUser = await userDAO.createUser({...adminUserObj});
-    ownerUser = await userDAO.createUser({...ownerUserObj});
-    otherUser = await userDAO.createUser({email: "example@test.ca"});
+    adminUser = await userDAO.createUser(adminUser.parse());
+    ownerUser = await userDAO.createUser(ownerUser.parse());
+    otherUser = await userDAO.createUser(otherUser.parse());
 });
 afterAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES AFTER ALL~~~~~~");
@@ -56,14 +56,13 @@ afterAll(async () => {
 });
 
 describe("Team API endpoints", () => {
-    const testTeamObj = {name: "Squirtle Squad", espnId: 1};
-    const testTeam = new Team({name: "Squirtle Squad", espnId: 1});
+    const testTeam = TeamFactory.getTeam();
     const updatedName = "Hello darkness my old friend";
 
     const adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), adminUserObj.email, adminUserObj.password, requestFn);
+        makeLoggedInRequest(request.agent(app), adminUser.email!, UserFactory.GENERIC_PASSWORD, requestFn);
     const ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), ownerUserObj.email, ownerUserObj.password, requestFn);
+        makeLoggedInRequest(request.agent(app), ownerUser.email!, UserFactory.GENERIC_PASSWORD, requestFn);
 
     describe("POST /teams (create new team)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
@@ -75,11 +74,11 @@ describe("Team API endpoints", () => {
         });
 
         it("should return a single team object based on the object passed in", async () => {
-            const res = await adminLoggedIn(postRequest(testTeamObj));
+            const res = await adminLoggedIn(postRequest(testTeam));
             expect(testTeam.publicTeam.equals(res.body)).toBeTrue();
         });
         it("should ignore any invalid properties from the object passed in", async () => {
-            const teamObj = {...testTeamObj, espnId: 2, blah: "Hello", bloop: "yeeah"};
+            const teamObj = {...testTeam.parse(), espnId: 2, blah: "Hello", bloop: "yeeah"};
             const testTeam2 = new Team(teamObj);
             const res = await adminLoggedIn(postRequest(teamObj));
             expect(testTeam2.publicTeam.equals(res.body)).toBeTrue();
@@ -91,10 +90,10 @@ describe("Team API endpoints", () => {
             expect(res.body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a team", async () => {
-            await ownerLoggedIn(postRequest(testTeamObj, 403));
+            await ownerLoggedIn(postRequest(testTeam, 403));
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
-            await postRequest(testTeamObj, 403)(request(app));
+            await postRequest(testTeam, 403)(request(app));
         });
     });
 
@@ -155,7 +154,7 @@ describe("Team API endpoints", () => {
         const putTeamRequest = (id: number, teamObj: Partial<Team>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<Team>>(agent, `/teams/${id}`, teamObj, status);
-        const updatedTeamObj = {...testTeamObj, id: 1, name: updatedName};
+        const updatedTeamObj = {...testTeam.parse(), id: 1, name: updatedName};
         const updatedTeam = new Team(updatedTeamObj);
         afterEach(async () => {
             await doLogout(request.agent(app));
@@ -199,7 +198,7 @@ describe("Team API endpoints", () => {
 
         it("should return the updated team with added owners", async () => {
             const res = await adminLoggedIn(patchTeamRequest(1, [otherUser, adminUser], []));
-            const testTeamUpdated = new Team({...testTeamObj, name: updatedName, owners: [otherUser, adminUser]});
+            const testTeamUpdated = new Team({...testTeam.parse(), name: updatedName, owners: [otherUser, adminUser]});
             expect(res.body.owners).toBeArrayOfSize(2);
             expect(res.body.owners.filter((owner: User) => owner.id === adminUser.id || owner.id === otherUser.id))
                 .toBeArrayOfSize(2);
@@ -207,7 +206,7 @@ describe("Team API endpoints", () => {
         });
         it("should allow adding and removing at the same time", async () => {
             const res = await adminLoggedIn(patchTeamRequest(1, [ownerUser], [otherUser]));
-            const testTeamUpdated = new Team({...testTeamObj, name: updatedName, owners: [adminUser, ownerUser]});
+            const testTeamUpdated = new Team({...testTeam.parse(), name: updatedName, owners: [adminUser, ownerUser]});
             expect(res.body.owners).toBeArrayOfSize(2);
             // Checking if admin user is here:
             expect(res.body.owners.filter((owner: User) => owner.id === otherUser.id)).toBeEmpty();

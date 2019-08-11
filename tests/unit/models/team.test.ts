@@ -2,10 +2,12 @@ import "jest";
 import "jest-extended";
 import { clone } from "lodash";
 import Team from "../../../src/models/team";
-import User, { Role } from "../../../src/models/user";
+import User from "../../../src/models/user";
+import { TeamFactory } from "../../factories/TeamFactory";
+import { UserFactory } from "../../factories/UserFactory";
 
 describe("Team Class", () => {
-    const teamObj = {id: 1, name: "Squirtle Squad", espnId: 1};
+    const teamObj = TeamFactory.getTeamObject(undefined, undefined, {id: 1});
     const team = new Team(teamObj);
 
     describe("constructor", () => {
@@ -20,7 +22,7 @@ describe("Team Class", () => {
 
     describe("getters", () => {
         it("publicTeam/0 - should return a team copy with owners' psswds cleaned", () => {
-            team.owners = [new User({email: "test@example.com", password: "lol"})];
+            team.owners = [UserFactory.getUser()];
             expect(team.publicTeam).toBeInstanceOf(Team);
             expect((team.publicTeam.owners || [])[0]).toBeInstanceOf(User);
             expect((team.publicTeam.owners || [])[0].password).toBeFalsy();
@@ -36,25 +38,24 @@ describe("Team Class", () => {
         });
 
         describe("equals/2", () => {
-            const user1 = new User({email: "test@example.com", password: "lol", roles: [Role.ADMIN]});
-            const team2 = new Team({name: "Squirtle Squad", espnId: 1, owners: [user1]});
-            const team3 = new Team({name: "Squirtle Squad", espnId: 2});
-            const team4 = clone(team);
+            const sameTeamDiffOwners = new Team({...team, owners: [UserFactory.getUser()]});
+            const sameTeamDiffEspn = new Team({...team, espnId: 2});
+            const sameTeam = clone(team);
 
             it("should return true if the two instances are identical. Excludes = default", async () => {
-                expect(team.equals(team4)).toBeTrue();
+                expect(team.equals(sameTeam)).toBeTrue();
             });
 
             it("should return true if the two instances are identical considering the excludes", async () => {
-                expect(team.equals(team3, {espnId: true})).toBeTrue();
+                expect(team.equals(sameTeamDiffEspn, {espnId: true})).toBeTrue();
             });
 
             it("should throw a useful error if something doesn't match (props)", async () => {
-                expect(() => team.equals(team3)).toThrowWithMessage(Error, "Not matching: espnId");
+                expect(() => team.equals(sameTeamDiffEspn)).toThrowWithMessage(Error, "Not matching: espnId");
             });
 
             it("should throw  a useful error if something doesn't match (objects)", () => {
-                expect(() => team.equals(team2)).toThrowWithMessage(Error, "Not matching: owners");
+                expect(() => team.equals(sameTeamDiffOwners)).toThrowWithMessage(Error, "Not matching: owners");
             });
         });
     });

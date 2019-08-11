@@ -5,7 +5,7 @@ import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
-import User, { Role } from "../../src/models/user";
+import User from "../../src/models/user";
 import server from "../../src/server";
 import { UserFactory } from "../factories/UserFactory";
 import {
@@ -39,7 +39,7 @@ beforeAll(async () => {
     const userDAO = new UserDAO();
     // Create admin and owner users in db for rest of this suite's use
     adminUser = await userDAO.createUser(adminUser.parse());
-    ownerUser = await userDAO.createUser({...ownerUserObj});
+    ownerUser = await userDAO.createUser(ownerUser.parse());
 });
 afterAll(async () => {
     logger.debug("~~~~~~USER ROUTES AFTER ALL~~~~~~");
@@ -50,15 +50,14 @@ afterAll(async () => {
 });
 
 describe("User API endpoints", () => {
-    const testUser = (email: string) => new User(testUserObj(email));
-
     const adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), adminUser.email!, adminUser.password!, requestFn);
+        makeLoggedInRequest(request.agent(app), adminUser.email!, UserFactory.GENERIC_PASSWORD, requestFn);
     const ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), ownerUser.email!, ownerUser.password!, requestFn);
+        makeLoggedInRequest(request.agent(app), ownerUser.email!, UserFactory.GENERIC_PASSWORD, requestFn);
 
     describe("POST /users (create new user)", () => {
         const jatheeshUser = UserFactory.getUser("jatheesh@example.com");
+        const akosUser = UserFactory.getUser("akos@example.com");
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
         const postRequest = (userObj: Partial<User>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
@@ -72,14 +71,13 @@ describe("User API endpoints", () => {
             expect(jatheeshUser.publicUser.equals(res.body)).toBeTrue();
         });
         it("should ignore any invalid properties from the object passed in", async () => {
-            const email = "invalid@gmail.com";
             const invalidPropsObj = {
-                ...jatheeshUser.parse(),
+                ...akosUser.parse(),
                 blah: "Hello",
                 bloop: "yeeeah",
             };
             const res = await adminLoggedIn(postRequest(invalidPropsObj));
-            expect(testUser(email).equals(res.body)).toBeTrue();
+            expect(akosUser.equals(res.body)).toBeTrue();
         });
         it("should return a 400 Bad Request error if missing required property", async () => {
             const missingEmailUser = {name: "Jatheesh"};
