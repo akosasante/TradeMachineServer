@@ -3,8 +3,8 @@ import "jest-extended";
 import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
 import TeamDAO from "../../../src/DAO/TeamDAO";
-import Team from "../../../src/models/team";
 import User from "../../../src/models/user";
+import { TeamFactory } from "../../factories/TeamFactory";
 import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 
 const mockTeamDb = {
@@ -20,8 +20,7 @@ jest.spyOn(typeorm, "getConnection").mockReturnValue({ getRepository: jest.fn().
 
 describe("TeamDAO", () => {
     const teamDAO = new TeamDAO();
-    const testTeam1 = new Team({id: 1, name: "Squirtle Squad"});
-    const testTeam2 = new Team({id: 2, name: "Flex Fox's Team"});
+    const [testTeam1, testTeam2] = TeamFactory.getTeams(2);
 
     afterEach(() => {
         Object.entries(mockTeamDb).forEach((kvp: [string, jest.Mock<any, any>]) => {
