@@ -16,7 +16,7 @@ import logger from "../../bootstrap/logger";
 import { WriteMode } from "../../csv/CsvUtils";
 import { processDraftPickCsv } from "../../csv/DraftPickParser";
 import DraftPickDAO from "../../DAO/DraftPickDAO";
-import UserDAO from "../../DAO/UserDAO";
+import TeamDAO from "../../DAO/TeamDAO";
 import DraftPick from "../../models/draftPick";
 import { LeagueLevel } from "../../models/player";
 import { Role } from "../../models/user";
@@ -25,11 +25,11 @@ import { cleanupQuery, fileUploadOptions as uploadOpts } from "../ApiHelpers";
 @JsonController("/picks")
 export default class DraftPickController {
     private dao: DraftPickDAO;
-    private userDAO: UserDAO;
+    private teamDAO: TeamDAO;
 
-    constructor(DAO?: DraftPickDAO, userDAO?: UserDAO) {
+    constructor(DAO?: DraftPickDAO, teamDAO?: TeamDAO) {
         this.dao = DAO || new DraftPickDAO();
-        this.userDAO = userDAO || new UserDAO();
+        this.teamDAO = teamDAO || new TeamDAO();
     }
 
     @Get("/")
@@ -69,8 +69,8 @@ export default class DraftPickController {
     @Post("/batch")
     public async batchUploadDraftPicks(@UploadedFile("picks", {required: true, options: uploadOpts}) file: any,
                                        @QueryParam("mode") mode: WriteMode): Promise<DraftPick[]> {
-        const users = await this.userDAO.getAllUsers();
-        return await processDraftPickCsv(file.path, users, this.dao, mode);
+        const teams = await this.teamDAO.getAllTeams();
+        return await processDraftPickCsv(file.path, teams, this.dao, mode);
     }
 
     @Authorized(Role.ADMIN)

@@ -4,9 +4,11 @@ import { clone } from "lodash";
 import DraftPick from "../../../src/models/draftPick";
 import { LeagueLevel } from "../../../src/models/player";
 import User, { Role } from "../../../src/models/user";
+import { DraftPickFactory } from "../../factories/DraftPickFactory";
+import { TeamFactory } from "../../factories/TeamFactory";
 
 describe("DraftPick Class", () => {
-    const draftPickObj = {round: 1, pickNumber: 12, type: LeagueLevel.LOW};
+    const draftPickObj = DraftPickFactory.getPickObject();
     const draftPick = new DraftPick(draftPickObj);
 
     describe("constructor", () => {
@@ -32,9 +34,11 @@ describe("DraftPick Class", () => {
             const draftDiffLevel = new DraftPick({...draftPickObj, type: LeagueLevel.HIGH});
             const owner = new User({email: "test@example.com", password: "lol", roles: [Role.ADMIN]});
             const owner2 = new User({email: "test2@example.com", password: "lol", roles: [Role.ADMIN]});
-            const draftWithOwner = new DraftPick({...draftPickObj, currentOwner: owner});
+            const team1 = TeamFactory.getTeam("team1", 1, {owners: [owner]});
+            const team2 = TeamFactory.getTeam("team2", 2, {owners: [owner2]});
+            const draftWithOwner = new DraftPick({...draftPickObj, currentOwner: team1});
             const draftOwnerCloned = clone(draftWithOwner);
-            const draftWithDiffOwner = new DraftPick({...draftPickObj, currentOwner: owner2});
+            const draftWithDiffOwner = new DraftPick({...draftPickObj, currentOwner: team2});
 
             it("should return true if the two instances are identical. Excludes = default", () => {
                 expect(draftPick.equals(draftClone)).toBeTrue();
@@ -50,7 +54,7 @@ describe("DraftPick Class", () => {
             it("should throw a useful error if something doesn't match (model fields)", () => {
                 expect(() => draftPick.equals(draftWithOwner)).toThrowWithMessage(Error, "Not matching: currentOwner");
                 expect(() => draftWithDiffOwner.equals(draftWithOwner))
-                    .toThrowWithMessage(Error, "Not matching: email");
+                    .toThrowWithMessage(Error, "Not matching: name");
             });
         });
     });

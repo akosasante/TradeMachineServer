@@ -1,6 +1,7 @@
 import { Column, Entity, OneToMany } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes, HasEquals } from "./base";
+import DraftPick from "./draftPick";
 import Player from "./player";
 import TradeItem from "./tradeItem";
 import TradeParticipant from "./tradeParticipant";
@@ -45,6 +46,12 @@ export default class Team extends BaseModel implements HasEquals {
     @OneToMany(type => TradeItem, tradeItem => tradeItem.recipient)
     public tradeItemsReceived?: TradeItem[];
 
+    @OneToMany(type => DraftPick, pick => pick.currentOwner)
+    public draftPicks?: DraftPick[];
+
+    @OneToMany(type => DraftPick, pick => pick.originalOwner)
+    public originalDraftPicks?: DraftPick[];
+
     constructor(teamObj: Partial<Team> = {}) {
         super();
         Object.assign(this, {id: teamObj.id});
@@ -59,6 +66,8 @@ export default class Team extends BaseModel implements HasEquals {
         this.tradeParticipants = teamObj.tradeParticipants;
         this.tradeItemsReceived = teamObj.tradeItemsReceived;
         this.tradeItemsSent = teamObj.tradeItemsSent;
+        this.draftPicks = teamObj.draftPicks;
+        this.originalDraftPicks = teamObj.originalDraftPicks;
     }
 
     public toString(): string {
@@ -67,7 +76,13 @@ export default class Team extends BaseModel implements HasEquals {
 
     public equals(other: Team, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
         logger.debug("Team equals check");
-        const COMPLEX_FIELDS = {tradeParticipants: true, tradeItemsReceived: true, tradeItemsSent: true};
+        const COMPLEX_FIELDS = {
+            tradeParticipants: true,
+            tradeItemsReceived: true,
+            tradeItemsSent: true,
+            draftPicks: true,
+            originalDraftPicks: true,
+        };
         const MODEL_FIELDS = {owners: true};
         const DEFAULT_EXCLUDES = {
             id: true,
