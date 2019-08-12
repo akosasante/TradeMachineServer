@@ -44,7 +44,7 @@ describe("PlayerParser", () => {
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(1);
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledWith("minor");
     });
-    it("should return ann error if error occurs while deleting existing players", async () => {
+    it("should return an error if error occurs while deleting existing players", async () => {
         mockDAO.deleteAllPlayers.mockImplementationOnce(() => {
             throw new Error("Error deleting players");
         });

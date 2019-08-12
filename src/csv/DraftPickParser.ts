@@ -5,7 +5,7 @@ import logger from "../bootstrap/logger";
 import DraftPickDAO from "../DAO/DraftPickDAO";
 import DraftPick from "../models/draftPick";
 import { LeagueLevel } from "../models/player";
-import User from "../models/user";
+import Team from "../models/team";
 import { validateRow, WriteMode } from "./CsvUtils";
 
 interface DraftPickCSVRow {
@@ -15,26 +15,41 @@ interface DraftPickCSVRow {
     Type: "Major"|"High"|"Low";
 }
 
-export async function processDraftPickCsv(csvFilePath: string, users: User[], dao: DraftPickDAO, mode?: WriteMode)
+export async function processDraftPickCsv(csvFilePath: string, teams: Team[], dao: DraftPickDAO, mode?: WriteMode)
     : Promise<DraftPick[]> {
-    let parsedPicks: Array<Partial<DraftPick>> = [];
-    let promisedPicks: Array<Promise<DraftPick[]>> = [];
+    const parsedPicks: Array<Partial<DraftPick>> = [];
 
+    await maybeDeleteExistingPicks(dao, mode);
+
+    logger.debug("WAITING ON STREAM");
+    await readAndParsePickCsv(parsedPicks, csvFilePath, teams);
+    logger.debug("DONE PARSING");
+
+    return dao.batchCreatePicks(parsedPicks.filter(pick => !!pick));
+}
+
+async function maybeDeleteExistingPicks(dao: DraftPickDAO, mode?: WriteMode) {
     if (mode === "overwrite") {
         try {
+            logger.debug("overwrite, so deleting all existing picks");
             await dao.deleteAllPicks();
         } catch (e) {
             logger.error(inspect(e));
             throw e;
         }
     }
+}
 
-    const promisedStream = new Promise((resolve, reject) => {
+async function readAndParsePickCsv(parsedPicks: Array<Partial<DraftPick>>, path: string, teams: Team[]) {
+    return new Promise((resolve, reject) => {
         logger.debug("----------- starting to read csv ----------");
-        fs.createReadStream(csvFilePath)
+        fs.createReadStream(path)
             .pipe(csv.parse({headers: true}))
             .on("data", (row: DraftPickCSVRow) => {
-                [parsedPicks, promisedPicks] = parseDraftPicks(row, parsedPicks, promisedPicks, users, dao);
+                const parsedPick = parseDraftPick(row, teams);
+                if (parsedPick) {
+                    parsedPicks.push(parsedPick);
+                }
                 // logger.debug(`parsed: ${parsedPicks.length}, promised: ${promisedPicks.length}`);
             })
             .on("error", (e: any) => reject(e))
@@ -43,34 +58,9 @@ export async function processDraftPickCsv(csvFilePath: string, users: User[], da
                 resolve();
             });
     });
-
-    return promisedStream.then(() => {
-        promisedPicks.push(dao.batchCreatePicks(parsedPicks.splice(0)));
-        return Promise.all(promisedPicks).then(draftPicks => {
-            // @ts-ignore typescript does not seem to know about "flat"
-            return draftPicks.flat().filter(pick => !!pick);
-        });
-    });
 }
 
-function parseDraftPicks(row: DraftPickCSVRow, parsedPicks: Array<Partial<DraftPick>>,
-                         promisedPicks: Array<Promise<DraftPick[]>>, users: User[], dao: DraftPickDAO):
-    [Array<Partial<DraftPick>>, Array<Promise<DraftPick[]>>] {
-    const parsed = Array.from(parsedPicks);
-    const promised = Array.from(promisedPicks);
-
-    const parsedRow: Partial<DraftPick>|undefined = parseDraftPick(row, users);
-
-    if (parsedRow) {
-        parsed.push(parsedRow);
-    }
-    if (parsed.length >= 50) {
-        promised.push(dao.batchCreatePicks(parsed.splice(0)));
-    }
-    return [parsed, promised];
-}
-
-function parseDraftPick(row: DraftPickCSVRow, users: User[]): Partial<DraftPick>|undefined {
+function parseDraftPick(row: DraftPickCSVRow, teams: Team[]): Partial<DraftPick>|undefined {
     const DRAFT_PICK_PROPS = ["Round", "Pick Owner", "Type", "Owner"];
     const KEYWORD_TO_LEVEL: {[key: string]: LeagueLevel} = {
         High: LeagueLevel.HIGH,
@@ -82,8 +72,10 @@ function parseDraftPick(row: DraftPickCSVRow, users: User[]): Partial<DraftPick>
     if (!validRow) {
         return undefined;
     }
-    const currentOwner = users.find(user => user.shortName === row.Owner);
-    const originalOwner = users.find(user => user.shortName === row["Pick Owner"]);
+    const teamsWithOwners = teams.filter(team => team.owners && team.owners.length);
+    const currentOwner = teamsWithOwners.find(team => team.owners!.some(owner => owner.shortName === row.Owner));
+    const originalOwner = teamsWithOwners.find(team =>
+        team.owners!.some(owner => owner.shortName === row["Pick Owner"]));
 
     if (!currentOwner || !originalOwner) {
         return undefined;

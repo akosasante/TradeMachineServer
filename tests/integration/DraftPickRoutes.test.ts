@@ -5,27 +5,34 @@ import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import { WriteMode } from "../../src/csv/CsvUtils";
+import TeamDAO from "../../src/DAO/TeamDAO";
 import UserDAO from "../../src/DAO/UserDAO";
 import DraftPick from "../../src/models/draftPick";
 import { LeagueLevel } from "../../src/models/player";
+import Team from "../../src/models/team";
 import User, { Role } from "../../src/models/user";
 import server from "../../src/server";
+import { DraftPickFactory } from "../factories/DraftPickFactory";
+import { TeamFactory } from "../factories/TeamFactory";
 import {
+    adminLoggedIn,
     doLogout,
     makeDeleteRequest,
     makeGetRequest,
-    makeLoggedInRequest,
     makePostRequest,
     makePutRequest,
+    ownerLoggedIn,
+    setupOwnerAndAdminUsers,
     stringifyQuery
 } from "./helpers";
 
 let app: Server;
 let adminUser: User;
 let ownerUser: User;
-const adminUserObj = { email: "admin@example.com", password: "lol", name: "Cam", roles: [Role.ADMIN], shortName: "Cam"};
-const ownerUserObj = { email: "owner@example.com", password: "lol", name: "A", roles: [Role.OWNER], shortName: "Akos"};
-const extraUserObj = { email: "kwasi@example.com", password: "lol", name: "K", roles: [Role.OWNER], shortName: "Kwasi"};
+let team1: Team;
+let team2: Team;
+let team3: Team;
+let user3: User;
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -42,11 +49,18 @@ beforeAll(async () => {
     logger.debug("~~~~~~DRAFT PICK ROUTES BEFORE ALL~~~~~~");
     app = await server;
 
-    // Create admin and owner users in db for rest of this suite's use
     const userDAO = new UserDAO();
-    adminUser = await userDAO.createUser({...adminUserObj});
-    ownerUser = await userDAO.createUser({...ownerUserObj});
-    await userDAO.createUser({...extraUserObj});
+    const teamDAO = new TeamDAO();
+    // Create admin and owner users in db for rest of this suite's use
+    [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+    await userDAO.updateUser(adminUser.id!, {name: "Cam", shortName: "Cam"});
+    await userDAO.updateUser(ownerUser.id!, {name: "A", shortName: "Akos"});
+    // Create users and teams for batch upload tests
+    user3 = await userDAO.createUser({ email: "kwasi@example.com", password: "lol", name: "K",
+        roles: [Role.OWNER], shortName: "Kwasi"});
+    team1 = await teamDAO.createTeam(TeamFactory.getTeamObject( "Camtastic", 1, {owners: [adminUser]}));
+    team2 = await teamDAO.createTeam(TeamFactory.getTeamObject( "Squad", 2, {owners: [ownerUser]}));
+    team3 = await teamDAO.createTeam(TeamFactory.getTeamObject( "Asantes", 3, {owners: [user3]}));
 });
 afterAll(async () => {
     logger.debug("~~~~~~DRAFT PICK ROUTES AFTER ALL~~~~~~");
@@ -57,13 +71,9 @@ afterAll(async () => {
 });
 
 describe("Pick API endpoints", () => {
-    const testPickObj = {round: 1, pickNumber: 12, type: LeagueLevel.HIGH};
-    const testPickObj2 = {round: 2, pickNumber: 6, type: LeagueLevel.MAJOR};
+    const testPickObj = DraftPickFactory.getPickObject(undefined, undefined, LeagueLevel.HIGH);
+    const testPickObj2 =  DraftPickFactory.getPickObject(2, 6, LeagueLevel.MAJOR);
     const testPick = new DraftPick(testPickObj);
-    const adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), adminUserObj.email, adminUserObj.password, requestFn);
-    const ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), ownerUserObj.email, ownerUserObj.password, requestFn);
 
     describe("POST /picks (create new pick)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
@@ -75,23 +85,23 @@ describe("Pick API endpoints", () => {
         });
 
         it("should return a single pick object based on object passed in", async () => {
-            const res = await adminLoggedIn(postRequest(testPickObj));
+            const res = await adminLoggedIn(postRequest(testPickObj), app);
             expect(testPick.equals(res.body)).toBeTrue();
         });
         it("should ignore any invalid properties from the object passed in", async () => {
             const pickObj = {...testPickObj2, blah: "Hello"};
             const testInvalidProps = new DraftPick(pickObj);
-            const res = await adminLoggedIn(postRequest(testInvalidProps));
+            const res = await adminLoggedIn(postRequest(testInvalidProps), app);
             expect(testInvalidProps.equals(res.body)).toBeTrue();
             expect(res.body.blah).toBeUndefined();
         });
         it("should return a 400 Bad Request error if missing a required property", async () => {
             const pickObj = { season: 2017 };
-            const res = await adminLoggedIn(postRequest(pickObj, 400));
+            const res = await adminLoggedIn(postRequest(pickObj, 400), app);
             expect(res.body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a pick", async () => {
-            await ownerLoggedIn(postRequest(testPickObj, 403));
+            await ownerLoggedIn(postRequest(testPickObj, 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await postRequest(testPickObj, 403)(request(app));
@@ -163,7 +173,7 @@ describe("Pick API endpoints", () => {
         });
 
         it("should return the updated pick", async () => {
-            const res = await adminLoggedIn(putRequest(updatedPickObj.id, updatedPickObj));
+            const res = await adminLoggedIn(putRequest(updatedPickObj.id, updatedPickObj), app);
             expect(updatedPick.equals(res.body)).toBeTrue();
 
             // Confirm db was actually updated:
@@ -172,7 +182,7 @@ describe("Pick API endpoints", () => {
         });
         it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
             const invalidObj = {...updatedPickObj, id: 1, blah: "wassup"};
-            await adminLoggedIn(putRequest(invalidObj.id, invalidObj, 400));
+            await adminLoggedIn(putRequest(invalidObj.id, invalidObj, 400), app);
 
             // Confirm db was not updated:
             const existingPick = await request(app).get(`/picks/${invalidObj.id}`).expect(200);
@@ -180,10 +190,10 @@ describe("Pick API endpoints", () => {
             expect(existingPick.body.blah).toBeUndefined();
         });
         it("should throw a 404 Not Found error if there is no pick with that ID", async () => {
-            await adminLoggedIn(putRequest(999, updatedPickObj, 404));
+            await adminLoggedIn(putRequest(999, updatedPickObj, 404), app);
         });
         it("should throw a 403 Forbidden error if a non-admin tries to update a pick", async () => {
-            await ownerLoggedIn(putRequest(updatedPickObj.id, updatedPickObj, 403));
+            await ownerLoggedIn(putRequest(updatedPickObj.id, updatedPickObj, 403), app);
         });
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await putRequest(updatedPickObj.id, updatedPickObj, 403)(request(app));
@@ -198,7 +208,7 @@ describe("Pick API endpoints", () => {
         });
 
         it("should return a delete result if successful", async () => {
-            const res = await adminLoggedIn(deleteRequest(1));
+            const res = await adminLoggedIn(deleteRequest(1), app);
             expect(res.body).toEqual({deleteCount: 1, id: 1});
 
             // Confirm that it was deleted from the db:
@@ -206,12 +216,12 @@ describe("Pick API endpoints", () => {
             expect(getAllRes.body).toBeArrayOfSize(1);
         });
         it("should throw a 404 Not Found error if there is no pick with that ID", async () => {
-            await adminLoggedIn(deleteRequest(1, 404));
+            await adminLoggedIn(deleteRequest(1, 404), app);
             const getAllRes = await request(app).get("/picks").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(1);
         });
         it("should throw a 403 Forbidden error if a non-admin tries to delete a pick", async () => {
-            await ownerLoggedIn(deleteRequest(2, 403));
+            await ownerLoggedIn(deleteRequest(2, 403), app);
             const getAllRes = await request(app).get("/picks").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(1);
         });
@@ -242,7 +252,7 @@ describe("Pick API endpoints", () => {
             const getAllRes = await request(app).get("/picks").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(1);
 
-            const batchPutRes = await adminLoggedIn(postFileRequest(csv));
+            const batchPutRes = await adminLoggedIn(postFileRequest(csv), app);
             expect(batchPutRes.body).toBeArrayOfSize(50);
             const afterGetAllRes = await request(app).get("/picks").expect(200);
             expect(afterGetAllRes.body).toBeArrayOfSize(51);
@@ -251,7 +261,7 @@ describe("Pick API endpoints", () => {
             const getAllRes = await request(app).get("/picks").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(51);
 
-            const batchPutRes = await adminLoggedIn(postFileRequest(csv, "append"));
+            const batchPutRes = await adminLoggedIn(postFileRequest(csv, "append"), app);
             expect(batchPutRes.body).toBeArrayOfSize(50);
             const afterGetAllRes = await request(app).get("/picks").expect(200);
             expect(afterGetAllRes.body).toBeArrayOfSize(101);
@@ -260,16 +270,16 @@ describe("Pick API endpoints", () => {
             const getAllRes = await request(app).get("/picks").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(101);
 
-            const batchPutRes = await adminLoggedIn(postFileRequest(csv, "overwrite"));
+            const batchPutRes = await adminLoggedIn(postFileRequest(csv, "overwrite"), app);
             expect(batchPutRes.body).toBeArrayOfSize(50);
             const afterGetAllRes = await request(app).get("/picks").expect(200);
             expect(afterGetAllRes.body).toBeArrayOfSize(50);
         });
         it("should return a 400 Bad Request if no file is passed in", async () => {
-            await (adminLoggedIn(requestWithoutFile("overwrite", 400)));
+            await (adminLoggedIn(requestWithoutFile("overwrite", 400), app));
         });
         it("should return a 403 Forbidden error if a non-admin tries to upload new picks", async () => {
-            await ownerLoggedIn(postFileRequest(csv, "overwrite", 403));
+            await ownerLoggedIn(postFileRequest(csv, "overwrite", 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged-in request is used", async () => {
             await postFileRequest(csv, "overwrite", 403)(request(app));

@@ -5,10 +5,11 @@ import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import DraftPickController from "../../../../src/api/routes/DraftPickController";
 import { processDraftPickCsv } from "../../../../src/csv/DraftPickParser";
 import DraftPickDAO from "../../../../src/DAO/DraftPickDAO";
-import UserDAO from "../../../../src/DAO/UserDAO";
+import TeamDAO from "../../../../src/DAO/TeamDAO";
 import DraftPick from "../../../../src/models/draftPick";
 import { LeagueLevel } from "../../../../src/models/player";
 import User from "../../../../src/models/user";
+import { DraftPickFactory } from "../../../factories/DraftPickFactory";
 
 jest.mock("../../../../src/csv/DraftPickParser");
 const mockedCsvParser = mocked(processDraftPickCsv);
@@ -22,15 +23,15 @@ describe("DraftPickController", () => {
         updatePick: jest.fn(),
         deletePick: jest.fn(),
     };
-    const mockUserDAO = {
-        getAllUsers: jest.fn(),
+    const mockTeamDAO = {
+        getAllTeams: jest.fn(),
     };
-    const testDraftPick = new DraftPick({id: 1, round: 1, pickNumber: 12, type: LeagueLevel.LOW});
+    const testDraftPick = DraftPickFactory.getPick();
     const draftPickController = new DraftPickController(
-        mockDraftPickDAO as unknown as DraftPickDAO, mockUserDAO as unknown as UserDAO);
+        mockDraftPickDAO as unknown as DraftPickDAO, mockTeamDAO as unknown as TeamDAO);
 
     afterEach(() => {
-        [mockDraftPickDAO, mockUserDAO].map(mockedThing =>
+        [mockDraftPickDAO, mockTeamDAO].map(mockedThing =>
             Object.entries(mockedThing).forEach((kvp: [string, jest.Mock<any, any>]) => {
             kvp[1].mockClear();
         }));
@@ -163,24 +164,24 @@ describe("DraftPickController", () => {
 
         it("should get all existing users from the db", async () => {
             await draftPickController.batchUploadDraftPicks(testFile, overwriteMode);
-            expect(mockUserDAO.getAllUsers).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.getAllUsers).toHaveBeenCalledWith();
+            expect(mockTeamDAO.getAllTeams).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.getAllTeams).toHaveBeenCalledWith();
         });
         it("should call the draft pick processor method", async () => {
             const users = [new User({shortName: "Akos"})];
-            mockUserDAO.getAllUsers.mockResolvedValueOnce(users);
+            mockTeamDAO.getAllTeams.mockResolvedValueOnce(users);
             await draftPickController.batchUploadDraftPicks(testFile, overwriteMode);
             expect(mockedCsvParser).toHaveBeenCalledTimes(1);
             expect(mockedCsvParser).toHaveBeenCalledWith(testFile.path, users, mockDraftPickDAO, overwriteMode);
         });
         it("should call the return an array of draft picks", async () => {
-            const picks = [new DraftPick({round: 1, pickNumber: 12, type: LeagueLevel.HIGH})];
+            const picks = [DraftPickFactory.getPick(undefined, undefined, LeagueLevel.HIGH)];
             mockedCsvParser.mockResolvedValueOnce(picks);
             const res = await draftPickController.batchUploadDraftPicks(testFile, overwriteMode);
             expect(res).toEqual(picks);
         });
         it("should reject if userDAO throws an error", async () => {
-            mockUserDAO.getAllUsers.mockImplementationOnce(() => {
+            mockTeamDAO.getAllTeams.mockImplementationOnce(() => {
                 throw new Error();
             });
             await expect(draftPickController.batchUploadDraftPicks(testFile, overwriteMode)).rejects.toThrow(Error);

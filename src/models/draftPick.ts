@@ -2,8 +2,8 @@ import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes, HasEquals } from "./base";
 import { LeagueLevel } from "./player";
+import Team from "./team";
 import TradeItem from "./tradeItem";
-import User from "./user";
 
 @Entity()
 @Index(["season", "round", "pickNumber"], {unique: true})
@@ -20,11 +20,11 @@ export default class DraftPick extends BaseModel implements HasEquals {
     @Column({type: "enum", enum: LeagueLevel})
     public type: LeagueLevel;
 
-    @ManyToOne(type => User, user => user.draftPicks, {eager: true, onDelete: "SET NULL"})
-    public currentOwner?: User;
+    @ManyToOne(type => Team, team => team.draftPicks, {eager: true, onDelete: "SET NULL"})
+    public currentOwner?: Team;
 
-    @ManyToOne(type => User, user => user.originalDraftPicks, {eager: true, onDelete: "SET NULL"})
-    public originalOwner?: User;
+    @ManyToOne(type => Team, team => team.originalDraftPicks, {eager: true, onDelete: "SET NULL"})
+    public originalOwner?: Team;
 
     @OneToMany(type => TradeItem, tradeItem => tradeItem.pick)
     public tradeItems?: TradeItem[];

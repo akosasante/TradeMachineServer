@@ -2,7 +2,6 @@ import { compare, hash } from "bcryptjs";
 import { Column, Entity, Generated, Index, ManyToOne, OneToMany, Unique } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes } from "./base";
-import DraftPick from "./draftPick";
 import GeneralSettings from "./generalSettings";
 import ScheduledDowntime from "./scheduledDowntime";
 import Team from "./team";
@@ -99,12 +98,6 @@ export default class User extends BaseModel {
     @OneToMany(type => GeneralSettings, setting => setting.modifiedBy)
     public updatedSettings?: GeneralSettings[];
 
-    @OneToMany(type => DraftPick, pick => pick.currentOwner)
-    public draftPicks?: DraftPick[];
-
-    @OneToMany(type => DraftPick, pick => pick.originalOwner)
-    public originalDraftPicks?: DraftPick[];
-
     public hasPassword?: boolean;
 
     constructor(userObj: Partial<User> = {}) {
@@ -128,8 +121,6 @@ export default class User extends BaseModel {
         this.createdSchedules = userObj.createdSchedules;
         this.updatedSchedules = userObj.updatedSchedules;
         this.updatedSettings = userObj.updatedSettings;
-        this.draftPicks = userObj.draftPicks;
-        this.originalDraftPicks = userObj.originalDraftPicks;
     }
 
     // Couldn't get this to work for whatever reason so just hashing in the DAO itself.
@@ -174,8 +165,6 @@ export default class User extends BaseModel {
             createdSchedules: true,
             updatedSchedules: true,
             updatedSettings: true,
-            draftPicks: true,
-            originalDraftPicks: true,
         };
         const DEFAULT_EXCLUDES = {
             id: true,

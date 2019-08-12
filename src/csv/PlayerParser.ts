@@ -23,7 +23,7 @@ export async function processMinorLeagueCsv(csvFilePath: string, teams: Team[], 
 
     logger.debug("WAITING ON STREAM");
     await readAndParseMinorLeagueCsv(parsedPlayers, csvFilePath, teams);
-    logger.debug("READY");
+    logger.debug("DONE PARSING");
 
     return dao.batchCreatePlayers(parsedPlayers.filter(player => !!player));
 }
@@ -31,6 +31,7 @@ export async function processMinorLeagueCsv(csvFilePath: string, teams: Team[], 
 async function maybeDropMinorPlayers(dao: PlayerDAO, mode?: WriteMode) {
     if (mode === "overwrite") {
         try {
+            logger.debug("overwrite, so deleting all minor league players");
             await dao.deleteAllPlayers("minor");
         } catch (e) {
             logger.error(inspect(e));

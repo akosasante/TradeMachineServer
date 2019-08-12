@@ -4,8 +4,8 @@ import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
 import { IsNull, Not } from "typeorm";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
-import DraftPick from "../../../src/models/draftPick";
 import { LeagueLevel } from "../../../src/models/player";
+import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 
 const mockPickDb = {
@@ -23,7 +23,7 @@ jest.spyOn(typeorm, "getConnection").mockReturnValue({
 
 describe("DraftPickDAO", () => {
     const draftPickDAO = new DraftPickDAO();
-    const testPick1 = new DraftPick({round: 1, pickNumber: 12, type: LeagueLevel.LOW});
+    const testPick1 = DraftPickFactory.getPick();
 
     afterEach(() => {
         Object.entries(mockPickDb).forEach((kvp: [string, jest.Mock<any, any>]) => {
