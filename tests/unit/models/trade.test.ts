@@ -1,27 +1,26 @@
 import "jest";
 import "jest-extended";
 import { clone } from "lodash";
-import DraftPick from "../../../src/models/draftPick";
-import Player, { LeagueLevel } from "../../../src/models/player";
+import { LeagueLevel } from "../../../src/models/player";
 import Team from "../../../src/models/team";
 import Trade from "../../../src/models/trade";
 import TradeItem, { TradeItemType } from "../../../src/models/tradeItem";
 import TradeParticipant, { TradeParticipantType } from "../../../src/models/tradeParticipant";
+import { DraftPickFactory } from "../../factories/DraftPickFactory";
+import { PlayerFactory } from "../../factories/PlayerFactory";
+import { TeamFactory } from "../../factories/TeamFactory";
+import { TradeFactory } from "../../factories/TradeFactory";
 
 describe("Trade Class", () => {
-    const minorPlayer = new Player({name: "Honus Wiener", league: LeagueLevel.HIGH});
-    const majorPlayer = new Player({name: "Pete Buttjudge", league: LeagueLevel.MAJOR});
-    const pick = new DraftPick({round: 1, pickNumber: 12, type: LeagueLevel.LOW});
-    const creatorTeam = new Team({name: "Squirtle Squad", espnId: 1});
-    const recipientTeam = new Team({name: "Ditto Duo", espnId: 2});
-    const sender = new TradeParticipant({participantType: TradeParticipantType.CREATOR, team: creatorTeam});
-    const recipient = new TradeParticipant({participantType: TradeParticipantType.RECIPIENT, team: recipientTeam});
-    const tradedMajorPlayer = new TradeItem({tradeItemType: TradeItemType.PLAYER, player: majorPlayer,
-        sender: creatorTeam, recipient: recipientTeam });
-    const tradedMinorPlayer = new TradeItem({tradeItemType: TradeItemType.PLAYER, player: minorPlayer,
-        sender: creatorTeam, recipient: recipientTeam });
-    const tradedPick = new TradeItem({tradeItemType: TradeItemType.PICK, pick,
-        sender: recipientTeam, recipient: creatorTeam });
+    const minorPlayer = PlayerFactory.getPlayer(undefined, LeagueLevel.HIGH);
+    const majorPlayer = PlayerFactory.getPlayer("Pete Buttjudge", LeagueLevel.MAJOR);
+    const pick = DraftPickFactory.getPick();
+    const [creatorTeam, recipientTeam] = TeamFactory.getTeams(2);
+    const sender = TradeFactory.getTradeCreator(creatorTeam);
+    const recipient = TradeFactory.getTradeRecipient(recipientTeam);
+    const tradedMajorPlayer = TradeFactory.getTradedMajorPlayer(majorPlayer, creatorTeam, recipientTeam);
+    const tradedMinorPlayer = TradeFactory.getTradedMinorPlayer(minorPlayer, creatorTeam, recipientTeam);
+    const tradedPick = TradeFactory.getTradedPick(pick, recipientTeam, creatorTeam);
     const tradeItems = [tradedMajorPlayer, tradedMinorPlayer, tradedPick];
     const testTrade = new Trade({id: 1, tradeItems, tradeParticipants: [sender, recipient]});
 

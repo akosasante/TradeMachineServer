@@ -1,19 +1,20 @@
 import "jest";
 import "jest-extended";
 import { clone } from "lodash";
-import DraftPick from "../../../src/models/draftPick";
-import Player, { LeagueLevel } from "../../../src/models/player";
-import Team from "../../../src/models/team";
+import { LeagueLevel } from "../../../src/models/player";
 import Trade from "../../../src/models/trade";
 import TradeItem, { TradeItemType } from "../../../src/models/tradeItem";
+import { DraftPickFactory } from "../../factories/DraftPickFactory";
+import { PlayerFactory } from "../../factories/PlayerFactory";
+import { TeamFactory } from "../../factories/TeamFactory";
 
 describe("Trade Item Class", () => {
-    const player = new Player({name: "Honus Wiener", league: LeagueLevel.HIGH});
-    const pick = new DraftPick({id: 99, round: 1, pickNumber: 12, type: LeagueLevel.LOW});
-    const sender = new Team({name: "Squirtle Squad", espnId: 1});
-    const recipient = new Team({name: "Ditto Duo", espnId: 2});
+    const player = PlayerFactory.getPlayer(undefined, undefined, {id: 1});
+    const pick = DraftPickFactory.getPick(undefined, undefined, undefined, {id: 1});
+    const [sender, recipient] = TeamFactory.getTeams(2);
     const trade = new Trade({id: 1, tradeItems: [], tradeParticipants: []});
     const tradedPlayerObj = {
+        tradeItemId: 1,
         tradeItemType: TradeItemType.PLAYER,
         trade, player, sender, recipient };
     const tradedPlayer = new TradeItem(tradedPlayerObj);
@@ -49,7 +50,7 @@ describe("Trade Item Class", () => {
 
     describe("instance methods", () => {
         it("toString/0", () => {
-            expect(tradedPlayer.toString()).toMatch(/TI#\d*: Player\d* for trade#\d*/);
+            expect(tradedPlayer.toString()).toMatch(/TI#\d*: Player#\d* for trade#\d*/);
             expect(tradedPick.toString()).toMatch(/TI#\d*: Pick#\d* for trade#\d*/);
         });
 

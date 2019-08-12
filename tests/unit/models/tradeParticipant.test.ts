@@ -1,12 +1,12 @@
 import "jest";
 import "jest-extended";
-import Team from "../../../src/models/team";
-import Trade from "../../../src/models/trade";
 import TradeParticipant, { TradeParticipantType } from "../../../src/models/tradeParticipant";
+import { TeamFactory } from "../../factories/TeamFactory";
+import { TradeFactory } from "../../factories/TradeFactory";
 
 describe("Trade Participant Class", () => {
-    const team = new Team({id: 1, name: "Squirtle Squad", espnId: 1});
-    const trade = new Trade({id: 1, tradeItems: [], tradeParticipants: []});
+    const team = TeamFactory.getTeam(undefined, undefined, {id: 1});
+    const trade = TradeFactory.getTrade(undefined, undefined, {id: 1});
     const participant = new TradeParticipant({participantType: TradeParticipantType.RECIPIENT, trade,
         team, tradeParticipantId: 1});
 

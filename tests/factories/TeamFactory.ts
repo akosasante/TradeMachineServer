@@ -1,3 +1,4 @@
+import { name as fakeName } from "faker";
 import Team from "../../src/models/team";
 
 export class TeamFactory {
@@ -16,7 +17,7 @@ export class TeamFactory {
         let name: string;
         return [...Array(num)].map((_, i) => {
             if ((i + 1) > names.length) {
-                name = names[(i + 1) % names.length];
+                name = fakeName.firstName();
             } else {
                 name = names[i];
             }
