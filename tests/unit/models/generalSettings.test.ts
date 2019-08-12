@@ -1,13 +1,12 @@
 import "jest";
 import "jest-extended";
 import { clone } from "lodash";
-import GeneralSettings, { TradeDeadlineStatus } from "../../../src/models/generalSettings";
-import User, { Role } from "../../../src/models/user";
+import GeneralSettings from "../../../src/models/generalSettings";
+import { SettingsFactory } from "../../factories/SettingsFactory";
+import { UserFactory } from "../../factories/UserFactory";
 
 describe("GeneralSettings Class", () => {
-    const startDate = new Date("January 1 2019 1:00");
-    const endDate = new Date("January 1 2019 5:00");
-    const deadline = {status: TradeDeadlineStatus.ON, startTime: startDate, endTime: endDate};
+    const deadline = SettingsFactory.getTradeDailyDeadline();
     const settingsObj = {deadline};
     const generalSettings = new GeneralSettings(settingsObj);
 
@@ -27,8 +26,8 @@ describe("GeneralSettings Class", () => {
         });
 
         describe("equals/2", () => {
-            const deadline2 = {status: TradeDeadlineStatus.OFF, startTime: startDate, endTime: endDate};
-            const modifiedBy = new User({email: "test@example.com", password: "lol", roles: [Role.ADMIN]});
+            const deadline2 = SettingsFactory.getTradeDailyDeadlineOff();
+            const modifiedBy = UserFactory.getUser();
             const settingsCopy = clone(generalSettings);
             const settings2 = new GeneralSettings({deadline: deadline2});
             const settings3 = new GeneralSettings({deadline: deadline2, modifiedBy});

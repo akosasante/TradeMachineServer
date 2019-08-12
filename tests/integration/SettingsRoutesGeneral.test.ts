@@ -4,16 +4,22 @@ import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
-import UserDAO from "../../src/DAO/UserDAO";
-import GeneralSettings, { TradeDeadlineStatus } from "../../src/models/generalSettings";
-import User, { Role } from "../../src/models/user";
+import GeneralSettings from "../../src/models/generalSettings";
+import User from "../../src/models/user";
 import server from "../../src/server";
-import { doLogout, makeGetRequest, makeLoggedInRequest, makePostRequest } from "./helpers";
+import { SettingsFactory } from "../factories/SettingsFactory";
+import {
+    adminLoggedIn,
+    doLogout,
+    makeGetRequest,
+    makePostRequest,
+    ownerLoggedIn,
+    setupOwnerAndAdminUsers
+} from "./helpers";
 
 let app: Server;
-let adminLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
-let ownerLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
 let adminUser: User;
+let ownerUser: User;
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -28,21 +34,8 @@ async function shutdown() {
 
 beforeAll(async () => {
     logger.debug("~~~~~~GENERAL SETTINGS ROUTES BEFORE ALL~~~~~~");
-    let ownerUser: User;
     app = await server;
-
-    const userDAO = new UserDAO();
-    const testPassword = "lol";
-    adminUser = await userDAO.createUser({
-        email: "admin@example.com", password: testPassword, name: "Cam", roles: [Role.ADMIN],
-    });
-    ownerUser = await userDAO.createUser({
-        email: "owner@example.com", password: testPassword, name: "Jatheesh", roles: [Role.OWNER],
-    });
-    adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), adminUser.email!, testPassword, requestFn);
-    ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), ownerUser.email!, testPassword, requestFn);
+    [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
 });
 
 afterAll(async () => {
@@ -54,9 +47,7 @@ afterAll(async () => {
 });
 
 describe("Settings API endpoints for general settings", () => {
-    const startDate = new Date("January 1 2019 1:00");
-    const endDate = new Date("January 1 2019 5:00");
-    const deadline = {status: TradeDeadlineStatus.ON, startTime: startDate, endTime: endDate};
+    const deadline = SettingsFactory.getTradeDailyDeadline();
     const testSettings = new GeneralSettings({deadline});
     let testSettings2: GeneralSettings;
 
@@ -70,22 +61,20 @@ describe("Settings API endpoints for general settings", () => {
         });
 
         it("should return a single general settings object", async () => {
-            const res = await adminLoggedIn(postRequest(testSettings.parse()));
+            const res = await adminLoggedIn(postRequest(testSettings.parse()), app);
             expect(testSettings.equals(new GeneralSettings(res.body))).toBeTrue();
         });
         it("should ignore any invalid properties from the object passed in", async () => {
-            const startDate2 = new Date("August 1 2019 1:00");
-            const endDate2 = new Date("August 1 2019 5:00");
-            const deadline2 = {status: TradeDeadlineStatus.OFF, startTime: startDate2, endTime: endDate2};
+            const deadline2 = SettingsFactory.getTradeDailyDeadlineOff();
             const settingsObj = {deadline: deadline2, blah: "bloop", modifiedBy: adminUser };
             testSettings2 = new GeneralSettings(settingsObj);
-            const res = await adminLoggedIn(postRequest(testSettings2));
+            const res = await adminLoggedIn(postRequest(testSettings2), app);
 
             expect(testSettings2.equals(new GeneralSettings(res.body))).toBeTrue();
             expect(res.body.blah).toBeUndefined();
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {
-            await ownerLoggedIn(postRequest(testSettings.parse(), 403));
+            await ownerLoggedIn(postRequest(testSettings.parse(), 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await postRequest(testSettings.parse(), 403)(request(app));
