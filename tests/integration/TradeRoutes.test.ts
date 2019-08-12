@@ -7,36 +7,34 @@ import logger from "../../src/bootstrap/logger";
 import DraftPickDAO from "../../src/DAO/DraftPickDAO";
 import PlayerDAO from "../../src/DAO/PlayerDAO";
 import TeamDAO from "../../src/DAO/TeamDAO";
-import UserDAO from "../../src/DAO/UserDAO";
-import DraftPick from "../../src/models/draftPick";
-import Player, { LeagueLevel } from "../../src/models/player";
-import Team from "../../src/models/team";
+import { LeagueLevel } from "../../src/models/player";
 import Trade from "../../src/models/trade";
 import TradeItem, { TradeItemType } from "../../src/models/tradeItem";
 import TradeParticipant, { TradeParticipantType } from "../../src/models/tradeParticipant";
-import User, { Role } from "../../src/models/user";
+import User from "../../src/models/user";
 import server from "../../src/server";
+import { DraftPickFactory } from "../factories/DraftPickFactory";
+import { PlayerFactory } from "../factories/PlayerFactory";
+import { TeamFactory } from "../factories/TeamFactory";
 import {
+    adminLoggedIn,
     doLogout,
     makeDeleteRequest,
     makeGetRequest,
-    makeLoggedInRequest,
     makePostRequest,
-    makePutRequest
+    makePutRequest,
+    ownerLoggedIn,
+    setupOwnerAndAdminUsers
 } from "./helpers";
 
 let app: Server;
 let adminUser: User;
 let ownerUser: User;
-const adminUserObj = { email: "admin@example.com", password: "lol", name: "Cam", roles: [Role.ADMIN]};
-const ownerUserObj = { email: "owner@example.com", password: "lol", name: "Jatheesh", roles: [Role.OWNER]};
-let minorPlayer = new Player({name: "Honus Wiener", league: LeagueLevel.HIGH});
-let majorPlayer = new Player({name: "Pete Buttjudge", league: LeagueLevel.MAJOR});
-let majorPlayer2 = new Player({name: "Feelda Bern", league: LeagueLevel.MAJOR});
-let pick = new DraftPick({round: 1, pickNumber: 12, type: LeagueLevel.LOW});
-let creatorTeam = new Team({name: "Squirtle Squad", espnId: 1});
-let recipientTeam = new Team({name: "Ditto Duo", espnId: 2});
-let recipientTeam2 = new Team({name: "Mr Mime Mob", espnId: 3});
+let minorPlayer = PlayerFactory.getPlayer();
+let majorPlayer = PlayerFactory.getPlayer("Pete Buttjudge", LeagueLevel.MAJOR);
+let majorPlayer2 = PlayerFactory.getPlayer("Feelda Bern", LeagueLevel.MAJOR);
+let pick = DraftPickFactory.getPick();
+let [creatorTeam, recipientTeam, recipientTeam2] = TeamFactory.getTeams(3);
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -54,12 +52,11 @@ beforeAll(async () => {
     app = await server;
 
     // Create admin and owner users in db for rest of this suite's use
-    const userDAO = new UserDAO();
+    [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+
     const playerDAO = new PlayerDAO();
     const pickDAO = new DraftPickDAO();
     const teamDAO = new TeamDAO();
-    adminUser = await userDAO.createUser({...adminUserObj});
-    ownerUser = await userDAO.createUser({...ownerUserObj});
     await playerDAO.createPlayer(minorPlayer);
     await playerDAO.createPlayer(majorPlayer);
     await playerDAO.createPlayer(majorPlayer2);
@@ -109,11 +106,6 @@ describe("Trade API endpoints", () => {
         testTrade = new Trade(testTradeObj);
     });
 
-    const adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), adminUserObj.email, adminUserObj.password, requestFn);
-    const ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), ownerUserObj.email, ownerUserObj.password, requestFn);
-
     describe("POST /trades (create new trade)", () => {
         const expectConstructorErrorString = expect.stringMatching(/Trade is not valid/);
         const postRequest = (tradeObj: Partial<Trade>, status: number = 200) =>
@@ -125,7 +117,7 @@ describe("Trade API endpoints", () => {
         });
 
         it("should return a single trade object based on the object passed in", async () => {
-            const res = await adminLoggedIn(postRequest(testTradeObj));
+            const res = await adminLoggedIn(postRequest(testTradeObj), app);
             const resTrade = new Trade(res.body);
             resTrade.constructRelations();
             expect(testTrade.equals(resTrade)).toBeTrue();
@@ -136,7 +128,7 @@ describe("Trade API endpoints", () => {
             const newPick = new TradeItem({ ...tradedPick, tradeItemId: undefined });
             const testTrade2 = new Trade({tradeItems: [newPick], tradeParticipants: [newCreator, newRecipient]});
 
-            const res = await adminLoggedIn(postRequest(testTrade2.parse()));
+            const res = await adminLoggedIn(postRequest(testTrade2.parse()), app);
             const resTrade = new Trade(res.body);
             resTrade.constructRelations();
             expect(testTrade2.equals(resTrade)).toBeTrue();
@@ -144,13 +136,13 @@ describe("Trade API endpoints", () => {
         });
         it("should return a 400 Bad Request error if missing a required property", async () => {
             const tradeObj = { tradeParticipants: [] };
-            const res = await adminLoggedIn(postRequest(tradeObj, 400));
+            const res = await adminLoggedIn(postRequest(tradeObj, 400), app);
             const resTrade = new Trade(res.body);
             resTrade.constructRelations();
             expect(res.body.stack).toEqual(expectConstructorErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a trade", async () => {
-            await ownerLoggedIn(postRequest(testTradeObj, 403));
+            await ownerLoggedIn(postRequest(testTradeObj, 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await postRequest(testTradeObj, 403)(request(app));
@@ -209,7 +201,7 @@ describe("Trade API endpoints", () => {
         });
 
         it("should return the updated trade", async () => {
-            const res = await adminLoggedIn(putTradeRequest(updatedTradeObj.id!, updatedTradeObj));
+            const res = await adminLoggedIn(putTradeRequest(updatedTradeObj.id!, updatedTradeObj), app);
             const updatedTradeRes = new Trade(res.body);
             updatedTradeRes.constructRelations();
 
@@ -224,10 +216,10 @@ describe("Trade API endpoints", () => {
             expect(updatedTrade.equals(getOneTradeRes)).toBeTrue();
         });
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
-            await adminLoggedIn(putTradeRequest(999, updatedTradeObj, 404));
+            await adminLoggedIn(putTradeRequest(999, updatedTradeObj, 404), app);
         });
         it("should throw a 403 Forbidden error if a non-admin tries to update a trade", async () => {
-            await ownerLoggedIn(putTradeRequest(1, updatedTradeObj, 403));
+            await ownerLoggedIn(putTradeRequest(1, updatedTradeObj, 403), app);
         });
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await putTradeRequest(1, updatedTradeObj, 403)(request(app));
@@ -242,7 +234,7 @@ describe("Trade API endpoints", () => {
         });
 
         it("should return a delete result if successful", async () => {
-            const res = await adminLoggedIn(deleteTradeRequest(1));
+            const res = await adminLoggedIn(deleteTradeRequest(1), app);
             expect(res.body).toEqual({ deleteCount: 1, id: 1 });
 
             // Confirm that it was deleted from the db:
@@ -253,10 +245,10 @@ describe("Trade API endpoints", () => {
             expect(getAllRes.id).toEqual(2);
         });
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
-            await adminLoggedIn(deleteTradeRequest(1, 404));
+            await adminLoggedIn(deleteTradeRequest(1, 404), app);
         });
         it("should throw a 403 Forbidden error if a non-admin tries to delete a trade", async () => {
-            await ownerLoggedIn(deleteTradeRequest(2, 403));
+            await ownerLoggedIn(deleteTradeRequest(2, 403), app);
         });
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await deleteTradeRequest(2, 403)(request(app));

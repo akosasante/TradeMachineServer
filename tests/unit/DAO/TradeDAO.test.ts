@@ -1,15 +1,9 @@
 import "jest";
 import "jest-extended";
-import { clone } from "lodash";
 import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
 import TradeDAO from "../../../src/DAO/TradeDAO";
-import DraftPick from "../../../src/models/draftPick";
-import Player, { LeagueLevel } from "../../../src/models/player";
-import Team from "../../../src/models/team";
-import Trade from "../../../src/models/trade";
-import TradeItem, { TradeItemType } from "../../../src/models/tradeItem";
-import TradeParticipant, { TradeParticipantType } from "../../../src/models/tradeParticipant";
+import { TradeFactory } from "../../factories/TradeFactory";
 import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 
 const mockTradeDb = {
@@ -29,21 +23,7 @@ jest.spyOn(typeorm, "getConnection").mockReturnValue({
 
 describe("TradeDAO", () => {
     const tradeDAO = new TradeDAO();
-    const minorPlayer = new Player({name: "Honus Wiener", league: LeagueLevel.HIGH});
-    const majorPlayer = new Player({name: "Pete Buttjudge", league: LeagueLevel.MAJOR});
-    const pick = new DraftPick({round: 1, pickNumber: 12, type: LeagueLevel.LOW});
-    const creatorTeam = new Team({name: "Squirtle Squad", espnId: 1});
-    const recipientTeam = new Team({name: "Ditto Duo", espnId: 2});
-    const sender = new TradeParticipant({participantType: TradeParticipantType.CREATOR, team: recipientTeam});
-    const recipient = new TradeParticipant({participantType: TradeParticipantType.RECIPIENT, team: creatorTeam});
-    const tradedMajorPlayer = new TradeItem({tradeItemType: TradeItemType.PLAYER, player: majorPlayer,
-        sender: creatorTeam, recipient: recipientTeam });
-    const tradedMinorPlayer = new TradeItem({tradeItemType: TradeItemType.PLAYER, player: minorPlayer,
-        sender: creatorTeam, recipient: recipientTeam });
-    const tradedPick = new TradeItem({tradeItemType: TradeItemType.PICK, pick,
-        sender: recipientTeam, recipient: creatorTeam });
-    const tradeItems = [tradedMajorPlayer, tradedMinorPlayer, tradedPick];
-    const testTrade = new Trade({id: 1, tradeItems, tradeParticipants: [sender, recipient]});
+    const testTrade = TradeFactory.getTrade();
 
     afterEach(() => {
         Object.entries(mockTradeDb).forEach((kvp: [string, jest.Mock<any, any>]) => {
@@ -112,10 +92,10 @@ describe("TradeDAO", () => {
         const relation = jest.fn(() => ({of}));
         mockTradeDb.createQueryBuilder.mockImplementationOnce(() => ({ relation }));
         mockTradeDb.findOneOrFail.mockReturnValue(testTrade.parse());
-        const cloneSender = clone(sender);
+        const cloneSender = TradeFactory.getTradeCreator();
         const res = await tradeDAO.updateParticipants(
             1,
-            [cloneSender], [sender]);
+            [cloneSender], [testTrade.tradeParticipants[0]]);
 
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledWith();
@@ -134,10 +114,10 @@ describe("TradeDAO", () => {
         const relation = jest.fn(() => ({of}));
         mockTradeDb.createQueryBuilder.mockImplementationOnce(() => ({ relation }));
         mockTradeDb.findOneOrFail.mockReturnValue(testTrade.parse());
-        const cloneItem = clone(tradedMajorPlayer);
+        const cloneItem = TradeFactory.getTradedMajorPlayer();
         const res = await tradeDAO.updateItems(
             1,
-            [cloneItem], [tradedMajorPlayer]);
+            [cloneItem], [testTrade.tradeItems[0]]);
 
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledWith();
