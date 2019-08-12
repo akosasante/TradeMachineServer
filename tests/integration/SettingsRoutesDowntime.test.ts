@@ -4,22 +4,23 @@ import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
-import UserDAO from "../../src/DAO/UserDAO";
 import ScheduledDowntime from "../../src/models/scheduledDowntime";
-import User, { Role } from "../../src/models/user";
+import User from "../../src/models/user";
 import server from "../../src/server";
 import {
+    adminLoggedIn,
     doLogout,
     makeDeleteRequest,
     makeGetRequest,
-    makeLoggedInRequest,
     makePostRequest,
-    makePutRequest
+    makePutRequest,
+    ownerLoggedIn,
+    setupOwnerAndAdminUsers
 } from "./helpers";
 
 let app: Server;
-let adminLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
-let ownerLoggedIn: (fn: (ag: request.SuperTest<request.Test>) => any) => Promise<any>;
+let adminUser: User;
+let ownerUser: User;
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -35,21 +36,7 @@ async function shutdown() {
 beforeAll(async () => {
     logger.debug("~~~~~~DOWNTIME SETTINGS ROUTES BEFORE ALL~~~~~~");
     app = await server;
-    let adminUser: User;
-    let ownerUser: User;
-
-    const userDAO = new UserDAO();
-    const testPassword = "lol";
-    adminUser = await userDAO.createUser({
-        email: "admin@example.com", password: testPassword, name: "Cam", roles: [Role.ADMIN],
-    });
-    ownerUser = await userDAO.createUser({
-        email: "owner@example.com", password: testPassword, name: "Jatheesh", roles: [Role.OWNER],
-    });
-    adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), adminUser.email!, testPassword, requestFn);
-    ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any) =>
-        makeLoggedInRequest(request.agent(app), ownerUser.email!, testPassword, requestFn);
+    [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
 });
 
 afterAll(async () => {
@@ -76,22 +63,22 @@ describe("Settings API endpoints for scheduled downtime", () => {
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<Partial<ScheduledDowntime>>(agent, "/settings/downtime", downtimeObj, status);
         afterAll(async () => {
-            await adminLoggedIn(postRequest(futureSchedule.parse()));
-            await adminLoggedIn(postRequest(currentSchedule.parse()));
+            await adminLoggedIn(postRequest(futureSchedule.parse()), app);
+            await adminLoggedIn(postRequest(currentSchedule.parse()), app);
         });
         afterEach(async () => {
             await doLogout(request.agent(app));
         });
 
         it("should return a single schedule object based on the object passed in", async () => {
-            const res = await adminLoggedIn(postRequest(previousSchedule.parse()));
+            const res = await adminLoggedIn(postRequest(previousSchedule.parse()), app);
             expect(previousSchedule.equals(new ScheduledDowntime(res.body))).toBeTrue();
         });
 
         it("should ignore any invalid properties from the object passed in", async () => {
             const scheduledObj = { ...previousSchedule.parse(), reason: "because", blah: "bloop" };
             const testObj = new ScheduledDowntime(scheduledObj);
-            const res = await adminLoggedIn(postRequest(testObj));
+            const res = await adminLoggedIn(postRequest(testObj), app);
 
             expect(testObj.equals(new ScheduledDowntime(res.body))).toBeTrue();
             expect(res.body.blah).toBeUndefined();
@@ -99,12 +86,12 @@ describe("Settings API endpoints for scheduled downtime", () => {
 
         it("should return a 400 Bad Request error if missing a required property", async () => {
             const testObj = { reason: "becuz" };
-            const res = await adminLoggedIn(postRequest(testObj, 400));
+            const res = await adminLoggedIn(postRequest(testObj, 400), app);
             expect(res.body.stack).toEqual(expect.stringMatching(/QueryFailedError/));
         });
 
         it("should return a 403 Forbidden error if a non-admin tries to create a schedule", async () => {
-            await ownerLoggedIn(postRequest(previousSchedule.parse(), 403));
+            await ownerLoggedIn(postRequest(previousSchedule.parse(), 403), app);
         });
 
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
@@ -171,7 +158,7 @@ describe("Settings API endpoints for scheduled downtime", () => {
         });
 
         it("should return the updated schedule", async () => {
-            const res = await adminLoggedIn(putScheduleRequest(ID, updatedSchedule.parse()));
+            const res = await adminLoggedIn(putScheduleRequest(ID, updatedSchedule.parse()), app);
             expect(updatedSchedule.equals(new ScheduledDowntime(res.body))).toBeTrue();
 
             // Confirm db was actually updated:
@@ -181,7 +168,7 @@ describe("Settings API endpoints for scheduled downtime", () => {
 
         it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
             const invalidPropsScheduleObj = { ...updatedSchedule.parse(), blah: "wassup" };
-            await adminLoggedIn(putScheduleRequest(ID, invalidPropsScheduleObj, 400));
+            await adminLoggedIn(putScheduleRequest(ID, invalidPropsScheduleObj, 400), app);
 
             // Confirm db was not updated:
             const getOneSchedule = await request(app).get(`/settings/downtime/${ID}`).expect(200);
@@ -190,11 +177,11 @@ describe("Settings API endpoints for scheduled downtime", () => {
         });
 
         it("should throw a 404 Not Found error if there is no schedule with that ID", async () => {
-            await adminLoggedIn(putScheduleRequest(999, updatedSchedule.parse(), 404));
+            await adminLoggedIn(putScheduleRequest(999, updatedSchedule.parse(), 404), app);
         });
 
         it("should throw a 403 Forbidden error if a non-admin tries to update a schedule", async () => {
-            await ownerLoggedIn(putScheduleRequest(ID, updatedSchedule.parse(), 403));
+            await ownerLoggedIn(putScheduleRequest(ID, updatedSchedule.parse(), 403), app);
         });
 
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
@@ -212,7 +199,7 @@ describe("Settings API endpoints for scheduled downtime", () => {
         });
 
         it("should return a delete result if successful", async () => {
-            const res = await adminLoggedIn(deleteScheduleRequest(ID));
+            const res = await adminLoggedIn(deleteScheduleRequest(ID), app);
             expect(res.body).toEqual({ deleteCount: 1, id: ID });
 
             // Confirm that it was deleted from the db:
@@ -221,11 +208,11 @@ describe("Settings API endpoints for scheduled downtime", () => {
         });
 
         it("should throw a 404 Not Found error if there is no schedule with that ID", async () => {
-            await adminLoggedIn(deleteScheduleRequest(ID, 404));
+            await adminLoggedIn(deleteScheduleRequest(ID, 404), app);
         });
 
         it("should throw a 403 Forbidden error if a non-admin tries to delete a schedule", async () => {
-            await ownerLoggedIn(deleteScheduleRequest(1, 403));
+            await ownerLoggedIn(deleteScheduleRequest(1, 403), app);
         });
 
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {

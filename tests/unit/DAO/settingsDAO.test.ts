@@ -3,9 +3,9 @@ import "jest-extended";
 import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
 import SettingsDAO, { ScheduleGetAllOptions } from "../../../src/DAO/SettingsDAO";
-import GeneralSettings, { TradeDeadlineStatus } from "../../../src/models/generalSettings";
-import ScheduledDowntime from "../../../src/models/scheduledDowntime";
+import GeneralSettings from "../../../src/models/generalSettings";
 import User, { Role } from "../../../src/models/user";
+import { SettingsFactory } from "../../factories/SettingsFactory";
 import { mockDeleteChain, mockWhereInIds } from "./daoHelpers";
 
 const mockSettingsDb = {
@@ -21,10 +21,8 @@ jest.spyOn(typeorm, "getConnection").mockReturnValue({ getRepository: jest.fn().
 
 describe("SettingsDAO", () => {
     const settingsDAO = new SettingsDAO();
-    const testSchedule = new ScheduledDowntime({startTime: new Date(), endTime: new Date()});
-    const startDate = new Date("January 1 2019 1:00");
-    const endDate = new Date("January 1 2019 5:00");
-    const deadline = {status: TradeDeadlineStatus.ON, startTime: startDate, endTime: endDate};
+    const testSchedule = SettingsFactory.getTradeDowntime();
+    const deadline = SettingsFactory.getTradeDailyDeadline();
     const testSettings = new GeneralSettings({deadline});
 
     afterEach(() => {
@@ -250,7 +248,7 @@ describe("SettingsDAO", () => {
         });
         it("should overwrite the most recent setting with updated values before saving", async () => {
             mockSettingsDb.find.mockReturnValueOnce([{deadline, modifiedBy}]);
-            const newSettings = {deadline: {status: TradeDeadlineStatus.OFF, startTime: startDate, endTime: endDate}};
+            const newSettings = {deadline: SettingsFactory.getTradeDailyDeadlineOff()};
             const mergedSettings = {deadline, modifiedBy, ...newSettings};
             mockSettingsDb.save.mockReturnValue(new GeneralSettings({...mergedSettings, id: undefined}));
 

@@ -4,8 +4,9 @@ import { NotFoundError } from "routing-controllers";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import SettingsController from "../../../../src/api/routes/SettingsController";
 import SettingsDAO, { ScheduleGetAllOptions } from "../../../../src/DAO/SettingsDAO";
-import GeneralSettings, { TradeDeadlineStatus } from "../../../../src/models/generalSettings";
+import GeneralSettings from "../../../../src/models/generalSettings";
 import ScheduledDowntime from "../../../../src/models/scheduledDowntime";
+import { SettingsFactory } from "../../../factories/SettingsFactory";
 
 describe("SettingsController", () => {
     const mockSettingsDAO = {
@@ -21,10 +22,8 @@ describe("SettingsController", () => {
         insertNewSettingsLine: jest.fn(),
     };
 
-    const testSchedule = new ScheduledDowntime({startTime: new Date(), endTime: new Date()});
-    const startDate = new Date("January 1 2019 1:00");
-    const endDate = new Date("January 1 2019 5:00");
-    const deadline = {status: TradeDeadlineStatus.ON, startTime: startDate, endTime: endDate};
+    const testSchedule = SettingsFactory.getTradeDowntime();
+    const deadline = SettingsFactory.getTradeDailyDeadline();
     const testSettings = new GeneralSettings({deadline});
     const settingsController = new SettingsController(mockSettingsDAO as unknown as SettingsDAO);
 
