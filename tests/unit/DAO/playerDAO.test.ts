@@ -4,7 +4,8 @@ import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
 import { IsNull, Not } from "typeorm";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
-import Player, { LeagueLevel } from "../../../src/models/player";
+import { LeagueLevel } from "../../../src/models/player";
+import { PlayerFactory } from "../../factories/PlayerFactory";
 import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 
 const mockPlayerDb = {
@@ -22,7 +23,7 @@ jest.spyOn(typeorm, "getConnection").mockReturnValue({
 
 describe("PlayerDAO", () => {
     const playerDAO = new PlayerDAO();
-    const testPlayer1 = new Player({id: 1, name: "Honus Wiener", league: LeagueLevel.HIGH});
+    const testPlayer1 = PlayerFactory.getPlayer();
 
     afterEach(() => {
         Object.entries(mockPlayerDb).forEach((kvp: [string, jest.Mock<any, any>]) => {

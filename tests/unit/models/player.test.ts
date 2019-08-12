@@ -3,9 +3,10 @@ import "jest-extended";
 import { clone } from "lodash";
 import Player, { LeagueLevel } from "../../../src/models/player";
 import Team from "../../../src/models/team";
+import { PlayerFactory } from "../../factories/PlayerFactory";
 
 describe("Player Class", () => {
-    const playerObj = {id: 1, name: "Honus Wiener", league: LeagueLevel.HIGH};
+    const playerObj = PlayerFactory.getPlayerObject(undefined, undefined, {id: 1});
     const player = new Player(playerObj);
 
     describe("constructor", () => {

@@ -7,7 +7,8 @@ import { processMinorLeagueCsv } from "../../../../src/csv/PlayerParser";
 import PlayerDAO from "../../../../src/DAO/PlayerDAO";
 import TeamDAO from "../../../../src/DAO/TeamDAO";
 import Player, { LeagueLevel } from "../../../../src/models/player";
-import Team from "../../../../src/models/team";
+import { PlayerFactory } from "../../../factories/PlayerFactory";
+import { TeamFactory } from "../../../factories/TeamFactory";
 
 jest.mock("../../../../src/csv/PlayerParser");
 const mockedCsvParser = mocked(processMinorLeagueCsv);
@@ -24,7 +25,7 @@ describe("PlayerController", () => {
     const mockTeamDAO = {
         getAllTeams: jest.fn(),
     };
-    const testPlayer = new Player({id: 1, name: "Honus Wiener", league: LeagueLevel.HIGH});
+    const testPlayer = PlayerFactory.getPlayer(undefined, undefined, {id: 1});
     const playerController = new PlayerController(mockPlayerDAO as unknown as PlayerDAO,
         mockTeamDAO as unknown as TeamDAO);
 
@@ -166,7 +167,7 @@ describe("PlayerController", () => {
             expect(mockTeamDAO.getAllTeams).toHaveBeenCalledWith();
         });
         it("should call the minor league player processor method", async () => {
-            const teams = [new Team({name: "Squirtle Squad", espnId: 1})];
+            const teams = TeamFactory.getTeam();
             mockTeamDAO.getAllTeams.mockResolvedValueOnce(teams);
             await playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode);
             expect(mockedCsvParser).toHaveBeenCalledTimes(1);

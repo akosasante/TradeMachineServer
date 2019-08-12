@@ -3,13 +3,16 @@ import "jest-extended";
 import { processMinorLeagueCsv } from "../../../src/csv/PlayerParser";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import Player from "../../../src/models/player";
-import Team from "../../../src/models/team";
 import User from "../../../src/models/user";
+import { TeamFactory } from "../../factories/TeamFactory";
 
 describe("PlayerParser", () => {
-    const testTeam1 = new Team({owners: [new User({shortName: "Akos"}), new User({shortName: "Kwasi"})]});
-    const testTeam2 = new Team({owners: [new User({shortName: "Squad"})]});
-    const testTeam3 = new Team({owners: [new User({shortName: "Cam"})]});
+    const testTeam1 = TeamFactory.getTeam(undefined, undefined,
+        {owners: [new User({shortName: "Akos"}), new User({shortName: "Kwasi"})]});
+    const testTeam2 = TeamFactory.getTeam(undefined, undefined,
+        {owners: [new User({shortName: "Squad"})]});
+    const testTeam3 = TeamFactory.getTeam(undefined, undefined,
+        {owners: [new User({shortName: "Cam"})]});
     const playerKeys = ["name", "mlbTeam", "league", "leagueTeam", "meta"];
     const threeOwnerCsv = `${process.env.BASE_DIR}/tests/resources/three-teams-three-owners-minor-players.csv`;
     const fourOwnerCsv = `${process.env.BASE_DIR}/tests/resources/three-teams-four-owners-minor-players.csv`;
