@@ -23,7 +23,7 @@ export default class UserController {
         return (users || []).map(user => user.publicUser);
     }
 
-    @Get("/:id([0-9]+)")
+    @Get("/:id([0-9]+|\\w+)")
     public async getOne(@Param("id") id: string, @QueryParam("byUUID") byUUID?: boolean): Promise<User> {
         logger.debug(`get one user endpoint${byUUID ? " by UUID" : ""}`);
         const user = byUUID ? await this.dao.getUserByUUID(id) : await this.dao.getUserById(Number(id));
