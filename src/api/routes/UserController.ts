@@ -23,7 +23,7 @@ export default class UserController {
         return (users || []).map(user => user.publicUser);
     }
 
-    @Get("/:id([0-9]+|\\w+)")
+    @Get("/:id([0-9]+|[0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12})")
     public async getOne(@Param("id") id: string, @QueryParam("byUUID") byUUID?: boolean): Promise<User> {
         logger.debug(`get one user endpoint${byUUID ? " by UUID" : ""}`);
         const user = byUUID ? await this.dao.getUserByUUID(id) : await this.dao.getUserById(Number(id));
@@ -43,6 +43,7 @@ export default class UserController {
         } else {
             logger.debug("fetching one user with query");
             const user = await this.dao.findUser(cleanupQuery(query as { [key: string]: string }), true);
+            logger.debug(`${(user || {} as User).publicUser}`);
             return (user || {} as User).publicUser;
         }
     }
