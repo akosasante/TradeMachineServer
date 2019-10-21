@@ -2,7 +2,6 @@ import "jest";
 import "jest-extended";
 import { NotFoundError } from "routing-controllers";
 import * as typeorm from "typeorm";
-import { IsNull, Not } from "typeorm";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import { LeagueLevel } from "../../../src/models/player";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
@@ -13,7 +12,7 @@ const mockPickDb = {
     findOneOrFail: jest.fn(),
     save: jest.fn(),
     update: jest.fn(),
-    delete: jest.fn(),
+    remove: jest.fn(),
     createQueryBuilder: jest.fn(),
 };
 
@@ -110,10 +109,11 @@ describe("DraftPickDAO", () => {
     });
 
     it("deleteAllPicks - delete all the picks in chunks", async () => {
-        const expectedQuery = {id: Not(IsNull())};
+        mockPickDb.find.mockReturnValueOnce([]);
         await draftPickDAO.deleteAllPicks();
-        expect(mockPickDb.delete).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.delete).toHaveBeenCalledWith(expectedQuery, {chunk: 10});
+        expect(mockPickDb.find).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.remove).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.remove).toHaveBeenCalledWith([], {chunk: 10});
     });
 
     it("batchCreatePicks - should call the db save once with pickObjs", async () => {

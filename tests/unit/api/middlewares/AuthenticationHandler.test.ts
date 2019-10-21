@@ -38,7 +38,7 @@ describe("Authentication middleware", () => {
             });
             const next: NextFunction = jest.fn();
             // @ts-ignore
-            const request: Request = {body: {email, password}, session: {}};
+            const request: Request = {body: {email, password}, session: {destroy: jest.fn()}};
             // @ts-ignore
             const response: Response  = {};
             const loginHandler = new LoginHandler();
