@@ -34,19 +34,6 @@ const REDIS_OPTS = {
     client: redisClient,
 };
 
-// const SESSION_OPTS = {
-//     resave: false,
-//     saveUninitialized: true,
-//     secret: process.env.SESSION_SECRET || "test",
-//     store: new RedisSessionStore(REDIS_OPTS),
-//     cookie: {
-//         secure: process.env.NODE_ENV === "production",
-//         name: "trades.sid",
-//         rolling: true,
-//         maxAge: 3000,
-//     },
-// };
-
 app.use(expressSession({
     resave: false,
     saveUninitialized: true,
