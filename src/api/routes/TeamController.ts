@@ -1,9 +1,5 @@
-import timeout from "connect-timeout";
-import { Request } from "express";
-import {
-    Authorized, Body, BodyParam, Delete, Get, JsonController,
-    Param, Patch, Post, Put, QueryParam, QueryParams, Req, UseBefore
-} from "routing-controllers";
+import { Authorized, Body, BodyParam, Delete, Get, JsonController,
+    Param, Patch, Post, Put, QueryParam, QueryParams } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import TeamDAO from "../../DAO/TeamDAO";
@@ -20,14 +16,8 @@ export default class TeamController {
     }
 
     @Get("/")
-    @UseBefore(timeout("500"))
-    public async getAllTeams(@Req() request: Request,
-                             @QueryParam("hasOwners") hasOwners?: "true"|"false"): Promise<Team[]> {
+    public async getAllTeams(@QueryParam("hasOwners") hasOwners?: "true"|"false"): Promise<Team[]> {
         logger.debug("get all teams endpoint" + ` -- ${hasOwners ? ("hasOwners: " + hasOwners ) : ""}`);
-        if (request.timedout) {
-            logger.error("timed out during get all teams request");
-            return [];
-        }
         let teams: Team[] = [];
         // TODO: Consider matching the contract used in UserController.findUser where it 404 if empty
         if (!hasOwners) {
@@ -79,7 +69,7 @@ export default class TeamController {
         logger.debug("delete team endpoint");
         const result = await this.dao.deleteTeam(id);
         logger.debug(`delete successful: ${inspect(result)}`);
-        return await {deleteCount: result.affected, id: result.raw[0].id};
+        return {deleteCount: result.affected, id: result.raw[0].id};
     }
 
     @Authorized(Role.ADMIN)
