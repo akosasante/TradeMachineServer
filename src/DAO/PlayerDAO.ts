@@ -69,11 +69,13 @@ export default class PlayerDAO {
 
     public async deleteAllPlayers(type?: "major"|"minor"|LeagueLevel): Promise<void> {
         if (!type) {
-            await this.playerDb.delete({id: Not(IsNull())}, {chunk: 10});
+            const allPlayers = await this.getAllPlayers(); // Workaround because delete no longer takes options
+            await this.playerDb.remove(allPlayers, {chunk: 10});
         } else {
             const query: FindConditions<Player> = type === "major" ? {league: LeagueLevel.MAJOR} : type === "minor" ?
                 {league: In([LeagueLevel.HIGH, LeagueLevel.LOW])} : {league: type};
-            await this.playerDb.delete(query, {chunk: 10});
+            const foundPlayers = await this.playerDb.find(query);
+            await this.playerDb.remove(foundPlayers, {chunk: 10});
         }
     }
 }
