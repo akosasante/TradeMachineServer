@@ -89,7 +89,7 @@ describe("Email API endpoints", () => {
             expect(res.body).toBeObject();
             expect(res.body.id).toEqual(testMessageId);
             expect(res.body.events).toBeArray();
-        });
+        }, 30000);
         it("should return a 403 Forbidden error if a non-admin user requests", async () => {
             await ownerLoggedIn(messageStatusRequest(testMessageId, 403));
         });

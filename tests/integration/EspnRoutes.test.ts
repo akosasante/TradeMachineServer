@@ -39,10 +39,10 @@ describe("ESPN API endpoints", () => {
         it("should return the location + nickname for the given team ID", async () => {
             const res = await getOneRequest(20);
             expect(res.body).toEqual("Squirtle Squad");
-        });
+        }, 30000);
 
         it("should throw a 404 error if a team with that ID is not found", async () => {
             await getOneRequest(999, 404);
-        });
+        }, 30000);
     });
 });
