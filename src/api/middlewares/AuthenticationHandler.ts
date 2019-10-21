@@ -15,6 +15,9 @@ export class LoginHandler implements ExpressMiddlewareInterface {
         return signInAuthentication(email, password, async (err?: Error, user?: User) => {
             if (err || !user) {
                 const message = `User could not be authenticated. ${err ? err.message : ""}`;
+                request.session!.destroy((sessionDestroyErr: Error) => {
+                    logger.debug(`Attempting to destroy unauthd session: ${sessionDestroyErr}`);
+                });
                 return next(new UnauthorizedError(message));
             } else {
                 request.session!.user = await serializeUser(user);

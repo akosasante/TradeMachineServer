@@ -22,7 +22,7 @@ export default class SettingsDAO {
     public async getAllScheduledDowntimes(option?: ScheduleGetAllOptions): Promise<ScheduledDowntime[]> {
         // @ts-ignore
         const queryOpts: FindManyOptions<ScheduledDowntime> = { order: { startTime: "ASC" } };
-        if (Object.values(ScheduleGetAllOptions).includes(option)) {
+        if (option && Object.values(ScheduleGetAllOptions).includes(option)) {
             queryOpts.where = option === ScheduleGetAllOptions.FUTURE
                 ? { startTime: MoreThan(new Date()) }
                 : { endTime: LessThan(new Date()) };

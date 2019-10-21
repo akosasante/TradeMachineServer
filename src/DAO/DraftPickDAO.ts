@@ -60,6 +60,7 @@ export default class DraftPickDAO {
     }
 
     public async deleteAllPicks(): Promise<void> {
-        await this.draftPickDb.delete({id: Not(IsNull())}, {chunk: 10});
+        const allEntities = await this.getAllPicks(); // Workaround because delete no longer takes options
+        await this.draftPickDb.remove(allEntities, {chunk: 10});
     }
 }

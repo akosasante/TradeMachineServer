@@ -5,6 +5,7 @@ import express from "express";
 import expressSession from "express-session";
 import morgan from "morgan";
 import redis from "redis";
+import responseTime from "response-time";
 import logger from "./logger";
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(compression());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan("dev", { stream: { write: message => logger.info(message.trim()) } }));
+app.use(responseTime());
 
 // Session tracking
 const RedisSessionStore = connectRedis(expressSession);
