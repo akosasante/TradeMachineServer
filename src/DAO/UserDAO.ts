@@ -25,7 +25,7 @@ export default class UserDAO {
     //     return dbUsers.map(user => user.toUserModel());
     // }
 
-    public async getUserById(id: number): Promise<User> {
+    public async getUserById(id: string): Promise<User> {
         // if (!id) {
         //     throw new NotFoundError("Id is required");
         // }
