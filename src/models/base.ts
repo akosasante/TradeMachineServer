@@ -1,7 +1,7 @@
 import { isEqualWith, union } from "lodash";
 import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { inspect } from "util";
-import uuid = require("uuid");
+import uuid from "uuid/v4";
 import logger from "../bootstrap/logger";
 
 export interface Excludes {
@@ -56,7 +56,7 @@ export class BaseModel {
 
     // tslint:disable-next-line
     constructor(id?: string) {
-        this.id = id || uuid.v4();
+        this.id = id || uuid();
     }
 
     public toString(): string {

@@ -26,8 +26,8 @@ export default class UserController {
         return users;
     }
 
-    @Get("/:id([0-9]+)")
-    public async getById(@Param("id") id: number): Promise<User> {
+    @Get("/:id([0-9a-fA-F]{8}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{12})")
+    public async getById(@Param("id") id: string): Promise<User> {
         logger.debug("get one user by id endpoint");
         const user = await this.dao.getUserById(id);
         logger.debug(`got user: ${user}`);

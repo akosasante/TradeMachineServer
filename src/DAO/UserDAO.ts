@@ -2,7 +2,6 @@ import { NotFoundError } from "routing-controllers";
 import { User } from "trade-machine-models/lib";
 import { Connection, DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
 import util from "util";
-import uuidV4 from "uuid/v4";
 import logger from "../bootstrap/logger";
 import UserDO from "../models/user";
 
