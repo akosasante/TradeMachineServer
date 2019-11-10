@@ -17,7 +17,7 @@ export default class Team extends BaseModel implements HasEquals {
 
     public get publicTeam(): Team {
         const team = new Team(this);
-        team.owners = (team.owners || []).map((owner: User) => owner.publicUser);
+        team.owners = (team.owners || []).map((owner: User) => owner);
         return team;
     }
 
@@ -60,7 +60,7 @@ export default class Team extends BaseModel implements HasEquals {
         this.status = teamObj.status || TeamStatus.DISABLED;
         this.owners = teamObj.owners ? teamObj.owners
                 .map((obj: any) => new User(obj))
-                .sort((a, b) => (a.id || 0) - (b.id || 0))
+                .sort((a, b) => (a.id || "0").localeCompare(b.id || "0"))
             : teamObj.owners;
         this.players = teamObj.players ? teamObj.players.map((obj: any) => new Player(obj)) : teamObj.players;
         this.tradeParticipants = teamObj.tradeParticipants;
