@@ -1,6 +1,7 @@
 import { isEqualWith, union } from "lodash";
 import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { inspect } from "util";
+import uuid = require("uuid");
 import logger from "../bootstrap/logger";
 
 export interface Excludes {
@@ -44,8 +45,8 @@ export class BaseModel {
         logger.debug("RESULT: " + res);
         return res;
     }
-    @PrimaryGeneratedColumn()
-    public readonly id?: number;
+    @PrimaryGeneratedColumn("uuid")
+    public readonly id?: string;
 
     @CreateDateColumn()
     public dateCreated?: Date;
@@ -54,7 +55,9 @@ export class BaseModel {
     public dateModified?: Date;
 
     // tslint:disable-next-line
-    constructor() {}
+    constructor(id?: string) {
+        this.id = id || uuid.v4();
+    }
 
     public toString(): string {
         return `${this.constructor.name}#${this.id}`;

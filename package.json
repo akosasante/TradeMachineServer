@@ -58,6 +58,7 @@
     "reflect-metadata": "^0.1.13",
     "response-time": "^2.3.2",
     "routing-controllers": "^0.8.0",
+    "trade-machine-models": "git+https://github.com/akosasante/TradeMachineModels.git",
     "typedi": "^0.8.0",
     "typeorm": "^0.2.20",
     "uuid": "^3.3.3"
