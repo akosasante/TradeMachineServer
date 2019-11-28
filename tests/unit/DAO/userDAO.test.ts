@@ -21,15 +21,15 @@ describe("UserDAO", () => {
     
     const testUser = UserFactory.getUser();
     const testUserModel = testUser.toUserModel();
-    // afterEach(async () => {
-    //     Object.keys(mockUserDb).forEach((action: string) => {
-    //         // @ts-ignore
-    //         (mockUserDb[action] as jest.Mock).mockClear();
-    //     });
-    //
-    //     mockExecute.mockClear();
-    //     mockWhereInIds.mockClear();
-    // });
+    afterEach(async () => {
+        Object.keys(mockUserDb).forEach((action: string) => {
+            // @ts-ignore
+            (mockUserDb[action] as jest.Mock).mockClear();
+        });
+
+        // mockExecute.mockClear();
+        // mockWhereInIds.mockClear();
+    });
     beforeAll(() => {
         logger.debug("~~~~~~USER DAO TESTS BEGIN~~~~~~");
     });
@@ -42,7 +42,7 @@ describe("UserDAO", () => {
 
     describe("getAllUsers", () => {
         it("should return an array of users as result of db call", async () => {
-            mockUserDb.find.mockReturnValue([testUser]);
+            mockUserDb.find.mockReturnValueOnce([testUser]);
             const res = await userDAO.getAllUsers();
             const defaultOptions = {order: {id: "ASC"}};
 
@@ -55,17 +55,20 @@ describe("UserDAO", () => {
         });
     });
 
-    // describe("getAllUsersWithTeams", () => {
-    //     it("should return an array of users as result of db call with the team relation", async () => {
-    //         const res = await userDAO.getAllUsersWithTeams();
-    //         const options = { order: { id: "ASC" }, relations: ["team"]};
-    //         // Testing that the correct db function is called with the correct params
-    //         expect(mockUserDb.find).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDb.find).toHaveBeenCalledWith(options);
-    //         // Testing that we return as expected
-    //         expect(res).toEqual([testUser]);
-    //     });
-    // });
+    describe("getAllUsersWithTeams", () => {
+        it("should return an array of users as result of db call with the team relation", async () => {
+            mockUserDb.find.mockReturnValueOnce([testUser]);
+            const res = await userDAO.getAllUsersWithTeams();
+            const options = { order: { id: "ASC" }, relations: ["team"]};
+           
+            // Testing that the correct db function is called with the correct params
+            expect(mockUserDb.find).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.find).toHaveBeenCalledWith(options);
+            
+            // Testing that we return as expected
+            expect(res).toEqual([testUserModel]);
+        });
+    });
 
     describe("getUserById", () => {
         it("should return a single user as result of db call", async () => {
