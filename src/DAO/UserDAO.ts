@@ -18,11 +18,11 @@ export default class UserDAO {
         return dbUsers.map(user => user.toUserModel());
     }
 
-    // public async getAllUsersWithTeams(): Promise<User[]> {
-    //     const options: FindManyOptions = { order: { id: "ASC" }, relations: ["team"]};
-    //     const dbUsers = await this.userDb.find(options);
-    //     return dbUsers.map(user => user.toUserModel());
-    // }
+    public async getAllUsersWithTeams(): Promise<User[]> {
+        const options: FindManyOptions = { order: { id: "ASC" }, relations: ["team"]};
+        const dbUsers = await this.userDb.find(options);
+        return dbUsers.map(user => user.toUserModel());
+    }
 
     public async getUserById(id: string): Promise<User> {
         // if (!id) {
