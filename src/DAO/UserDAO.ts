@@ -25,9 +25,6 @@ export default class UserDAO {
     }
 
     public async getUserById(id: string): Promise<User> {
-        // if (!id) {
-        //     throw new NotFoundError("Id is required");
-        // }
         const dbUser = await this.userDb.findOneOrFail(id);
         return dbUser.toUserModel();
     }
