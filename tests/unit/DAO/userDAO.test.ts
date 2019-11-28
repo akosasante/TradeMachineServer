@@ -9,6 +9,7 @@ import UserDAO from "../../../src/DAO/UserDAO";
 import { UserFactory } from "../../factories/UserFactory";
 // import { testUser } from "../mocks/mockUserDb";
 import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
+import {EntityNotFoundError} from "typeorm/browser/error/EntityNotFoundError";
 
 describe("UserDAO", () => {
     const mockUserDb = {
@@ -74,18 +75,14 @@ describe("UserDAO", () => {
         it("should return a single user as result of db call", async () => {
             mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
             const res = await userDAO.getUserById(testUser.id!);
+            
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
+            
             // Testing that we return as expected
             expect(res).toEqual(testUserModel);
         });
-        // it("should throw a NotFoundError if no id is passed in", async () => {
-        //     // This can happen if like user.id is passed in and we expect it to always be a number
-        //     // But for some reason it's undefined.
-        //     // @ts-ignore
-        //     await expect(userDAO.getUserById(undefined)).rejects.toThrow(NotFoundError);
-        // });
     });
 
     // describe("getUserByUUID", () => {
