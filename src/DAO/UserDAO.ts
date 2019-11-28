@@ -8,8 +8,8 @@ import UserDO from "../models/user";
 export default class UserDAO {
     private userDb: Repository<UserDO>;
 
-    constructor(connection: Connection) {
-        this.userDb = connection.getRepository("User");
+    constructor(repo?: Repository<UserDO>) {
+        this.userDb = repo || getConnection(process.env.NODE_ENV).getRepository("User");
     }
 
     public async getAllUsers(): Promise<User[]> {
@@ -60,17 +60,11 @@ export default class UserDAO {
     //     }
     // }
     //
-    // public async createUser(userObj: Partial<UserDO>, skipHash: boolean = false): Promise<User> {
-    //     // TODO: Perhaps some custom validation that the db can't be responsible for?
-    //     logger.debug("creating");
-    //     // Currently doesn't seem to be necessary
-    //     if (userObj.password && !skipHash) {
-    //         // Doing this here because I couldn't get beforeinsert to work
-    //         userObj.password = await User.generateHashedPassword(userObj.password);
-    //     }
+    // public async createUser(userObj: Partial<UserDO>): Promise<User> {
+    //     logger.debug("creating user via DAO");
     //     const dbUser = await this.userDb.save(userObj);
-    //     logger.debug("done");
-    //     return new User(dbUser);
+    //     logger.debug("user db save complete");
+    //     return dbUser.toUserModel();
     // }
     //
     // public async updateUser(id: number, userObj: Partial<UserDO>): Promise<User> {
