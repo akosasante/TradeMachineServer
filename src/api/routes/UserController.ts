@@ -14,7 +14,7 @@ export default class UserController {
 
     constructor(DAO?: UserDAO) {
         // ^ injected in tests
-        this.dao = DAO || new UserDAO(getConnection(process.env.NODE_ENV));
+        this.dao = DAO || new UserDAO();
     }
 
     @Get("/")
