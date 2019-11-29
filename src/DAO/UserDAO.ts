@@ -1,8 +1,5 @@
-import { NotFoundError } from "routing-controllers";
 import { User } from "trade-machine-models/lib";
-import { Connection, DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
-import util from "util";
-import logger from "../bootstrap/logger";
+import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
 import UserDO from "../models/user";
 
 export default class UserDAO {
@@ -34,7 +31,7 @@ export default class UserDAO {
         const dbUser = await findFn({where: query});
         return dbUser ? dbUser.toUserModel() : undefined;
     }
-    
+
     public async findUsers(query: Partial<UserDO>): Promise<User[]> {
         const dbUsers = await this.userDb.find({where: query});
         return dbUsers.map(user => user.toUserModel());
@@ -44,12 +41,12 @@ export default class UserDAO {
         const dbUsers = await this.userDb.save(userObjs);
         return dbUsers.map(user => user.toUserModel());
     }
-    
+
     public async updateUser(id: string, userObj: Partial<UserDO>): Promise<User> {
         await this.userDb.update({id}, userObj);
         return await this.getUserById(id);
     }
-    
+
     public async deleteUser(id: string): Promise<DeleteResult> {
         await this.getUserById(id); // This should throw error if the id does not exist
         return await this.userDb.createQueryBuilder()

@@ -1,15 +1,10 @@
 import "jest";
 import "jest-extended";
-import { NotFoundError } from "routing-controllers";
-import { mocked } from "ts-jest";
-import * as typeorm from "typeorm";
-import { Connection } from "typeorm";
 import logger from "../../../src/bootstrap/logger";
 import UserDAO from "../../../src/DAO/UserDAO";
 import { UserFactory } from "../../factories/UserFactory";
 // import { testUser } from "../mocks/mockUserDb";
 import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
-import {EntityNotFoundError} from "typeorm/browser/error/EntityNotFoundError";
 
 describe("UserDAO", () => {
     const mockUserDb = {
@@ -20,7 +15,7 @@ describe("UserDAO", () => {
         update: jest.fn(),
         createQueryBuilder: jest.fn(),
     };
-    
+
     const testUser = UserFactory.getUser();
     const testUserModel = testUser.toUserModel();
     afterEach(async () => {
@@ -62,11 +57,11 @@ describe("UserDAO", () => {
             mockUserDb.find.mockReturnValueOnce([testUser]);
             const res = await userDAO.getAllUsersWithTeams();
             const options = { order: { id: "ASC" }, relations: ["team"]};
-           
+
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
             expect(mockUserDb.find).toHaveBeenCalledWith(options);
-            
+
             // Testing that we return as expected
             expect(res).toEqual([testUserModel]);
         });
@@ -76,11 +71,11 @@ describe("UserDAO", () => {
         it("should return a single user as result of db call", async () => {
             mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
             const res = await userDAO.getUserById(testUser.id!);
-            
+
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
-            
+
             // Testing that we return as expected
             expect(res).toEqual(testUserModel);
         });
@@ -91,18 +86,18 @@ describe("UserDAO", () => {
         it("should pass a query object to db and return a single user", async () => {
             mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
             const res = await userDAO.findUser(condition);
-            
+
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({where: condition});
-           
+
             // Testing that we return as expected
             expect(res).toEqual(testUserModel);
         });
         it("should use the findOne method if the param passed is false", async () => {
             mockUserDb.findOne.mockReturnValueOnce(testUser);
             const res = await userDAO.findUser(condition, false);
-            
+
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.findOne).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOne).toHaveBeenCalledWith({where: condition});
@@ -130,13 +125,12 @@ describe("UserDAO", () => {
     describe("createUsers", () => {
         it("should create users in the db for all the objs passed in", async () => {
             mockUserDb.save.mockReturnValueOnce([testUser]);
-            const expectedUser = expect.objectContaining({email: expect.any(String)});
             const res = await userDAO.createUsers([testUser.parse()]);
-            
+
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.save).toHaveBeenCalledTimes(1);
             expect(mockUserDb.save).toHaveBeenCalledWith([testUser.parse()]);
-            
+
             // Testing that we return as expected
             expect(res).toEqual([testUserModel]);
         });
@@ -146,18 +140,18 @@ describe("UserDAO", () => {
         it("should call update the user in the db then return the result of getUserById", async () => {
             mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
             const res = await userDAO.updateUser(testUser.id!, testUser.parse());
-            
+
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.update).toHaveBeenCalledTimes(1);
             expect(mockUserDb.update).toHaveBeenCalledWith({id: testUser.id}, testUser.parse());
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
-            
+
             // Testing that we return as expected
             expect(res).toEqual(testUserModel);
         });
     });
-    
+
     describe("deleteUser", () => {
         it("should return a delete result", async () => {
             mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
@@ -165,13 +159,13 @@ describe("UserDAO", () => {
             const deleteResult = { affected: 1, raw: {id: testUser.id!} };
             mockExecute.mockReturnValueOnce(deleteResult);
             const res = await userDAO.deleteUser(testUser.id!);
-            
+
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id!);
             expect(mockUserDb.createQueryBuilder).toHaveBeenCalledTimes(1);
             expect(mockWhereInIds).toHaveBeenCalledWith(testUser.id!);
-            
+
             // Testing that we return as expected
             expect(res).toEqual(deleteResult);
         });
