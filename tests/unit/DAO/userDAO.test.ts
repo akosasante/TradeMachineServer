@@ -15,6 +15,7 @@ describe("UserDAO", () => {
     const mockUserDb = {
         find: jest.fn(),
         findOneOrFail: jest.fn(),
+        findOne: jest.fn(),
         // save: jest.fn(),
         // update: jest.fn(),
         // createQueryBuilder: jest.fn(),
@@ -85,6 +86,31 @@ describe("UserDAO", () => {
         });
     });
 
+    describe("findUser", () => {
+        it("should pass a query object to db and return a single user", async () => {
+            mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
+            const res = await userDAO.findUser({email: testUser.email});
+            
+            // Testing that the correct db function is called with the correct params
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({where: {email: testUser.email}});
+           
+            // Testing that we return as expected
+            expect(res).toEqual(testUserModel);
+        });
+        it("should use the findOne method if the param passed is false", async () => {
+            mockUserDb.findOne.mockReturnValueOnce(testUser);
+            const res = await userDAO.findUser({email: testUser.email}, false);
+            
+            // Testing that the correct db function is called with the correct params
+            expect(mockUserDb.findOne).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.findOne).toHaveBeenCalledWith({where: {email: testUser.email}});
+
+            // Testing that we return as expected
+            expect(res).toEqual(testUserModel);
+        });
+    });
+
     // describe("getUserByUUID", () => {
     //     it("should return a single user as a result of db call", async () => {
     //         const res = await userDAO.getUserByUUID(testUser.userIdToken!);
@@ -97,23 +123,6 @@ describe("UserDAO", () => {
     //     it("should throw a NotFoundError if no UUID is passed in", async () => {
     //         // @ts-ignore
     //         await expect(userDAO.getUserByUUID(undefined)).rejects.toThrow(NotFoundError);
-    //     });
-    // });
-
-    // describe("findUser", () => {
-    //     it("should pass a query object to db and return a single user", async () => {
-    //         const res = await userDAO.findUser({email: testUser.email});
-    //         // Testing that the correct db function is called with the correct params
-    //         expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({where: {email: testUser.email}});
-    //         // Testing that we return as expected
-    //         expect(res).toEqual(testUser);
-    //     });
-    //     it("should use the findOne method if the param passed is false", async () => {
-    //         const res = await userDAO.findUser({email: testUser.email}, false);
-    //         expect(mockUserDb.findOne).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDb.findOne).toHaveBeenCalledWith({where: {email: testUser.email}});
-    //         expect(res).toEqual(testUser);
     //     });
     // });
 
