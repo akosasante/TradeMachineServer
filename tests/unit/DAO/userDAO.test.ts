@@ -17,7 +17,7 @@ describe("UserDAO", () => {
         findOneOrFail: jest.fn(),
         findOne: jest.fn(),
         save: jest.fn(),
-        // update: jest.fn(),
+        update: jest.fn(),
         // createQueryBuilder: jest.fn(),
     };
     
@@ -142,19 +142,21 @@ describe("UserDAO", () => {
         });
     });
 
-    // describe("updateUser", () => {
-    //
-    //     it("should call getUsersById and associated db call then return single user", async () => {
-    //         const res = await userDAO.updateUser(testUser.id!, testUser.parse());
-    //         // Testing that the correct db function is called with the correct params
-    //         expect(mockUserDb.update).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDb.update).toHaveBeenCalledWith({id: testUser.id}, testUser.parse());
-    //         expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
-    //         // Testing that we return as expected
-    //         expect(res).toEqual(testUser);
-    //     });
-    // });
+    describe("updateUser", () => {
+        it("should call update the user in the db then return the result of getUserById", async () => {
+            mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
+            const res = await userDAO.updateUser(testUser.id!, testUser.parse());
+            
+            // Testing that the correct db function is called with the correct params
+            expect(mockUserDb.update).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.update).toHaveBeenCalledWith({id: testUser.id}, testUser.parse());
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
+            
+            // Testing that we return as expected
+            expect(res).toEqual(testUserModel);
+        });
+    });
     //
     // describe("deleteUser", () => {
     //     it("should return a delete result", async () => {

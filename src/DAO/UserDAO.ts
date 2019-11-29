@@ -45,12 +45,10 @@ export default class UserDAO {
         return dbUsers.map(user => user.toUserModel());
     }
     
-    //
-    // public async updateUser(id: number, userObj: Partial<UserDO>): Promise<User> {
-    //     const updateResult = await this.userDb.update({id}, userObj);
-    //     logger.debug(util.inspect(updateResult));
-    //     return await this.getUserById(id);
-    // }
+    public async updateUser(id: string, userObj: Partial<UserDO>): Promise<User> {
+        const updateResult = await this.userDb.update({id}, userObj);
+        return await this.getUserById(id);
+    }
     //
     // public async deleteUser(id: number): Promise<DeleteResult> {
     //     await this.getUserById(id); // This should throw error if the id does not exist
