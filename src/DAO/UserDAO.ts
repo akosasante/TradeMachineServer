@@ -46,27 +46,16 @@ export default class UserDAO {
     }
     
     public async updateUser(id: string, userObj: Partial<UserDO>): Promise<User> {
-        const updateResult = await this.userDb.update({id}, userObj);
+        await this.userDb.update({id}, userObj);
         return await this.getUserById(id);
     }
-    //
-    // public async deleteUser(id: number): Promise<DeleteResult> {
-    //     await this.getUserById(id); // This should throw error if the id does not exist
-    //     return await this.userDb.createQueryBuilder()
-    //         .delete()
-    //         .whereInIds(id)
-    //         .returning("id")
-    //         .execute();
-    // }
-    //
-    // public async setPasswordExpires(id: number): Promise<void> {
-    //     const passwordResetToken = uuidV4();
-    //     const updateResult = await this.userDb.update(
-    //         {id},
-    //         {
-    //             passwordResetExpiresOn: User.generateTimeToPasswordExpires(),
-    //             passwordResetToken });
-    //     logger.debug(util.inspect(updateResult));
-    //     return;
-    // }
+    
+    public async deleteUser(id: string): Promise<DeleteResult> {
+        await this.getUserById(id); // This should throw error if the id does not exist
+        return await this.userDb.createQueryBuilder()
+            .delete()
+            .whereInIds(id)
+            .returning("id")
+            .execute();
+    }
 }
