@@ -18,7 +18,7 @@ describe("UserDAO", () => {
         findOne: jest.fn(),
         save: jest.fn(),
         update: jest.fn(),
-        // createQueryBuilder: jest.fn(),
+        createQueryBuilder: jest.fn(),
     };
     
     const testUser = UserFactory.getUser();
@@ -157,32 +157,23 @@ describe("UserDAO", () => {
             expect(res).toEqual(testUserModel);
         });
     });
-    //
-    // describe("deleteUser", () => {
-    //     it("should return a delete result", async () => {
-    //         mockUserDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
-    //         const deleteResult = { affected: 1, raw: {id: testUser.id!} };
-    //         mockExecute.mockReturnValueOnce(deleteResult);
-    //         const res = await userDAO.deleteUser(testUser.id!);
-    //         // Testing that the correct db function is called with the correct params
-    //         expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id!);
-    //         expect(mockUserDb.createQueryBuilder).toHaveBeenCalledTimes(1);
-    //         expect(mockWhereInIds).toHaveBeenCalledWith(testUser.id!);
-    //         // Testing that we return as expected
-    //         expect(res).toEqual(deleteResult);
-    //     });
-    // });
-    //
-    // describe("setPasswordExpires", () => {
-    //     it("should return successfully if db call has on errors", async () => {
-    //         const updatePartial = {passwordResetExpiresOn: expect.toBeDate(), passwordResetToken: expect.toBeString()};
-    //         const res = await userDAO.setPasswordExpires(testUser.id!);
-    //
-    //         expect(mockUserDb.update).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDb.update).toHaveBeenCalledWith({id: testUser.id!}, updatePartial);
-    //
-    //         expect(res).toBeUndefined();
-    //     });
-    // });
+    
+    describe("deleteUser", () => {
+        it("should return a delete result", async () => {
+            mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
+            mockUserDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+            const deleteResult = { affected: 1, raw: {id: testUser.id!} };
+            mockExecute.mockReturnValueOnce(deleteResult);
+            const res = await userDAO.deleteUser(testUser.id!);
+            
+            // Testing that the correct db function is called with the correct params
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id!);
+            expect(mockUserDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+            expect(mockWhereInIds).toHaveBeenCalledWith(testUser.id!);
+            
+            // Testing that we return as expected
+            expect(res).toEqual(deleteResult);
+        });
+    });
 });
