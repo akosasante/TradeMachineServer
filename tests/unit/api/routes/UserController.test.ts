@@ -10,7 +10,7 @@ import { UserFactory } from "../../../factories/UserFactory";
 describe("UserController", () => {
     const mockUserDAO = {
         getAllUsers: jest.fn(),
-        // getAllUsersWithTeams: jest.fn(),
+        getAllUsersWithTeams: jest.fn(),
         getUserById: jest.fn(),
         // getUserByUUID: jest.fn(),
         // createUser: jest.fn(),
@@ -41,21 +41,21 @@ describe("UserController", () => {
             // Testing that the return value from the controller method is as expected
             expect(res).toEqual([testUserModel]);
         });
-        // it("should call the getAll method if 'full' param is false", async () => {
-        //     mockUserDAO.getAllUsers.mockReturnValue([testUser]);
-        //     await userController.getAll(false);
-        //
-        //     expect(mockUserDAO.getAllUsers).toHaveBeenCalledTimes(1);
-        //     expect(mockUserDAO.getAllUsers).toHaveBeenCalledWith();
-        // });
-        // it("should call the getAllWithTeams method if 'full' param is true", async () => {
-        //     mockUserDAO.getAllUsersWithTeams.mockReturnValue([testUser]);
-        //     const res = await userController.getAll(true);
-        //
-        //     expect(mockUserDAO.getAllUsersWithTeams).toHaveBeenCalledTimes(1);
-        //     expect(mockUserDAO.getAllUsersWithTeams).toHaveBeenCalledWith();
-        //     expect(res).toEqual([testUser.publicUser]);
-        // });
+        it("should call the getAll method if 'full' param is false", async () => {
+            mockUserDAO.getAllUsers.mockReturnValue([testUserModel]);
+            await userController.getAll(false);
+
+            expect(mockUserDAO.getAllUsers).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.getAllUsers).toHaveBeenCalledWith();
+        });
+        it("should call the getAllWithTeams method if 'full' param is true", async () => {
+            mockUserDAO.getAllUsersWithTeams.mockReturnValue([testUserModel]);
+            const res = await userController.getAll(true);
+
+            expect(mockUserDAO.getAllUsersWithTeams).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.getAllUsersWithTeams).toHaveBeenCalledWith();
+            expect(res).toEqual([testUserModel]);
+        });
     });
 
     describe("getById method", () => {
