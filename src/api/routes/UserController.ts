@@ -19,8 +19,7 @@ export default class UserController {
     @Get("/")
     public async getAll(@QueryParam("full") full?: boolean): Promise<User[]> {
         logger.debug(`get all users endpoint${full ? " with teams" : ""}`);
-        // const users = full ? await this.dao.getAllUsersWithTeams() : await this.dao.getAllUsers();
-        const users = await this.dao.getAllUsers();
+        const users = full ? await this.dao.getAllUsersWithTeams() : await this.dao.getAllUsers();
         logger.debug(`got ${users.length} users`);
         return users;
     }
@@ -32,15 +31,7 @@ export default class UserController {
         logger.debug(`got user: ${user}`);
         return user;
     }
-
-    // @Get("/:uuid([0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12})")
-    // public async getByUUID(@Param("uuid") id: string, @QueryParam("byUUID") byUUID?: boolean): Promise<User> {
-    //     logger.debug(`get one user endpoint${byUUID ? " by UUID" : ""}`);
-    //     // const user = byUUID ? await this.dao.getUserByUUID(id) : await this.dao.getUserById(Number(id));
-    //     const user = await this.dao.getUserById(Number(id));
-    //     logger.debug(`got user: ${user}`);
-    //     return (user || {} as User).publicUser;
-    // }
+    
 
     // @Get("/search")
     // public async findUser(@QueryParams() query: Partial<User>): Promise<User[]|User|undefined> {
