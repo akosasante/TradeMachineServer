@@ -39,13 +39,12 @@ export default class UserDAO {
         const dbUsers = await this.userDb.find({where: query});
         return dbUsers.map(user => user.toUserModel());
     }
-    //
-    // public async createUser(userObj: Partial<UserDO>): Promise<User> {
-    //     logger.debug("creating user via DAO");
-    //     const dbUser = await this.userDb.save(userObj);
-    //     logger.debug("user db save complete");
-    //     return dbUser.toUserModel();
-    // }
+
+    public async createUsers(userObjs: Array<Partial<UserDO>>): Promise<User[]> {
+        const dbUsers = await this.userDb.save(userObjs);
+        return dbUsers.map(user => user.toUserModel());
+    }
+    
     //
     // public async updateUser(id: number, userObj: Partial<UserDO>): Promise<User> {
     //     const updateResult = await this.userDb.update({id}, userObj);
