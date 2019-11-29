@@ -111,42 +111,20 @@ describe("UserDAO", () => {
         });
     });
 
-    // describe("getUserByUUID", () => {
-    //     it("should return a single user as a result of db call", async () => {
-    //         const res = await userDAO.getUserByUUID(testUser.userIdToken!);
-    //
-    //         expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({where: {userIdToken: testUser.userIdToken}});
-    //
-    //         expect(res).toEqual(testUser);
-    //     });
-    //     it("should throw a NotFoundError if no UUID is passed in", async () => {
-    //         // @ts-ignore
-    //         await expect(userDAO.getUserByUUID(undefined)).rejects.toThrow(NotFoundError);
-    //     });
-    // });
+    describe("findUsers", () => {
+        it("should pass a query object to the find method and return an array", async () => {
+            mockUserDb.find.mockReturnValueOnce([testUser]);
+            const condition = {email: testUser.email};
+            const res = await userDAO.findUsers(condition);
 
-    // describe("findUsers", () => {
-    //     const condition = {email: testUser.email};
-    //     it("should pass a query object to the find method and return an array", async () => {
-    //         const res = await userDAO.findUsers(condition, false);
-    //         expect(mockUserDb.find).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDb.find).toHaveBeenCalledWith({where: condition});
-    //         expect(res).toEqual([testUser]);
-    //         mockUserDb.find.mockClear();
-    //     });
-    //     it("should return an empty array if failIfNotFound is falsy", async () => {
-    //         mockUserDb.find.mockImplementationOnce(() => []);
-    //         const res = await userDAO.findUsers(condition, false);
-    //         expect(mockUserDb.find).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDb.find).toHaveBeenCalledWith({where: condition});
-    //         expect(res).toEqual([]);
-    //     });
-    //     it("should throw a NotFoundError if the failIfNotFound arg is true", async () => {
-    //         mockUserDb.find.mockImplementationOnce(() => []);
-    //         await expect(userDAO.findUsers(condition, true)).rejects.toThrow(NotFoundError);
-    //     });
-    // });
+            // Testing that the correct db function is called with the correct params
+            expect(mockUserDb.find).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.find).toHaveBeenCalledWith({where: condition});
+
+            // Testing that we return as expected
+            expect(res).toEqual([testUserModel]);
+        });
+    });
 
     // describe("createUser", () => {
     //     it("should a user instance and hash any included password before insert", async () => {

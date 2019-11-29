@@ -29,29 +29,16 @@ export default class UserDAO {
         return dbUser.toUserModel();
     }
 
-    // public async getUserByUUID(uuid: string): Promise<UserDO|undefined> {
-    //     if (!uuid) {
-    //         throw new NotFoundError("UUID is required");
-    //     }
-    //     return await this.findUser({userIdToken: uuid});
-    // }
-
     public async findUser(query: Partial<UserDO>, failIfNotFound: boolean = true): Promise<User|undefined> {
         const findFn = failIfNotFound ? this.userDb.findOneOrFail : this.userDb.findOne;
         const dbUser = await findFn({where: query});
         return dbUser ? dbUser.toUserModel() : undefined;
     }
-    //
-    // public async findUsers(query: Partial<UserDO>, failIfNotFound: boolean = true): Promise<User[]> {
-    //     const dbUsers = await this.userDb.find({where: query});
-    //     if (dbUsers.length) {
-    //         return dbUsers.map(user => new User(user));
-    //     } else if (failIfNotFound) {
-    //         throw new NotFoundError("No users found for that query");
-    //     } else {
-    //         return [];
-    //     }
-    // }
+    
+    public async findUsers(query: Partial<UserDO>): Promise<User[]> {
+        const dbUsers = await this.userDb.find({where: query});
+        return dbUsers.map(user => user.toUserModel());
+    }
     //
     // public async createUser(userObj: Partial<UserDO>): Promise<User> {
     //     logger.debug("creating user via DAO");
