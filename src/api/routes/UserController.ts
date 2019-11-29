@@ -13,7 +13,6 @@ export default class UserController {
     private dao: UserDAO;
 
     constructor(DAO?: UserDAO) {
-        // ^ injected in tests
         this.dao = DAO || new UserDAO();
     }
 

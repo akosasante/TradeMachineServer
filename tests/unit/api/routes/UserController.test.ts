@@ -30,7 +30,7 @@ describe("UserController", () => {
     });
 
     describe("getAll method", () => {
-        it("should return an array of users without passwords", async () => {
+        it("should return an array of user models", async () => {
             mockUserDAO.getAllUsers.mockReturnValue([testUserModel]);
             const res = await userController.getAll();
 
@@ -56,48 +56,19 @@ describe("UserController", () => {
         //     expect(mockUserDAO.getAllUsersWithTeams).toHaveBeenCalledWith();
         //     expect(res).toEqual([testUser.publicUser]);
         // });
-        it("should throw an error if dao throws an error", async () => {
-            mockUserDAO.getAllUsers.mockImplementation(() => {
-                // TODO: This should be an error we would expect from this route; just for clarity's sake
-                throw new Error("Generic Error");
-            });
-            await expect(userController.getAll()).rejects.toThrow(Error);
-        });
     });
 
     describe("getById method", () => {
-        it("should return a user by id without its password", async () => {
+        it("should return a user model by id", async () => {
             mockUserDAO.getUserById.mockReturnValue(testUserModel);
             const res = await userController.getById(testUser.id!);
 
             // Must call the correct DAO method
             expect(mockUserDAO.getUserById).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.getUserById).toHaveBeenCalledWith(testUser.id!);
+            
             expect(res).toEqual(testUserModel);
         });
-        // it("should return a user by uuid without its password", async () => {
-        //     mockUserDAO.getUserByUUID.mockReturnValue(testUser);
-        //     const res = await userController.getOne(testUser.userIdToken!, true);
-        //
-        //     // Must call the correct DAO method
-        //     expect(mockUserDAO.getUserByUUID).toHaveBeenCalledTimes(1);
-        //     expect(mockUserDAO.getUserByUUID).toHaveBeenCalledWith(testUser.userIdToken!);
-        //     expect(res).toEqual(testUser.publicUser);
-        // });
-        it("should throw an error if entity not found (by id)", async () => {
-            mockUserDAO.getUserById.mockImplementation(() => {
-                throw new EntityNotFoundError(User, "ID not found.");
-            });
-            await expect(userController.getById("abcd-not-real"))
-                .rejects.toThrow(EntityNotFoundError);
-        });
-        // it("should throw an error if entity not found (by uuid)", async () => {
-        //     mockUserDAO.getUserByUUID.mockImplementation(() => {
-        //         throw new EntityNotFoundError(User, "UUID not found.");
-        //     });
-        //     await expect(userController.getOne("invalid-id", true))
-        //         .rejects.toThrow(EntityNotFoundError);
-        // });
     });
 
     // describe("findUser method", () => {
