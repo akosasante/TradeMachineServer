@@ -29,9 +29,6 @@ export default class TeamDAO {
     }
 
     public async getTeamById(id: string): Promise<Team> {
-        if (!id) {
-            throw new NotFoundError("Id is required");
-        }
         const dbTeam = await this.teamDb.findOneOrFail(id);
         return dbTeam.toTeamModel();
     }
