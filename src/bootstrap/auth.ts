@@ -52,22 +52,18 @@ export async function signUpAuthentication(email: string, password: string, user
     }
 }
 
-export async function signInAuthentication(email: string, password: string,
+export async function signInAuthentication(email: string, password: string, userDAO: UserDAO = new UserDAO(),
                                            done: (err?: Error, user?: User) => any): Promise<void> {
     try {
         logger.debug("sign in strategy");
-        logger.debug(email);
-        logger.debug(password);
-        const userDAO = new UserDAO();
         // Will throw EntityNotFoundError if user is not found
-        logger.debug(inspect(await userDAO.getAllUsers()));
         const user = await userDAO.findUser({email});
-        logger.debug(inspect(user));
         if (user) {
+            logger.debug("found user with matching email")
             const userPassword = await userDAO.getUserPassword(user.id!);
             const validPassword = userPassword ? await isPasswordMatching(password, userPassword) : false;
             if (validPassword) {
-                logger.debug("updating user last logged in");
+                logger.debug("password matched - updating user last logged in");
                 await userDAO.updateUser(user.id!, {lastLoggedIn: new Date()});
                 return done(undefined, user);
             } else {
@@ -112,7 +108,7 @@ async function getUserFromAction(action: Action): Promise<User | undefined> {
     return userId ? await deserializeUser(userId) : undefined;
 }
 
-async function isPasswordMatching(userPasssword: string, password: string): Promise<boolean> {
+async function isPasswordMatching(password: string, userPasssword: string): Promise<boolean> {
     logger.debug(`comparing ${password} to user=${userPasssword}`);
     return compare(password, userPasssword || "");
 }
