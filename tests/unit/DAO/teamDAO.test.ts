@@ -11,7 +11,7 @@ import logger from "../../../src/bootstrap/logger";
 describe("TeamDAO", () => {
     const mockTeamDb = {
         find: jest.fn(),
-        // findOneOrFail: jest.fn(),
+        findOneOrFail: jest.fn(),
         // save: jest.fn(),
         // update: jest.fn(),
         createQueryBuilder: jest.fn(),
@@ -69,21 +69,15 @@ describe("TeamDAO", () => {
             expect(resFalse).toEqual([testTeamModel]);
         });
     });
-    //
-    // it("getTeamById - should throw NotFoundError if no id is passed", async () => {
-    //     // @ts-ignore
-    //     await expect(teamDAO.getTeamById(undefined)).rejects.toThrow(NotFoundError);
-    //     expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(0);
-    // });
-    //
-    // it("getTeamById - should call the db findOneOrFail once with id", async () => {
-    //     mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam1.parse());
-    //     const res = await teamDAO.getTeamById(1);
-    //
-    //     expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
-    //     expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(1);
-    //     expect(res).toEqual(testTeam1);
-    // });
+    
+    it("getTeamById - should call the db findOneOrFail once with id", async () => {
+        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam);
+        const res = await teamDAO.getTeamById(testTeam.id!);
+
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id);
+        expect(res).toEqual(testTeamModel);
+    });
     //
     // it("findTeams - should call the db find once with query", async () => {
     //     mockTeamDb.find.mockReturnValueOnce([testTeam1.parse()]);
