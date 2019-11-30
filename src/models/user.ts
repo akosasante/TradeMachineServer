@@ -1,7 +1,7 @@
 import { User } from "@akosasante/trade-machine-models";
 import { Column, Entity, Index, ManyToOne, OneToMany, Unique } from "typeorm";
 import logger from "../bootstrap/logger";
-import { BaseModel, Excludes } from "./base";
+import { BaseModel, Excludes, HasEquals } from "./base";
 import GeneralSettings from "./generalSettings";
 import ScheduledDowntime from "./scheduledDowntime";
 import Team from "./team";
@@ -18,21 +18,7 @@ export enum UserStatus {
 
 @Entity("User")
 @Unique(["email"])
-export default class UserDO extends BaseModel {
-    // public get publicUser(): User {
-    //     const user = new User(this);
-    //     user.password = undefined;
-    //     return user;
-    // }
-    //
-    // public static async generateHashedPassword(plainPassword: string): Promise<string> {
-    //     logger.debug("hashing password");
-    //     const saltFactor = process.env.NODE_ENV !== "production" ? 1 : 15;
-    //     return hash(plainPassword, saltFactor)
-    //         .then(pass => pass)
-    //         .catch(err => err);
-    // }
-    //
+export default class UserDO extends BaseModel implements HasEquals {
     // public static generateTimeToPasswordExpires() {
     //     return new Date(Date.now() + User.TIME_TO_EXPIRE_PASSWORD_MS);
     // }
@@ -42,14 +28,6 @@ export default class UserDO extends BaseModel {
     // }
     //
     // private static TIME_TO_EXPIRE_PASSWORD_MS = 1 * 60 * 60 * 1000;  // 1 hr * 60 min/hr * 60 s/min * 1000ms/s
-
-    // public static defaultPassword() {
-    //     return "trade_machine_new_user";
-    // }
-
-    // public static isUser(userObj: any): userObj is User {
-    //     return (userObj as User).email !== undefined;
-    // }
 
     @Column()
     @Index({unique: true})
@@ -91,8 +69,6 @@ export default class UserDO extends BaseModel {
     @OneToMany(type => GeneralSettings, setting => setting.modifiedBy)
     public updatedSettings?: GeneralSettings[];
 
-    // public hasPassword?: boolean;
-
     constructor(userObj: Partial<UserDO> = {}) {
         super(userObj.id);
         this.password = userObj.password;
@@ -114,41 +90,7 @@ export default class UserDO extends BaseModel {
         this.updatedSettings = userObj.updatedSettings;
     }
 
-    // Couldn't get this to work for whatever reason so just hashing in the DAO itself.
-    // @BeforeInsert()
-    // public async setHashedPassword() {
-    //     logger.debug("HASHING ON INSERT");
-    //     this.password = this.password ? await User.generateHashedPassword(this.password) : this.password;
-    // }
-
-    // public async isPasswordMatching(password: string): Promise<boolean> {
-    //     logger.debug(`comparing ${password} to ${this.password}`);
-    //     return compare(password, this.password || "");
-    // }
-
-    // public toString(): string {
-    //     return `User#${this.id}`;
-    // }
-
-    // public isAdmin(): boolean {
-    //     return this.hasRole(Role.ADMIN);
-    // }
-    //
-    // public hasRole(role: Role): boolean {
-    //     return (this.roles || []).includes(role);
-    // }
-
-    // public passwordResetIsValid(): boolean {
-    //     if (this.passwordResetExpiresOn) {
-    //         const dateOfExpiry = new Date(this.passwordResetExpiresOn);
-    //         logger.debug(dateOfExpiry);
-    //         return (dateOfExpiry.valueOf() - Date.now()) >= 0;
-    //     } else {
-    //         return false;
-    //     }
-    // }
-
-    public toUserModel() {
+    public toUserModel(): User {
         if (this.id && this.displayName && this.email) {
             return new User(
                 this.id,
