@@ -108,26 +108,21 @@ describe("TeamDAO", () => {
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id);
         expect(res).toEqual(testTeamModel);
     });
-    //
-    // it("deleteTeam - should call the db delete once with id", async () => {
-    //     mockTeamDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
-    //     const deleteResult = { raw: [{id: 1}], affected: 1};
-    //     mockExecute.mockReturnValueOnce(deleteResult);
-    //     const res = await teamDAO.deleteTeam(1);
-    //
-    //     expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
-    //     expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(1);
-    //     expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
-    //     expect(mockWhereInIds).toHaveBeenCalledWith(1);
-    //     expect(res).toEqual(deleteResult);
-    // });
-    //
-    // it("deleteTeam - should throw NotFoundError if no id is passed", async () => {
-    //     // @ts-ignore
-    //     await expect(teamDAO.deleteTeam(undefined)).rejects.toThrow(NotFoundError);
-    //     expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(0);
-    //     expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(0);
-    // });
+
+    it("deleteTeam - should call the db delete once with id", async () => {
+        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam);
+        mockTeamDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+        const deleteResult = { raw: [{id: testTeam.id!}], affected: 1};
+        mockExecute.mockReturnValueOnce(deleteResult);
+        const res = await teamDAO.deleteTeam(testTeam.id!);
+
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id!);
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockWhereInIds).toHaveBeenCalledWith(testTeam.id!);
+        expect(res).toEqual(deleteResult);
+    });
+
     //
     // it("updateOwners - should call the db createQueryBuilder and findOneOrFail with id and owner objects", async () => {
     //     const addAndRemove = jest.fn();
