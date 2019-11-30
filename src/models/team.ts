@@ -1,3 +1,4 @@
+import { Team } from "@akosasante/trade-machine-models";
 import { Column, Entity, OneToMany } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes, HasEquals } from "./base";
@@ -5,21 +6,15 @@ import DraftPick from "./draftPick";
 import Player from "./player";
 import TradeItem from "./tradeItem";
 import TradeParticipant from "./tradeParticipant";
-import User from "./user";
+import UserDO from "./user";
 
 export enum TeamStatus {
-    ACTIVE = "Active",
-    DISABLED = "Disabled",
+    ACTIVE = "active",
+    DISABLED = "inactive",
 }
 
 @Entity()
-export default class Team extends BaseModel implements HasEquals {
-
-    public get publicTeam(): Team {
-        const team = new Team(this);
-        team.owners = (team.owners || []).map((owner: User) => owner);
-        return team;
-    }
+export default class TeamDO extends BaseModel implements HasEquals {
 
     @Column({nullable: true})
     public espnId?: number;
@@ -31,8 +26,8 @@ export default class Team extends BaseModel implements HasEquals {
     @Column({type: "enum", enum: TeamStatus, default: [TeamStatus.DISABLED]})
     public status?: TeamStatus;
 
-    @OneToMany(type => User, user => user.team, { eager: true, onDelete: "SET NULL"})
-    public owners?: User[];
+    @OneToMany(type => UserDO, user => user.team, { eager: true, onDelete: "SET NULL"})
+    public owners?: UserDO[];
 
     @OneToMany(type => Player, player => player.leagueTeam, { onDelete: "SET NULL"})
     public players?: Player[];
@@ -52,14 +47,14 @@ export default class Team extends BaseModel implements HasEquals {
     @OneToMany(type => DraftPick, pick => pick.originalOwner)
     public originalDraftPicks?: DraftPick[];
 
-    constructor(teamObj: Partial<Team> = {}) {
+    constructor(teamObj: Partial<TeamDO> = {}) {
         super();
         Object.assign(this, {id: teamObj.id});
         this.name = teamObj.name || "";
         this.espnId = teamObj.espnId;
         this.status = teamObj.status || TeamStatus.DISABLED;
         this.owners = teamObj.owners ? teamObj.owners
-                .map((obj: any) => new User(obj))
+                .map((obj: any) => new UserDO(obj))
                 .sort((a, b) => (a.id || "0").localeCompare(b.id || "0"))
             : teamObj.owners;
         this.players = teamObj.players ? teamObj.players.map((obj: any) => new Player(obj)) : teamObj.players;
@@ -70,11 +65,20 @@ export default class Team extends BaseModel implements HasEquals {
         this.originalDraftPicks = teamObj.originalDraftPicks;
     }
 
-    public toString(): string {
-        return `Fantasy Team ID#${this.id}: ${this.name}`;
+    public toTeamModel(): Team {
+        if (this.id && this.name) {
+            return new Team(
+                this.id,
+                this.name,
+                this.status,
+                this.espnId
+            );
+        } else {
+            throw new Error("Invalid Team Model inputs");
+        }
     }
 
-    public equals(other: Team, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
+    public equals(other: TeamDO, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
         logger.debug("Team equals check");
         const COMPLEX_FIELDS = {
             tradeParticipants: true,
