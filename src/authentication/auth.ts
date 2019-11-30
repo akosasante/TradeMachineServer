@@ -53,7 +53,8 @@ export async function signInAuthentication(email: string, password: string, user
         const user = await userDAO.findUser({email});
         if (user) {
             logger.debug("found user with matching email");
-            const userPassword = await userDAO.getUserPassword(user.id!);
+            const userDbObj = await userDAO.getUserDbObj(user.id!);
+            const userPassword = userDbObj.password;
             const validPassword = userPassword ? await isPasswordMatching(password, userPassword) : false;
             if (validPassword) {
                 logger.debug("password matched - updating user last logged in");
@@ -94,8 +95,14 @@ export async function currentUserChecker(action: Action, userDAO: UserDAO = new 
     }
 }
 
-export function passwordResetDateIsValid(passwordExpiry: Date): boolean {
+export function passwordResetDateIsValid(passwordExpiry?: Date): boolean {
     return Boolean(passwordExpiry && isAfter(passwordExpiry, new Date()));
+}
+
+export async function generateHashedPassword(plainPassword: string): Promise<string> {
+    logger.debug("hashing password");
+    const saltFactor = process.env.NODE_ENV !== "production" ? 1 : 15;
+    return hash(plainPassword, saltFactor);
 }
 
 async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO()): Promise<User | undefined> {
@@ -109,12 +116,4 @@ async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO(
 async function isPasswordMatching(password: string, userPasssword: string): Promise<boolean> {
     logger.debug(`comparing ${password} to user=${userPasssword}`);
     return compare(password, userPasssword || "");
-}
-
-async function generateHashedPassword(plainPassword: string): Promise<string> {
-    logger.debug("hashing password");
-    const saltFactor = process.env.NODE_ENV !== "production" ? 1 : 15;
-    return hash(plainPassword, saltFactor)
-        .then(pass => pass)
-        .catch(err => err);
 }
