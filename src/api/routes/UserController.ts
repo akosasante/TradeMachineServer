@@ -6,7 +6,7 @@ import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import UserDO, { Role } from "../../models/user";
-import { cleanupQuery } from "../ApiHelpers";
+import { cleanupQuery } from "../helpers/ApiHelpers";
 
 @JsonController("/users")
 export default class UserController {

@@ -5,7 +5,7 @@ import logger from "../../bootstrap/logger";
 import TeamDAO from "../../DAO/TeamDAO";
 import Team from "../../models/team";
 import User, { Role } from "../../models/user";
-import { cleanupQuery } from "../ApiHelpers";
+import { cleanupQuery } from "../helpers/ApiHelpers";
 
 @JsonController("/teams")
 export default class TeamController {
