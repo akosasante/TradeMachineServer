@@ -7,6 +7,7 @@ import {
     authorizationChecker,
     currentUserChecker,
     deserializeUser,
+    passwordResetDateIsValid,
     serializeUser,
     signInAuthentication,
     signUpAuthentication,
@@ -148,6 +149,21 @@ describe("Authorization helper methods", () => {
 
             const res = await currentUserChecker(actionWithoutUser, mockUserDAO as unknown as UserDAO);
             await expect(res).toBeFalse();
+        });
+    });
+
+    describe("passwordResetDateIsValid", () => {
+        it("should return true if the user's expiry date is after now", () => {
+            const expiryDate = new Date("January 1 2091");
+            expect(passwordResetDateIsValid(expiryDate)).toBeTrue();
+        });
+        it("should return false if a null value is passed in", () => {
+            // @ts-ignore
+            expect(passwordResetDateIsValid(undefined)).toBeFalse();
+        });
+        it("should return false if the user's expiry date is before now", () => {
+            const expiryDate = new Date("January 1 1991");
+            expect(passwordResetDateIsValid(expiryDate)).toBeFalse();
         });
     });
 });
