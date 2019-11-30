@@ -26,6 +26,11 @@ export default class UserDAO {
         return dbUser.toUserModel();
     }
 
+    public async getUserPassword(id: string): Promise<string | undefined> {
+        const dbUser = await this.userDb.findOneOrFail(id);
+        return dbUser.password;
+    }
+
     public async findUser(query: Partial<UserDO>, failIfNotFound: boolean = true): Promise<User|undefined> {
         const findFn = failIfNotFound ? this.userDb.findOneOrFail : this.userDb.findOne;
         const dbUser = await findFn({where: query});

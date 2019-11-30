@@ -3,7 +3,6 @@ import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import UserDAO from "../../../src/DAO/UserDAO";
 import { UserFactory } from "../../factories/UserFactory";
-// import { testUser } from "../mocks/mockUserDb";
 import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 
 describe("UserDAO", () => {
@@ -78,6 +77,20 @@ describe("UserDAO", () => {
 
             // Testing that we return as expected
             expect(res).toEqual(testUserModel);
+        });
+    });
+
+    describe("getUserPassword", () => {
+        it("should return password string", async () => {
+            mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
+            const res = await userDAO.getUserPassword(testUser.id!);
+
+            // Testing that the correct db function is called with the correct params
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
+
+            // Testing that we return as expected
+            expect(res).toEqual(testUser.password);
         });
     });
 
