@@ -1,6 +1,5 @@
-import { compare, hash } from "bcryptjs";
-import { User } from "trade-machine-models/lib";
-import { Column, Entity, Generated, Index, ManyToOne, OneToMany, Unique } from "typeorm";
+import { User } from "@akosasante/trade-machine-models";
+import { Column, Entity, Index, ManyToOne, OneToMany, Unique } from "typeorm";
 import logger from "../bootstrap/logger";
 import { BaseModel, Excludes } from "./base";
 import GeneralSettings from "./generalSettings";
