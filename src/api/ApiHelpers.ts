@@ -20,9 +20,9 @@ export const fileUploadOptions = {
 };
 
 export function cleanupQuery(initQuery: {[key: string]: string}) {
-    const query = {...initQuery}; // clone so that we don't cause weird stuff to inadvertently happen by
-    // mutating the original object
-    delete query.multiple; // Query param used for certain controllers but we don't want to pass it to the DAO
+    /* clone so that we don't cause weird stuff to
+    inadvertently happen by mutating the original object */
+    const query = {...initQuery};
     const queryWithNull = coerceStringToNull(Object.entries(query)); // [[email, aaa], [name, none]]
     logger.debug(`queryWithNull: ${inspect(queryWithNull)}`);
     return queryWithNull;
