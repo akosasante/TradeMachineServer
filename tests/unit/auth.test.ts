@@ -22,7 +22,7 @@ const mockUserDAO = {
     // getAllUsersWithTeams: jest.fn(),
     getUserById: jest.fn(),
     findUser: jest.fn(),
-    // findUsers: jest.fn(),
+    getUserPassword: jest.fn(),
     createUsers: jest.fn(),
     updateUser: jest.fn(),
     // deleteUser: jest.fn(),
@@ -79,45 +79,32 @@ describe("Authorization helper methods", () => {
             expect(cb).toBeCalledWith(new ConflictError("Email already in use and signed up."));
         });
     });
-    //
-    // describe("signInAuthentication", () => {
-    //     const email = "test@example.com";
-    //     const expectedUser = new User({
-    //         id: 1,
-    //         email,
-    //         password: testUser.password!,
-    //         lastLoggedIn: new Date(),
-    //     });
-    //     it("should return an updated user if the password is matching", async () => {
-    //         const cb = jest.fn();
-    //         // @ts-ignore
-    //         User.prototype.isPasswordMatching = jest.fn(() => true);
-    //         mockUserDb.findOneOrFail = jest.fn((id, userObj) => expectedUser);
-    //
-    //         await signInAuthentication(email, testUser.password!, cb);
-    //         expect(cb).toBeCalledTimes(1);
-    //         expect(cb).toBeCalledWith(undefined, expectedUser);
-    //     });
-    //     it("should return an error if the password is not matching", async () => {
-    //         const cb = jest.fn();
-    //         // @ts-ignore
-    //         User.prototype.isPasswordMatching = jest.fn(() => false);
-    //
-    //         await signInAuthentication(email, testUser.password!, cb);
-    //         expect(cb).toBeCalledTimes(1);
-    //         expect(cb).toBeCalledWith(new Error("Incorrect password"));
-    //     });
-    //     it("should return an error if the user is not found", async () => {
-    //         const cb = jest.fn();
-    //         mockUserDb.findOneOrFail = jest.fn(id => {
-    //             throw new EntityNotFoundError("User", `No user found with this ${id}`);
-    //         });
-    //
-    //         await signInAuthentication(email, testUser.password!, cb);
-    //         expect(cb).toBeCalledTimes(1);
-    //         expect(cb).toBeCalledWith(expect.any(EntityNotFoundError));
-    //     });
-    // });
+
+    describe("signInAuthentication", () => {
+        const cb = jest.fn();
+        afterEach(() => {
+            cb.mockClear();
+        });
+        
+        it("should return an updated user if the password is matching", async () => {
+            mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
+            const hashedPassword = generateHashedPassword(testUser.password!);
+            mockUserDAO.getUserPassword.mockReturnValueOnce(hashedPassword);
+            mockUserDAO.updateUser.mockReturnValueOnce(testUserModel);
+            await signInAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
+            
+            expect(cb).toBeCalledTimes(1);
+            expect(cb).toBeCalledWith(undefined, testUserModel);
+        });
+        it("should return an error if the password is not matching", async () => {
+            mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
+            mockUserDAO.getUserPassword.mockReturnValueOnce("completely-different-saved-password");
+            await signInAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
+
+            expect(cb).toBeCalledTimes(1);
+            expect(cb).toBeCalledWith(new Error("Incorrect password"));
+        });
+    });
     //
     // describe("authorizationChecker", () => {
     //     const action: Action = {request: {session: {user: 1}}, response: {}};
