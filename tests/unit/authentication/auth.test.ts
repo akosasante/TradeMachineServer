@@ -2,7 +2,7 @@ import { hash } from "bcryptjs";
 import "jest";
 import "jest-extended";
 import { Action } from "routing-controllers";
-import { ConflictError } from "../../src/api/middlewares/ErrorHandler";
+import { ConflictError } from "../../../src/api/middlewares/ErrorHandler";
 import {
     authorizationChecker,
     currentUserChecker,
@@ -10,22 +10,19 @@ import {
     serializeUser,
     signInAuthentication,
     signUpAuthentication,
-} from "../../src/bootstrap/auth";
-import UserDAO from "../../src/DAO/UserDAO";
-import UserDO, { Role } from "../../src/models/user";
-import { UserFactory } from "../factories/UserFactory";
+} from "../../../src/authentication/auth";
+import UserDAO from "../../../src/DAO/UserDAO";
+import UserDO, { Role } from "../../../src/models/user";
+import { UserFactory } from "../../factories/UserFactory";
 
 const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, Role.OWNER, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
 const testUserModel = testUser.toUserModel();
 const mockUserDAO = {
-    // getAllUsers: jest.fn(),
-    // getAllUsersWithTeams: jest.fn(),
     getUserById: jest.fn(),
     findUser: jest.fn(),
     getUserPassword: jest.fn(),
     createUsers: jest.fn(),
     updateUser: jest.fn(),
-    // deleteUser: jest.fn(),
 };
 
 describe("Authorization helper methods", () => {
