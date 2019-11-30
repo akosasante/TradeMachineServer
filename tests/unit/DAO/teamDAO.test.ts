@@ -1,12 +1,10 @@
 import "jest";
 import "jest-extended";
-import { NotFoundError } from "routing-controllers";
-import * as typeorm from "typeorm";
+import logger from "../../../src/bootstrap/logger";
 import TeamDAO from "../../../src/DAO/TeamDAO";
 import User from "../../../src/models/user";
 import { TeamFactory } from "../../factories/TeamFactory";
 import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
-import logger from "../../../src/bootstrap/logger";
 
 describe("TeamDAO", () => {
     const mockTeamDb = {
@@ -47,7 +45,7 @@ describe("TeamDAO", () => {
         expect(mockTeamDb.find).toHaveBeenCalledWith(defaultOpts);
         expect(res).toEqual([testTeamModel]);
     });
-    
+
     describe("getTeamsByOwnerStatus - should call the db createQueryBuilder with the correct methods", () => {
         const getMany = jest.fn(() => [testTeam]);
         const where = jest.fn(() => ({ getMany }));
