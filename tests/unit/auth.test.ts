@@ -15,7 +15,7 @@ import { User } from "@akosasante/trade-machine-models";
 import {UserFactory} from "../factories/UserFactory";
 import UserDAO from "../../src/DAO/UserDAO";
 
-const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
+const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, Role.OWNER, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
 const testUserModel = testUser.toUserModel();
 const mockUserDAO = {
     // getAllUsers: jest.fn(),
@@ -105,39 +105,37 @@ describe("Authorization helper methods", () => {
             expect(cb).toBeCalledWith(new Error("Incorrect password"));
         });
     });
-    //
-    // describe("authorizationChecker", () => {
-    //     const action: Action = {request: {session: {user: 1}}, response: {}};
-    //     const roles = [ Role.OWNER, Role.ADMIN ];
-    //
-    //     it("should return true if the user has at least one of the required roles", async () => {
-    //         const userWithRoles = new User({...testUser, roles: [Role.OWNER]});
-    //         mockUserDb.findOneOrFail = jest.fn(id => userWithRoles);
-    //
-    //         const res = await authorizationChecker(action, roles);
-    //         expect(res).toBeTrue();
-    //     });
-    //     it("should return true if the user is an admin no matter what", async () => {
-    //         const ownerRoles = [Role.OWNER];
-    //         const adminUser = new User({...testUser, roles: [Role.ADMIN]});
-    //         mockUserDb.findOneOrFail = jest.fn(id => adminUser);
-    //
-    //         const res = await authorizationChecker(action, ownerRoles);
-    //         expect(res).toBeTrue();
-    //     });
-    //     it("should return false if the user does not have any of the required roles", async () => {
-    //         mockUserDb.findOneOrFail = jest.fn(id => testUser);
-    //
-    //         const res = await authorizationChecker(action, roles);
-    //         expect(res).toBeFalse();
-    //     });
-    //     it("should return false if the user is not logged in", async () => {
-    //         const actionWithoutUser: Action = {request: {session: {}}, response: {}};
-    //
-    //         const res = await authorizationChecker(actionWithoutUser, roles);
-    //         expect(res).toBeFalse();
-    //     });
-    // });
+
+    describe("authorizationChecker", () => {
+        const action: Action = {request: {session: {user: 1}}, response: {}};
+        const roles = [ Role.OWNER, Role.ADMIN ];
+
+        it("should return true if the user has at least one of the required roles", async () => {
+            mockUserDAO.getUserById.mockReturnValueOnce(testUserModel);
+
+            const res = await authorizationChecker(action, roles, mockUserDAO as unknown as UserDAO);
+            expect(res).toBeTrue();
+        });
+        it("should return true if the user is an admin no matter what", async () => {
+            const adminUser = UserFactory.getAdminUser();
+            mockUserDAO.getUserById.mockReturnValueOnce(adminUser.toUserModel());
+
+            const res = await authorizationChecker(action, [roles[0]], mockUserDAO as unknown as UserDAO);
+            expect(res).toBeTrue();
+        });
+        it("should return false if the user does not have any of the required roles", async () => {
+            mockUserDAO.getUserById.mockReturnValueOnce(testUserModel);
+
+            const res = await authorizationChecker(action, [roles[1]], mockUserDAO as unknown as UserDAO);
+            expect(res).toBeFalse();
+        });
+        it("should return false if the user is not logged in", async () => {
+            const actionWithoutUser: Action = {request: {session: {}}, response: {}};
+
+            const res = await authorizationChecker(actionWithoutUser, roles, mockUserDAO as unknown as UserDAO);
+            expect(res).toBeFalse();
+        });
+    });
     //
     // describe("currentUserChecker", () => {
     //     it("should return the true from the action if it exists on the request.session object", async () => {
