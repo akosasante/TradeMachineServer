@@ -1,10 +1,10 @@
-import {Request, Response} from "express";
-import {BodyParam, Controller, Post, Req, Res, Session, UseBefore} from "routing-controllers";
-import {deserializeUser} from "../../authentication/auth";
+import { User } from "@akosasante/trade-machine-models";
+import { Request, Response } from "express";
+import { BodyParam, Controller, Post, Req, Res, Session, UseBefore } from "routing-controllers";
+import { deserializeUser, generateHashedPassword, passwordResetDateIsValid } from "../../authentication/auth";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
-import {LoginHandler, RegisterHandler} from "../middlewares/AuthenticationHandler";
-import {User} from "@akosasante/trade-machine-models";
+import { LoginHandler, RegisterHandler } from "../middlewares/AuthenticationHandler";
 
 @Controller("/auth")
 export default class AuthController {
@@ -50,27 +50,31 @@ export default class AuthController {
             }
         });
     }
-    //
-    // @Post("/reset_password")
-    // public async resetPassword(@BodyParam("id") userId: number,
-    //                            @BodyParam("password") newPassword: string,
-    //                            @BodyParam("token") passwordResetToken: string,
-    //                            @Res() response: Response): Promise<Response> {
-    //     const hashedPassword = await User.generateHashedPassword(newPassword);
-    //     const existingUser = await this.userDao.findUser({id: userId, passwordResetToken}, false);
-    //
-    //     if (!existingUser) {
-    //         logger.debug("did not find user for id and token");
-    //         return response.status(404).json("user does not exist");
-    //     }
-    //     if (!existingUser.passwordResetIsValid()) {
-    //         logger.debug("user password reset expired");
-    //         return response.status(403).json("expired");
-    //     }
-    //
-    //     await this.userDao.updateUser(userId, {
-    //         password: hashedPassword,
-    //         passwordResetExpiresOn: undefined });
-    //     return response.status(200).json("success");
-    // }
+
+    @Post("/reset_password")
+    public async resetPassword(@BodyParam("id") userId: string,
+                               @BodyParam("password") newPassword: string,
+                               @BodyParam("token") passwordResetToken: string,
+                               @Res() response: Response): Promise<Response> {
+        const existingUser = await this.userDao.getUserDbObj(userId);
+
+        if (!existingUser || !existingUser.passwordResetToken ||
+            existingUser.passwordResetToken !== passwordResetToken) {
+            logger.debug("did not find user for id and matching token");
+            return response.status(404).json("user does not exist");
+        }
+        if (!passwordResetDateIsValid(existingUser.passwordResetExpiresOn)) {
+            logger.debug("user password reset expired");
+            return response.status(403).json("expired");
+        }
+
+        logger.debug("valid reset password request");
+        const hashedPassword = await generateHashedPassword(newPassword);
+        await this.userDao.updateUser(userId, {
+            password: hashedPassword,
+            passwordResetExpiresOn: undefined,
+            passwordResetToken: undefined,
+        });
+        return response.status(200).json("success");
+    }
 }
