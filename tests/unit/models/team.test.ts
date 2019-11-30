@@ -1,3 +1,4 @@
+import { Team, User } from "@akosasante/trade-machine-models";
 import "jest";
 import "jest-extended";
 import { clone } from "lodash";
@@ -23,6 +24,16 @@ describe("Team Class", () => {
         it("toString/0", async () => {
             expect(team.toString()).toMatch(team.id!);
             expect(team.toString()).toMatch("TeamDO#");
+        });
+
+        it("toTeamModel/0", () => {
+            const testUser = UserFactory.getUser(undefined, undefined, undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45a"});
+            const teamWithRelations = TeamFactory.getTeam(undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b", owners: [testUser]});
+            const teamModel = teamWithRelations.toTeamModel();
+            expect(teamModel).toBeInstanceOf(Team);
+            expect(teamModel.owners).toBeArrayOfSize(1);
+            expect(teamModel.owners).toBeArrayOfSize(1);
+            expect(teamModel.owners[0]).toBeInstanceOf(User);
         });
 
         describe("equals/2", () => {
