@@ -1,21 +1,21 @@
 import { NotFoundError } from "routing-controllers";
 import { Connection, DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
-import Team from "../models/team";
+import TeamDO from "../models/team";
 import User from "../models/user";
+import { Team } from "@akosasante/trade-machine-models";
+import UserDO from "../models/user";
 
 export default class TeamDAO {
-    public connection: Connection;
-    private teamDb: Repository<Team>;
+    private teamDb: Repository<TeamDO>;
 
-    constructor() {
-        this.connection = getConnection(process.env.NODE_ENV);
-        this.teamDb = this.connection.getRepository("Team");
+    constructor(repo?: Repository<TeamDO>) {
+        this.teamDb = repo || getConnection(process.env.NODE_ENV).getRepository("Team");
     }
 
     public async getAllTeams(): Promise<Team[]> {
         const options: FindManyOptions = {order: {id: "ASC"}};
         const dbTeams = await this.teamDb.find(options);
-        return dbTeams.map(team => new Team(team));
+        return dbTeams.map(team => team.toTeamModel());
     }
 
     public async getTeamsByOwnerStatus(hasOwners: boolean): Promise<Team[]> {
@@ -25,40 +25,37 @@ export default class TeamDAO {
             .leftJoinAndSelect("team.owners", "owner")
             .where(condition)
             .getMany();
-        return dbTeams.map(team => new Team(team));
+        return dbTeams.map(team => team.toTeamModel());
     }
 
-    public async getTeamById(id: number): Promise<Team> {
+    public async getTeamById(id: string): Promise<Team> {
         if (!id) {
             throw new NotFoundError("Id is required");
         }
         const dbTeam = await this.teamDb.findOneOrFail(id);
-        return new Team(dbTeam);
+        return dbTeam.toTeamModel();
     }
 
-    public async findTeams(query: Partial<Team>): Promise<Team[]> {
+    public async findTeams(query: Partial<TeamDO>): Promise<Team[]> {
         const dbTeams = await this.teamDb.find({where: query});
         if (dbTeams.length) {
-            return dbTeams.map(team => new Team(team));
+            return dbTeams.map(team => team.toTeamModel());
         } else {
             throw new NotFoundError("No teams found for that query");
         }
     }
 
-    public async createTeam(teamObj: Partial<Team>): Promise<Team> {
-        const dbTeam = await this.teamDb.save(teamObj);
-        return new Team(dbTeam);
+    public async createTeams(teamObjs: Array<Partial<TeamDO>>): Promise<Team[]> {
+        const dbTeams = await this.teamDb.save(teamObjs);
+        return dbTeams.map(team => team.toTeamModel());
     }
 
-    public async updateTeam(id: number, teamObj: Partial<Team>): Promise<Team> {
+    public async updateTeam(id: string, teamObj: Partial<TeamDO>): Promise<Team> {
         await this.teamDb.update({ id }, teamObj);
         return await this.getTeamById(id);
     }
 
-    public async deleteTeam(id: number): Promise<DeleteResult> {
-        if (!id) {
-            throw new NotFoundError("Id is required");
-        }
+    public async deleteTeam(id: string): Promise<DeleteResult> {
         await this.teamDb.findOneOrFail(id);
         return await this.teamDb.createQueryBuilder()
             .delete()
@@ -67,10 +64,7 @@ export default class TeamDAO {
             .execute();
     }
 
-    public async updateTeamOwners(id: number, ownersToAdd: User[], ownersToRemove: User[]): Promise<Team> {
-        if (!id) {
-            throw new NotFoundError("Id is required");
-        }
+    public async updateTeamOwners(id: string, ownersToAdd: UserDO[], ownersToRemove: UserDO[]): Promise<Team> {
         await this.teamDb.findOneOrFail(id);
         await this.teamDb
             .createQueryBuilder()
