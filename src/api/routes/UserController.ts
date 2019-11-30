@@ -1,15 +1,12 @@
-import {
-    Authorized, Body, Delete, Get, JsonController, NotFoundError,
-    Param, Post, Put, QueryParam, QueryParams
-} from "routing-controllers";
 // import User, { Role } from "../../models/user";
 import { User } from "@akosasante/trade-machine-models";
-import { getConnection } from "typeorm";
+import { Authorized, Body, Delete, Get, JsonController,
+    NotFoundError, Param, Post, Put, QueryParam } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
+import UserDO, { Role } from "../../models/user";
 import { cleanupQuery } from "../ApiHelpers";
-import UserDO, {Role} from "../../models/user";
 
 @JsonController("/users")
 export default class UserController {
@@ -34,7 +31,7 @@ export default class UserController {
         logger.debug(`got user: ${user}`);
         return user;
     }
-    
+
     @Get("/search")
     public async findUser(@QueryParam("query") query: Partial<UserDO>,
                           @QueryParam("multiple") multiple: boolean): Promise<User[]|User|undefined> {
