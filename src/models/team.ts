@@ -71,7 +71,8 @@ export default class TeamDO extends BaseModel implements HasEquals {
                 this.id,
                 this.name,
                 this.status,
-                this.espnId
+                this.espnId,
+                this.owners ? this.owners.map(owner => owner.toUserModel()) : []
             );
         } else {
             throw new Error("Invalid Team Model inputs");

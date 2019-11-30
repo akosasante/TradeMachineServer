@@ -100,7 +100,8 @@ export default class UserDO extends BaseModel implements HasEquals {
                 this.role,
                 this.status,
                 this.slackUsername,
-                this.lastLoggedIn
+                this.lastLoggedIn,
+                this.team ? this.team.toTeamModel() : undefined
             );
         } else {
             throw new Error("Invalid User Model inputs");

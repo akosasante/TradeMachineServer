@@ -34,7 +34,7 @@
   "author": "Akosua Asante",
   "license": "ISC",
   "dependencies": {
-    "@akosasante/trade-machine-models": "^1.0",
+    "@akosasante/trade-machine-models": "^1.0.3",
     "amqplib": "^0.5.5",
     "axios": "^0.18.1",
     "bcryptjs": "^2.4.3",
