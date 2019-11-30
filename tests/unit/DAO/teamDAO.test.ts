@@ -123,27 +123,20 @@ describe("TeamDAO", () => {
         expect(res).toEqual(deleteResult);
     });
 
-    //
-    // it("updateOwners - should call the db createQueryBuilder and findOneOrFail with id and owner objects", async () => {
-    //     const addAndRemove = jest.fn();
-    //     const of = jest.fn(() => ({addAndRemove}));
-    //     const relation = jest.fn(() => ({of}));
-    //     mockTeamDb.createQueryBuilder.mockImplementationOnce(() => ({ relation }));
-    //     mockTeamDb.findOneOrFail.mockReturnValue(testTeam1.parse());
-    //     const res = await teamDAO.updateTeamOwners(
-    //         1,
-    //         [new User({email: "1@example.com"})], [new User({email: "2@example.com"})]);
-    //
-    //     expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
-    //     expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith();
-    //     expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(2);
-    //     expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(1);
-    //     expect(res).toEqual(testTeam1);
-    // });
-    // it("updateTeamOwners should throw an error if no id is passed", async () => {
-    //     // @ts-ignore
-    //     await expect(teamDAO.updateTeamOwners(undefined)).rejects.toThrow(NotFoundError);
-    // });
-    //
+    it("updateOwners - should call the db createQueryBuilder and findOneOrFail with id and owner objects", async () => {
+        const addAndRemove = jest.fn();
+        const of = jest.fn(() => ({addAndRemove}));
+        const relation = jest.fn(() => ({of}));
+        mockTeamDb.createQueryBuilder.mockImplementationOnce(() => ({ relation }));
+        mockTeamDb.findOneOrFail.mockReturnValue(testTeam);
+        const res = await teamDAO.updateTeamOwners(
+            testTeam.id,
+            [new User({email: "1@example.com"})], [new User({email: "2@example.com"})]);
 
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith();
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(2);
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id);
+        expect(res).toEqual(testTeamModel);
+    });
 });
