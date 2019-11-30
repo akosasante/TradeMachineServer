@@ -9,6 +9,7 @@ import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import { cleanupQuery } from "../ApiHelpers";
+import UserDO, {Role} from "../../models/user";
 
 @JsonController("/users")
 export default class UserController {
@@ -35,7 +36,7 @@ export default class UserController {
     }
     
     @Get("/search")
-    public async findUser(@QueryParam("query") query: Partial<User>,
+    public async findUser(@QueryParam("query") query: Partial<UserDO>,
                           @QueryParam("multiple") multiple: boolean): Promise<User[]|User|undefined> {
         logger.debug(`searching for user with props: ${inspect(query)}, multiple=${multiple}`);
         if (multiple) {
@@ -55,28 +56,24 @@ export default class UserController {
         }
     }
 
-    // @Authorized(Role.ADMIN)
-    // @Post("/")
-    // public async createUser(@Body() userObj: Partial<User>): Promise<User> {
-    //     logger.debug("create user endpoint");
-    //     // const { password, ...userRest } = userObj;
-    //     // ^ Because we don't hash passwords on insert.
-    //     // Not sure what I was thinking here? Why not allow passing password on create API-wise?
-    //     // const user = await this.dao.createUser(userRest);
-    //     const user = await this.dao.createUser(userObj);
-    //     logger.debug(`created user: ${user}`);
-    //     return user.publicUser;
-    // }
-    //
-    // @Authorized(Role.ADMIN)
-    // @Put("/:id")
-    // public async updateUser(@Param("id") id: number, @Body() userObj: Partial<User>): Promise<User> {
-    //     logger.debug("update user endpoint");
-    //     const user = await this.dao.updateUser(id, userObj);
-    //     logger.debug(`updated user: ${user}`);
-    //     return user.publicUser;
-    // }
-    //
+    @Authorized(Role.ADMIN)
+    @Post("/")
+    public async createUsers(@Body() userObjs: Array<Partial<UserDO>>): Promise<User[]> {
+        logger.debug("create user endpoint");
+        const users = await this.dao.createUsers(userObjs);
+        logger.debug(`created user: ${inspect(users)}`);
+        return users;
+    }
+
+    @Authorized(Role.ADMIN)
+    @Put("/:id")
+    public async updateUser(@Param("id") id: string, @Body() userObj: Partial<UserDO>): Promise<User> {
+        logger.debug("update user endpoint");
+        const user = await this.dao.updateUser(id, userObj);
+        logger.debug(`updated user: ${user}`);
+        return user;
+    }
+
     // @Authorized(Role.ADMIN)
     // @Delete("/:id")
     // public async deleteUser(@Param("id") id: number) {
