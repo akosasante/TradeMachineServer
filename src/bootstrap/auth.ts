@@ -22,40 +22,36 @@ export async function serializeUser(user: User): Promise<string | undefined> {
     return user ? user.id : undefined;
 }
 
-export async function deserializeUser(id: string): Promise<User> {
+export async function deserializeUser(id: string, userDAO: UserDAO = new UserDAO()): Promise<User> {
     logger.debug("deserializing user");
-    const userDAO = new UserDAO();
     return await userDAO.getUserById(id);
 }
 
-// export async function signUpAuthentication(email: string, password: string,
-//                                            done: (err?: Error, user?: User) => any): Promise<void> {
-//     try {
-//         logger.debug("sign up strategy");
-//         const userDAO = new UserDAO();
-//         const user = await userDAO.findUser({email}, false);
-//         if (!user) {
-//             logger.debug("no existing user with that email");
-//             const hashedPass = await User.generateHashedPassword(password);
-//             logger.debug(hashedPass);
-//             const newUser = await userDAO.createUser({email, password: hashedPass, lastLoggedIn: new Date()}, true);
-//             logger.debug(newUser);
-//             return done(undefined, newUser);
-//         } else if (user && !user.password) {
-//             logger.debug("user found with unset password");
-//             const hashedPass = await User.generateHashedPassword(password);
-//             const updatedUser = await userDAO.updateUser(user.id!, {password: hashedPass, lastLoggedIn: new Date()});
-//             return done(undefined, updatedUser);
-//         } else {
-//             return done(new ConflictError("Email already in use and signed up."));
-//         }
-//     } catch (error) {
-//         logger.error("Error in sign-up strategy");
-//         logger.error(error);
-//         return done(error);
-//     }
-// }
-//
+export async function signUpAuthentication(email: string, password: string, userDAO: UserDAO = new UserDAO(),
+                                           done: (err?: Error, user?: User) => any): Promise<void> {
+    try {
+        logger.debug("sign up strategy");
+        const user = await userDAO.findUser({email}, false);
+        if (!user) {
+            logger.debug("no existing user with that email");
+            const hashedPass = await generateHashedPassword(password);
+            const newUser = await userDAO.createUsers([{email, password: hashedPass, lastLoggedIn: new Date()}]);
+            return done(undefined, newUser[0]);
+        } else if (user && !user.hasPassword) {
+            logger.debug("user found with unset password");
+            const hashedPass = await generateHashedPassword(password);
+            const updatedUser = await userDAO.updateUser(user.id!, {password: hashedPass, lastLoggedIn: new Date()});
+            return done(undefined, updatedUser);
+        } else {
+            return done(new ConflictError("Email already in use and signed up."));
+        }
+    } catch (error) {
+        logger.error("Error in sign-up strategy");
+        logger.error(error);
+        return done(error);
+    }
+}
+
 export async function signInAuthentication(email: string, password: string,
                                            done: (err?: Error, user?: User) => any): Promise<void> {
     try {
