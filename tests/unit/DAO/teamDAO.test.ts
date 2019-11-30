@@ -14,7 +14,7 @@ describe("TeamDAO", () => {
         // findOneOrFail: jest.fn(),
         // save: jest.fn(),
         // update: jest.fn(),
-        // createQueryBuilder: jest.fn(),
+        createQueryBuilder: jest.fn(),
     };
     const testTeam = TeamFactory.getTeam(undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
     const testTeamModel = testTeam.toTeamModel();
@@ -46,6 +46,28 @@ describe("TeamDAO", () => {
         expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.find).toHaveBeenCalledWith(defaultOpts);
         expect(res).toEqual([testTeamModel]);
+    });
+    
+    describe("getTeamsByOwnerStatus - should call the db createQueryBuilder with the correct methods", () => {
+        const getMany = jest.fn(() => [testTeam]);
+        const where = jest.fn(() => ({ getMany }));
+        const leftJoinAndSelect = jest.fn(() => ({ where }));
+        mockTeamDb.createQueryBuilder.mockImplementation(() => ({ leftJoinAndSelect }));
+
+        it("if hasOwners is true, should search using `owners IS NOT NULL`", async () => {
+            const resTrue = await teamDAO.getTeamsByOwnerStatus(true);
+            expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+            expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith("team");
+            expect(where).toHaveBeenLastCalledWith('owner."teamId" IS NOT NULL');
+            expect(resTrue).toEqual([testTeamModel]);
+        });
+        it("if hasOwners is false, should search using `owners IS NULL`", async () => {
+            const resFalse = await teamDAO.getTeamsByOwnerStatus(false);
+            expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+            expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith("team");
+            expect(where).toHaveBeenLastCalledWith('owner."teamId" IS NULL');
+            expect(resFalse).toEqual([testTeamModel]);
+        });
     });
     //
     // it("getTeamById - should throw NotFoundError if no id is passed", async () => {
@@ -139,22 +161,5 @@ describe("TeamDAO", () => {
     //     await expect(teamDAO.updateTeamOwners(undefined)).rejects.toThrow(NotFoundError);
     // });
     //
-    // it("getTeamsByOwnerStatus - should call the db createQueryBuilder with the correct methods", async () => {
-    //     const getMany = jest.fn(() => [testTeam1.parse()]);
-    //     const where = jest.fn(() => ({ getMany }));
-    //     const leftJoinAndSelect = jest.fn(() => ({ where }));
-    //     mockTeamDb.createQueryBuilder.mockImplementation(() => ({ leftJoinAndSelect }));
-    //
-    //     const resTrue = await teamDAO.getTeamsByOwnerStatus(true);
-    //     expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
-    //     expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith("team");
-    //     expect(where).toHaveBeenLastCalledWith('owner."teamId" IS NOT NULL');
-    //     expect(resTrue).toEqual([testTeam1]);
-    //
-    //     const resFalse = await teamDAO.getTeamsByOwnerStatus(false);
-    //     expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(2);
-    //     expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith("team");
-    //     expect(where).toHaveBeenLastCalledWith('owner."teamId" IS NULL');
-    //     expect(resFalse).toEqual([testTeam1]);
-    // });
+
 });

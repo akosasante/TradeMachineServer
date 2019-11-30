@@ -19,14 +19,17 @@ describe("UserDAO", () => {
 
     const testUser = UserFactory.getUser();
     const testUserModel = testUser.toUserModel();
+    // @ts-ignore
+    const userDAO: UserDAO = new UserDAO(mockUserDb);
+    
     afterEach(async () => {
         Object.keys(mockUserDb).forEach((action: string) => {
             // @ts-ignore
             (mockUserDb[action] as jest.Mock).mockClear();
         });
 
-        // mockExecute.mockClear();
-        // mockWhereInIds.mockClear();
+        mockExecute.mockClear();
+        mockWhereInIds.mockClear();
     });
     beforeAll(() => {
         logger.debug("~~~~~~USER DAO TESTS BEGIN~~~~~~");
@@ -34,9 +37,6 @@ describe("UserDAO", () => {
     afterAll(() => {
         logger.debug("~~~~~~USER DAO TESTS COMPLETE~~~~~~");
     });
-
-    // @ts-ignore
-    const userDAO: UserDAO = new UserDAO(mockUserDb);
 
     describe("getAllUsers", () => {
         it("should return an array of users as result of db call", async () => {
