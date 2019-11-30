@@ -12,12 +12,12 @@ describe("UserController", () => {
         getAllUsers: jest.fn(),
         getAllUsersWithTeams: jest.fn(),
         getUserById: jest.fn(),
+        findUser: jest.fn(),
+        findUsers: jest.fn(),
         // getUserByUUID: jest.fn(),
         // createUser: jest.fn(),
         // updateUser: jest.fn(),
         // deleteUser: jest.fn(),
-        // findUser: jest.fn(),
-        // findUsers: jest.fn(),
     };
     const userController = new UserController(mockUserDAO as unknown as UserDAO);
     const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
@@ -71,41 +71,37 @@ describe("UserController", () => {
         });
     });
 
-    // describe("findUser method", () => {
-    //     const query: {[key: string]: string} = { name: "Jatheesh" };
-    //     it("should find a user by the given query options", async () => {
-    //         mockUserDAO.findUser.mockReturnValueOnce(testUser);
-    //         const res = await userController.findUser(query);
-    //
-    //         expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDAO.findUser).toHaveBeenCalledWith(query, true);
-    //         expect(res).toEqual(testUser.publicUser);
-    //     });
-    //     it("should throw an error if the entity is not found in db", async () => {
-    //         mockUserDAO.findUser.mockImplementation(() => {
-    //             throw new EntityNotFoundError(User, "ID not found");
-    //         });
-    //         await expect(userController.findUser(query)).rejects.toThrow(EntityNotFoundError);
-    //     });
-    //     it("should return an array of users if multiple is a key in the query", async () => {
-    //         const multiQuery = {...query, multiple: "true"};
-    //         mockUserDAO.findUsers.mockReturnValueOnce([testUser]);
-    //         // @ts-ignore
-    //         const res = await userController.findUser(multiQuery);
-    //
-    //         expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);
-    //         // We delete the "multiple" key before passing the rest to the DAO
-    //         expect(mockUserDAO.findUsers).toHaveBeenCalledWith(query, true);
-    //         expect(res).toEqual([testUser.publicUser]);
-    //     });
-    //     it("should throw an error if no entities are found with the multiple key", async () => {
-    //         query.multiple = "true";
-    //         mockUserDAO.findUsers.mockImplementation(() => {
-    //             throw new NotFoundError("ID not found");
-    //         });
-    //         await expect(userController.findUser(query)).rejects.toThrow(NotFoundError);
-    //     });
-    // });
+    describe("findUser method", () => {
+        const query: {[key: string]: string} = { name: "Jatheesh" };
+        it("should find a user by the given query options", async () => {
+            mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
+            // @ts-ignore
+            const res = await userController.findUser(query, undefined);
+
+            expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.findUser).toHaveBeenCalledWith(query, true);
+            
+            expect(res).toEqual(testUserModel);
+        });
+        it("should return an array of users if multiple is a key in the query", async () => {
+            mockUserDAO.findUsers.mockReturnValueOnce([testUserModel]);
+            const res = await userController.findUser(query, true);
+
+            expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.findUsers).toHaveBeenCalledWith(query);
+            
+            expect(res).toEqual([testUserModel]);
+        });
+        it("should throw an error if no entities are found with the multiple key", async () => {
+            mockUserDAO.findUsers.mockReturnValueOnce([]);
+            const res = userController.findUser(query, true);
+
+            expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.findUsers).toHaveBeenCalledWith(query);
+
+            await expect(res).rejects.toThrowError(NotFoundError);
+        });
+    });
     //
     // describe("createUser method", () => {
     //     it("should create a user", async () => {

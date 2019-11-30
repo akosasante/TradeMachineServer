@@ -1,4 +1,4 @@
-import { User } from "trade-machine-models/lib";
+import { User } from "@akosasante/trade-machine-models";
 import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
 import UserDO from "../models/user";
 

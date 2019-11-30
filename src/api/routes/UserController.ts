@@ -1,7 +1,9 @@
-import { Authorized, Body, Delete, Get, JsonController,
-    Param, Post, Put, QueryParam, QueryParams } from "routing-controllers";
+import {
+    Authorized, Body, Delete, Get, JsonController, NotFoundError,
+    Param, Post, Put, QueryParam, QueryParams
+} from "routing-controllers";
 // import User, { Role } from "../../models/user";
-import { User } from "trade-machine-models/lib";
+import { User } from "@akosasante/trade-machine-models";
 import { getConnection } from "typeorm";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -32,24 +34,27 @@ export default class UserController {
         return user;
     }
     
+    @Get("/search")
+    public async findUser(@QueryParam("query") query: Partial<User>,
+                          @QueryParam("multiple") multiple: boolean): Promise<User[]|User|undefined> {
+        logger.debug(`searching for user with props: ${inspect(query)}, multiple=${multiple}`);
+        if (multiple) {
+            logger.debug("fetching all users with query");
+            const users = await this.dao.findUsers(cleanupQuery(query as { [key: string]: string }));
+            if (users.length) {
+                logger.debug(`got ${users.length} users`);
+                return users;
+            } else {
+                throw new NotFoundError("No users found matching that query");
+            }
+        } else {
+            logger.debug("fetching one user with query");
+            const user = await this.dao.findUser(cleanupQuery(query as { [key: string]: string }), true);
+            logger.debug(`got user: ${user}`);
+            return user;
+        }
+    }
 
-    // @Get("/search")
-    // public async findUser(@QueryParams() query: Partial<User>): Promise<User[]|User|undefined> {
-    //     logger.debug(`searching for user with props: ${inspect(query)}`);
-    //     const multiple = Object.keys(query).includes("multiple");
-    //     if (multiple) {
-    //         logger.debug("fetching all users with query");
-    //         const users = await this.dao.findUsers(cleanupQuery(query as { [key: string]: string }), true);
-    //         logger.debug(`got ${users.length} users`);
-    //         return users.map(user => user.publicUser);
-    //     } else {
-    //         logger.debug("fetching one user with query");
-    //         const user = await this.dao.findUser(cleanupQuery(query as { [key: string]: string }), true);
-    //         logger.debug(`${(user || {} as User).publicUser}`);
-    //         return (user || {} as User).publicUser;
-    //     }
-    // }
-    //
     // @Authorized(Role.ADMIN)
     // @Post("/")
     // public async createUser(@Body() userObj: Partial<User>): Promise<User> {
