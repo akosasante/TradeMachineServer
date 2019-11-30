@@ -14,9 +14,8 @@ describe("UserController", () => {
         getUserById: jest.fn(),
         findUser: jest.fn(),
         findUsers: jest.fn(),
-        // getUserByUUID: jest.fn(),
-        // createUser: jest.fn(),
-        // updateUser: jest.fn(),
+        createUsers: jest.fn(),
+        updateUser: jest.fn(),
         // deleteUser: jest.fn(),
     };
     const userController = new UserController(mockUserDAO as unknown as UserDAO);
@@ -102,42 +101,30 @@ describe("UserController", () => {
             await expect(res).rejects.toThrowError(NotFoundError);
         });
     });
-    //
-    // describe("createUser method", () => {
-    //     it("should create a user", async () => {
-    //         mockUserDAO.createUser.mockReturnValue(testUser);
-    //         const res = await userController.createUser(testUser.parse());
-    //
-    //         expect(mockUserDAO.createUser).toHaveBeenCalledTimes(1);
-    //         expect(mockUserDAO.createUser).toHaveBeenCalledWith(testUser.parse());
-    //         expect(res).toEqual(testUser.publicUser);
-    //     });
-    //     it("should throw an error", async () => {
-    //         mockUserDAO.createUser.mockImplementation(() => {
-    //             // TODO: This should be an error we would expect from this route; just for clarity's sake
-    //             throw new Error("Generic Error");
-    //         });
-    //         await expect(userController.createUser(testUser.parse())).rejects.toThrow(Error);
-    //     });
-    // });
-    //
-    // describe("updateUser method", () => {
-    //     it("should return updated user with the given id", async () => {
-    //         mockUserDAO.updateUser.mockReturnValue(testUser);
-    //         const res = await userController.updateUser(testUser.id!, testUser.parse());
-    //
-    //         expect(mockUserDAO.updateUser).toBeCalledTimes(1);
-    //         expect(mockUserDAO.updateUser).toBeCalledWith(testUser.id!, testUser.parse());
-    //         expect(res).toEqual(testUser.publicUser);
-    //     });
-    //     it("should throw an error", async () => {
-    //         mockUserDAO.updateUser.mockImplementation(() => {
-    //             throw new EntityNotFoundError(User, "Id not found.");
-    //         });
-    //         await expect(userController.updateUser(9999, testUser.parse()))
-    //             .rejects.toThrow(EntityNotFoundError);
-    //     });
-    // });
+
+    describe("createUsers method", () => {
+        it("should create a user and return array", async () => {
+            mockUserDAO.createUsers.mockReturnValue([testUserModel]);
+            const res = await userController.createUsers([testUser.parse()]);
+
+            expect(mockUserDAO.createUsers).toHaveBeenCalledTimes(1);
+            expect(mockUserDAO.createUsers).toHaveBeenCalledWith([testUser.parse()]);
+            
+            expect(res).toEqual([testUserModel]);
+        });
+    });
+
+    describe("updateUser method", () => {
+        it("should return updated user with the given id", async () => {
+            mockUserDAO.updateUser.mockReturnValue(testUserModel);
+            const res = await userController.updateUser(testUser.id!, testUser.parse());
+
+            expect(mockUserDAO.updateUser).toBeCalledTimes(1);
+            expect(mockUserDAO.updateUser).toBeCalledWith(testUser.id!, testUser.parse());
+            
+            expect(res).toEqual(testUserModel);
+        });
+    });
     //
     // describe("deleteUser method", () => {
     //     it("should delete a user by id", async () => {
