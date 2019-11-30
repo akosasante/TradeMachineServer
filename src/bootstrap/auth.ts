@@ -7,15 +7,7 @@ import { inspect } from "util";
 import { ConflictError } from "../api/middlewares/ErrorHandler";
 import logger from "../bootstrap/logger";
 import UserDAO from "../DAO/UserDAO";
-import UserDO, { Role } from "../models/user";
-
-export async function generateHashedPassword(plainPassword: string): Promise<string> {
-    logger.debug("hashing password");
-    const saltFactor = process.env.NODE_ENV !== "production" ? 1 : 15;
-    return hash(plainPassword, saltFactor)
-        .then(pass => pass)
-        .catch(err => err);
-}
+import { Role } from "../models/user";
 
 export async function serializeUser(user: User): Promise<string | undefined> {
     logger.debug("serializing user");
@@ -59,7 +51,7 @@ export async function signInAuthentication(email: string, password: string, user
         // Will throw EntityNotFoundError if user is not found
         const user = await userDAO.findUser({email});
         if (user) {
-            logger.debug("found user with matching email")
+            logger.debug("found user with matching email");
             const userPassword = await userDAO.getUserPassword(user.id!);
             const validPassword = userPassword ? await isPasswordMatching(password, userPassword) : false;
             if (validPassword) {
@@ -112,4 +104,12 @@ async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO(
 async function isPasswordMatching(password: string, userPasssword: string): Promise<boolean> {
     logger.debug(`comparing ${password} to user=${userPasssword}`);
     return compare(password, userPasssword || "");
+}
+
+async function generateHashedPassword(plainPassword: string): Promise<string> {
+    logger.debug("hashing password");
+    const saltFactor = process.env.NODE_ENV !== "production" ? 1 : 15;
+    return hash(plainPassword, saltFactor)
+        .then(pass => pass)
+        .catch(err => err);
 }
