@@ -12,7 +12,7 @@ describe("TeamDAO", () => {
     const mockTeamDb = {
         find: jest.fn(),
         findOneOrFail: jest.fn(),
-        // save: jest.fn(),
+        save: jest.fn(),
         // update: jest.fn(),
         createQueryBuilder: jest.fn(),
     };
@@ -69,7 +69,7 @@ describe("TeamDAO", () => {
             expect(resFalse).toEqual([testTeamModel]);
         });
     });
-    
+
     it("getTeamById - should call the db findOneOrFail once with id", async () => {
         mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam);
         const res = await teamDAO.getTeamById(testTeam.id!);
@@ -88,22 +88,16 @@ describe("TeamDAO", () => {
         expect(mockTeamDb.find).toHaveBeenCalledWith({where: condition});
         expect(res).toEqual([testTeamModel]);
     });
-    //
-    // it("findTeams - should throw an error if find returns empty array", async () => {
-    //     mockTeamDb.find.mockReturnValueOnce([]);
-    //     await expect(teamDAO.findTeams({espnId: 1})).rejects.toThrow(NotFoundError);
-    //     expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
-    // });
-    //
-    // it("createTeam - should call the db save once with teamObj", async () => {
-    //     mockTeamDb.save.mockReturnValueOnce(testTeam1.parse());
-    //     const res = await teamDAO.createTeam(testTeam1.parse());
-    //
-    //     expect(mockTeamDb.save).toHaveBeenCalledTimes(1);
-    //     expect(mockTeamDb.save).toHaveBeenCalledWith(testTeam1.parse());
-    //     expect(res).toEqual(testTeam1);
-    // });
-    //
+
+    it("createTeams - should call the db save once with all the teams passed in", async () => {
+        mockTeamDb.save.mockReturnValueOnce([testTeam]);
+        const res = await teamDAO.createTeams(testTeam.parse());
+
+        expect(mockTeamDb.save).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.save).toHaveBeenCalledWith(testTeam.parse());
+        expect(res).toEqual([testTeamModel]);
+    });
+
     // it("updateTeam - should call the db update and findOneOrFail once with id and teamObj", async () => {
     //     mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam1.parse());
     //     const res = await teamDAO.updateTeam(1, testTeam1.parse());
