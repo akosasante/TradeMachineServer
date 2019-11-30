@@ -35,11 +35,7 @@ export default class TeamDAO {
 
     public async findTeams(query: Partial<TeamDO>): Promise<Team[]> {
         const dbTeams = await this.teamDb.find({where: query});
-        if (dbTeams.length) {
-            return dbTeams.map(team => team.toTeamModel());
-        } else {
-            throw new NotFoundError("No teams found for that query");
-        }
+        return dbTeams.map(team => team.toTeamModel());
     }
 
     public async createTeams(teamObjs: Array<Partial<TeamDO>>): Promise<Team[]> {
