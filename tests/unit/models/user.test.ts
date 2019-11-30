@@ -5,7 +5,7 @@ import UserDO, { Role } from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
 
 describe("User Class", () => {
-    const userObj = UserFactory.getUserObject(undefined, undefined,  undefined, Role.ADMIN);
+    const userObj = UserFactory.getUserObject(undefined, undefined,  undefined, Role.ADMIN, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
     const user = new UserDO(userObj);
 
     describe("constructor", () => {
