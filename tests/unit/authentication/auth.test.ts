@@ -1,4 +1,3 @@
-import { hash } from "bcryptjs";
 import "jest";
 import "jest-extended";
 import { Action } from "routing-controllers";
@@ -7,6 +6,7 @@ import {
     authorizationChecker,
     currentUserChecker,
     deserializeUser,
+    generateHashedPassword,
     passwordResetDateIsValid,
     serializeUser,
     signInAuthentication,
@@ -21,7 +21,7 @@ const testUserModel = testUser.toUserModel();
 const mockUserDAO = {
     getUserById: jest.fn(),
     findUser: jest.fn(),
-    getUserPassword: jest.fn(),
+    getUserDbObj: jest.fn(),
     createUsers: jest.fn(),
     updateUser: jest.fn(),
 };
@@ -86,8 +86,8 @@ describe("Authorization helper methods", () => {
 
         it("should return an updated user if the password is matching", async () => {
             mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
-            const hashedPassword = await hash(testUser.password!, 1);
-            mockUserDAO.getUserPassword.mockReturnValueOnce(hashedPassword);
+            const hashedPassword = await generateHashedPassword(testUser.password!);
+            mockUserDAO.getUserDbObj.mockReturnValueOnce({...testUser, password: hashedPassword});
             mockUserDAO.updateUser.mockReturnValueOnce(testUserModel);
             await signInAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
 
@@ -96,7 +96,9 @@ describe("Authorization helper methods", () => {
         });
         it("should return an error if the password is not matching", async () => {
             mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
-            mockUserDAO.getUserPassword.mockReturnValueOnce("completely-different-saved-password");
+            mockUserDAO.getUserDbObj.mockReturnValueOnce(
+                {...testUser, password: "completely-different-saved-password"}
+            );
             await signInAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
 
             expect(cb).toBeCalledTimes(1);
@@ -158,12 +160,18 @@ describe("Authorization helper methods", () => {
             expect(passwordResetDateIsValid(expiryDate)).toBeTrue();
         });
         it("should return false if a null value is passed in", () => {
-            // @ts-ignore
             expect(passwordResetDateIsValid(undefined)).toBeFalse();
         });
         it("should return false if the user's expiry date is before now", () => {
             const expiryDate = new Date("January 1 1991");
             expect(passwordResetDateIsValid(expiryDate)).toBeFalse();
+        });
+    });
+
+    describe("generateHashedPassword", () => {
+        it("should return the hashed string", async () => {
+            const hashedPassword = await generateHashedPassword(testUser.password!);
+            expect(testUser.password).not.toEqual(hashedPassword);
         });
     });
 });
