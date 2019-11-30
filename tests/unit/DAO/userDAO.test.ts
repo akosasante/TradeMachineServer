@@ -1,7 +1,9 @@
+import { User } from "@akosasante/trade-machine-models";
 import "jest";
 import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import UserDAO from "../../../src/DAO/UserDAO";
+import UserDO from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
 import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 
@@ -80,17 +82,18 @@ describe("UserDAO", () => {
         });
     });
 
-    describe("getUserPassword", () => {
-        it("should return password string", async () => {
+    describe("getUserDbObj", () => {
+        it("should return userDO obj", async () => {
             mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
-            const res = await userDAO.getUserPassword(testUser.id!);
+            const res = await userDAO.getUserDbObj(testUser.id!);
 
             // Testing that the correct db function is called with the correct params
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
 
             // Testing that we return as expected
-            expect(res).toEqual(testUser.password);
+            expect(res).toEqual(testUser);
+            expect(res).toBeInstanceOf(UserDO);
         });
     });
 
@@ -106,6 +109,7 @@ describe("UserDAO", () => {
 
             // Testing that we return as expected
             expect(res).toEqual(testUserModel);
+            expect(res).toBeInstanceOf(User);
         });
         it("should use the findOne method if the param passed is false", async () => {
             mockUserDb.findOne.mockReturnValueOnce(testUser);

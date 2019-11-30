@@ -11,7 +11,7 @@ import { UserFactory } from "../../../factories/UserFactory";
 
 const mockUserDAO = {
     findUser: jest.fn(),
-    getUserPassword: jest.fn(),
+    getUserDbObj: jest.fn(),
     updateUser: jest.fn(),
 };
 
@@ -23,7 +23,7 @@ describe("Authentication middleware", () => {
         it("should serialize the user and return the next function if sign in was successful", async () => {
             mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
             const hashedPassword = await hash(testUser.password!, 1);
-            mockUserDAO.getUserPassword.mockReturnValueOnce(hashedPassword);
+            mockUserDAO.getUserDbObj.mockReturnValueOnce({...testUser, password: hashedPassword});
             mockUserDAO.updateUser.mockReturnValueOnce(testUserModel);
             const next: NextFunction = jest.fn();
             const request: Request = {
@@ -43,7 +43,7 @@ describe("Authentication middleware", () => {
         it(`should return and call next with an Unauthorized error and not serialize the user if sign in fails
         or user is empty`, async () => {
             mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
-            mockUserDAO.getUserPassword.mockReturnValueOnce("nonmatching password");
+            mockUserDAO.getUserDbObj.mockReturnValueOnce({...testUser, password: "nonmatching password"});
             const next: NextFunction = jest.fn();
             const request: Request = {
                 body: {email: testUser.email!, password: testUser.password!},
