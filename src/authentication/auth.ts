@@ -96,6 +96,7 @@ export async function currentUserChecker(action: Action, userDAO: UserDAO = new 
 }
 
 export function passwordResetDateIsValid(passwordExpiry?: Date): boolean {
+    logger.debug(`Comparing password expiry date=${passwordExpiry}`);
     return Boolean(passwordExpiry && isAfter(passwordExpiry, new Date()));
 }
 
