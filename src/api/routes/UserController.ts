@@ -74,12 +74,12 @@ export default class UserController {
         return user;
     }
 
-    // @Authorized(Role.ADMIN)
-    // @Delete("/:id")
-    // public async deleteUser(@Param("id") id: number) {
-    //     logger.debug("delete user endpoint");
-    //     const result = await this.dao.deleteUser(id);
-    //     logger.debug(`delete successful: ${inspect(result)}`);
-    //     return await {deleteCount: result.affected, id: result.raw[0].id};
-    // }
+    @Authorized(Role.ADMIN)
+    @Delete("/:id")
+    public async deleteUser(@Param("id") id: string) {
+        logger.debug("delete user endpoint");
+        const result = await this.dao.deleteUser(id);
+        logger.debug(`delete successful: ${inspect(result)}`);
+        return {deleteCount: result.affected, id: result.raw[0].id};
+    }
 }
