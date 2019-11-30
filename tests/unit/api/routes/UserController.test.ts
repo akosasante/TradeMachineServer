@@ -1,10 +1,8 @@
 import "jest";
 import "jest-extended";
 import { NotFoundError } from "routing-controllers";
-import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import UserController from "../../../../src/api/routes/UserController";
 import UserDAO from "../../../../src/DAO/UserDAO";
-import User from "../../../../src/models/user";
 import { UserFactory } from "../../../factories/UserFactory";
 
 describe("UserController", () => {
@@ -65,7 +63,7 @@ describe("UserController", () => {
             // Must call the correct DAO method
             expect(mockUserDAO.getUserById).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.getUserById).toHaveBeenCalledWith(testUser.id!);
-            
+
             expect(res).toEqual(testUserModel);
         });
     });
@@ -79,7 +77,7 @@ describe("UserController", () => {
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.findUser).toHaveBeenCalledWith(query, true);
-            
+
             expect(res).toEqual(testUserModel);
         });
         it("should return an array of users if multiple is a key in the query", async () => {
@@ -88,7 +86,7 @@ describe("UserController", () => {
 
             expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.findUsers).toHaveBeenCalledWith(query);
-            
+
             expect(res).toEqual([testUserModel]);
         });
         it("should throw an error if no entities are found with the multiple key", async () => {
@@ -109,7 +107,7 @@ describe("UserController", () => {
 
             expect(mockUserDAO.createUsers).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.createUsers).toHaveBeenCalledWith([testUser.parse()]);
-            
+
             expect(res).toEqual([testUserModel]);
         });
     });
@@ -121,7 +119,7 @@ describe("UserController", () => {
 
             expect(mockUserDAO.updateUser).toBeCalledTimes(1);
             expect(mockUserDAO.updateUser).toBeCalledWith(testUser.id!, testUser.parse());
-            
+
             expect(res).toEqual(testUserModel);
         });
     });
@@ -133,7 +131,7 @@ describe("UserController", () => {
 
             expect(mockUserDAO.deleteUser).toBeCalledTimes(1);
             expect(mockUserDAO.deleteUser).toBeCalledWith(testUser.id!);
-            
+
             expect(res).toEqual({deleteCount: 1, id: testUser.id});
         });
     });
