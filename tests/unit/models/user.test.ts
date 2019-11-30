@@ -1,7 +1,8 @@
-import { User } from "@akosasante/trade-machine-models";
+import { Team, User } from "@akosasante/trade-machine-models";
 import "jest";
 import "jest-extended";
 import UserDO, { Role } from "../../../src/models/user";
+import { TeamFactory } from "../../factories/TeamFactory";
 import { UserFactory } from "../../factories/UserFactory";
 
 describe("User Class", () => {
@@ -57,6 +58,13 @@ describe("User Class", () => {
                 expect(user.toUserModel()).toBeInstanceOf(User);
                 expect(user.toUserModel().hasPassword).toBeTrue();
                 expect(UserFactory.getPasswordlessOwner().toUserModel().hasPassword).toBeFalse();
+            });
+            it("should set up relations correctly", () => {
+                const testTeam = TeamFactory.getTeam(undefined, undefined,
+                    {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
+                const userWithRelations = UserFactory.getUser(undefined, undefined,  undefined, Role.ADMIN, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b", team: testTeam});
+                const userModel = userWithRelations.toUserModel();
+                expect(userModel.team).toBeInstanceOf(Team);
             });
         });
         // it("isPasswordMatching/1 - should resolve true if it's a matching password", async () => {
