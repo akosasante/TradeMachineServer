@@ -13,7 +13,7 @@ describe("TeamDAO", () => {
         find: jest.fn(),
         findOneOrFail: jest.fn(),
         save: jest.fn(),
-        // update: jest.fn(),
+        update: jest.fn(),
         createQueryBuilder: jest.fn(),
     };
     const testTeam = TeamFactory.getTeam(undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
@@ -98,16 +98,16 @@ describe("TeamDAO", () => {
         expect(res).toEqual([testTeamModel]);
     });
 
-    // it("updateTeam - should call the db update and findOneOrFail once with id and teamObj", async () => {
-    //     mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam1.parse());
-    //     const res = await teamDAO.updateTeam(1, testTeam1.parse());
-    //
-    //     expect(mockTeamDb.update).toHaveBeenCalledTimes(1);
-    //     expect(mockTeamDb.update).toHaveBeenCalledWith({id: 1}, testTeam1.parse());
-    //     expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
-    //     expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(1);
-    //     expect(res).toEqual(testTeam1);
-    // });
+    it("updateTeam - should call the db update and findOneOrFail once with id and teamObj", async () => {
+        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam);
+        const res = await teamDAO.updateTeam(testTeam.id!, testTeam.parse());
+
+        expect(mockTeamDb.update).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.update).toHaveBeenCalledWith({id: testTeam.id}, testTeam.parse());
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id);
+        expect(res).toEqual(testTeamModel);
+    });
     //
     // it("deleteTeam - should call the db delete once with id", async () => {
     //     mockTeamDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
