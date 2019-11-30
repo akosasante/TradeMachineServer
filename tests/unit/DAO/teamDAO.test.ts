@@ -78,15 +78,16 @@ describe("TeamDAO", () => {
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id);
         expect(res).toEqual(testTeamModel);
     });
-    //
-    // it("findTeams - should call the db find once with query", async () => {
-    //     mockTeamDb.find.mockReturnValueOnce([testTeam1.parse()]);
-    //     const res = await teamDAO.findTeams({espnId: 1});
-    //
-    //     expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
-    //     expect(mockTeamDb.find).toHaveBeenCalledWith({where: {espnId: 1}});
-    //     expect(res).toEqual([testTeam1]);
-    // });
+
+    it("findTeams - should call the db find once with query", async () => {
+        const condition = {espnId: 1};
+        mockTeamDb.find.mockReturnValueOnce([testTeam]);
+        const res = await teamDAO.findTeams(condition);
+
+        expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.find).toHaveBeenCalledWith({where: condition});
+        expect(res).toEqual([testTeamModel]);
+    });
     //
     // it("findTeams - should throw an error if find returns empty array", async () => {
     //     mockTeamDb.find.mockReturnValueOnce([]);
