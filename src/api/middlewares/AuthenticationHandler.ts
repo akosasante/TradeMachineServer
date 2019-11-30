@@ -2,17 +2,21 @@ import { NextFunction, Request, Response } from "express";
 import { get } from "lodash";
 import { ExpressMiddlewareInterface, UnauthorizedError } from "routing-controllers";
 import { inspect } from "util";
-import { serializeUser, signInAuthentication, signUpAuthentication } from "../../bootstrap/auth";
+import { serializeUser, signInAuthentication, signUpAuthentication } from "../../authentication/auth";
 import logger from "../../bootstrap/logger";
-import User from "../../models/user";
+import UserDO from "../../models/user";
+import UserDAO from "../../DAO/UserDAO";
+import {User} from "@akosasante/trade-machine-models";
 // tslint:disable:max-classes-per-file
 
 export class LoginHandler implements ExpressMiddlewareInterface {
+    constructor(public userDAO: UserDAO = new UserDAO()) {}
+    
     public async use(request: Request, response: Response, next: NextFunction) {
         logger.debug("IN LOGIN HANDLER");
         const email = get(request, "body.email");
         const password = get(request, "body.password");
-        return signInAuthentication(email, password, async (err?: Error, user?: User) => {
+        return signInAuthentication(email, password, this.userDAO, async (err?: Error, user?: User) => {
             if (err || !user) {
                 const message = `User could not be authenticated. ${err ? err.message : ""}`;
                 request.session!.destroy((sessionDestroyErr: Error) => {
@@ -33,24 +37,24 @@ export class LoginHandler implements ExpressMiddlewareInterface {
     }
 }
 
-export class RegisterHandler implements ExpressMiddlewareInterface {
-    public async use(request: Request, response: Response, next: NextFunction) {
-        logger.debug("IN REGISTER HANDLER");
-        const email = get(request, "body.email");
-        const password = get(request, "body.password");
-        if (!email || !password) {
-            return next(new Error("Some details are missing. Cannot register user."));
-        }
-        return signUpAuthentication(email, password, async (err?: Error, user?: User) => {
-            if (err) {
-                return next(err);
-            } else if (!user) {
-                return next(new Error("For some reason could not register user"));
-            } else {
-                logger.debug(`registered user: ${user}`);
-                request.session!.user = await serializeUser(user);
-                return next();
-            }
-        });
-    }
-}
+// export class RegisterHandler implements ExpressMiddlewareInterface {
+//     public async use(request: Request, response: Response, next: NextFunction) {
+//         logger.debug("IN REGISTER HANDLER");
+//         const email = get(request, "body.email");
+//         const password = get(request, "body.password");
+//         if (!email || !password) {
+//             return next(new Error("Some details are missing. Cannot register user."));
+//         }
+//         return signUpAuthentication(email, password, async (err?: Error, user?: User) => {
+//             if (err) {
+//                 return next(err);
+//             } else if (!user) {
+//                 return next(new Error("For some reason could not register user"));
+//             } else {
+//                 logger.debug(`registered user: ${user}`);
+//                 request.session!.user = await serializeUser(user);
+//                 return next();
+//             }
+//         });
+//     }
+// }

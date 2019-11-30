@@ -2,87 +2,106 @@ import { NextFunction, Request, Response } from "express";
 import "jest";
 import "jest-extended";
 import { UnauthorizedError } from "routing-controllers";
-import { LoginHandler, RegisterHandler } from "../../../../src/api/middlewares/AuthenticationHandler";
+import { LoginHandler } from "../../../../src/api/middlewares/AuthenticationHandler";
 import { ConflictError } from "../../../../src/api/middlewares/ErrorHandler";
-import * as AuthFuncs from "../../../../src/bootstrap/auth";
+import * as AuthFuncs from "../../../../src/authentication/auth";
 import User from "../../../../src/models/user";
+import UserDAO from "../../../../src/DAO/UserDAO";
+import {UserFactory} from "../../../factories/UserFactory";
+import {hash} from "bcryptjs";
+
+const mockUserDAO = {
+    // getAllUsers: jest.fn(),
+    // getAllUsersWithTeams: jest.fn(),
+    // getUserById: jest.fn(),
+    findUser: jest.fn(),
+    getUserPassword: jest.fn(),
+    // createUsers: jest.fn(),
+    updateUser: jest.fn(),
+    // deleteUser: jest.fn(),
+};
 
 describe("Authentication middleware", () => {
-    const email = "test@example.com";
-    const password = "test";
-    const testUser = new User({id: 1, email, password, lastLoggedIn: new Date()});
+    const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
+    const testUserModel = testUser.toUserModel();
+    
     describe("LoginHandler", () => {
         it("should serialize the user and return the next function if sign in was successful", async () => {
-            // @ts-ignore
-            AuthFuncs.signInAuthentication = jest.fn((mail, psswrd, done) => {
-                return done(undefined, testUser);
-            });
+            mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
+            const hashedPassword = await hash(testUser.password!, 1);
+            mockUserDAO.getUserPassword.mockReturnValueOnce(hashedPassword);
+            mockUserDAO.updateUser.mockReturnValueOnce(testUserModel);
             const next: NextFunction = jest.fn();
-            // @ts-ignore
-            const request: Request = {body: {email, password}, session: {save: jest.fn(() => next())}};
+            const request: Request = {
+                body: {email: testUser.email!, password: testUser.password!},
+                // @ts-ignore
+                session: {save: jest.fn()},
+            };
             // @ts-ignore
             const response: Response  = {};
-            const loginHandler = new LoginHandler();
+            const loginHandler = new LoginHandler(mockUserDAO as unknown as UserDAO);
             await loginHandler.use(request, response, next);
-            expect(next).toBeCalledTimes(1);
-            expect(next).toBeCalledWith();
+            
             expect(request.session!.save).toBeCalledTimes(1);
             expect(request.session!.user).toBeDefined();
             expect(request.session!.user).toEqual(testUser.id);
         });
         it(`should return and call next with an Unauthorized error and not serialize the user if sign in fails
         or user is empty`, async () => {
-            // @ts-ignore
-            AuthFuncs.signInAuthentication = jest.fn((mail, psswrd, done) => {
-                return done(new Error("Incorrect password"));
-            });
+            mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
+            mockUserDAO.getUserPassword.mockReturnValueOnce("nonmatching password");
             const next: NextFunction = jest.fn();
-            // @ts-ignore
-            const request: Request = {body: {email, password}, session: {destroy: jest.fn()}};
+            const request: Request = {
+                body: {email: testUser.email!, password: testUser.password!},
+                // @ts-ignore
+                session: {destroy: jest.fn()},
+            };
             // @ts-ignore
             const response: Response  = {};
-            const loginHandler = new LoginHandler();
+            const loginHandler = new LoginHandler(mockUserDAO as unknown as UserDAO);
             await loginHandler.use(request, response, next);
+            
             expect(next).toBeCalledTimes(1);
             expect(next).toBeCalledWith(new UnauthorizedError("User could not be authenticated. Incorrect password"));
+            expect(request.session!.destroy).toBeCalledTimes(1);
             expect(request.session!.user).toBeUndefined();
         });
     });
-    describe("Register Handler", () => {
-        it("should serialize the user and return the next function if sign up was successful", async () => {
-            // @ts-ignore
-            AuthFuncs.signUpAuthentication = jest.fn((mail, psswrd, done) => {
-                return done(undefined, testUser);
-            });
-            const next: NextFunction = jest.fn();
-            // @ts-ignore
-            const request: Request = {body: {email, password}, session: {}};
-            // @ts-ignore
-            const response: Response  = {};
-            const registerHandler = new RegisterHandler();
-            await registerHandler.use(request, response, next);
-
-            expect(next).toBeCalledTimes(1);
-            expect(next).toBeCalledWith();
-            expect(request.session!.user).toBeDefined();
-            expect(request.session!.user).toEqual(testUser.id);
-        });
-        it("should return the original error if the signup method returns an error", async () => {
-            // @ts-ignore
-            AuthFuncs.signUpAuthentication = jest.fn((mail, psswrd, done) => {
-                return done(new ConflictError("Email already in use and signed up."));
-            });
-            const next: NextFunction = jest.fn();
-            // @ts-ignore
-            const request: Request = {body: {email, password}, session: {}};
-            // @ts-ignore
-            const response: Response  = {};
-            const registerHandler = new RegisterHandler();
-            await registerHandler.use(request, response, next);
-
-            expect(next).toBeCalledTimes(1);
-            expect(next).toBeCalledWith(new ConflictError("Email already in use and signed up."));
-            expect(request.session!.user).toBeUndefined();
-        });
-    });
+    // describe("Register Handler", () => {
+    //     it("should serialize the user and return the next function if sign up was successful", async () => {
+    //         // @ts-ignore
+    //         AuthFuncs.signUpAuthentication = jest.fn((mail, psswrd, done) => {
+    //             return done(undefined, testUser);
+    //         });
+    //         const next: NextFunction = jest.fn();
+    //         // @ts-ignore
+    //         const request: Request = {body: {email, password}, session: {}};
+    //         // @ts-ignore
+    //         const response: Response  = {};
+    //         const registerHandler = new RegisterHandler();
+    //         await registerHandler.use(request, response, next);
+    //
+    //         expect(next).toBeCalledTimes(1);
+    //         expect(next).toBeCalledWith();
+    //         expect(request.session!.user).toBeDefined();
+    //         expect(request.session!.user).toEqual(testUser.id);
+    //     });
+    //     it("should return the original error if the signup method returns an error", async () => {
+    //         // @ts-ignore
+    //         AuthFuncs.signUpAuthentication = jest.fn((mail, psswrd, done) => {
+    //             return done(new ConflictError("Email already in use and signed up."));
+    //         });
+    //         const next: NextFunction = jest.fn();
+    //         // @ts-ignore
+    //         const request: Request = {body: {email, password}, session: {}};
+    //         // @ts-ignore
+    //         const response: Response  = {};
+    //         const registerHandler = new RegisterHandler();
+    //         await registerHandler.use(request, response, next);
+    //
+    //         expect(next).toBeCalledTimes(1);
+    //         expect(next).toBeCalledWith(new ConflictError("Email already in use and signed up."));
+    //         expect(request.session!.user).toBeUndefined();
+    //     });
+    // });
 });
