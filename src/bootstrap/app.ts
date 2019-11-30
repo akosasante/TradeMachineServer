@@ -1,7 +1,7 @@
 import { Express } from "express";
 import "reflect-metadata";
 import { useExpressServer } from "routing-controllers";
-import { authorizationChecker, currentUserChecker } from "./auth";
+import { authorizationChecker, currentUserChecker } from "../authentication/auth";
 import initializeDb from "./db";
 import app from "./express";
 import logger from "./logger";

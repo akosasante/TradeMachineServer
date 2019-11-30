@@ -1,6 +1,6 @@
+import { User } from "@akosasante/trade-machine-models";
 import "jest";
 import "jest-extended";
-import { User } from "trade-machine-models/lib";
 import UserDO, { Role } from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
 
