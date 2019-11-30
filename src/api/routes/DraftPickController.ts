@@ -20,7 +20,7 @@ import TeamDAO from "../../DAO/TeamDAO";
 import DraftPick from "../../models/draftPick";
 import { LeagueLevel } from "../../models/player";
 import { Role } from "../../models/user";
-import { cleanupQuery, fileUploadOptions as uploadOpts } from "../ApiHelpers";
+import { cleanupQuery, fileUploadOptions as uploadOpts } from "../helpers/ApiHelpers";
 
 @JsonController("/picks")
 export default class DraftPickController {

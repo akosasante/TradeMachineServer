@@ -2,7 +2,7 @@ import { mkdirSync } from "fs";
 import multer from "multer";
 import { FindOperator, IsNull, Not } from "typeorm";
 import { inspect } from "util";
-import logger from "../bootstrap/logger";
+import logger from "../../bootstrap/logger";
 
 const storage: multer.DiskStorageOptions = {
     destination: (req: any, file: any, cb: any) => {

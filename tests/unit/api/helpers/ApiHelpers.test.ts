@@ -1,5 +1,5 @@
 import { IsNull, Not } from "typeorm";
-import { cleanupQuery } from "../../../src/api/ApiHelpers";
+import { cleanupQuery } from "../../../../src/api/helpers/ApiHelpers";
 
 describe("ApiHelpers utility functions", () => {
     describe("cleanupQuery/1", () => {
