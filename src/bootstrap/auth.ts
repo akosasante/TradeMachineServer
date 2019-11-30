@@ -79,12 +79,13 @@ export async function signInAuthentication(email: string, password: string, user
     }
 }
 
-export async function authorizationChecker(action: Action, roles: Role[]): Promise<boolean> {
+export async function authorizationChecker(action: Action, allowedRoles: Role[],
+                                           userDAO: UserDAO = new UserDAO()): Promise<boolean> {
     logger.debug("checking roles");
-    const user = await getUserFromAction(action);
+    const user = await getUserFromAction(action, userDAO);
     if (user) {
-        const userHasRole = roles.some(role => user.role === role);
-        return (!roles.length || userHasRole || user.isAdmin());
+        const userHasRole = allowedRoles.some(role => user.role === role);
+        return (!allowedRoles.length || userHasRole || user.isAdmin());
     } else {
         return false;
     }
@@ -100,12 +101,12 @@ export async function currentUserChecker(action: Action) {
     }
 }
 
-async function getUserFromAction(action: Action): Promise<User | undefined> {
+async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO()): Promise<User | undefined> {
     const userId = get(action, "request.session.user");
     logger.debug(inspect(action.request.session));
     logger.debug(inspect(action.request.sessionID));
     logger.debug(`Current userId: ${userId}`);
-    return userId ? await deserializeUser(userId) : undefined;
+    return userId ? await deserializeUser(userId, userDAO) : undefined;
 }
 
 async function isPasswordMatching(password: string, userPasssword: string): Promise<boolean> {
