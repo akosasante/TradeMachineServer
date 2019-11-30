@@ -27,29 +27,29 @@ export default class AuthController {
         return await deserializeUser(session.user, this.userDao);
     }
 
-    // @Post("/logout")
-    // public async logout(@Req() request: Request, @Session() session: any) {
-    //     return new Promise((resolve, reject) => {
-    //         if (session && session.user && request.session) {
-    //             request.session.destroy(async err => {
-    //                 if (err) {
-    //                     logger.error("Error destroying session");
-    //                     reject(err);
-    //                 } else {
-    //                     logger.debug(`Destroying user session for userId#${session.user}`);
-    //                     await this.userDao.updateUser(session.user, { lastLoggedIn: new Date() });
-    //                     delete session.user;
-    //                     resolve(true);
-    //                 }
-    //             });
-    //         } else {
-    //             // Assumedly, there's nothing to log out of. We're all good.
-    //             // I don't think it's necessary to throw an error here
-    //             logger.debug("Resolving empty session logout");
-    //             resolve(true);
-    //         }
-    //     });
-    // }
+    @Post("/logout")
+    public async logout(@Req() request: Request, @Session() session: any) {
+        return new Promise((resolve, reject) => {
+            if (session && session.user && request.session) {
+                request.session.destroy(async err => {
+                    if (err) {
+                        logger.error("Error destroying session");
+                        reject(err);
+                    } else {
+                        logger.debug(`Destroying user session for userId#${session.user}`);
+                        await this.userDao.updateUser(session.user, { lastLoggedIn: new Date() });
+                        delete session.user;
+                        resolve(true);
+                    }
+                });
+            } else {
+                // Assumedly, there's nothing to log out of. We're all good.
+                // I don't think it's necessary to throw an error here
+                logger.debug("Resolving empty session logout");
+                resolve(true);
+            }
+        });
+    }
     //
     // @Post("/reset_password")
     // public async resetPassword(@BodyParam("id") userId: number,
