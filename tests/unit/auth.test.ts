@@ -136,29 +136,21 @@ describe("Authorization helper methods", () => {
             expect(res).toBeFalse();
         });
     });
-    //
-    // describe("currentUserChecker", () => {
-    //     it("should return the true from the action if it exists on the request.session object", async () => {
-    //         const action: Action = {request: {session: {user: 1}}, response: {}};
-    //         mockUserDb.findOneOrFail = jest.fn(id => testUser);
-    //
-    //         const res = await currentUserChecker(action);
-    //         expect(res).toBeTrue();
-    //     });
-    //     it("should return false if the session doesn't exist", async () => {
-    //         const action: Action = {request: {}, response: {}};
-    //
-    //         const res = await currentUserChecker(action);
-    //         await expect(res).toBeFalse();
-    //     });
-    //     it("should return false if the user for that Id doesn't exist", async () => {
-    //         const action: Action = {request: {session: {user: 1}}, response: {}};
-    //         mockUserDb.findOneOrFail = jest.fn(id => {
-    //             throw new EntityNotFoundError("User", `No user found with this ${id}`);
-    //         });
-    //
-    //         const res = await currentUserChecker(action);
-    //         expect(res).toBeFalse();
-    //     });
-    // });
+
+    describe("currentUserChecker", () => {
+        const action: Action = {request: {session: {user: 1}}, response: {}};
+
+        it("should return the true from the action if it exists on the request.session object", async () => {
+            mockUserDAO.getUserById.mockReturnValueOnce(testUserModel);
+
+            const res = await currentUserChecker(action, mockUserDAO as unknown as UserDAO);
+            expect(res).toBeTrue();
+        });
+        it("should return false if the session doesn't exist", async () => {
+            const actionWithoutUser: Action = {request: {session: {}}, response: {}};
+
+            const res = await currentUserChecker(actionWithoutUser, mockUserDAO as unknown as UserDAO);
+            await expect(res).toBeFalse();
+        });
+    });
 });

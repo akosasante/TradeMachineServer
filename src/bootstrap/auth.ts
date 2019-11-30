@@ -91,10 +91,10 @@ export async function authorizationChecker(action: Action, allowedRoles: Role[],
     }
 }
 
-export async function currentUserChecker(action: Action) {
+export async function currentUserChecker(action: Action, userDAO: UserDAO = new UserDAO()) {
     logger.debug("checking current user");
     try {
-        return !!(await getUserFromAction(action));
+        return !!(await getUserFromAction(action, userDAO));
     } catch (error) {
         // Assuming error was due to not being able to find user with this ID
         return false;
