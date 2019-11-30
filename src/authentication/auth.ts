@@ -1,5 +1,6 @@
 import { User } from "@akosasante/trade-machine-models";
 import { compare, hash } from "bcryptjs";
+import { isAfter } from "date-fns";
 import { get } from "lodash";
 import { Action, BadRequestError } from "routing-controllers";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
@@ -91,6 +92,10 @@ export async function currentUserChecker(action: Action, userDAO: UserDAO = new 
         // Assuming error was due to not being able to find user with this ID
         return false;
     }
+}
+
+export function passwordResetDateIsValid(passwordExpiry: Date): boolean {
+    return Boolean(passwordExpiry && isAfter(passwordExpiry, new Date()));
 }
 
 async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO()): Promise<User | undefined> {
