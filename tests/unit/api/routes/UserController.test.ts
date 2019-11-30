@@ -16,7 +16,7 @@ describe("UserController", () => {
         findUsers: jest.fn(),
         createUsers: jest.fn(),
         updateUser: jest.fn(),
-        // deleteUser: jest.fn(),
+        deleteUser: jest.fn(),
     };
     const userController = new UserController(mockUserDAO as unknown as UserDAO);
     const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
@@ -125,22 +125,16 @@ describe("UserController", () => {
             expect(res).toEqual(testUserModel);
         });
     });
-    //
-    // describe("deleteUser method", () => {
-    //     it("should delete a user by id", async () => {
-    //         mockUserDAO.deleteUser.mockReturnValue({raw: [{id: testUser.id!}], affected: 1});
-    //         const res = await userController.deleteUser(testUser.id!);
-    //
-    //         expect(mockUserDAO.deleteUser).toBeCalledTimes(1);
-    //         expect(mockUserDAO.deleteUser).toBeCalledWith(testUser.id!);
-    //         expect(res).toEqual({deleteCount: 1, id: testUser.id});
-    //     });
-    //     it("should throw an error", async () => {
-    //         mockUserDAO.deleteUser.mockImplementation(() => {
-    //             throw new EntityNotFoundError(User, "Id not found.");
-    //         });
-    //         await expect(userController.deleteUser(9999))
-    //             .rejects.toThrow(EntityNotFoundError);
-    //     });
-    // });
+
+    describe("deleteUser method", () => {
+        it("should delete a user by id", async () => {
+            mockUserDAO.deleteUser.mockReturnValue({raw: [{id: testUser.id!}], affected: 1});
+            const res = await userController.deleteUser(testUser.id!);
+
+            expect(mockUserDAO.deleteUser).toBeCalledTimes(1);
+            expect(mockUserDAO.deleteUser).toBeCalledWith(testUser.id!);
+            
+            expect(res).toEqual({deleteCount: 1, id: testUser.id});
+        });
+    });
 });
