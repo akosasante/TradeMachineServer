@@ -27,7 +27,14 @@ export default class TeamController {
         logger.debug(`got ${teams} teams`);
         return teams;
     }
-    //
+    
+    @Get("/:id([0-9a-fA-F]{8}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{12})")
+    public async getOneTeam(@Param("id") id: string): Promise<Team> {
+        logger.debug("get one team endpoint");
+        const team = await this.dao.getTeamById(id);
+        logger.debug(`got team: ${team}`);
+        return team;
+    }
     // @Get("/search")
     // public async findTeamsByQuery(@QueryParams() query: Partial<TeamDO>): Promise<TeamDO[]> {
     //     logger.debug(`searching for team with props: ${inspect(query)}`);
@@ -36,13 +43,7 @@ export default class TeamController {
     //     return teams.map((team: TeamDO) => team.publicTeam);
     // }
     //
-    // @Get("/:id([0-9]+)")
-    // public async getOneTeam(@Param("id") id: number): Promise<TeamDO> {
-    //     logger.debug("get one team endpoint");
-    //     const team = await this.dao.getTeamById(id);
-    //     return team.publicTeam;
-    // }
-    //
+
     // /* Only the league admins can edit/delete/create teams at the moment */
     //
     // @Authorized(Role.ADMIN)

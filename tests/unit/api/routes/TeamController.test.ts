@@ -12,7 +12,7 @@ import logger from "../../../../src/bootstrap/logger";
 describe("TeamController", () => {
     const mockTeamDAO = {
         getAllTeams: jest.fn(),
-        // getTeamById: jest.fn(),
+        getTeamById: jest.fn(),
         // findTeams: jest.fn(),
         // createTeam: jest.fn(),
         // updateTeam: jest.fn(),
@@ -58,23 +58,17 @@ describe("TeamController", () => {
             expect(res).toEqual([testTeamModel]);
         });
     });
-    // describe("getOneTeam method", () => {
-    //     it("should return a team by id", async () => {
-    //         mockTeamDAO.getTeamById.mockReturnValue(testTeam);
-    //         const res = await teamController.getOneTeam(testTeam.id!);
-    //
-    //         expect(mockTeamDAO.getTeamById).toHaveBeenCalledTimes(1);
-    //         expect(mockTeamDAO.getTeamById).toHaveBeenCalledWith(testTeam.id);
-    //         expect(res).toEqual(testTeam.publicTeam);
-    //     });
-    //     it("should throw an error if entity is not found in db", async () => {
-    //         mockTeamDAO.getTeamById.mockImplementation(() => {
-    //             throw new EntityNotFoundError(Team, "ID not found.");
-    //         });
-    //         await expect(teamController.getOneTeam(9999))
-    //             .rejects.toThrow(EntityNotFoundError);
-    //     });
-    // });
+
+    describe("getOneTeam method", () => {
+        it("should return a team by id", async () => {
+            mockTeamDAO.getTeamById.mockReturnValue(testTeamModel);
+            const res = await teamController.getOneTeam(testTeam.id!);
+
+            expect(mockTeamDAO.getTeamById).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.getTeamById).toHaveBeenCalledWith(testTeam.id);
+            expect(res).toEqual(testTeamModel);
+        });
+    });
     // describe("createTeam method", () => {
     //     it("should create a team", async () => {
     //         mockTeamDAO.createTeam.mockReturnValue(testTeam);
