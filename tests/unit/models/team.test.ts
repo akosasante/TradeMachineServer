@@ -2,11 +2,18 @@ import { Team, User } from "@akosasante/trade-machine-models";
 import "jest";
 import "jest-extended";
 import { clone } from "lodash";
+import logger from "../../../src/bootstrap/logger";
 import TeamDO from "../../../src/models/team";
 import { TeamFactory } from "../../factories/TeamFactory";
 import { UserFactory } from "../../factories/UserFactory";
 
 describe("Team Class", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~TEAM DATA OBJECT TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~TEAM DATA OBJECT TESTS COMPLETE~~~~~~");
+    });
     const teamObj = TeamFactory.getTeamObject(undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
     const team = new TeamDO(teamObj);
 

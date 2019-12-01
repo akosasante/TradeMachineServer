@@ -1,8 +1,6 @@
-import { NotFoundError } from "routing-controllers";
-import { Connection, DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
-import TeamDO from "../models/team";
-import User from "../models/user";
 import { Team } from "@akosasante/trade-machine-models";
+import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
+import TeamDO from "../models/team";
 import UserDO from "../models/user";
 
 export default class TeamDAO {

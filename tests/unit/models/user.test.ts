@@ -1,11 +1,18 @@
 import { Team, User } from "@akosasante/trade-machine-models";
 import "jest";
 import "jest-extended";
+import logger from "../../../src/bootstrap/logger";
 import UserDO, { Role } from "../../../src/models/user";
 import { TeamFactory } from "../../factories/TeamFactory";
 import { UserFactory } from "../../factories/UserFactory";
 
 describe("User Class", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~USER DATA OBJECT TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~USER DATA OBJECT COMPLETE~~~~~~");
+    });
     const userObj = UserFactory.getUserObject(undefined, undefined,  undefined, Role.ADMIN, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
     const user = new UserDO(userObj);
 
