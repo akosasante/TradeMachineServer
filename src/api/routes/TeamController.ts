@@ -24,7 +24,7 @@ export default class TeamController {
         const teams = hasOwners ?
             await this.dao.getTeamsByOwnerStatus(hasOwners === "true") :
             await this.dao.getAllTeams();
-        logger.debug(`got ${teams} teams`);
+        logger.debug(`got ${teams.length} teams`);
         return teams;
     }
     
@@ -35,14 +35,19 @@ export default class TeamController {
         logger.debug(`got team: ${team}`);
         return team;
     }
-    // @Get("/search")
-    // public async findTeamsByQuery(@QueryParams() query: Partial<TeamDO>): Promise<TeamDO[]> {
-    //     logger.debug(`searching for team with props: ${inspect(query)}`);
-    //     // TODO: May allow for searching for multiple teams in the future?
-    //     const teams = await this.dao.findTeams(cleanupQuery(query as {[key: string]: string}));
-    //     return teams.map((team: TeamDO) => team.publicTeam);
-    // }
-    //
+    
+    @Get("/search")
+    public async findTeamsByQuery(@QueryParams() query: Partial<TeamDO>): Promise<Team[]> {
+        logger.debug(`searching for team with props: ${inspect(query)}`);
+        const teams = await this.dao.findTeams(cleanupQuery(query as {[key: string]: string}));
+        if (teams.length) {
+            logger.debug(`got ${teams.length} teams`);
+            return teams;
+        } else {
+            throw new NotFoundError('No teams found matching that query');
+        }
+    }
+
 
     // /* Only the league admins can edit/delete/create teams at the moment */
     //
