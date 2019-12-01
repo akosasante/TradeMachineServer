@@ -21,13 +21,11 @@ export default class TeamController {
     @Get("/")
     public async getAllTeams(@QueryParam("hasOwners") hasOwners?: "true"|"false"): Promise<Team[]> {
         logger.debug("get all teams endpoint" + ` -- ${hasOwners ? ("hasOwners: " + hasOwners ) : ""}`);
-        const teams = hasOwners ? await this.dao.getAllTeams() : await this.dao.getTeamsByOwnerStatus(hasOwners === "true");
-        if (teams.length) {
-            logger.debug(`got ${teams.length} teams`);
-            return teams;
-        } else {
-            throw new NotFoundError("No teams found matching that query");
-        }
+        const teams = hasOwners ?
+            await this.dao.getTeamsByOwnerStatus(hasOwners === "true") :
+            await this.dao.getAllTeams();
+        logger.debug(`got ${teams} teams`);
+        return teams;
     }
     //
     // @Get("/search")
