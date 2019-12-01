@@ -7,6 +7,7 @@ import Team from "../../../../src/models/team";
 import User from "../../../../src/models/user";
 import { TeamFactory } from "../../../factories/TeamFactory";
 import { UserFactory } from "../../../factories/UserFactory";
+import logger from "../../../../src/bootstrap/logger";
 
 describe("TeamController", () => {
     const mockTeamDAO = {
@@ -17,10 +18,10 @@ describe("TeamController", () => {
         // updateTeam: jest.fn(),
         // deleteTeam: jest.fn(),
         // updateTeamOwners: jest.fn(),
-        // getTeamsByOwnerStatus: jest.fn(),
+        getTeamsByOwnerStatus: jest.fn(),
     };
     const testUser = UserFactory.getUser(undefined, undefined, undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45a"});
-    const testTeam = TeamFactory.getTeam(undefined, undefined, {owners: [testUser]});
+    const testTeam = TeamFactory.getTeam(undefined, undefined, {owners: [testUser], id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
     const testTeamModel = testTeam.toTeamModel();
     const teamController = new TeamController(mockTeamDAO as unknown as TeamDAO);
 
@@ -32,36 +33,30 @@ describe("TeamController", () => {
 
     describe("getAllTeams method", () => {
         it("should return an array of teams if no hasOwner param is passed", async () => {
-            mockTeamDAO.getAllTeams.mockReturnValue([testTeamModel]);
+            mockTeamDAO.getAllTeams.mockReturnValueOnce([testTeamModel]);
             const res = await teamController.getAllTeams();
 
             expect(mockTeamDAO.getAllTeams).toHaveBeenCalledTimes(1);
             expect(mockTeamDAO.getAllTeams).toHaveBeenCalledWith();
+            
             expect(res).toEqual([testTeamModel]);
         });
-        // it("should call the getTeamsByOwners DAO method with true if that param passed", async () => {
-        //     mockTeamDAO.getTeamsByOwnerStatus.mockReturnValue([testTeam]);
-        //     const res = await teamController.getAllTeams("true");
-        //
-        //     expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledTimes(1);
-        //     expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledWith(true);
-        //     expect(res).toEqual([testTeam.publicTeam]);
-        // });
-        // it("should call the getTeamsByOwnerStatus DAO method with false if that param passed", async () => {
-        //     mockTeamDAO.getTeamsByOwnerStatus.mockReturnValue([testTeam]);
-        //     const res = await teamController.getAllTeams("false");
-        //
-        //     expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledTimes(1);
-        //     expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledWith(false);
-        //     expect(res).toEqual([testTeam.publicTeam]);
-        // });
-        // it("should bubble up any errors from the DAO", async () => {
-        //     mockTeamDAO.getAllTeams.mockImplementation(() => {
-        //         throw new Error("Generic Error");
-        //     });
-        //     await expect(teamController.getAllTeams())
-        //         .rejects.toThrow(Error);
-        // });
+        it("should call the getTeamsByOwners DAO method with true if that param passed", async () => {
+            mockTeamDAO.getTeamsByOwnerStatus.mockReturnValue([testTeamModel]);
+            const res = await teamController.getAllTeams("true");
+
+            expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledWith(true);
+            expect(res).toEqual([testTeamModel]);
+        });
+        it("should call the getTeamsByOwnerStatus DAO method with false if that param passed", async () => {
+            mockTeamDAO.getTeamsByOwnerStatus.mockReturnValue([testTeamModel]);
+            const res = await teamController.getAllTeams("false");
+
+            expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.getTeamsByOwnerStatus).toHaveBeenCalledWith(false);
+            expect(res).toEqual([testTeamModel]);
+        });
     });
     // describe("getOneTeam method", () => {
     //     it("should return a team by id", async () => {
