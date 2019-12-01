@@ -8,12 +8,13 @@ import User from "../../../../src/models/user";
 import { TeamFactory } from "../../../factories/TeamFactory";
 import { UserFactory } from "../../../factories/UserFactory";
 import logger from "../../../../src/bootstrap/logger";
+import {NotFoundError} from "routing-controllers";
 
 describe("TeamController", () => {
     const mockTeamDAO = {
         getAllTeams: jest.fn(),
         getTeamById: jest.fn(),
-        // findTeams: jest.fn(),
+        findTeams: jest.fn(),
         // createTeam: jest.fn(),
         // updateTeam: jest.fn(),
         // deleteTeam: jest.fn(),
@@ -69,6 +70,25 @@ describe("TeamController", () => {
             expect(res).toEqual(testTeamModel);
         });
     });
+
+    describe("findTeamsByQuery method", () => {
+        const query = {espnId: 1};
+        it("should find teams by the given query options", async () => {
+            mockTeamDAO.findTeams.mockReturnValue([testTeamModel]);
+            const res = await teamController.findTeamsByQuery(query);
+
+            expect(mockTeamDAO.findTeams).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.findTeams).toHaveBeenCalledWith(query);
+            expect(res).toEqual([testTeamModel]);
+        });
+        it("should throw an error if no matchingn teams are found in db", async () => {
+            mockTeamDAO.findTeams.mockReturnValue([]);
+
+            await expect(teamController.findTeamsByQuery(query)).rejects.toThrow(NotFoundError);
+            expect(mockTeamDAO.findTeams).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.findTeams).toHaveBeenCalledWith(query);
+        });
+    });
     // describe("createTeam method", () => {
     //     it("should create a team", async () => {
     //         mockTeamDAO.createTeam.mockReturnValue(testTeam);
@@ -120,23 +140,7 @@ describe("TeamController", () => {
     //             .rejects.toThrow(EntityNotFoundError);
     //     });
     // });
-    // describe("findTeamsByQuery method", () => {
-    //     const query = {espnId: 1};
-    //     it("should find teams by the given query options", async () => {
-    //         mockTeamDAO.findTeams.mockReturnValue([testTeam]);
-    //         const res = await teamController.findTeamsByQuery(query);
-    //
-    //         expect(mockTeamDAO.findTeams).toHaveBeenCalledTimes(1);
-    //         expect(mockTeamDAO.findTeams).toHaveBeenCalledWith(query);
-    //         expect(res).toEqual([testTeam]);
-    //     });
-    //     it("should throw an error if entity is not found in db", async () => {
-    //         mockTeamDAO.findTeams.mockImplementation(() => {
-    //             throw new EntityNotFoundError(Team, "ID not found.");
-    //         });
-    //         await expect(teamController.findTeamsByQuery(query)).rejects.toThrow(EntityNotFoundError);
-    //     });
-    // });
+
     // describe("updateTeamOwners method", () => {
     //     const user1 = new User({email: "usr1@test.com"});
     //     const user2 = new User({email: "usr2@test.com"});
