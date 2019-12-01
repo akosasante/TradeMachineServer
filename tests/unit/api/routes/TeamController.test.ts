@@ -15,7 +15,7 @@ describe("TeamController", () => {
         getAllTeams: jest.fn(),
         getTeamById: jest.fn(),
         findTeams: jest.fn(),
-        // createTeam: jest.fn(),
+        createTeams: jest.fn(),
         // updateTeam: jest.fn(),
         // deleteTeam: jest.fn(),
         // updateTeamOwners: jest.fn(),
@@ -89,23 +89,17 @@ describe("TeamController", () => {
             expect(mockTeamDAO.findTeams).toHaveBeenCalledWith(query);
         });
     });
-    // describe("createTeam method", () => {
-    //     it("should create a team", async () => {
-    //         mockTeamDAO.createTeam.mockReturnValue(testTeam);
-    //         const res = await teamController.createTeam(testTeam.parse());
-    //
-    //         expect(mockTeamDAO.createTeam).toHaveBeenCalledTimes(1);
-    //         expect(mockTeamDAO.createTeam).toHaveBeenCalledWith(testTeam.parse());
-    //         expect(res).toEqual(testTeam.publicTeam);
-    //     });
-    //     it("should bubble up any errors from the DAO", async () => {
-    //         mockTeamDAO.createTeam.mockImplementation(() => {
-    //             throw new Error("Generic Error");
-    //         });
-    //         await expect(teamController.createTeam(testTeam.parse()))
-    //             .rejects.toThrow(Error);
-    //     });
-    // });
+    
+    describe("createTeam method", () => {
+        it("should create a team", async () => {
+            mockTeamDAO.createTeams.mockReturnValue([testTeamModel]);
+            const res = await teamController.createTeam([testTeam.parse()]);
+
+            expect(mockTeamDAO.createTeams).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.createTeams).toHaveBeenCalledWith([testTeam.parse()]);
+            expect(res).toEqual([testTeamModel]);
+        });
+    });
     // describe("updateTeam method", () => {
     //     it("should return updated team with the given id", async () => {
     //         mockTeamDAO.updateTeam.mockReturnValue(testTeam);

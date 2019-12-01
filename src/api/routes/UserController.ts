@@ -58,7 +58,7 @@ export default class UserController {
     public async createUsers(@Body() userObjs: Array<Partial<UserDO>>): Promise<User[]> {
         logger.debug("create user endpoint");
         const users = await this.dao.createUsers(userObjs);
-        logger.debug(`created user: ${inspect(users)}`);
+        logger.debug(`created users: ${inspect(users)}`);
         return users;
     }
 

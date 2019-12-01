@@ -49,15 +49,16 @@ export default class TeamController {
     }
 
 
-    // /* Only the league admins can edit/delete/create teams at the moment */
-    //
-    // @Authorized(Role.ADMIN)
-    // @Post("/")
-    // public async createTeam(@Body() teamObj: Partial<TeamDO>): Promise<TeamDO> {
-    //     logger.debug("create team endpoint");
-    //     const team = await this.dao.createTeam(teamObj);
-    //     return team.publicTeam;
-    // }
+    /* Only the league admins can edit/delete/create teams at the moment */
+
+    @Authorized(Role.ADMIN)
+    @Post("/")
+    public async createTeam(@Body() teamObjs: Array<Partial<TeamDO>>): Promise<Team[]> {
+        logger.debug("create team endpoint");
+        const teams = await this.dao.createTeams(teamObjs);
+        logger.debug(`created teams: ${inspect(teams)}`);
+        return teams;
+    }
     //
     // @Authorized(Role.ADMIN)
     // @Put("/:id")
