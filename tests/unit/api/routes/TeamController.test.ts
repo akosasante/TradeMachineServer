@@ -1,14 +1,10 @@
 import "jest";
 import "jest-extended";
-import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
+import { NotFoundError } from "routing-controllers";
 import TeamController from "../../../../src/api/routes/TeamController";
 import TeamDAO from "../../../../src/DAO/TeamDAO";
-import Team from "../../../../src/models/team";
 import User from "../../../../src/models/user";
 import { TeamFactory } from "../../../factories/TeamFactory";
-import { UserFactory } from "../../../factories/UserFactory";
-import logger from "../../../../src/bootstrap/logger";
-import {NotFoundError} from "routing-controllers";
 
 describe("TeamController", () => {
     const mockTeamDAO = {
@@ -18,11 +14,10 @@ describe("TeamController", () => {
         createTeams: jest.fn(),
         updateTeam: jest.fn(),
         deleteTeam: jest.fn(),
-        // updateTeamOwners: jest.fn(),
+        updateTeamOwners: jest.fn(),
         getTeamsByOwnerStatus: jest.fn(),
     };
-    const testUser = UserFactory.getUser(undefined, undefined, undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45a"});
-    const testTeam = TeamFactory.getTeam(undefined, undefined, {owners: [testUser], id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
+    const testTeam = TeamFactory.getTeam(undefined, undefined, { id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b" });
     const testTeamModel = testTeam.toTeamModel();
     const teamController = new TeamController(mockTeamDAO as unknown as TeamDAO);
 
@@ -39,7 +34,7 @@ describe("TeamController", () => {
 
             expect(mockTeamDAO.getAllTeams).toHaveBeenCalledTimes(1);
             expect(mockTeamDAO.getAllTeams).toHaveBeenCalledWith();
-            
+
             expect(res).toEqual([testTeamModel]);
         });
         it("should call the getTeamsByOwners DAO method with true if that param passed", async () => {
@@ -89,7 +84,7 @@ describe("TeamController", () => {
             expect(mockTeamDAO.findTeams).toHaveBeenCalledWith(query);
         });
     });
-    
+
     describe("createTeam method", () => {
         it("should create a team", async () => {
             mockTeamDAO.createTeams.mockReturnValue([testTeamModel]);
@@ -100,7 +95,7 @@ describe("TeamController", () => {
             expect(res).toEqual([testTeamModel]);
         });
     });
-    
+
     describe("updateTeam method", () => {
         it("should return updated team with the given id", async () => {
             mockTeamDAO.updateTeam.mockReturnValue(testTeamModel);
@@ -111,7 +106,7 @@ describe("TeamController", () => {
             expect(res).toEqual(testTeamModel);
         });
     });
-    
+
     describe("deleteTeam method", () => {
         it("should delete a team by id from the db", async () => {
             mockTeamDAO.deleteTeam.mockReturnValue({raw: [ {id: testTeam.id} ], affected: 1});
@@ -123,23 +118,17 @@ describe("TeamController", () => {
         });
     });
 
-    // describe("updateTeamOwners method", () => {
-    //     const user1 = new User({email: "usr1@test.com"});
-    //     const user2 = new User({email: "usr2@test.com"});
-    //
-    //     it("should update a teams owners as provided", async () => {
-    //         mockTeamDAO.updateTeamOwners.mockReturnValue(testTeam);
-    //         const res = await teamController.updateTeamOwners(testTeam.id!, [user1], [user2]);
-    //
-    //         expect(mockTeamDAO.updateTeamOwners).toHaveBeenCalledTimes(1);
-    //         expect(mockTeamDAO.updateTeamOwners).toHaveBeenCalledWith(testTeam.id, [user1], [user2]);
-    //         expect(res).toEqual(testTeam);
-    //     });
-    //     it("should throw an error if entity is not found in db", async () => {
-    //         mockTeamDAO.updateTeamOwners.mockImplementation(() => {
-    //             throw new EntityNotFoundError(Team, "ID not found.");
-    //         });
-    //         await expect(teamController.updateTeamOwners(999, [user1], [user2])).rejects.toThrow(EntityNotFoundError);
-    //     });
-    // });
+    describe("updateTeamOwners method", () => {
+        const user1 = new User({email: "usr1@test.com"});
+        const user2 = new User({email: "usr2@test.com"});
+
+        it("should update a teams owners as provided", async () => {
+            mockTeamDAO.updateTeamOwners.mockReturnValue(testTeamModel);
+            const res = await teamController.updateTeamOwners(testTeam.id!, [user1], [user2]);
+
+            expect(mockTeamDAO.updateTeamOwners).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.updateTeamOwners).toHaveBeenCalledWith(testTeam.id, [user1], [user2]);
+            expect(res).toEqual(testTeamModel);
+        });
+    });
 });
