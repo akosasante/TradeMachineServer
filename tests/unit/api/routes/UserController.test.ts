@@ -2,6 +2,7 @@ import "jest";
 import "jest-extended";
 import { NotFoundError } from "routing-controllers";
 import UserController from "../../../../src/api/routes/UserController";
+import logger from "../../../../src/bootstrap/logger";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import { UserFactory } from "../../../factories/UserFactory";
 
@@ -20,6 +21,12 @@ describe("UserController", () => {
     const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
     const testUserModel = testUser.toUserModel();
 
+    beforeAll(() => {
+        logger.debug("~~~~~~USER CONTROLLER TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~USER CONTROLLER TESTS COMPLETE~~~~~~");
+    });
     afterEach(() => {
         Object.entries(mockUserDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
             kvp[1].mockClear();

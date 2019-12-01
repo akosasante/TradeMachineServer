@@ -2,6 +2,7 @@ import "jest";
 import "jest-extended";
 import { NotFoundError } from "routing-controllers";
 import TeamController from "../../../../src/api/routes/TeamController";
+import logger from "../../../../src/bootstrap/logger";
 import TeamDAO from "../../../../src/DAO/TeamDAO";
 import User from "../../../../src/models/user";
 import { TeamFactory } from "../../../factories/TeamFactory";
@@ -21,6 +22,12 @@ describe("TeamController", () => {
     const testTeamModel = testTeam.toTeamModel();
     const teamController = new TeamController(mockTeamDAO as unknown as TeamDAO);
 
+    beforeAll(() => {
+        logger.debug("~~~~~~TEAM CONTROLLER TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~TEAM CONTROLLER TESTS COMPLETE~~~~~~");
+    });
     afterEach(() => {
         Object.entries(mockTeamDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
             kvp[1].mockClear();

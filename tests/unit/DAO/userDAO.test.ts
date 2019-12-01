@@ -21,7 +21,7 @@ describe("UserDAO", () => {
     const testUserModel = testUser.toUserModel();
     // @ts-ignore
     const userDAO: UserDAO = new UserDAO(mockUserDb);
-    
+
     afterEach(async () => {
         Object.keys(mockUserDb).forEach((action: string) => {
             // @ts-ignore
