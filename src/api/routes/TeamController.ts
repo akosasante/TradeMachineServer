@@ -1,14 +1,25 @@
+import { Team } from "@akosasante/trade-machine-models";
 import {
-    Authorized, Body, BodyParam, Delete, Get, JsonController, NotFoundError,
-    Param, Patch, Post, Put, QueryParam, QueryParams
+    Authorized,
+    Body,
+    BodyParam,
+    Delete,
+    Get,
+    JsonController,
+    NotFoundError,
+    Param,
+    Patch,
+    Post,
+    Put,
+    QueryParam,
+    QueryParams
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import TeamDAO from "../../DAO/TeamDAO";
 import TeamDO from "../../models/team";
-import User, { Role } from "../../models/user";
-import {cleanupQuery, UUIDPattern} from "../helpers/ApiHelpers";
-import {Team} from "@akosasante/trade-machine-models";
+import UserDO, { Role } from "../../models/user";
+import { cleanupQuery, UUIDPattern } from "../helpers/ApiHelpers";
 
 @JsonController("/teams")
 export default class TeamController {
@@ -27,7 +38,7 @@ export default class TeamController {
         logger.debug(`got ${teams.length} teams`);
         return teams;
     }
-    
+
     @Get(UUIDPattern)
     public async getOneTeam(@Param("id") id: string): Promise<Team> {
         logger.debug("get one team endpoint");
@@ -35,7 +46,7 @@ export default class TeamController {
         logger.debug(`got team: ${team}`);
         return team;
     }
-    
+
     @Get("/search")
     public async findTeamsByQuery(@QueryParams() query: Partial<TeamDO>): Promise<Team[]> {
         logger.debug(`searching for team with props: ${inspect(query)}`);
@@ -44,10 +55,9 @@ export default class TeamController {
             logger.debug(`got ${teams.length} teams`);
             return teams;
         } else {
-            throw new NotFoundError('No teams found matching that query');
+            throw new NotFoundError("No teams found matching that query");
         }
     }
-
 
     /* Only the league admins can edit/delete/create teams at the moment */
 
@@ -78,15 +88,14 @@ export default class TeamController {
         return {deleteCount: result.affected, id: result.raw[0].id};
     }
 
-    // @Authorized(Role.ADMIN)
-    // @Patch(UUIDPattern)
-    // public async updateTeamOwners(@Param("id") id: number,
-    //                               @BodyParam("add") ownersToAdd: User[],
-    //                               @BodyParam("remove") ownersToRemove: User[]): Promise<TeamDO> {
-    //     logger.debug("update team owners endpoint");
-    //     logger.debug(`add: ${inspect((ownersToAdd || []).map((user: User) => new User(user).toString()))}
-    //      remove: ${inspect((ownersToRemove || []).map((user: User) => new User(user).toString()))}`);
-    //     const team = await this.dao.updateTeamOwners(id, ownersToAdd, ownersToRemove);
-    //     return team.publicTeam;
-    // }
+    @Authorized(Role.ADMIN)
+    @Patch(UUIDPattern)
+    public async updateTeamOwners(@Param("id") id: string,
+                                  @BodyParam("add") ownersToAdd: UserDO[],
+                                  @BodyParam("remove") ownersToRemove: UserDO[]): Promise<Team> {
+        logger.debug("update team owners endpoint");
+        logger.debug(`add: ${inspect((ownersToAdd || []).map((user: UserDO) => new UserDO(user).toString()))}
+         remove: ${inspect((ownersToRemove || []).map((user: UserDO) => new UserDO(user).toString()))}`);
+        return await this.dao.updateTeamOwners(id, ownersToAdd, ownersToRemove);
+    }
 }
