@@ -16,7 +16,7 @@ describe("TeamController", () => {
         getTeamById: jest.fn(),
         findTeams: jest.fn(),
         createTeams: jest.fn(),
-        // updateTeam: jest.fn(),
+        updateTeam: jest.fn(),
         // deleteTeam: jest.fn(),
         // updateTeamOwners: jest.fn(),
         getTeamsByOwnerStatus: jest.fn(),
@@ -100,23 +100,17 @@ describe("TeamController", () => {
             expect(res).toEqual([testTeamModel]);
         });
     });
-    // describe("updateTeam method", () => {
-    //     it("should return updated team with the given id", async () => {
-    //         mockTeamDAO.updateTeam.mockReturnValue(testTeam);
-    //         const res = await teamController.updateTeam(testTeam.id!, testTeam.parse());
-    //
-    //         expect(mockTeamDAO.updateTeam).toHaveBeenCalledTimes(1);
-    //         expect(mockTeamDAO.updateTeam).toHaveBeenCalledWith(testTeam.id, testTeam.parse());
-    //         expect(res).toEqual(testTeam.publicTeam);
-    //     });
-    //     it("should throw an error if entity is not found in db", async () => {
-    //         mockTeamDAO.updateTeam.mockImplementation(() => {
-    //             throw new EntityNotFoundError(Team, "ID not found.");
-    //         });
-    //         await expect(teamController.updateTeam(9999, testTeam.parse()))
-    //             .rejects.toThrow(EntityNotFoundError);
-    //     });
-    // });
+    
+    describe("updateTeam method", () => {
+        it("should return updated team with the given id", async () => {
+            mockTeamDAO.updateTeam.mockReturnValue(testTeamModel);
+            const res = await teamController.updateTeam(testTeam.id!, testTeam.parse());
+
+            expect(mockTeamDAO.updateTeam).toHaveBeenCalledTimes(1);
+            expect(mockTeamDAO.updateTeam).toHaveBeenCalledWith(testTeam.id, testTeam.parse());
+            expect(res).toEqual(testTeamModel);
+        });
+    });
     // describe("deleteTeam method", () => {
     //     it("should delete a team by id from the db", async () => {
     //         mockTeamDAO.deleteTeam.mockReturnValue({raw: [ {id: testTeam.id} ], affected: 1});

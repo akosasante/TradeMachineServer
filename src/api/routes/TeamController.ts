@@ -59,16 +59,16 @@ export default class TeamController {
         logger.debug(`created teams: ${inspect(teams)}`);
         return teams;
     }
-    //
-    // @Authorized(Role.ADMIN)
-    // @Put("/:id")
-    // public async updateTeam(@Param("id") id: number, @Body() teamObj: Partial<TeamDO>): Promise<TeamDO> {
-    //     logger.debug("update team endpoint");
-    //     const team = await this.dao.updateTeam(id, teamObj);
-    //     logger.debug(`updated team: ${team}`);
-    //     return team.publicTeam;
-    // }
-    //
+
+    @Authorized(Role.ADMIN)
+    @Put("/:id")
+    public async updateTeam(@Param("id") id: string, @Body() teamObj: Partial<TeamDO>): Promise<Team> {
+        logger.debug("update team endpoint");
+        const team = await this.dao.updateTeam(id, teamObj);
+        logger.debug(`updated team: ${team}`);
+        return team;
+    }
+
     // @Authorized(Role.ADMIN)
     // @Delete("/:id([0-9]+)")
     // public async deleteTeam(@Param("id") id: number) {
