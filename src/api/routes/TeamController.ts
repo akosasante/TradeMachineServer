@@ -7,7 +7,7 @@ import logger from "../../bootstrap/logger";
 import TeamDAO from "../../DAO/TeamDAO";
 import TeamDO from "../../models/team";
 import User, { Role } from "../../models/user";
-import { cleanupQuery } from "../helpers/ApiHelpers";
+import {cleanupQuery, UUIDPattern} from "../helpers/ApiHelpers";
 import {Team} from "@akosasante/trade-machine-models";
 
 @JsonController("/teams")
@@ -28,7 +28,7 @@ export default class TeamController {
         return teams;
     }
     
-    @Get("/:id([0-9a-fA-F]{8}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{12})")
+    @Get(UUIDPattern)
     public async getOneTeam(@Param("id") id: string): Promise<Team> {
         logger.debug("get one team endpoint");
         const team = await this.dao.getTeamById(id);
@@ -61,7 +61,7 @@ export default class TeamController {
     }
 
     @Authorized(Role.ADMIN)
-    @Put("/:id")
+    @Put(UUIDPattern)
     public async updateTeam(@Param("id") id: string, @Body() teamObj: Partial<TeamDO>): Promise<Team> {
         logger.debug("update team endpoint");
         const team = await this.dao.updateTeam(id, teamObj);
@@ -69,17 +69,17 @@ export default class TeamController {
         return team;
     }
 
+    @Authorized(Role.ADMIN)
+    @Delete(UUIDPattern)
+    public async deleteTeam(@Param("id") id: string) {
+        logger.debug("delete team endpoint");
+        const result = await this.dao.deleteTeam(id);
+        logger.debug(`delete successful: ${inspect(result)}`);
+        return {deleteCount: result.affected, id: result.raw[0].id};
+    }
+
     // @Authorized(Role.ADMIN)
-    // @Delete("/:id([0-9]+)")
-    // public async deleteTeam(@Param("id") id: number) {
-    //     logger.debug("delete team endpoint");
-    //     const result = await this.dao.deleteTeam(id);
-    //     logger.debug(`delete successful: ${inspect(result)}`);
-    //     return {deleteCount: result.affected, id: result.raw[0].id};
-    // }
-    //
-    // @Authorized(Role.ADMIN)
-    // @Patch("/:id([0-9]+)")
+    // @Patch(UUIDPattern)
     // public async updateTeamOwners(@Param("id") id: number,
     //                               @BodyParam("add") ownersToAdd: User[],
     //                               @BodyParam("remove") ownersToRemove: User[]): Promise<TeamDO> {

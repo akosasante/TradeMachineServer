@@ -6,7 +6,7 @@ import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import UserDO, { Role } from "../../models/user";
-import { cleanupQuery } from "../helpers/ApiHelpers";
+import {cleanupQuery, UUIDPattern} from "../helpers/ApiHelpers";
 
 @JsonController("/users")
 export default class UserController {
@@ -24,7 +24,7 @@ export default class UserController {
         return users;
     }
 
-    @Get("/:id([0-9a-fA-F]{8}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{12})")
+    @Get(UUIDPattern)
     public async getById(@Param("id") id: string): Promise<User> {
         logger.debug("get one user by id endpoint");
         const user = await this.dao.getUserById(id);
@@ -63,7 +63,7 @@ export default class UserController {
     }
 
     @Authorized(Role.ADMIN)
-    @Put("/:id")
+    @Put(UUIDPattern)
     public async updateUser(@Param("id") id: string, @Body() userObj: Partial<UserDO>): Promise<User> {
         logger.debug("update user endpoint");
         const user = await this.dao.updateUser(id, userObj);
@@ -72,7 +72,7 @@ export default class UserController {
     }
 
     @Authorized(Role.ADMIN)
-    @Delete("/:id")
+    @Delete(UUIDPattern)
     public async deleteUser(@Param("id") id: string) {
         logger.debug("delete user endpoint");
         const result = await this.dao.deleteUser(id);
