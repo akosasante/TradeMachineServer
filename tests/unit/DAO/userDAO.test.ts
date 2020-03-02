@@ -1,4 +1,3 @@
-import { User } from "@akosasante/trade-machine-models";
 import "jest";
 import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
@@ -18,7 +17,6 @@ describe("UserDAO", () => {
     };
 
     const testUser = UserFactory.getUser();
-    const testUserModel = testUser.toUserModel();
     // @ts-ignore
     const userDAO: UserDAO = new UserDAO(mockUserDb);
 
@@ -49,7 +47,7 @@ describe("UserDAO", () => {
             expect(mockUserDb.find).toHaveBeenCalledWith(defaultOptions);
 
             // Testing that we return as expected
-            expect(res).toEqual([testUserModel]);
+            expect(res).toEqual([testUser]);
         });
     });
 
@@ -64,7 +62,7 @@ describe("UserDAO", () => {
             expect(mockUserDb.find).toHaveBeenCalledWith(options);
 
             // Testing that we return as expected
-            expect(res).toEqual([testUserModel]);
+            expect(res).toEqual([testUser]);
         });
     });
 
@@ -78,22 +76,7 @@ describe("UserDAO", () => {
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
 
             // Testing that we return as expected
-            expect(res).toEqual(testUserModel);
-        });
-    });
-
-    describe("getUserDbObj", () => {
-        it("should return userDO obj", async () => {
-            mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
-            const res = await userDAO.getUserDbObj(testUser.id!);
-
-            // Testing that the correct db function is called with the correct params
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
-
-            // Testing that we return as expected
             expect(res).toEqual(testUser);
-            expect(res).toBeInstanceOf(UserDO);
         });
     });
 
@@ -108,8 +91,8 @@ describe("UserDAO", () => {
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({where: condition});
 
             // Testing that we return as expected
-            expect(res).toEqual(testUserModel);
-            expect(res).toBeInstanceOf(User);
+            expect(res).toEqual(testUser);
+            expect(res).toBeInstanceOf(UserDO);
         });
         it("should use the findOne method if the param passed is false", async () => {
             mockUserDb.findOne.mockReturnValueOnce(testUser);
@@ -120,7 +103,7 @@ describe("UserDAO", () => {
             expect(mockUserDb.findOne).toHaveBeenCalledWith({where: condition});
 
             // Testing that we return as expected
-            expect(res).toEqual(testUserModel);
+            expect(res).toEqual(testUser);
         });
     });
 
@@ -135,7 +118,7 @@ describe("UserDAO", () => {
             expect(mockUserDb.find).toHaveBeenCalledWith({where: condition});
 
             // Testing that we return as expected
-            expect(res).toEqual([testUserModel]);
+            expect(res).toEqual([testUser]);
         });
     });
 
@@ -149,7 +132,7 @@ describe("UserDAO", () => {
             expect(mockUserDb.save).toHaveBeenCalledWith([testUser.parse()]);
 
             // Testing that we return as expected
-            expect(res).toEqual([testUserModel]);
+            expect(res).toEqual([testUser]);
         });
     });
 
@@ -165,7 +148,7 @@ describe("UserDAO", () => {
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
 
             // Testing that we return as expected
-            expect(res).toEqual(testUserModel);
+            expect(res).toEqual(testUser);
         });
     });
 

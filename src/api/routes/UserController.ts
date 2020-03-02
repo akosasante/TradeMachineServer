@@ -6,7 +6,7 @@ import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import UserDO, { Role } from "../../models/user";
-import {cleanupQuery, UUIDPattern} from "../helpers/ApiHelpers";
+import { cleanupQuery, UUIDPattern } from "../helpers/ApiHelpers";
 
 @JsonController("/users")
 export default class UserController {
@@ -21,7 +21,7 @@ export default class UserController {
         logger.debug(`get all users endpoint${full ? " with teams" : ""}`);
         const users = full ? await this.dao.getAllUsersWithTeams() : await this.dao.getAllUsers();
         logger.debug(`got ${users.length} users`);
-        return users;
+        return users.map(u => u.toUserModel());
     }
 
     @Get(UUIDPattern)
@@ -29,7 +29,7 @@ export default class UserController {
         logger.debug("get one user by id endpoint");
         const user = await this.dao.getUserById(id);
         logger.debug(`got user: ${user}`);
-        return user;
+        return user.toUserModel();
     }
 
     @Get("/search")
@@ -41,7 +41,7 @@ export default class UserController {
             const users = await this.dao.findUsers(cleanupQuery(query as { [key: string]: string }));
             if (users.length) {
                 logger.debug(`got ${users.length} users`);
-                return users;
+                return users.map(u => u.toUserModel());
             } else {
                 throw new NotFoundError("No users found matching that query");
             }
@@ -49,17 +49,17 @@ export default class UserController {
             logger.debug("fetching one user with query");
             const user = await this.dao.findUser(cleanupQuery(query as { [key: string]: string }), true);
             logger.debug(`got user: ${user}`);
-            return user;
+            return user?.toUserModel();
         }
     }
 
     @Authorized(Role.ADMIN)
     @Post("/")
-    public async createUsers(@Body() userObjs: Array<Partial<UserDO>>): Promise<User[]> {
+    public async createUsers(@Body() userObjs: Partial<UserDO>[]): Promise<User[]> {
         logger.debug("create user endpoint");
         const users = await this.dao.createUsers(userObjs);
         logger.debug(`created users: ${inspect(users)}`);
-        return users;
+        return users.map(u => u.toUserModel());
     }
 
     @Authorized(Role.ADMIN)
@@ -68,7 +68,7 @@ export default class UserController {
         logger.debug("update user endpoint");
         const user = await this.dao.updateUser(id, userObj);
         logger.debug(`updated user: ${user}`);
-        return user;
+        return user.toUserModel();
     }
 
     @Authorized(Role.ADMIN)

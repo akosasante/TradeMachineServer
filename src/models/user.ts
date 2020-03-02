@@ -16,7 +16,7 @@ export enum UserStatus {
     INACTIVE = "inactive",
 }
 
-@Entity("User")
+@Entity({name: "user"})
 @Unique(["email"])
 export default class UserDO extends BaseModel implements HasEquals {
     // public static generateTimeToPasswordExpires() {
