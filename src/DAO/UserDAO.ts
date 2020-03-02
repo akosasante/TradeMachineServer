@@ -6,47 +6,37 @@ export default class UserDAO {
     private userDb: Repository<UserDO>;
 
     constructor(repo?: Repository<UserDO>) {
-        this.userDb = repo || getConnection(process.env.NODE_ENV).getRepository("User");
+        this.userDb = repo || getConnection(process.env.NODE_ENV).getRepository("user");
     }
 
-    public async getAllUsers(): Promise<User[]> {
+    public async getAllUsers(): Promise<UserDO[]> {
         const options: FindManyOptions = { order: { id: "ASC" } };
-        const dbUsers = await this.userDb.find(options);
-        return dbUsers.map(user => user.toUserModel());
+        return await this.userDb.find(options);
     }
 
-    public async getAllUsersWithTeams(): Promise<User[]> {
+    public async getAllUsersWithTeams(): Promise<UserDO[]> {
         const options: FindManyOptions = { order: { id: "ASC" }, relations: ["team"]};
-        const dbUsers = await this.userDb.find(options);
-        return dbUsers.map(user => user.toUserModel());
+        return await this.userDb.find(options);
     }
 
-    public async getUserById(id: string): Promise<User> {
-        const dbUser = await this.userDb.findOneOrFail(id);
-        return dbUser.toUserModel();
+    public async getUserById(id: string): Promise<UserDO> {
+        return await this.userDb.findOneOrFail(id);
     }
 
-    public async getUserDbObj(id: string): Promise<UserDO> {
-        return this.userDb.findOneOrFail(id);
-    }
-    
-    public async findUser(query: Partial<UserDO>, failIfNotFound: boolean = true): Promise<User|undefined> {
+    public async findUser(query: Partial<UserDO>, failIfNotFound: boolean = true): Promise<UserDO|undefined> {
         const findFn = failIfNotFound ? this.userDb.findOneOrFail : this.userDb.findOne;
-        const dbUser = await findFn({where: query});
-        return dbUser ? dbUser.toUserModel() : undefined;
+        return await findFn({where: query});
     }
 
-    public async findUsers(query: Partial<UserDO>): Promise<User[]> {
-        const dbUsers = await this.userDb.find({where: query});
-        return dbUsers.map(user => user.toUserModel());
+    public async findUsers(query: Partial<UserDO>): Promise<UserDO[]> {
+        return await this.userDb.find({where: query});
     }
 
-    public async createUsers(userObjs: Array<Partial<UserDO>>): Promise<User[]> {
-        const dbUsers = await this.userDb.save(userObjs);
-        return dbUsers.map(user => user.toUserModel());
+    public async createUsers(userObjs: Partial<UserDO>[]): Promise<UserDO[]> {
+        return await this.userDb.save(userObjs);
     }
 
-    public async updateUser(id: string, userObj: Partial<UserDO>): Promise<User> {
+    public async updateUser(id: string, userObj: Partial<UserDO>): Promise<UserDO> {
         await this.userDb.update({id}, userObj);
         return await this.getUserById(id);
     }

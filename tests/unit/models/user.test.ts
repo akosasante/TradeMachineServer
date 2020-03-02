@@ -30,35 +30,6 @@ describe("User Class", () => {
         });
     });
 
-    // describe("static methods", () => {
-    //     it("generateHashedPassword/1 - should resolve a hashed password", async () => {
-    //         const pass = await UserDO.generateHashedPassword("lol");
-    //         expect(pass).toEqual(expect.any(String));
-    //         expect(pass).not.toEqual("lol");
-    //     });
-    //
-    //     it("generateTimeToPasswordExpires/0 - should return a time at least 59 mins from now", () => {
-    //         const now = new Date();
-    //         const beforeExpiry = now.getMilliseconds() + (1 * 60 * 60 * 1000);
-    //         const expiry = UserDO.generateTimeToPasswordExpires();
-    //         expect(beforeExpiry).toBeBefore(expiry);
-    //     });
-    //     it("sanitizeUUID/1 - should return a string with no dashes", () => {
-    //         const token = "9911046e-159f-483f-afd5-389e07b606a7";
-    //         const sanitized = UserDO.sanitizeUUID(token);
-    //         expect(sanitized.length).toBeLessThan(token.length);
-    //         expect(sanitized.includes("-")).toBeFalse();
-    //     });
-    // });
-
-    // describe("getters", () => {
-    //     it("publicUser/0 - should return a user copy with no password", () => {
-    //         expect(user.publicUser).toBeInstanceOf(UserDO);
-    //         expect(user.publicUser.hasPassword).toBeTrue();
-    //         expect(user.publicUser.password).toBeFalsy();
-    //     });
-    // });
-
     describe("instance methods", () => {
         describe("toUserModel/0", () => {
             it("should set up hasPassword correctly", () => {
@@ -74,35 +45,11 @@ describe("User Class", () => {
                 expect(userModel.team).toBeInstanceOf(Team);
             });
         });
-        // it("isPasswordMatching/1 - should resolve true if it's a matching password", async () => {
-        //     user.password = await UserDO.generateHashedPassword(user.password!);
-        //     expect((await user.isPasswordMatching("lol"))).toBeTrue();
-        // });
-        // it("isPasswordMatching/1 - should resolve false if it's not a matching password", async () => {
-        //     const completelyWrong = await user.isPasswordMatching("");
-        //     expect(completelyWrong).toBeFalse();
-        //     user.password = "test";
-        //     const plainTextInsteadOfHash = await user.isPasswordMatching("test");
-        //     expect(plainTextInsteadOfHash).toBeFalse();
-        // });
 
         it("toString/0 - should return a string with the DO id", () => {
             expect(user.toString()).toMatch(user.id!);
             expect(user.toString()).toMatch("UserDO#");
         });
-
-        // it("isAdmin/0 - should return true if it is an admin", () => {
-        //     expect(user.isAdmin()).toBeTrue();
-        // });
-        //
-        // it("hasRole/1 - should return true if it has the role", () => {
-        //     expect(user.hasRole(Role.ADMIN)).toBeTrue();
-        // });
-        // it("hasRole/1 - should return false if it has no roles or no matching role", () => {
-        //     expect(user.hasRole(Role.OWNER)).toBeFalse();
-        //     user.roles = [];
-        //     expect(user.hasRole(Role.ADMIN)).toBeFalse();
-        // });
 
         it("parse/1 - should take a user and return a POJO", () => {
             expect(user).toBeInstanceOf(UserDO);
@@ -136,18 +83,5 @@ describe("User Class", () => {
                 expect(() => firstUser.equals(otherUser)).toThrow(new Error("Not matching: role"));
             });
         });
-
-        // describe("passwordResetIsValid/0", () => {
-        //     it("should return true if the passwordResetTime vs currentTime is greater than or equal to 0", () => {
-        //         const date = new Date(Date.now() + (30 * 60 * 1000)); // half an hour from now
-        //         const validUser = new UserDO({passwordResetExpiresOn: date});
-        //         expect(validUser.passwordResetIsValid()).toBeTrue();
-        //     });
-        //     it("should return true if the passwordResetTime vs currentTime is greater than or equal to 0", () => {
-        //         const date = new Date("January 1 1990");
-        //         const expiredUser = new UserDO({passwordResetExpiresOn: date});
-        //         expect(expiredUser.passwordResetIsValid()).toBeFalse();
-        //     });
-        // });
     });
 });
