@@ -1,27 +1,19 @@
+import { User } from "@akosasante/trade-machine-models";
 import { Server } from "http";
 import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
-import User from "../../src/models/user";
 import server from "../../src/server";
 import { UserFactory } from "../factories/UserFactory";
-import {
-    adminLoggedIn,
-    doLogout,
-    makeDeleteRequest,
-    makeGetRequest,
-    makePostRequest,
-    makePutRequest,
-    ownerLoggedIn,
-    setupOwnerAndAdminUsers,
-    stringifyQuery
-} from "./helpers";
+import { adminLoggedIn, doLogout, makeDeleteRequest, makeGetRequest, makePostRequest,
+    makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, stringifyQuery } from "./helpers";
+import UserDO from "../../src/models/user";
 
 let app: Server;
-let ownerUser: User;
-let adminUser: User;
+let ownerUser: UserDO;
+let adminUser: UserDO;
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -55,16 +47,16 @@ describe("User API endpoints", () => {
         const jatheeshUser = UserFactory.getUser("jatheesh@example.com");
         const akosUser = UserFactory.getUser("akos@example.com");
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (userObj: Partial<User>, status: number = 200) =>
+        const postRequest = (userObj: Partial<UserDO>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<User>>(agent, "/users", userObj, status);
+                makePostRequest<Partial<UserDO>>(agent, "/users", userObj, status);
         afterEach(async () => {
             await doLogout(request.agent(app));
         });
 
         it("should return a single user object instance to the object passed in", async () => {
             const res = await adminLoggedIn(postRequest(jatheeshUser.parse()), app);
-            expect(jatheeshUser.publicUser.equals(res.body)).toBeTrue();
+            expect(jatheeshUser.toUserModel() === (res.body)).toBeTrue();
         });
         it("should ignore any invalid properties from the object passed in", async () => {
             const invalidPropsObj = {
@@ -76,7 +68,7 @@ describe("User API endpoints", () => {
             expect(akosUser.equals(res.body)).toBeTrue();
         });
         it("should return a 400 Bad Request error if missing required property", async () => {
-            const missingEmailUser = {name: "Jatheesh"};
+            const missingEmailUser = {displayName: "Jatheesh"};
             const res = await adminLoggedIn(postRequest(missingEmailUser, 400), app);
             expect(res.body.stack).toEqual(expectQueryFailedErrorString);
         });
@@ -98,7 +90,7 @@ describe("User API endpoints", () => {
         it("should return an array of all the users in the db", async () => {
             const res = await getAllRequest();
             expect(res.body).toBeArrayOfSize(4);
-            expect(adminUser.publicUser.equals(res.body[0])).toBeTrue();
+            expect(adminUser.toUserModel() === (res.body[0])).toBeTrue();
         });
     });
 
@@ -109,28 +101,28 @@ describe("User API endpoints", () => {
         it("should return an array of all the users with teams in the db if full=true", async () => {
             const res = await getAllRequest();
             expect(res.body).toBeArrayOfSize(4);
-            expect(adminUser.publicUser.equals(res.body[0])).toBeTrue();
+            expect(adminUser.toUserModel() === (res.body[0])).toBeTrue();
             expect(res.body[0]).toHaveProperty("team");
         });
         it("should return an array of all the users without teams in the db if full=false", async () => {
             const res = await getAllRequest(false );
             expect(res.body).toBeArrayOfSize(4);
-            expect(adminUser.publicUser.equals(res.body[0])).toBeTrue();
+            expect(adminUser.toUserModel() === (res.body[0])).toBeTrue();
             expect(res.body[0]).not.toHaveProperty("team");
         });
     });
 
     describe("GET /users/:id (get one user)", () => {
-        const getOneRequest = (id: number, status: number = 200) =>
+        const getOneRequest = (id: string, status: number = 200) =>
             makeGetRequest(request(app), `/users/${id}`, status);
 
         it("should return a single public user if logged in, no matter the role (ADMIN)", async () => {
-            const res = await getOneRequest(1);
+            const res = await getOneRequest("1");
             expect(res.body).toBeObject();
             expect(adminUser.equals(res.body)).toBeTrue();
         });
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
-            await getOneRequest(999, 404);
+            await getOneRequest("999", 404);
         });
     });
 
@@ -141,7 +133,7 @@ describe("User API endpoints", () => {
         it("should return a single public user for the given query", async () => {
             const res = await findRequest({ email: ownerUser.email });
             expect(res.body).toBeObject();
-            expect(ownerUser.publicUser.equals(res.body)).toBeTrue();
+            expect(ownerUser.toUserModel() === (res.body)).toBeTrue();
         });
         it("should throw a 404 error if no user with that query is found", async () => {
             await findRequest({ email: "nonono@test.com" }, 404);
@@ -150,7 +142,7 @@ describe("User API endpoints", () => {
             const res = await findRequest({email: ownerUser.email, multiple: "true"});
             expect(res.body).toBeArrayOfSize(1);
             expect(res.body[0]).toBeObject();
-            expect(ownerUser.publicUser.equals(res.body[0])).toBeTrue();
+            expect(ownerUser.toUserModel() === (res.body[0])).toBeTrue();
         });
         it("should throw a 404 error if no users with that query are found (multiple)", async () => {
             await findRequest({ email: "nonono@test.com", multiple: "true" }, 404);
@@ -158,25 +150,25 @@ describe("User API endpoints", () => {
     });
 
     describe("PUT /users/:id (update one user)", () => {
-        const putRequest = (id: number, userObj: Partial<User>, status: number = 200) =>
+        const putRequest = (id: string, userObj: Partial<UserDO>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
-                makePutRequest<Partial<User>>(agent, `/users/${id}`, userObj, status);
-        const getOneRequest = (id: number) => makeGetRequest(request(app), `/users/${id}`, 200);
-        const username = "MrMeSeeks92";
+                makePutRequest<Partial<UserDO>>(agent, `/users/${id}`, userObj, status);
+        const getOneRequest = (id: string) => makeGetRequest(request(app), `/users/${id}`, 200);
+        const slackUsername = "MrMeSeeks92";
         const updatedAdmin = UserFactory.getAdminUser();
-        updatedAdmin.username = username;
+        updatedAdmin.slackUsername = slackUsername;
 
         afterEach(async () => {
             await doLogout(request.agent(app));
         });
 
         it("should return the updated user without a password", async () => {
-            const res = await adminLoggedIn(putRequest(adminUser.id!, { username }), app);
-            expect(updatedAdmin.publicUser.equals(res.body)).toBeTrue();
+            const res = await adminLoggedIn(putRequest(adminUser.id!, { slackUsername }), app);
+            expect(updatedAdmin.toUserModel() === (res.body)).toBeTrue();
 
             // Confirm db was actually updated:
             const getOneRes = await getOneRequest(adminUser.id!);
-            expect(updatedAdmin.publicUser.equals(getOneRes.body)).toBeTrue();
+            expect(updatedAdmin.toUserModel() === (getOneRes.body)).toBeTrue();
         });
         it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
             const updatedObj = { email: "new@gmail.com", blah: "yo" };
@@ -184,22 +176,22 @@ describe("User API endpoints", () => {
 
             // Confirm db was NOT updated:
             const getOneRes = await getOneRequest(adminUser.id!);
-            expect(updatedAdmin.publicUser.equals(getOneRes.body)).toBeTrue();
+            expect(updatedAdmin.toUserModel() === (getOneRes.body)).toBeTrue();
             expect(getOneRes.body.blah).toBeUndefined();
         });
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
-            await adminLoggedIn(putRequest(999, { email: "whatever@gmail.com"  }, 404), app);
+            await adminLoggedIn(putRequest("999", { email: "whatever@gmail.com"  }, 404), app);
         });
         it("should throw a 403 Forbidden Error if a non-admin tries to update a user", async () => {
-            await ownerLoggedIn(putRequest(1, { username: "hey" }, 403), app);
+            await ownerLoggedIn(putRequest("1", { slackUsername: "hey" }, 403), app);
         });
         it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
-            await putRequest(1, { username: "Hey2" }, 403)(request(app));
+            await putRequest("1", { slackUsername: "Hey2" }, 403)(request(app));
         });
     });
 
     describe("DELETE /users/:id (delete one user)", () => {
-        const deleteRequest = (id: number, status: number = 200) =>
+        const deleteRequest = (id: string, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/users/${id}`, status);
         const getAllRequest = () => makeGetRequest(request(app), "/users", 200);
         afterEach(async () => {
@@ -207,7 +199,7 @@ describe("User API endpoints", () => {
         });
 
         it("should return a delete result when logged in", async () => {
-            const id = 4;
+            const id = "4";
             const res = await adminLoggedIn(deleteRequest(id), app);
             expect(res.body).toEqual({ deleteCount: 1, id });
 
@@ -217,13 +209,13 @@ describe("User API endpoints", () => {
             expect(getAllRes.body.filter((user: User) => user.id === id)).toBeEmpty();
         });
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
-            await adminLoggedIn(deleteRequest(999, 404), app);
+            await adminLoggedIn(deleteRequest("999", 404), app);
         });
         it("should throw a 403 Forbidden Error if a non-admin tries to delete a user", async () => {
-            await ownerLoggedIn(deleteRequest(1, 403), app);
+            await ownerLoggedIn(deleteRequest("1", 403), app);
         });
         it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
-            await deleteRequest(1, 403)(request(app));
+            await deleteRequest("1", 403)(request(app));
         });
     });
 });

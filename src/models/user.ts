@@ -133,4 +133,8 @@ export default class UserDO extends BaseModel implements HasEquals {
         excludes = bypassDefaults ? excludes : Object.assign(DEFAULT_EXCLUDES, (excludes || {}));
         return BaseModel.equals(this, other, excludes, COMPLEX_FIELDS, MODEL_FIELDS);
     }
+
+    public isAdmin() {
+        return this.toUserModel().isAdmin();
+    }
 }
