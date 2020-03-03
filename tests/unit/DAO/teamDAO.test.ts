@@ -121,7 +121,7 @@ describe("TeamDAO", () => {
         expect(res).toEqual(deleteResult);
     });
 
-    it("updateOwners - should call the db createQueryBuilder and findOneOrFail with id and owner objects", async () => {
+    it("updateTeamOwners - should call the db createQueryBuilder and findOneOrFail with id and owner objects", async () => {
         const addAndRemove = jest.fn();
         const of = jest.fn(() => ({addAndRemove}));
         const relation = jest.fn(() => ({of}));

@@ -1,4 +1,3 @@
-import { User } from "@akosasante/trade-machine-models";
 import { compare, hash } from "bcryptjs";
 import { isAfter } from "date-fns";
 import { get } from "lodash";
@@ -8,20 +7,21 @@ import { inspect } from "util";
 import { ConflictError } from "../api/middlewares/ErrorHandler";
 import logger from "../bootstrap/logger";
 import UserDAO from "../DAO/UserDAO";
-import { Role } from "../models/user";
+import UserDO, { Role } from "../models/user";
 
-export async function serializeUser(user: User): Promise<string | undefined> {
+
+export async function serializeUser(user: UserDO): Promise<string | undefined> {
     logger.debug("serializing user");
     return user ? user.id : undefined;
 }
 
-export async function deserializeUser(id: string, userDAO: UserDAO = new UserDAO()): Promise<User> {
+export async function deserializeUser(id: string, userDAO: UserDAO = new UserDAO()): Promise<UserDO> {
     logger.debug("deserializing user");
     return await userDAO.getUserById(id);
 }
 
 export async function signUpAuthentication(email: string, password: string, userDAO: UserDAO = new UserDAO(),
-                                           done: (err?: Error, user?: User) => any): Promise<void> {
+                                           done: (err?: Error, user?: UserDO) => any): Promise<void> {
     try {
         logger.debug("sign up strategy");
         const user = await userDAO.findUser({email}, false);
@@ -30,7 +30,7 @@ export async function signUpAuthentication(email: string, password: string, user
             const hashedPass = await generateHashedPassword(password);
             const newUser = await userDAO.createUsers([{email, password: hashedPass, lastLoggedIn: new Date()}]);
             return done(undefined, newUser[0]);
-        } else if (user && !user.hasPassword) {
+        } else if (user && !user.password) {
             logger.debug("user found with unset password");
             const hashedPass = await generateHashedPassword(password);
             const updatedUser = await userDAO.updateUser(user.id!, {password: hashedPass, lastLoggedIn: new Date()});
@@ -46,16 +46,14 @@ export async function signUpAuthentication(email: string, password: string, user
 }
 
 export async function signInAuthentication(email: string, password: string, userDAO: UserDAO = new UserDAO(),
-                                           done: (err?: Error, user?: User) => any): Promise<void> {
+                                           done: (err?: Error, user?: UserDO) => any): Promise<void> {
     try {
         logger.debug("sign in strategy");
         // Will throw EntityNotFoundError if user is not found
         const user = await userDAO.findUser({email});
         if (user) {
             logger.debug("found user with matching email");
-            const userDbObj = await userDAO.getUserDbObj(user.id!);
-            const userPassword = userDbObj.password;
-            const validPassword = userPassword ? await isPasswordMatching(password, userPassword) : false;
+            const validPassword = user.password && await isPasswordMatching(password, user.password);
             if (validPassword) {
                 logger.debug("password matched - updating user last logged in");
                 await userDAO.updateUser(user.id!, {lastLoggedIn: new Date()});
@@ -106,7 +104,7 @@ export async function generateHashedPassword(plainPassword: string): Promise<str
     return hash(plainPassword, saltFactor);
 }
 
-async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO()): Promise<User | undefined> {
+async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO()): Promise<UserDO | undefined> {
     const userId = get(action, "request.session.user");
     logger.debug(inspect(action.request.session));
     logger.debug(inspect(action.request.sessionID));

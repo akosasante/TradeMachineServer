@@ -69,8 +69,8 @@ export async function setupOwnerAndAdminUsers() {
     const userDAO = new UserDAO();
     const ownerUser = UserFactory.getOwnerUser();
     const adminUser = UserFactory.getAdminUser();
-    const savedAdmin = await userDAO.createUser(adminUser.parse());
-    const savedOwner = await userDAO.createUser(ownerUser.parse());
+    const [savedAdmin] = await userDAO.createUsers([adminUser.parse()]);
+    const [savedOwner] = await userDAO.createUsers([ownerUser.parse()]);
     return [savedAdmin, savedOwner];
 }
 
