@@ -2,12 +2,17 @@ import "jest";
 import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import UserDAO from "../../../src/DAO/UserDAO";
-import UserDO from "../../../src/models/user";
+import User from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
 import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
+import { Repository } from "typeorm";
 
 describe("UserDAO", () => {
-    const mockUserDb = {
+    interface MockDb {
+        [key: string]: jest.Mock<any, any>;
+    }
+
+    const mockUserDb: MockDb = {
         find: jest.fn(),
         findOneOrFail: jest.fn(),
         findOne: jest.fn(),
@@ -17,13 +22,11 @@ describe("UserDAO", () => {
     };
 
     const testUser = UserFactory.getUser();
-    // @ts-ignore
-    const userDAO: UserDAO = new UserDAO(mockUserDb);
+    const userDAO: UserDAO = new UserDAO(mockUserDb as unknown as Repository<User>);
 
     afterEach(async () => {
         Object.keys(mockUserDb).forEach((action: string) => {
-            // @ts-ignore
-            (mockUserDb[action] as jest.Mock).mockClear();
+            (mockUserDb[action as keyof MockDb] as jest.Mock).mockClear();
         });
 
         mockExecute.mockClear();
@@ -42,11 +45,9 @@ describe("UserDAO", () => {
             const res = await userDAO.getAllUsers();
             const defaultOptions = {order: {id: "ASC"}};
 
-            // Testing that the correct db function is called with the correct params
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
             expect(mockUserDb.find).toHaveBeenCalledWith(defaultOptions);
 
-            // Testing that we return as expected
             expect(res).toEqual([testUser]);
         });
     });
@@ -57,11 +58,9 @@ describe("UserDAO", () => {
             const res = await userDAO.getAllUsersWithTeams();
             const options = { order: { id: "ASC" }, relations: ["team"]};
 
-            // Testing that the correct db function is called with the correct params
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
             expect(mockUserDb.find).toHaveBeenCalledWith(options);
 
-            // Testing that we return as expected
             expect(res).toEqual([testUser]);
         });
     });
@@ -71,11 +70,9 @@ describe("UserDAO", () => {
             mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
             const res = await userDAO.getUserById(testUser.id!);
 
-            // Testing that the correct db function is called with the correct params
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
 
-            // Testing that we return as expected
             expect(res).toEqual(testUser);
         });
     });
@@ -86,23 +83,19 @@ describe("UserDAO", () => {
             mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
             const res = await userDAO.findUser(condition);
 
-            // Testing that the correct db function is called with the correct params
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({where: condition});
 
-            // Testing that we return as expected
             expect(res).toEqual(testUser);
-            expect(res).toBeInstanceOf(UserDO);
+            expect(res).toBeInstanceOf(User);
         });
         it("should use the findOne method if the param passed is false", async () => {
             mockUserDb.findOne.mockReturnValueOnce(testUser);
             const res = await userDAO.findUser(condition, false);
 
-            // Testing that the correct db function is called with the correct params
             expect(mockUserDb.findOne).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOne).toHaveBeenCalledWith({where: condition});
 
-            // Testing that we return as expected
             expect(res).toEqual(testUser);
         });
     });
@@ -113,11 +106,9 @@ describe("UserDAO", () => {
             const condition = {email: testUser.email};
             const res = await userDAO.findUsers(condition);
 
-            // Testing that the correct db function is called with the correct params
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
             expect(mockUserDb.find).toHaveBeenCalledWith({where: condition});
 
-            // Testing that we return as expected
             expect(res).toEqual([testUser]);
         });
     });
@@ -127,11 +118,9 @@ describe("UserDAO", () => {
             mockUserDb.save.mockReturnValueOnce([testUser]);
             const res = await userDAO.createUsers([testUser.parse()]);
 
-            // Testing that the correct db function is called with the correct params
             expect(mockUserDb.save).toHaveBeenCalledTimes(1);
             expect(mockUserDb.save).toHaveBeenCalledWith([testUser.parse()]);
 
-            // Testing that we return as expected
             expect(res).toEqual([testUser]);
         });
     });
@@ -141,13 +130,11 @@ describe("UserDAO", () => {
             mockUserDb.findOneOrFail.mockReturnValueOnce(testUser);
             const res = await userDAO.updateUser(testUser.id!, testUser.parse());
 
-            // Testing that the correct db function is called with the correct params
             expect(mockUserDb.update).toHaveBeenCalledTimes(1);
             expect(mockUserDb.update).toHaveBeenCalledWith({id: testUser.id}, testUser.parse());
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
 
-            // Testing that we return as expected
             expect(res).toEqual(testUser);
         });
     });
@@ -160,13 +147,11 @@ describe("UserDAO", () => {
             mockExecute.mockReturnValueOnce(deleteResult);
             const res = await userDAO.deleteUser(testUser.id!);
 
-            // Testing that the correct db function is called with the correct params
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id!);
             expect(mockUserDb.createQueryBuilder).toHaveBeenCalledTimes(1);
             expect(mockWhereInIds).toHaveBeenCalledWith(testUser.id!);
 
-            // Testing that we return as expected
             expect(res).toEqual(deleteResult);
         });
     });
