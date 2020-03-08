@@ -33,7 +33,7 @@ export default class UserController {
 
     @Get("/search")
     public async findUser(@QueryParam("query") query: Partial<UserDO>,
-                          @QueryParam("multiple") multiple: boolean): Promise<User[]|User|undefined> {
+                          @QueryParam("multiple") multiple?: boolean): Promise<User[]|User|undefined> {
         logger.debug(`searching for user with props: ${inspect(query)}, multiple=${multiple}`);
         if (multiple) {
             logger.debug("fetching all users with query");
