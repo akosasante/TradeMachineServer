@@ -1,42 +1,41 @@
-import { User } from "@akosasante/trade-machine-models";
 import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
-import UserDO from "../models/user";
+import User from "../models/user";
 
 export default class UserDAO {
-    private userDb: Repository<UserDO>;
+    private userDb: Repository<User>;
 
-    constructor(repo?: Repository<UserDO>) {
+    constructor(repo?: Repository<User>) {
         this.userDb = repo || getConnection(process.env.NODE_ENV).getRepository("user");
     }
 
-    public async getAllUsers(): Promise<UserDO[]> {
+    public async getAllUsers(): Promise<User[]> {
         const options: FindManyOptions = { order: { id: "ASC" } };
         return await this.userDb.find(options);
     }
 
-    public async getAllUsersWithTeams(): Promise<UserDO[]> {
+    public async getAllUsersWithTeams(): Promise<User[]> {
         const options: FindManyOptions = { order: { id: "ASC" }, relations: ["team"]};
         return await this.userDb.find(options);
     }
 
-    public async getUserById(id: string): Promise<UserDO> {
+    public async getUserById(id: string): Promise<User> {
         return await this.userDb.findOneOrFail(id);
     }
 
-    public async findUser(query: Partial<UserDO>, failIfNotFound: boolean = true): Promise<UserDO|undefined> {
+    public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User|undefined> {
         const findFn = failIfNotFound ? this.userDb.findOneOrFail : this.userDb.findOne;
         return await findFn({where: query});
     }
 
-    public async findUsers(query: Partial<UserDO>): Promise<UserDO[]> {
+    public async findUsers(query: Partial<User>): Promise<User[]> {
         return await this.userDb.find({where: query});
     }
 
-    public async createUsers(userObjs: Partial<UserDO>[]): Promise<UserDO[]> {
+    public async createUsers(userObjs: Partial<User>[]): Promise<User[]> {
         return await this.userDb.save(userObjs);
     }
 
-    public async updateUser(id: string, userObj: Partial<UserDO>): Promise<UserDO> {
+    public async updateUser(id: string, userObj: Partial<User>): Promise<User> {
         await this.userDb.update({id}, userObj);
         return await this.getUserById(id);
     }
