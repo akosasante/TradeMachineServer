@@ -5,7 +5,6 @@ import { EntityColumnNotFound } from "typeorm/error/EntityColumnNotFound";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import util from "util";
 import logger from "../../bootstrap/logger";
-import { ConstructorError } from "../../models/base";
 // tslint:disable:max-classes-per-file
 
 @Middleware({type: "after"})
@@ -24,8 +23,7 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
         } else if (error instanceof EntityNotFoundError) {
              logger.error(`Database Error: ${error.message}`);
              response.status(404).json(CustomErrorHandler.cleanErrorObject(error));
-        } else if (error instanceof QueryFailedError || error instanceof EntityColumnNotFound ||
-            error instanceof ConstructorError) {
+        } else if (error instanceof QueryFailedError || error instanceof EntityColumnNotFound) {
             logger.error(`Database/Entity Error: ${error.message}`);
             response.status(400).json(CustomErrorHandler.cleanErrorObject(error));
         } else {

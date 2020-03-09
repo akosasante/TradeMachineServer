@@ -23,7 +23,7 @@ export default class UserDAO {
     }
 
     public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User|undefined> {
-        const findFn = failIfNotFound ? this.userDb.findOneOrFail : this.userDb.findOne;
+        const findFn = failIfNotFound ? this.userDb.findOneOrFail.bind(this.userDb) : this.userDb.findOne.bind(this.userDb);
         return await findFn({where: query});
     }
 

@@ -25,7 +25,7 @@ export default class User extends BaseModel {
     @Column({nullable: true})
     public password?: string;
 
-    @Column()
+    @Column({nullable: true})
     public displayName?: string;
 
     @Column({nullable: true})

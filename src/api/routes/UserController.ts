@@ -1,5 +1,4 @@
-import User from "../../models/user";
-import UserDO, { Role } from "../../models/user";
+import User, { Role } from "../../models/user";
 import { Authorized, Body, Delete, Get, JsonController,
     NotFoundError, Param, Post, Put, QueryParam } from "routing-controllers";
 import { inspect } from "util";
@@ -32,12 +31,18 @@ export default class UserController {
     }
 
     @Get("/search")
-    public async findUser(@QueryParam("query") query: Partial<UserDO>,
+    public async findUser(@QueryParam("query") query: string,
                           @QueryParam("multiple") multiple?: boolean): Promise<User[]|User|undefined> {
-        logger.debug(`searching for user with props: ${inspect(query)}, multiple=${multiple}`);
+        logger.debug(`searching for user with props: ${query}, multiple=${multiple}`);
+        const queryObj = Array.from(new URLSearchParams(query)).reduce((acc, [key, value]) => {
+            // @ts-ignore
+            acc[key] = value;
+            return acc;
+        }, {} as Partial<User>);
         if (multiple) {
-            logger.debug("fetching all users with query");
-            const users = await this.dao.findUsers(cleanupQuery(query as { [key: string]: string }));
+            logger.debug(`fetching all users with query: ${inspect(queryObj)}`);
+
+            const users = await this.dao.findUsers(cleanupQuery(queryObj as { [key: string]: string }));
             if (users.length) {
                 logger.debug(`got ${users.length} users`);
                 return users;
@@ -45,8 +50,8 @@ export default class UserController {
                 throw new NotFoundError("No users found matching that query");
             }
         } else {
-            logger.debug("fetching one user with query");
-            const user = await this.dao.findUser(cleanupQuery(query as { [key: string]: string }), true);
+            logger.debug(`fetching one user with query: ${inspect(queryObj)}`);
+            const user = await this.dao.findUser(cleanupQuery(queryObj as { [key: string]: string }), true);
             logger.debug(`got user: ${user}`);
             return user;
         }
@@ -54,16 +59,18 @@ export default class UserController {
 
     @Authorized(Role.ADMIN)
     @Post("/")
-    public async createUsers(@Body() userObjs: Partial<UserDO>[]): Promise<User[]> {
-        logger.debug("create user endpoint");
+    public async createUsers(@Body() userObjs: Partial<User>[]): Promise<any> {
+        logger.debug(`create user endpoint: ${inspect(userObjs)}`);
         const users = await this.dao.createUsers(userObjs);
+        logger.debug(`created users: ${users.length}`);
+        logger.debug(`created users: ${users[0]}`);
         logger.debug(`created users: ${inspect(users)}`);
         return users;
     }
 
     @Authorized(Role.ADMIN)
     @Put(UUIDPattern)
-    public async updateUser(@Param("id") id: string, @Body() userObj: Partial<UserDO>): Promise<User> {
+    public async updateUser(@Param("id") id: string, @Body() userObj: Partial<User>): Promise<User> {
         logger.debug("update user endpoint");
         const user = await this.dao.updateUser(id, userObj);
         logger.debug(`updated user: ${user}`);
