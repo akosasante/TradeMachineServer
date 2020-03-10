@@ -7,10 +7,10 @@ import uuid from "uuid/v4";
 
 describe("User Class", () => {
     beforeAll(() => {
-        logger.debug("~~~~~~USER DATA OBJECT TESTS BEGIN~~~~~~");
+        logger.debug("~~~~~~USER TESTS BEGIN~~~~~~");
     });
     afterAll(() => {
-        logger.debug("~~~~~~USER DATA OBJECT COMPLETE~~~~~~");
+        logger.debug("~~~~~~USER TESTS COMPLETE~~~~~~");
     });
     const userObj = UserFactory.getUserObject(undefined, undefined,  undefined, Role.ADMIN, {id: uuid()});
     const user = new User(userObj);
@@ -38,6 +38,7 @@ describe("User Class", () => {
         it("parse/1 - should take a user and return a POJO", () => {
             expect(user).toBeInstanceOf(User);
             expect(user.parse()).not.toBeInstanceOf(User);
+            expect(user.parse()).toEqual(userObj);
             expect(user.parse()).toEqual(expect.any(Object));
         });
     });

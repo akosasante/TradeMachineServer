@@ -1,5 +1,4 @@
 import { Column, Entity, Index, ManyToOne, OneToMany, Unique } from "typeorm";
-import logger from "../bootstrap/logger";
 import { BaseModel } from "./base";
 import GeneralSettings from "./generalSettings";
 import ScheduledDowntime from "./scheduledDowntime";
@@ -15,7 +14,7 @@ export enum UserStatus {
     INACTIVE = "inactive",
 }
 
-@Entity({name: "user"})
+@Entity()
 @Unique(["email"])
 export default class User extends BaseModel {
 
@@ -46,9 +45,9 @@ export default class User extends BaseModel {
     @Column({ type: "enum", enum: UserStatus, default: UserStatus.ACTIVE })
     public status?: UserStatus;
 
-    // @ManyToOne(type => Team, team => team.owners, {onDelete: "SET NULL"})
-    // public team?: Team;
-    //
+    @ManyToOne(type => Team, team => team.owners, {onDelete: "SET NULL"})
+    public team?: Team;
+
     // @OneToMany(type => ScheduledDowntime, schedule => schedule.createdBy)
     // public createdSchedules?: ScheduledDowntime[];
     //
