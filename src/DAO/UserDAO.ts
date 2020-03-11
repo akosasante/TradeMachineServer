@@ -5,7 +5,7 @@ export default class UserDAO {
     private userDb: Repository<User>;
 
     constructor(repo?: Repository<User>) {
-        this.userDb = repo || getConnection(process.env.NODE_ENV).getRepository("user");
+        this.userDb = repo || getConnection(process.env.NODE_ENV).getRepository("User");
     }
 
     public async getAllUsers(): Promise<User[]> {

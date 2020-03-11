@@ -4,14 +4,10 @@ import logger from "../../../src/bootstrap/logger";
 import UserDAO from "../../../src/DAO/UserDAO";
 import User from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
-import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
+import { mockDeleteChain, mockExecute, mockWhereInIds, MockDb } from "./daoHelpers";
 import { Repository } from "typeorm";
 
 describe("UserDAO", () => {
-    interface MockDb {
-        [key: string]: jest.Mock<any, any>;
-    }
-
     const mockUserDb: MockDb = {
         find: jest.fn(),
         findOneOrFail: jest.fn(),
