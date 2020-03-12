@@ -76,13 +76,14 @@ describe("UserController", () => {
     });
 
     describe("findUser method", () => {
-        const query: {[key: string]: string} = { name: "Jatheesh" };
+        const query: string = "name=Jatheesh";
+        const expectedQuery = {name: "Jatheesh"}
         it("should find a user by the given query options", async () => {
             mockUserDAO.findUser.mockReturnValueOnce(testUser);
             const res = await userController.findUser(query);
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.findUser).toHaveBeenCalledWith(query, true);
+            expect(mockUserDAO.findUser).toHaveBeenCalledWith(expectedQuery, true);
 
             expect(res).toEqual(testUser);
         });
@@ -91,7 +92,7 @@ describe("UserController", () => {
             const res = await userController.findUser(query, true);
 
             expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.findUsers).toHaveBeenCalledWith(query);
+            expect(mockUserDAO.findUsers).toHaveBeenCalledWith(expectedQuery);
 
             expect(res).toEqual([testUser]);
         });
@@ -100,7 +101,7 @@ describe("UserController", () => {
             const res = userController.findUser(query, true);
 
             expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.findUsers).toHaveBeenCalledWith(query);
+            expect(mockUserDAO.findUsers).toHaveBeenCalledWith(expectedQuery);
 
             await expect(res).rejects.toThrowError(NotFoundError);
         });

@@ -32,7 +32,7 @@ export default class UserController {
 
     @Get("/search")
     public async findUser(@QueryParam("query") query: string,
-                          @QueryParam("multiple") multiple?: boolean): Promise<User[]|User|undefined> {
+                          @QueryParam("multiple") multiple?: boolean): Promise<User[]|User> {
         logger.debug(`searching for user with props: ${query}, multiple=${multiple}`);
         const queryObj = Array.from(new URLSearchParams(query)).reduce((acc, [key, value]) => {
             // @ts-ignore
@@ -53,9 +53,11 @@ export default class UserController {
             logger.debug(`fetching one user with query: ${inspect(queryObj)}`);
             const user = await this.dao.findUser(cleanupQuery(queryObj as { [key: string]: string }), true);
             logger.debug(`got user: ${user}`);
-            return user;
+            return user!;
         }
     }
+
+    /* Only league admins can directly edit/delete/create users */
 
     @Authorized(Role.ADMIN)
     @Post("/")

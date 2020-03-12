@@ -1,24 +1,10 @@
-import { Team } from "@akosasante/trade-machine-models";
-import {
-    Authorized,
-    Body,
-    BodyParam,
-    Delete,
-    Get,
-    JsonController,
-    NotFoundError,
-    Param,
-    Patch,
-    Post,
-    Put,
-    QueryParam,
-    QueryParams
-} from "routing-controllers";
+import { Authorized, BadRequestError, Body, BodyParam, Delete, Get, JsonController, NotFoundError,
+    Param, Patch, Post, Put, QueryParam, QueryParams } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import TeamDAO from "../../DAO/TeamDAO";
-import TeamDO from "../../models/team";
-import UserDO, { Role } from "../../models/user";
+import Team from "../../models/team";
+import User, { Role } from "../../models/user";
 import { cleanupQuery, UUIDPattern } from "../helpers/ApiHelpers";
 
 @JsonController("/teams")
@@ -30,11 +16,16 @@ export default class TeamController {
     }
 
     @Get("/")
-    public async getAllTeams(@QueryParam("hasOwners") hasOwners?: "true"|"false"): Promise<Team[]> {
+    public async getAllTeams(@QueryParam("hasOwners") hasOwners?: string): Promise<Team[]> {
         logger.debug("get all teams endpoint" + ` -- ${hasOwners ? ("hasOwners: " + hasOwners ) : ""}`);
-        const teams = hasOwners ?
-            await this.dao.getTeamsByOwnerStatus(hasOwners === "true") :
-            await this.dao.getAllTeams();
+        let teams: Team[];
+        if (hasOwners && ["true", "false"].includes(hasOwners.toLowerCase())) {
+            teams = hasOwners === "true" ? await this.dao.getTeamsWithOwners() : await this.dao.getTeamsWithNoOwners();
+        } else if (!hasOwners) {
+            teams = await this.dao.getAllTeams();
+        } else {
+            throw new BadRequestError(`Given parameter (${hasOwners}) for hasOwners queryParam is invalid.`);
+        }
         logger.debug(`got ${teams.length} teams`);
         return teams;
     }
@@ -48,7 +39,7 @@ export default class TeamController {
     }
 
     @Get("/search")
-    public async findTeamsByQuery(@QueryParams() query: Partial<TeamDO>): Promise<Team[]> {
+    public async findTeamsByQuery(@QueryParams() query: Partial<Team>): Promise<Team[]> {
         logger.debug(`searching for team with props: ${inspect(query)}`);
         const teams = await this.dao.findTeams(cleanupQuery(query as {[key: string]: string}));
         if (teams.length) {
@@ -63,7 +54,7 @@ export default class TeamController {
 
     @Authorized(Role.ADMIN)
     @Post("/")
-    public async createTeam(@Body() teamObjs: Array<Partial<TeamDO>>): Promise<Team[]> {
+    public async createTeam(@Body() teamObjs: Partial<Team>[]): Promise<Team[]> {
         logger.debug("create team endpoint");
         const teams = await this.dao.createTeams(teamObjs);
         logger.debug(`created teams: ${inspect(teams)}`);
@@ -72,7 +63,7 @@ export default class TeamController {
 
     @Authorized(Role.ADMIN)
     @Put(UUIDPattern)
-    public async updateTeam(@Param("id") id: string, @Body() teamObj: Partial<TeamDO>): Promise<Team> {
+    public async updateTeam(@Param("id") id: string, @Body() teamObj: Partial<Team>): Promise<Team> {
         logger.debug("update team endpoint");
         const team = await this.dao.updateTeam(id, teamObj);
         logger.debug(`updated team: ${team}`);
@@ -91,11 +82,11 @@ export default class TeamController {
     @Authorized(Role.ADMIN)
     @Patch(UUIDPattern)
     public async updateTeamOwners(@Param("id") id: string,
-                                  @BodyParam("add") ownersToAdd: UserDO[],
-                                  @BodyParam("remove") ownersToRemove: UserDO[]): Promise<Team> {
+                                  @BodyParam("add") ownersToAdd: User[],
+                                  @BodyParam("remove") ownersToRemove: User[]): Promise<Team> {
         logger.debug("update team owners endpoint");
-        logger.debug(`add: ${inspect((ownersToAdd || []).map((user: UserDO) => new UserDO(user).toString()))}
-         remove: ${inspect((ownersToRemove || []).map((user: UserDO) => new UserDO(user).toString()))}`);
+        logger.debug(`add: ${inspect((ownersToAdd || []).map((user: User) => new User(user).toString()))}
+         remove: ${inspect((ownersToRemove || []).map((user: User) => new User(user).toString()))}`);
         return await this.dao.updateTeamOwners(id, ownersToAdd, ownersToRemove);
     }
 }
