@@ -75,6 +75,7 @@ describe("User API endpoints", () => {
             const {body} = await adminLoggedIn(postRequest([invalidPropsObj]), app);
             const {body: getBody} =  await getOneRequest(body[0].id);
             expect(getBody).toMatchObject(akosUser);
+            expect(getBody.blah).toBeUndefined();
         });
         it("should return a 400 Bad Request error if missing required property", async () => {
             const missingEmailUser = {displayName: "Jatheesh"};
@@ -86,10 +87,10 @@ describe("User API endpoints", () => {
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should throw a 403 Forbidden Error if a non-admin tries to create a user", async () => {
-            await ownerLoggedIn(postRequest(jatheeshUser, 403), app);
+            await ownerLoggedIn(postRequest([jatheeshUser], 403), app);
         });
         it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
-            await postRequest(jatheeshUser, 403)(request(app));
+            await postRequest([jatheeshUser], 403)(request(app));
         });
     });
 
@@ -136,9 +137,9 @@ describe("User API endpoints", () => {
             makeGetRequest(request(app), `/users/${id}`, status);
 
         it("should return a single public user if logged in, no matter the role (ADMIN)", async () => {
-            const res = await getOneRequest(adminUser.id!);
-            expect(res.body).toBeObject();
-            expect(res.body).toMatchObject({...adminUser,
+            const {body} = await getOneRequest(adminUser.id!);
+            expect(body).toBeObject();
+            expect(body).toMatchObject({...adminUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
@@ -166,10 +167,10 @@ describe("User API endpoints", () => {
             await findRequest({query: { email: "nonono@test.com" }}, 404);
         });
         it("should return an array of users if given query includes the key 'multiple'", async () => {
-            const res = await findRequest({ query: {email: ownerUser.email}, multiple: "true" });
-            expect(res.body).toBeArrayOfSize(1);
-            expect(res.body[0]).toBeObject();
-            expect(res.body[0]).toMatchObject({...ownerUser,
+            const {body} = await findRequest({ query: {email: ownerUser.email}, multiple: "true" });
+            expect(body).toBeArrayOfSize(1);
+            expect(body[0]).toBeObject();
+            expect(body[0]).toMatchObject({...ownerUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
@@ -186,8 +187,7 @@ describe("User API endpoints", () => {
                 makePutRequest<Partial<User>>(agent, `/users/${id}`, userObj, status);
         const getOneRequest = (id: string) => makeGetRequest(request(app), `/users/${id}`, 200);
         const slackUsername = "MrMeSeeks92";
-        const updatedAdmin = UserFactory.getAdminUser();
-        updatedAdmin.slackUsername = slackUsername;
+        const updatedAdmin = {...adminUser, slackUsername};
 
         afterEach(async () => {
             await doLogout(request.agent(app));

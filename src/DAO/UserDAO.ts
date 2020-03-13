@@ -1,6 +1,5 @@
-import {DeleteResult, FindManyOptions, getConnection, In, Repository} from "typeorm";
+import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
 import User from "../models/user";
-import {FindOneOptions} from "typeorm/find-options/FindOneOptions";
 
 export default class UserDAO {
     private userDb: Repository<User>;
@@ -33,8 +32,8 @@ export default class UserDAO {
     }
 
     public async createUsers(userObjs: Partial<User>[]): Promise<User[]> {
-        const savedUsers = await this.userDb.save(userObjs);
-        return await this.userDb.find({id: In(savedUsers.map(u => u.id))});
+        const result: InsertResult = await this.userDb.insert(userObjs);
+        return await this.userDb.find({id: In(result.identifiers.map(({id}) => id))});
     }
 
     public async updateUser(id: string, userObj: Partial<User>): Promise<User> {

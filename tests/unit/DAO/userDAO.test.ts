@@ -12,7 +12,7 @@ describe("UserDAO", () => {
         find: jest.fn(),
         findOneOrFail: jest.fn(),
         findOne: jest.fn(),
-        save: jest.fn(),
+        insert: jest.fn(),
         update: jest.fn(),
         createQueryBuilder: jest.fn(),
     };
@@ -120,12 +120,12 @@ describe("UserDAO", () => {
 
     describe("createUsers", () => {
         it("should create users in the db for all the objs passed in", async () => {
-            mockUserDb.save.mockReturnValueOnce([testUser]);
+            mockUserDb.insert.mockReturnValueOnce({identifiers: [{id: testUser.id!}], generatedMaps: [], raw: []});
             mockUserDb.find.mockReturnValueOnce([testUser]);
             const res = await userDAO.createUsers([testUser.parse()]);
 
-            expect(mockUserDb.save).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.save).toHaveBeenCalledWith([testUser.parse()]);
+            expect(mockUserDb.insert).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.insert).toHaveBeenCalledWith([testUser.parse()]);
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
             expect(mockUserDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testUser.id]}});
 
