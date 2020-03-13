@@ -16,9 +16,8 @@ describe("TeamDAO", () => {
         update: jest.fn(),
         createQueryBuilder: jest.fn(),
     };
-    const testTeam = TeamFactory.getTeam(undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
+    const testTeam = TeamFactory.getTeam();
     const teamDAO = new TeamDAO(mockTeamDb as unknown as Repository<Team>);
-    // const [testTeam1, testTeam2] = TeamFactory.getTeams(2);
 
     afterEach(async () => {
         Object.keys(mockTeamDb).forEach((action: string) => {
@@ -93,10 +92,13 @@ describe("TeamDAO", () => {
 
     it("createTeams - should call the db save once with all the teams passed in", async () => {
         mockTeamDb.save.mockReturnValueOnce([testTeam]);
+        mockTeamDb.find.mockReturnValueOnce([testTeam]);
         const res = await teamDAO.createTeams([testTeam.parse()]);
 
         expect(mockTeamDb.save).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.save).toHaveBeenCalledWith([testTeam.parse()]);
+        expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testTeam.id]}});
         expect(res).toEqual([testTeam]);
     });
 
