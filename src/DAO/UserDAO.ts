@@ -1,5 +1,6 @@
-import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
+import {DeleteResult, FindManyOptions, getConnection, In, Repository} from "typeorm";
 import User from "../models/user";
+import {FindOneOptions} from "typeorm/find-options/FindOneOptions";
 
 export default class UserDAO {
     private userDb: Repository<User>;
@@ -22,9 +23,9 @@ export default class UserDAO {
         return await this.userDb.findOneOrFail(id);
     }
 
-    public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User|undefined> {
+    public async findUser(query: Partial<User>, failIfNotFound: boolean = true, includePassword: boolean = false): Promise<User|undefined> {
         const findFn = failIfNotFound ? this.userDb.findOneOrFail.bind(this.userDb) : this.userDb.findOne.bind(this.userDb);
-        return await findFn({where: query});
+        return await findFn(query, includePassword ? {select: ["password"]} : undefined);
     }
 
     public async findUsers(query: Partial<User>): Promise<User[]> {
@@ -32,7 +33,8 @@ export default class UserDAO {
     }
 
     public async createUsers(userObjs: Partial<User>[]): Promise<User[]> {
-        return await this.userDb.save(userObjs);
+        const savedUsers = await this.userDb.save(userObjs);
+        return await this.userDb.find({id: In(savedUsers.map(u => u.id))});
     }
 
     public async updateUser(id: string, userObj: Partial<User>): Promise<User> {

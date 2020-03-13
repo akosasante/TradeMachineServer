@@ -80,7 +80,7 @@ describe("UserDAO", () => {
             const res = await userDAO.findUser(condition);
 
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({where: condition});
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(condition, undefined);
 
             expect(res).toEqual(testUser);
             expect(res).toBeInstanceOf(User);
@@ -90,10 +90,19 @@ describe("UserDAO", () => {
             const res = await userDAO.findUser(condition, false);
 
             expect(mockUserDb.findOne).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOne).toHaveBeenCalledWith({where: condition});
+            expect(mockUserDb.findOne).toHaveBeenCalledWith(condition, undefined);
 
             expect(res).toEqual(testUser);
         });
+        it("should include the `select` option if includePassword is true", async () => {
+            mockUserDb.findOne.mockReturnValueOnce(testUser);
+            const res = await userDAO.findUser(condition, false, true);
+
+            expect(mockUserDb.findOne).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.findOne).toHaveBeenCalledWith(condition, {select: ["password"]});
+
+            expect(res).toEqual(testUser);
+        })
     });
 
     describe("findUsers", () => {
@@ -112,10 +121,13 @@ describe("UserDAO", () => {
     describe("createUsers", () => {
         it("should create users in the db for all the objs passed in", async () => {
             mockUserDb.save.mockReturnValueOnce([testUser]);
+            mockUserDb.find.mockReturnValueOnce([testUser]);
             const res = await userDAO.createUsers([testUser.parse()]);
 
             expect(mockUserDb.save).toHaveBeenCalledTimes(1);
             expect(mockUserDb.save).toHaveBeenCalledWith([testUser.parse()]);
+            expect(mockUserDb.find).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testUser.id]}});
 
             expect(res).toEqual([testUser]);
         });
