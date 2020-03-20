@@ -56,8 +56,8 @@ export async function signInAuthentication(email: string, password: string, user
             const validPassword = user.password && await isPasswordMatching(password, user.password);
             if (validPassword) {
                 logger.debug("password matched - updating user last logged in");
-                await userDAO.updateUser(user.id!, {lastLoggedIn: new Date()});
-                return done(undefined, user);
+                const returnedUser = await userDAO.updateUser(user.id!, {lastLoggedIn: new Date()});
+                return done(undefined, returnedUser);
             } else {
                 return done(new BadRequestError("Incorrect password"));
             }
