@@ -1,6 +1,5 @@
 import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
-import logger from "../bootstrap/logger";
-import { BaseModel, Excludes, HasEquals } from "./base";
+import { BaseModel } from "./base";
 import Team from "./team";
 import TradeItem from "./tradeItem";
 
@@ -11,7 +10,7 @@ export enum LeagueLevel {
 }
 
 @Entity()
-export default class Player extends BaseModel implements HasEquals {
+export default class Player extends BaseModel {
     @Column()
     @Index()
     public name: string;
@@ -40,22 +39,5 @@ export default class Player extends BaseModel implements HasEquals {
         this.leagueTeam = playerObj.leagueTeam;
         this.meta = playerObj.meta;
         this.tradeItems = playerObj.tradeItems;
-    }
-
-    public toString(): string {
-        return `MLB Player ID#${this.id}: ${this.name}`;
-    }
-
-    public equals(other: Player, excludes?: Excludes, bypassDefaults: boolean = false): boolean {
-        logger.debug("MLB Player equals check");
-        const COMPLEX_FIELDS = {meta: true, tradeItems: true};
-        const MODEL_FIELDS = {leagueTeam: true};
-        const DEFAULT_EXCLUDES = {
-            id: true,
-            dateCreated: true,
-            dateModified: true,
-        };
-        excludes = bypassDefaults ? excludes : Object.assign(DEFAULT_EXCLUDES, (excludes || {}));
-        return BaseModel.equals(this, other, excludes, COMPLEX_FIELDS, MODEL_FIELDS);
     }
 }
