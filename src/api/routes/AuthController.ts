@@ -1,4 +1,3 @@
-import { User } from "@akosasante/trade-machine-models";
 import { Request, Response } from "express";
 import { BodyParam, Controller, Post, Req, Res, Session, UseBefore } from "routing-controllers";
 import { deserializeUser, generateHashedPassword, passwordResetDateIsValid } from "../../authentication/auth";

@@ -118,7 +118,7 @@ describe("Error handler middleware", () => {
         expect(response.status).toHaveBeenCalledWith(400);
         expect(response.json).toHaveBeenCalledWith(errorObjectExpect);
     });
-    it("should call response with 500 and error json in all other  cases", async () => {
+    it("should call response with 500 and error json in all other cases", async () => {
         const error = new Error("generic error");
         // @ts-ignore
         const request: Request = {};
