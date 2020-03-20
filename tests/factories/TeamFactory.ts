@@ -1,11 +1,12 @@
 import { name as fakeName } from "faker";
 import TeamDO from "../../src/models/team";
+import { v4 as uuid } from "uuid";
 
 export class TeamFactory {
     public static NAME = "Squirtle Squad";
 
     public static getTeamObject(name = TeamFactory.NAME, espnId = 1, rest = {}) {
-        return { name, espnId, ...rest };
+        return { id: uuid(), name, espnId, ...rest };
     }
 
     public static getTeam(name = TeamFactory.NAME, espnId = 1, rest = {}) {

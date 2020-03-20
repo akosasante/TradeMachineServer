@@ -1,4 +1,5 @@
-import UserDO, { Role } from "../../src/models/user";
+import User, { Role } from "../../src/models/user";
+import { v4 as uuid } from "uuid";
 
 export class UserFactory {
     public static TEST_EMAIL = "test@example.com";
@@ -9,12 +10,12 @@ export class UserFactory {
 
     public static getUserObject(email = UserFactory.TEST_EMAIL, displayName = UserFactory.GENERIC_NAME,
                                 password = UserFactory.GENERIC_PASSWORD, role = Role.ADMIN, rest = {}) {
-        return { email, displayName, password, role , ...rest};
+        return { id: uuid(), email, displayName, password, role , ...rest};
     }
 
     public static getUser(email = UserFactory.TEST_EMAIL, displayName = UserFactory.GENERIC_NAME,
                           password = UserFactory.GENERIC_PASSWORD, role = Role.ADMIN, rest = {}) {
-        return new UserDO(UserFactory.getUserObject(email, displayName, password, role, rest));
+        return new User(UserFactory.getUserObject(email, displayName, password, role, rest));
     }
 
     public static getAdminUser() {
@@ -26,6 +27,6 @@ export class UserFactory {
     }
 
     public static getPasswordlessOwner() {
-        return new UserDO({email: UserFactory.OWNER_EMAIL, displayName: "Len Mitch", role: Role.OWNER});
+        return new User({email: UserFactory.OWNER_EMAIL, displayName: "Len Mitch", role: Role.OWNER});
     }
 }

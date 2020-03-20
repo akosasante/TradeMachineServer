@@ -94,15 +94,6 @@ describe("UserDAO", () => {
 
             expect(res).toEqual(testUser);
         });
-        it("should include the `select` option if includePassword is true", async () => {
-            mockUserDb.findOne.mockReturnValueOnce(testUser);
-            const res = await userDAO.findUser(condition, false, true);
-
-            expect(mockUserDb.findOne).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOne).toHaveBeenCalledWith(condition, {select: ["password"]});
-
-            expect(res).toEqual(testUser);
-        })
     });
 
     describe("findUsers", () => {

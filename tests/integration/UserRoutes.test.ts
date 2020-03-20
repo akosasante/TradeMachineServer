@@ -37,6 +37,7 @@ beforeAll(async () => {
 
     // Create admin and owner users in db for rest of this suite's use
     [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+    logger.debug("~~~~~STARTING TESTS~~~~~~~~~~");
 });
 
 afterAll(async () => {
@@ -64,7 +65,13 @@ describe("User API endpoints", () => {
 
         it("should return a single user object instance to the object passed in", async () => {
             const {body} = await adminLoggedIn(postRequest([jatheeshUser.parse()]), app);
-            expect(body[0]).toMatchObject(jatheeshUser);
+            const expected = {...jatheeshUser,
+                dateCreated: expect.stringMatching(DatePatternRegex),
+                dateModified: expect.stringMatching(DatePatternRegex),
+                password: undefined,
+            };
+            delete expected.password;
+            expect(body[0]).toMatchObject(expected);
         });
         it("should ignore any invalid properties from the object passed in", async () => {
             const invalidPropsObj = {
@@ -74,7 +81,13 @@ describe("User API endpoints", () => {
             };
             const {body} = await adminLoggedIn(postRequest([invalidPropsObj]), app);
             const {body: getBody} =  await getOneRequest(body[0].id);
-            expect(getBody).toMatchObject(akosUser);
+            const expected = {...akosUser,
+                dateCreated: expect.stringMatching(DatePatternRegex),
+                dateModified: expect.stringMatching(DatePatternRegex),
+                password: undefined,
+            };
+            delete expected.password;
+            expect(getBody).toMatchObject(expected);
             expect(getBody.blah).toBeUndefined();
         });
         it("should return a 400 Bad Request error if missing required property", async () => {
@@ -106,6 +119,7 @@ describe("User API endpoints", () => {
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
             });
+            expect(returnedAdmin.password).toBeUndefined();
         });
     });
 
@@ -113,22 +127,30 @@ describe("User API endpoints", () => {
         const getAllRequest = (full: boolean = true, status: number = 200) =>
             makeGetRequest(request(app), `/users?full=${full}`, status);
 
-        // it("should return an array of all the users with teams in the db if full=true", async () => {
-        //     const res = await getAllRequest();
-        //     expect(res.body).toBeArrayOfSize(4);
-        //     expect(adminUser).toEqual(res.body[0]);
-        //     expect(res.body[0]).toHaveProperty("team");
-        // });
-        it("should return an array of all the users without teams in the db if full=false", async () => {
-            const res = await getAllRequest(false );
-            expect(res.body).toBeArrayOfSize(4);
-            const returnedAdmin = res.body.find((user: User) => user.id === adminUser.id);
+        it("should return an array of all the users with teams in the db if full=true", async () => {
+            const {body} = await getAllRequest();
+            expect(body).toBeArrayOfSize(4);
+            const returnedAdmin = body.find((user: User) => user.id === adminUser.id);
             expect(returnedAdmin).toMatchObject({...adminUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
             });
-            expect(res.body[0]).not.toHaveProperty("team");
+            expect(returnedAdmin).toHaveProperty("team");
+            expect(returnedAdmin.password).toBeUndefined();
+        });
+
+        it("should return an array of all the users without teams in the db if full=false", async () => {
+            const {body} = await getAllRequest(false );
+            expect(body).toBeArrayOfSize(4);
+            const returnedAdmin = body.find((user: User) => user.id === adminUser.id);
+            expect(returnedAdmin).toMatchObject({...adminUser,
+                dateCreated: expect.stringMatching(DatePatternRegex),
+                dateModified: expect.stringMatching(DatePatternRegex),
+                lastLoggedIn: expect.stringMatching(DatePatternRegex),
+            });
+            expect(returnedAdmin).not.toHaveProperty("team");
+            expect(returnedAdmin.password).toBeUndefined();
         });
     });
 
@@ -144,6 +166,7 @@ describe("User API endpoints", () => {
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
             });
+            expect(body.password).toBeUndefined();
         });
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
             await getOneRequest(uuid(), 404);
@@ -155,13 +178,14 @@ describe("User API endpoints", () => {
             makeGetRequest(request(app), `/users/search${stringifyQuery(query)}`, status);
 
         it("should return a single public user for the given query", async () => {
-            const res = await findRequest({ query: {email: ownerUser.email }});
-            expect(res.body).toBeObject();
-            expect(res.body).toMatchObject({...ownerUser,
+            const {body} = await findRequest({ query: {email: ownerUser.email }});
+            expect(body).toBeObject();
+            expect(body).toMatchObject({...ownerUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
             });
+            expect(body.password).toBeUndefined();
         });
         it("should throw a 404 error if no user with that query is found", async () => {
             await findRequest({query: { email: "nonono@test.com" }}, 404);
@@ -175,6 +199,7 @@ describe("User API endpoints", () => {
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
             });
+            expect(body[0].password).toBeUndefined();
         });
         it("should throw a 404 error if no users with that query are found (multiple)", async () => {
             await findRequest({ query: { email: "nonono@test.com"}, multiple: "true" }, 404);
@@ -196,7 +221,6 @@ describe("User API endpoints", () => {
         it("should return the updated user", async () => {
             const res = await adminLoggedIn(putRequest(adminUser.id!, { slackUsername }), app);
             expect(res.body).toMatchObject({...updatedAdmin,
-                password: expect.any(String),
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
@@ -204,12 +228,14 @@ describe("User API endpoints", () => {
 
             // Confirm db was actually updated:
             const {body: getOneBody} = await getOneRequest(adminUser.id!);
-            expect(getOneBody).toMatchObject({...updatedAdmin,
+            const expected = {...updatedAdmin,
                 password: expect.any(String),
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
-            });
+            };
+            delete expected.password;
+            expect(getOneBody).toMatchObject(expected);
 
         });
         it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
@@ -218,12 +244,14 @@ describe("User API endpoints", () => {
 
             // Confirm db was NOT updated:
             const {body: getOneRes} = await getOneRequest(adminUser.id!);
-            expect(getOneRes).toMatchObject({...updatedAdmin,
+            const expected = {...updatedAdmin,
                 password: expect.any(String),
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
-            });
+            };
+            delete expected.password;
+            expect(getOneRes).toMatchObject(expected);
 
             expect(getOneRes.blah).toBeUndefined();
             expect(getOneRes.email).toEqual(adminUser.email);

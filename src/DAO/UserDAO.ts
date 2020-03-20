@@ -22,9 +22,19 @@ export default class UserDAO {
         return await this.userDb.findOneOrFail(id);
     }
 
-    public async findUser(query: Partial<User>, failIfNotFound: boolean = true, includePassword: boolean = false): Promise<User|undefined> {
+    public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User|undefined> {
         const findFn = failIfNotFound ? this.userDb.findOneOrFail.bind(this.userDb) : this.userDb.findOne.bind(this.userDb);
-        return await findFn(query, includePassword ? {select: ["password"]} : undefined);
+        return await findFn(query);
+    }
+
+    public async findUserWithPassword(query: Partial<User>): Promise<User|undefined> {
+        return await this.userDb
+            .createQueryBuilder("user")
+            .select("user.id")
+            .addSelect("user.password")
+            .addSelect("user.email")
+            .where(query)
+            .getOne();
     }
 
     public async findUsers(query: Partial<User>): Promise<User[]> {
