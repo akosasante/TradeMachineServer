@@ -14,17 +14,9 @@ import server from "../../src/server";
 import { PlayerFactory } from "../factories/PlayerFactory";
 import { TeamFactory } from "../factories/TeamFactory";
 import { UserFactory } from "../factories/UserFactory";
-import {
-    adminLoggedIn,
-    doLogout,
-    makeDeleteRequest,
-    makeGetRequest,
-    makePostRequest,
-    makePutRequest,
-    ownerLoggedIn,
-    setupOwnerAndAdminUsers,
-    stringifyQuery
-} from "./helpers";
+import { adminLoggedIn, doLogout, makeDeleteRequest, makeGetRequest, makePostRequest,
+    makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, stringifyQuery } from "./helpers";
+import uuid from "uuid";
 
 let app: Server;
 let adminUser: User;
@@ -54,16 +46,19 @@ beforeAll(async () => {
     const teamDAO = new TeamDAO();
     // Create admin and owner users in db for rest of this suite's use
     [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
-    await userDAO.updateUser(adminUser.id!, {shortName: "Cam"});
-    await userDAO.updateUser(ownerUser.id!, {shortName: "Squad"});
+    await userDAO.updateUser(adminUser.id!, {csvName: "Cam"});
+    await userDAO.updateUser(ownerUser.id!, {csvName: "Squad"});
     // Create users and teams for batch upload tests
-    user3 = await userDAO.createUser(UserFactory.getUserObject("akos@example.com", undefined,
-        [Role.OWNER], {name: "A", shortName: "Akos"}));
-    user4 = await userDAO.createUser(UserFactory.getUserObject("kwasi@example.com", undefined,
-        [Role.OWNER], {name: "K", shortName: "Kwasi"}));
-    team1 = await teamDAO.createTeam(TeamFactory.getTeamObject( "Camtastic", 1, {owners: [adminUser]}));
-    team2 = await teamDAO.createTeam(TeamFactory.getTeamObject( "Squad", 2, {owners: [ownerUser]}));
-    team3 = await teamDAO.createTeam(TeamFactory.getTeamObject( "Asantes", 3, {owners: [user3, user4]}));
+    [user3, user4] = await userDAO.createUsers([
+        UserFactory.getUserObject("akos@example.com", undefined,
+        undefined, Role.OWNER, {name: "A", csvName: "Akos"}),
+        UserFactory.getUserObject("kwasi@example.com", undefined, undefined, Role.OWNER,  {name: "K", csvName: "Kwasi"}),
+    ]);
+    [team1, team2, team3] = await teamDAO.createTeams([
+        TeamFactory.getTeamObject( "Camtastic", 1, {owners: [adminUser]}),
+        TeamFactory.getTeamObject( "Squad", 2, {owners: [ownerUser]}),
+        TeamFactory.getTeamObject( "Asantes", 3, {owners: [user3, user4]}),
+    ]);
 });
 afterAll(async () => {
     logger.debug("~~~~~~PLAYER ROUTES AFTER ALL~~~~~~");
@@ -89,13 +84,13 @@ describe("Player API endpoints", () => {
 
         it("should return a single player object based on object passed in", async () => {
             const res = await adminLoggedIn(postRequest(testPlayerObj), app);
-            expect(testPlayer.equals(res.body)).toBeTrue();
+            expect(testPlayer).toEqual(res.body);
         });
         it("should ignore any invalid properties from the object passed in", async () => {
             const playerObj = {...testPlayerObj2, blah: "Hello"};
             const testInvalidProps = new Player(playerObj);
             const res = await adminLoggedIn(postRequest(testInvalidProps), app);
-            expect(testInvalidProps.equals(res.body)).toBeTrue();
+            expect(testInvalidProps).toEqual(res.body);
             expect(res.body.blah).toBeUndefined();
         });
         it("should return a 400 Bad Request error if missing a required property", async () => {
@@ -118,7 +113,7 @@ describe("Player API endpoints", () => {
         it("should return an array of all players in the db", async () => {
             const res = await getAllRequest();
             expect(res.body).toBeArrayOfSize(2);
-            expect(testPlayer.equals(res.body[0])).toBeTrue();
+            expect(testPlayer).toEqual(res.body[0]);
         });
         it("should return an array of all players in a given league or leagues", async () => {
             const res1 = await getAllRequest("?include[]=high");
@@ -126,7 +121,7 @@ describe("Player API endpoints", () => {
 
             expect(res1.body).toBeArrayOfSize(1);
             expect(res2.body).toBeArrayOfSize(2);
-            expect(testPlayer.equals(res2.body[0])).toBeTrue();
+            expect(testPlayer).toEqual(res2.body[0]);
         });
         it("should throw a 404 error if no players in a given league found", async () => {
             await getAllRequest("?include[]=low", 404);
@@ -134,17 +129,17 @@ describe("Player API endpoints", () => {
     });
 
     describe("GET /players/:id (get one player)", () => {
-        const getOneRequest = (id: number, status: number = 200) =>
+        const getOneRequest = (id: string, status: number = 200) =>
             makeGetRequest(request(app), `/players/${id}`, status);
 
         it("should return a single player for the given id", async () => {
-            const res = await getOneRequest(1);
+            const res = await getOneRequest(testPlayer.id!);
             expect(res.body).toBeObject();
-            expect(testPlayer.equals(res.body)).toBeTrue();
+            expect(testPlayer).toEqual(res.body);
             expect(res.body.id).toEqual(1);
         });
         it("should throw a 404 Not Found error if there is no player with that ID", async () => {
-            await getOneRequest(999, 404);
+            await getOneRequest(uuid(), 404);
         });
     });
 
@@ -157,7 +152,7 @@ describe("Player API endpoints", () => {
             const testPlayer2 = new Player(testPlayerObj2);
 
             expect(res.body).toBeArrayOfSize(1);
-            expect(testPlayer2.equals(res.body[0])).toBeTrue();
+            expect(testPlayer2).toEqual(res.body[0]);
             expect(res.body[0].id).toEqual(2);
         });
         it("should throw a 404 error if no player with that query is found", async () => {
@@ -166,34 +161,34 @@ describe("Player API endpoints", () => {
     });
 
     describe("PUT /players/:id (update one player)", () => {
-        const putRequest = (id: number, playerObj: Partial<Player>, status: number = 200) =>
+        const putRequest = (id: string, playerObj: Partial<Player>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<Player>>(agent, `/players/${id}`, playerObj, status);
-        const updatedPlayerObj = {...testPlayerObj, mlbTeam: "Miami Marlins", id: 1};
+        const updatedPlayerObj = {...testPlayerObj, mlbTeam: "Miami Marlins"};
         const updatedPlayer = new Player(updatedPlayerObj);
         afterEach(async () => {
             await doLogout(request.agent(app));
         });
 
         it("should return the updated player", async () => {
-            const res = await adminLoggedIn(putRequest(updatedPlayerObj.id, updatedPlayerObj), app);
-            expect(updatedPlayer.equals(res.body)).toBeTrue();
+            const res = await adminLoggedIn(putRequest(updatedPlayerObj.id!, updatedPlayerObj), app);
+            expect(updatedPlayer).toEqual(res.body);
 
             // Confirm db was actually updated:
             const getOnePlayer = await request(app).get(`/players/${updatedPlayerObj.id}`).expect(200);
-            expect(updatedPlayer.equals(getOnePlayer.body)).toBeTrue();
+            expect(updatedPlayer).toEqual(getOnePlayer.body);
         });
         it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
-            const invalidObj = {...updatedPlayerObj, id: 1, blah: "wassup"};
+            const invalidObj = {...updatedPlayerObj, blah: "wassup"};
             await adminLoggedIn(putRequest(invalidObj.id, invalidObj, 400), app);
 
             // Confirm db was not updated:
             const existingPlayer = await request(app).get(`/players/${invalidObj.id}`).expect(200);
-            expect(updatedPlayer.equals(existingPlayer.body)).toBeTrue();
+            expect(updatedPlayer).toEqual(existingPlayer.body);
             expect(existingPlayer.body.blah).toBeUndefined();
         });
         it("should throw a 404 Not Found error if there is no player with that ID", async () => {
-            await adminLoggedIn(putRequest(999, updatedPlayerObj, 404), app);
+            await adminLoggedIn(putRequest(uuid(), updatedPlayerObj, 404), app);
         });
         it("should throw a 403 Forbidden error if a non-admin tries to update a player", async () => {
             await ownerLoggedIn(putRequest(updatedPlayerObj.id, updatedPlayerObj, 403), app);
@@ -204,14 +199,14 @@ describe("Player API endpoints", () => {
     });
 
     describe("DELETE /players/:id (delete one player)", () => {
-        const deleteRequest = (id: number, status: number = 200) =>
+        const deleteRequest = (id: string, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/players/${id}`, status);
         afterEach(async () => {
             await doLogout(request.agent(app));
         });
 
         it("should return a delete result if successful", async () => {
-            const res = await adminLoggedIn(deleteRequest(1), app);
+            const res = await adminLoggedIn(deleteRequest(testPlayer.id!), app);
             expect(res.body).toEqual({deleteCount: 1, id: 1});
 
             // Confirm that it was deleted from the db:
@@ -219,17 +214,17 @@ describe("Player API endpoints", () => {
             expect(getAllRes.body).toBeArrayOfSize(1);
         });
         it("should throw a 404 Not Found error if there is no player with that ID", async () => {
-            await adminLoggedIn(deleteRequest(1, 404), app);
+            await adminLoggedIn(deleteRequest(testPlayer.id!, 404), app);
             const getAllRes = await request(app).get("/players").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(1);
         });
         it("should throw a 403 Forbidden error if a non-admin tries to delete a player", async () => {
-            await ownerLoggedIn(deleteRequest(2, 403), app);
+            await ownerLoggedIn(deleteRequest(testPlayer.id!, 403), app);
             const getAllRes = await request(app).get("/players").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(1);
         });
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
-            await deleteRequest(2, 403)(request(app));
+            await deleteRequest(testPlayer.id!, 403)(request(app));
             const getAllRes = await request(app).get("/players").expect(200);
             expect(getAllRes.body).toBeArrayOfSize(1);
         });

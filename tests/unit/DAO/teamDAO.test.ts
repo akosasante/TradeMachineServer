@@ -4,12 +4,12 @@ import logger from "../../../src/bootstrap/logger";
 import TeamDAO from "../../../src/DAO/TeamDAO";
 import User from "../../../src/models/user";
 import { TeamFactory } from "../../factories/TeamFactory";
-import { MockDb, mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
+import { MockObj, mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 import Team from "../../../src/models/team";
 import { Repository } from "typeorm";
 
 describe("TeamDAO", () => {
-    const mockTeamDb: MockDb = {
+    const mockTeamDb: MockObj = {
         find: jest.fn(),
         findOneOrFail: jest.fn(),
         save: jest.fn(),
@@ -21,7 +21,7 @@ describe("TeamDAO", () => {
 
     afterEach(async () => {
         Object.keys(mockTeamDb).forEach((action: string) => {
-            (mockTeamDb[action as keyof MockDb] as jest.Mock).mockClear();
+            (mockTeamDb[action as keyof MockObj] as jest.Mock).mockClear();
         });
 
         mockExecute.mockClear();

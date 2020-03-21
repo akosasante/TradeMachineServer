@@ -5,13 +5,10 @@ import UserController from "../../../../src/api/routes/UserController";
 import logger from "../../../../src/bootstrap/logger";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import { UserFactory } from "../../../factories/UserFactory";
+import { MockObj } from "../../DAO/daoHelpers";
 
 describe("UserController", () => {
-    interface MockDAO {
-        [key: string]: jest.Mock<any, any>;
-    }
-
-    const mockUserDAO: MockDAO = {
+    const mockUserDAO: MockObj = {
         getAllUsers: jest.fn(),
         getAllUsersWithTeams: jest.fn(),
         getUserById: jest.fn(),

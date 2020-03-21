@@ -4,11 +4,11 @@ import logger from "../../../src/bootstrap/logger";
 import UserDAO from "../../../src/DAO/UserDAO";
 import User from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
-import { mockDeleteChain, mockExecute, mockWhereInIds, MockDb } from "./daoHelpers";
+import { mockDeleteChain, mockExecute, mockWhereInIds, MockObj } from "./daoHelpers";
 import { Repository } from "typeorm";
 
 describe("UserDAO", () => {
-    const mockUserDb: MockDb = {
+    const mockUserDb: MockObj = {
         find: jest.fn(),
         findOneOrFail: jest.fn(),
         findOne: jest.fn(),
@@ -22,7 +22,7 @@ describe("UserDAO", () => {
 
     afterEach(async () => {
         Object.keys(mockUserDb).forEach((action: string) => {
-            (mockUserDb[action as keyof MockDb] as jest.Mock).mockClear();
+            (mockUserDb[action as keyof MockObj] as jest.Mock).mockClear();
         });
 
         mockExecute.mockClear();

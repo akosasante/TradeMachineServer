@@ -5,6 +5,6 @@ export const mockDeleteChain = {
         {whereInIds: mockWhereInIds}),
 };
 
-export interface MockDb {
+export interface MockObj {
     [key: string]: jest.Mock<any, any>;
 }
