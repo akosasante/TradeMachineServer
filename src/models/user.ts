@@ -30,6 +30,9 @@ export default class User extends BaseModel {
     @Column({nullable: true})
     public slackUsername?: string;
 
+    @Column({nullable: true})
+    public csvName?: string;
+
     @Column({ type: "enum", enum: Role, default: Role.OWNER })
     public role?: Role;
 

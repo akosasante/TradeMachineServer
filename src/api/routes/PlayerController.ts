@@ -1,16 +1,5 @@
-import {
-    Authorized,
-    Body,
-    Delete,
-    Get,
-    JsonController,
-    Param,
-    Post,
-    Put,
-    QueryParam,
-    QueryParams,
-    UploadedFile
-} from "routing-controllers";
+import { Authorized, Body, Delete, Get, JsonController, Param,
+    Post, Put, QueryParam, QueryParams, UploadedFile } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import { WriteMode } from "../../csv/CsvUtils";
@@ -46,7 +35,7 @@ export default class PlayerController {
     }
 
     @Get("/:id([0-9]+)")
-    public async getOnePlayer(@Param("id") id: number): Promise<Player> {
+    public async getOnePlayer(@Param("id") id: string): Promise<Player> {
         logger.debug("get one player endpoint");
         return await this.dao.getPlayerById(id);
     }
@@ -59,9 +48,9 @@ export default class PlayerController {
 
     @Authorized(Role.ADMIN)
     @Post("/")
-    public async createPlayer(@Body() playerObj: Partial<Player>): Promise<Player> {
+    public async createPlayers(@Body() playerObj: Partial<Player>[]): Promise<Player[]> {
         logger.debug("create player endpoint");
-        return await this.dao.createPlayer(playerObj);
+        return await this.dao.createPlayers(playerObj);
     }
 
     @Authorized(Role.ADMIN)
@@ -74,14 +63,14 @@ export default class PlayerController {
 
     @Authorized(Role.ADMIN)
     @Put("/:id([0-9]+)")
-    public async updatePlayer(@Param("id") id: number, @Body() playerObj: Partial<Player>): Promise<Player> {
+    public async updatePlayer(@Param("id") id: string, @Body() playerObj: Partial<Player>): Promise<Player> {
         logger.debug("update player endpoint");
         return await this.dao.updatePlayer(id, playerObj);
     }
 
     @Authorized(Role.ADMIN)
     @Delete("/:id([0-9]+)")
-    public async deletePlayer(@Param("id") id: number) {
+    public async deletePlayer(@Param("id") id: string) {
         logger.debug("delete player endpoint");
         const result = await this.dao.deletePlayer(id);
         logger.debug(`delete successful: ${inspect(result)}`);

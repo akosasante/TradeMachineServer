@@ -9,6 +9,8 @@ import TeamDAO from "../../../../src/DAO/TeamDAO";
 import Player, { LeagueLevel } from "../../../../src/models/player";
 import { PlayerFactory } from "../../../factories/PlayerFactory";
 import { TeamFactory } from "../../../factories/TeamFactory";
+import logger from "../../../../src/bootstrap/logger";
+import { v4 as uuid } from "uuid";
 
 jest.mock("../../../../src/csv/PlayerParser");
 const mockedCsvParser = mocked(processMinorLeagueCsv);
@@ -18,17 +20,24 @@ describe("PlayerController", () => {
         getAllPlayers: jest.fn(),
         getPlayerById: jest.fn(),
         findPlayers: jest.fn(),
-        createPlayer: jest.fn(),
+        createPlayers: jest.fn(),
         updatePlayer: jest.fn(),
         deletePlayer: jest.fn(),
     };
     const mockTeamDAO = {
         getAllTeams: jest.fn(),
     };
+
     const testPlayer = PlayerFactory.getPlayer(undefined, undefined, {id: 1});
     const playerController = new PlayerController(mockPlayerDAO as unknown as PlayerDAO,
         mockTeamDAO as unknown as TeamDAO);
 
+    beforeAll(() => {
+        logger.debug("~~~~~~PLAYER CONTROLLER TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~PLAYER CONTROLLER TESTS COMPLETE~~~~~~");
+    });
     afterEach(() => {
         [mockPlayerDAO, mockTeamDAO].map(mockedThing =>
             Object.entries(mockedThing).forEach((kvp: [string, jest.Mock<any, any>]) => {
@@ -80,7 +89,7 @@ describe("PlayerController", () => {
             mockPlayerDAO.getPlayerById.mockImplementation(() => {
                 throw new EntityNotFoundError(Player, "ID not found.");
             });
-            await expect(playerController.getOnePlayer(9999))
+            await expect(playerController.getOnePlayer(uuid()))
                 .rejects.toThrow(EntityNotFoundError);
         });
     });
@@ -103,20 +112,20 @@ describe("PlayerController", () => {
         });
     });
 
-    describe("createPlayer method", () => {
+    describe("createPlayers method", () => {
         it("should create a player", async () => {
-            mockPlayerDAO.createPlayer.mockReturnValue(testPlayer);
-            const res = await playerController.createPlayer(testPlayer.parse());
+            mockPlayerDAO.createPlayers.mockReturnValue(testPlayer);
+            const res = await playerController.createPlayers([testPlayer.parse()]);
 
-            expect(mockPlayerDAO.createPlayer).toHaveBeenCalledTimes(1);
-            expect(mockPlayerDAO.createPlayer).toHaveBeenCalledWith(testPlayer.parse());
+            expect(mockPlayerDAO.createPlayers).toHaveBeenCalledTimes(1);
+            expect(mockPlayerDAO.createPlayers).toHaveBeenCalledWith([testPlayer.parse()]);
             expect(res).toEqual(testPlayer);
         });
         it("should bubble up any errors from the DAO", async () => {
-            mockPlayerDAO.createPlayer.mockImplementation(() => {
+            mockPlayerDAO.createPlayers.mockImplementation(() => {
                 throw new Error("Generic Error");
             });
-            await expect(playerController.createPlayer(testPlayer.parse()))
+            await expect(playerController.createPlayers([testPlayer.parse()]))
                 .rejects.toThrow(Error);
         });
     });
@@ -134,7 +143,7 @@ describe("PlayerController", () => {
             mockPlayerDAO.updatePlayer.mockImplementation(() => {
                 throw new EntityNotFoundError(Player, "ID not found.");
             });
-            await expect(playerController.updatePlayer(9999, testPlayer.parse()))
+            await expect(playerController.updatePlayer(uuid(), testPlayer.parse()))
                 .rejects.toThrow(EntityNotFoundError);
         });
     });
@@ -152,7 +161,7 @@ describe("PlayerController", () => {
             mockPlayerDAO.deletePlayer.mockImplementation(() => {
                 throw new EntityNotFoundError(Player, "ID not found.");
             });
-            await expect(playerController.deletePlayer(9999))
+            await expect(playerController.deletePlayer(uuid()))
                 .rejects.toThrow(EntityNotFoundError);
         });
     });
@@ -167,15 +176,14 @@ describe("PlayerController", () => {
             expect(mockTeamDAO.getAllTeams).toHaveBeenCalledWith();
         });
         it("should call the minor league player processor method", async () => {
-            const teams = TeamFactory.getTeam();
+            const teams = [TeamFactory.getTeam()];
             mockTeamDAO.getAllTeams.mockResolvedValueOnce(teams);
-            await playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode);
+            mockedCsvParser.mockResolvedValueOnce([testPlayer]);
+
+            const res = await playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode);
+
             expect(mockedCsvParser).toHaveBeenCalledTimes(1);
             expect(mockedCsvParser).toHaveBeenCalledWith(testFile.path, teams, mockPlayerDAO, overwriteMode);
-        });
-        it("should call the return an array of players", async () => {
-            mockedCsvParser.mockResolvedValueOnce([testPlayer]);
-            const res = await playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode);
             expect(res).toEqual([testPlayer]);
         });
         it("should reject if userDAO throws an error", async () => {

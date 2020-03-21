@@ -4,11 +4,11 @@ import { Repository } from "typeorm";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import Player, { LeagueLevel } from "../../../src/models/player";
 import { PlayerFactory } from "../../factories/PlayerFactory";
-import { MockDb, mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
+import { MockObj, mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 import logger from "../../../src/bootstrap/logger";
 
 describe("PlayerDAO", () => {
-    const mockPlayerDb: MockDb = {
+    const mockPlayerDb: MockObj = {
         find: jest.fn(),
         findOneOrFail: jest.fn(),
         save: jest.fn(),
@@ -23,7 +23,7 @@ describe("PlayerDAO", () => {
 
     afterEach(() => {
         Object.keys(mockPlayerDb).forEach((action: string) => {
-            (mockPlayerDb[action as keyof MockDb] as jest.Mock).mockClear();
+            (mockPlayerDb[action as keyof MockObj] as jest.Mock).mockClear();
         });
 
         mockExecute.mockClear();
