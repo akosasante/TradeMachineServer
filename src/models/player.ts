@@ -13,7 +13,7 @@ export enum LeagueLevel {
 export default class Player extends BaseModel {
     @Column()
     @Index()
-    public name: string;
+    public name!: string;
 
     @Column({type: "enum", enum: LeagueLevel, nullable: true})
     public league?: LeagueLevel;
@@ -30,14 +30,8 @@ export default class Player extends BaseModel {
     @OneToMany(type => TradeItem, tradeItem => tradeItem.player)
     public tradeItems?: TradeItem[];
 
-    constructor(playerObj: Partial<Player> = {}) {
+    constructor(props: Partial<Player> & Required<Pick<Player, "name">>) {
         super();
-        Object.assign(this, {id: playerObj.id});
-        this.name = playerObj.name || "";
-        this.league = playerObj.league;
-        this.mlbTeam = playerObj.mlbTeam;
-        this.leagueTeam = playerObj.leagueTeam;
-        this.meta = playerObj.meta;
-        this.tradeItems = playerObj.tradeItems;
+        Object.assign(this, props);
     }
 }

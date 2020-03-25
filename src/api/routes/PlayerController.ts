@@ -1,5 +1,7 @@
-import { Authorized, Body, Delete, Get, JsonController, Param,
-    Post, Put, QueryParam, QueryParams, UploadedFile } from "routing-controllers";
+import {
+    Authorized, Body, Delete, Get, JsonController, NotFoundError, Param,
+    Post, Put, QueryParam, QueryParams, UploadedFile
+} from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import { WriteMode } from "../../csv/CsvUtils";
@@ -8,7 +10,7 @@ import PlayerDAO from "../../DAO/PlayerDAO";
 import TeamDAO from "../../DAO/TeamDAO";
 import Player, { LeagueLevel } from "../../models/player";
 import { Role } from "../../models/user";
-import { cleanupQuery, fileUploadOptions as uploadOpts } from "../helpers/ApiHelpers";
+import {cleanupQuery, fileUploadOptions as uploadOpts, UUIDPattern} from "../helpers/ApiHelpers";
 
 @JsonController("/players")
 export default class PlayerController {
@@ -34,7 +36,7 @@ export default class PlayerController {
         return players;
     }
 
-    @Get("/:id([0-9]+)")
+    @Get(UUIDPattern)
     public async getOnePlayer(@Param("id") id: string): Promise<Player> {
         logger.debug("get one player endpoint");
         return await this.dao.getPlayerById(id);
@@ -43,7 +45,12 @@ export default class PlayerController {
     @Get("/search")
     public async findPlayersByQuery(@QueryParams() query: Partial<Player>): Promise<Player[]> {
         logger.debug(`searching for player with props: ${inspect(query)}`);
-        return await this.dao.findPlayers(cleanupQuery(query as {[key: string]: string}));
+        const players = await this.dao.findPlayers(cleanupQuery(query as {[key: string]: string}));
+        if (players.length) {
+            return players;
+        } else {
+            throw new NotFoundError("No players found matching that query");
+        }
     }
 
     @Authorized(Role.ADMIN)
@@ -62,14 +69,14 @@ export default class PlayerController {
     }
 
     @Authorized(Role.ADMIN)
-    @Put("/:id([0-9]+)")
+    @Put(UUIDPattern)
     public async updatePlayer(@Param("id") id: string, @Body() playerObj: Partial<Player>): Promise<Player> {
         logger.debug("update player endpoint");
         return await this.dao.updatePlayer(id, playerObj);
     }
 
     @Authorized(Role.ADMIN)
-    @Delete("/:id([0-9]+)")
+    @Delete(UUIDPattern)
     public async deletePlayer(@Param("id") id: string) {
         logger.debug("delete player endpoint");
         const result = await this.dao.deletePlayer(id);

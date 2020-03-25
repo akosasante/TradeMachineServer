@@ -61,11 +61,10 @@ export async function makePatchRequest<T>(agent: request.SuperTest<request.Test>
         .expect(expectedStatus);
 }
 
-export function stringifyQuery(query: any) {
-    return "?".concat(Object.keys(query).map(key => {
-        let val = query[key];
+export function stringifyQuery(query: {[key: string]: string}) {
+    return "?".concat(Object.entries(query).map(([key, val]) => {
         if (typeof val === "object") val = stringifyQuery(val);
-        return `${key}=${encodeURIComponent(`${val}`.replace(/\s/g, "_"))}`;
+        return `${key}=${encodeURIComponent(val)}`;
     }).join("&"));
 }
 

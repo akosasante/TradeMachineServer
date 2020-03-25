@@ -1,5 +1,5 @@
 import { name as fakeName } from "faker";
-import TeamDO from "../../src/models/team";
+import Team from "../../src/models/team";
 import { v4 as uuid } from "uuid";
 
 export class TeamFactory {
@@ -10,7 +10,7 @@ export class TeamFactory {
     }
 
     public static getTeam(name = TeamFactory.NAME, espnId = 1, rest = {}) {
-        return new TeamDO(TeamFactory.getTeamObject(name, espnId, rest));
+        return new Team(TeamFactory.getTeamObject(name, espnId, rest));
     }
 
     public static getTeams(num: number) {
