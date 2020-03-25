@@ -135,7 +135,7 @@ describe("Team API endpoints", () => {
 
     describe("GET /teams/search?queryOpts (get team by query)", () => {
         const findRequest = (query: Partial<Team>, status: number = 200) =>
-            makeGetRequest(request(app), `/teams/search${stringifyQuery(query)}`, status);
+            makeGetRequest(request(app), `/teams/search${stringifyQuery(query as { [key: string]: string; })}`, status);
 
         it("should return teams (public vers.) for the given query", async () => {
             const {body} = await findRequest({espnId: 2});
@@ -157,7 +157,7 @@ describe("Team API endpoints", () => {
             await doLogout(request.agent(app));
         });
 
-        it("should return the updated team (public vers.)", async () => {
+        it("should return the updated team", async () => {
             const {body} = await adminLoggedIn(putTeamRequest(testTeam.id!, updatedTeamObj), app);
             expect(body).toMatchObject(updatedTeam);
         });

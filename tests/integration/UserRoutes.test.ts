@@ -111,9 +111,9 @@ describe("User API endpoints", () => {
         const getAllRequest = (status: number = 200) => makeGetRequest(request(app), "/users", status);
 
         it("should return an array of all the users in the db", async () => {
-            const res = await getAllRequest();
-            expect(res.body).toBeArrayOfSize(4);
-            const returnedAdmin = res.body.find((user: User) => user.id === adminUser.id);
+            const {body} = await getAllRequest();
+            expect(body).toBeArrayOfSize(4);
+            const returnedAdmin = body.find((user: User) => user.id === adminUser.id);
             expect(returnedAdmin).toMatchObject({...adminUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
