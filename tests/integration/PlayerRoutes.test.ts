@@ -17,11 +17,10 @@ import {
     adminLoggedIn, DatePatternRegex, doLogout, makeDeleteRequest, makeGetRequest, makePostRequest,
     makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, stringifyQuery
 } from "./helpers";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
 import startServer from "../../src/bootstrap/app";
-import {inspect} from "util";
 
 dotenvConfig({path: resolvePath(__dirname, "../.env")});
 
@@ -130,13 +129,13 @@ describe("Player API endpoints", () => {
 
         it("should return an array of all players in the db", async () => {
             const {body} = await getAllRequest();
-            expect(body).toBeArrayOfSize(2);
-
             const expected = {...testPlayer,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
             };
             const returnedPlayer = body.find((player: Player) => player.id === testPlayer.id);
+
+            expect(body).toBeArrayOfSize(2);
             expect(returnedPlayer).toMatchObject(expected);
         });
         it("should return an array of all players in a given league or leagues", async () => {
@@ -161,11 +160,11 @@ describe("Player API endpoints", () => {
 
         it("should return a single player for the given id", async () => {
             const {body} = await getOneRequest(testPlayer.id!);
-            expect(body).toBeObject();
             const expected = {...testPlayer,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
             };
+            expect(body).toBeObject();
             expect(body).toMatchObject(expected);
         });
         it("should throw a 404 Not Found error if there is no player with that ID", async () => {
@@ -179,12 +178,11 @@ describe("Player API endpoints", () => {
 
         it("should return players for the given query", async () => {
             const {body} = await findRequest({mlbTeam: "Boston Red Sox"});
-
-            expect(body).toBeArrayOfSize(1);
             const expected = {...testPlayer2,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
             };
+            expect(body).toBeArrayOfSize(1);
             expect(body[0]).toMatchObject(expected);
         });
         it("should throw a 404 error if no player with that query is found", async () => {

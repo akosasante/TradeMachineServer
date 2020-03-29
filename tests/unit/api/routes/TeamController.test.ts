@@ -19,7 +19,7 @@ describe("TeamController", () => {
         deleteTeam: jest.fn(),
         updateTeamOwners: jest.fn(),
     };
-    const testTeam = TeamFactory.getTeam(undefined, undefined, { id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b" });
+    const testTeam = TeamFactory.getTeam();
     const teamController = new TeamController(mockTeamDAO as unknown as TeamDAO);
 
     beforeAll(() => {

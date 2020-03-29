@@ -19,7 +19,7 @@ describe("UserController", () => {
         deleteUser: jest.fn(),
     };
     const userController = new UserController(mockUserDAO as unknown as UserDAO);
-    const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
+    const testUser = UserFactory.getUser("j@gm.com", "Jatheesh");
 
     beforeAll(() => {
         logger.debug("~~~~~~USER CONTROLLER TESTS BEGIN~~~~~~");
