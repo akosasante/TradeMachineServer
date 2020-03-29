@@ -31,10 +31,10 @@ describe("PlayerDAO", () => {
     });
 
     beforeAll(() => {
-        logger.debug("~~~~~~USER DAO TESTS BEGIN~~~~~~");
+        logger.debug("~~~~~~PLAYER DAO TESTS BEGIN~~~~~~");
     });
     afterAll(() => {
-        logger.debug("~~~~~~USER DAO TESTS COMPLETE~~~~~~");
+        logger.debug("~~~~~~PLAYER DAO TESTS COMPLETE~~~~~~");
     });
 
     it("getAllPlayers - should call the db find method once with no args", async () => {

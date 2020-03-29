@@ -1,8 +1,4 @@
-import { NotFoundError } from "routing-controllers";
-import {
-    Connection, DeleteResult, FindConditions, FindManyOptions,
-    getConnection, In, InsertResult, IsNull, Not, Repository
-} from "typeorm";
+import { DeleteResult, FindConditions, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
 import Player, { LeagueLevel } from "../models/player";
 
 export default class PlayerDAO {
