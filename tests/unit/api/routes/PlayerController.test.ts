@@ -28,7 +28,7 @@ describe("PlayerController", () => {
         getAllTeams: jest.fn(),
     };
 
-    const testPlayer = PlayerFactory.getPlayer(undefined, undefined, {id: 1});
+    const testPlayer = PlayerFactory.getPlayer();
     const playerController = new PlayerController(mockPlayerDAO as unknown as PlayerDAO,
         mockTeamDAO as unknown as TeamDAO);
 
@@ -186,7 +186,7 @@ describe("PlayerController", () => {
             expect(mockedCsvParser).toHaveBeenCalledWith(testFile.path, teams, mockPlayerDAO, overwriteMode);
             expect(res).toEqual([testPlayer]);
         });
-        it("should reject if userDAO throws an error", async () => {
+        it("should reject if teamDAO throws an error", async () => {
             mockTeamDAO.getAllTeams.mockImplementationOnce(() => {
                 throw new Error();
             });
