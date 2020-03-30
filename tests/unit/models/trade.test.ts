@@ -2,27 +2,45 @@ import "jest";
 import "jest-extended";
 import { clone } from "lodash";
 import { LeagueLevel } from "../../../src/models/player";
-import Team from "../../../src/models/team";
 import Trade from "../../../src/models/trade";
-import TradeItem, { TradeItemType } from "../../../src/models/tradeItem";
-import TradeParticipant, { TradeParticipantType } from "../../../src/models/tradeParticipant";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import { TeamFactory } from "../../factories/TeamFactory";
 import { TradeFactory } from "../../factories/TradeFactory";
+import logger from "../../../src/bootstrap/logger";
+import tradeParticipant from "../../../src/models/tradeParticipant";
 
 describe("Trade Class", () => {
-    const minorPlayer = PlayerFactory.getPlayer(undefined, LeagueLevel.HIGH);
-    const majorPlayer = PlayerFactory.getPlayer("Pete Buttjudge", LeagueLevel.MAJOR);
-    const pick = DraftPickFactory.getPick();
+    beforeAll(() => {
+        logger.debug("~~~~~~TRADE TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~TRADE TESTS COMPLETE~~~~~~");
+    });
+
     const [creatorTeam, recipientTeam] = TeamFactory.getTeams(2);
-    const sender = TradeFactory.getTradeCreator(creatorTeam);
-    const recipient = TradeFactory.getTradeRecipient(recipientTeam);
-    const tradedMajorPlayer = TradeFactory.getTradedMajorPlayer(majorPlayer, creatorTeam, recipientTeam);
-    const tradedMinorPlayer = TradeFactory.getTradedMinorPlayer(minorPlayer, creatorTeam, recipientTeam);
+
+    const [minorPlayer, majorPlayer] = [
+        PlayerFactory.getPlayer(undefined, LeagueLevel.HIGH),
+        PlayerFactory.getPlayer("Pete Buttjudge", LeagueLevel.MAJOR),
+        ];
+    const [tradedMajorPlayer, tradedMinorPlayer] = [
+        TradeFactory.getTradedMajorPlayer(majorPlayer, creatorTeam, recipientTeam),
+        TradeFactory.getTradedMinorPlayer(minorPlayer, creatorTeam, recipientTeam),
+        ];
+
+    const pick = DraftPickFactory.getPick();
     const tradedPick = TradeFactory.getTradedPick(pick, recipientTeam, creatorTeam);
+
     const tradeItems = [tradedMajorPlayer, tradedMinorPlayer, tradedPick];
-    const testTrade = new Trade({id: 1, tradeItems, tradeParticipants: [sender, recipient]});
+    const testTrade = TradeFactory.getTrade(tradeItems, []);
+
+    const [sender, recipient] = [
+        TradeFactory.getTradeCreator(creatorTeam, testTrade),
+        TradeFactory.getTradeRecipient(recipientTeam, testTrade),
+        ];
+    testTrade.tradeParticipants = [sender, recipient];
+    const testTradeObj = { id: testTrade.id, tradeItems, tradeParticipants: [sender, recipient] };
 
     describe("constructor", () => {
         it("should construct the obj as expected", () => {
@@ -54,7 +72,15 @@ describe("Trade Class", () => {
 
     describe("instance methods", () => {
         it("toString/0", () => {
-            expect(testTrade.toString()).toMatch(/Trade#\d+ with \d+ trade entities/);
+            expect(testTrade.toString()).toMatch(testTrade.id!);
+            expect(testTrade.toString()).toMatch("Trade#");
+        });
+
+        it("parse/1 - should take a trade and return a POJO", () => {
+            expect(testTrade).toBeInstanceOf(Trade);
+            expect(testTrade.parse()).not.toBeInstanceOf(Trade);
+            expect(testTrade.parse()).toEqual(testTradeObj);
+            expect(testTrade.parse()).toEqual(expect.any(Object));
         });
 
         describe("isValid/0", () => {
@@ -107,79 +133,6 @@ describe("Trade Class", () => {
             it("should return true if valid trade", () => {
                 expect(testTrade.isValid()).toBeTrue();
             });
-        });
-
-        describe("constructRelations/0", () => {
-            // @ts-ignore
-            const trade = new Trade({
-                tradeItems: [
-                    {tradeItemType: TradeItemType.PLAYER, player: majorPlayer, sender: creatorTeam,
-                        recipient: recipientTeam },
-                    {tradeItemType: TradeItemType.PICK, pick, sender: recipientTeam, recipient: creatorTeam },
-                    ],
-                tradeParticipants: [
-                    {participantType: TradeParticipantType.RECIPIENT, team: recipientTeam},
-                    {participantType: TradeParticipantType.CREATOR, team: creatorTeam},
-                ],
-            });
-            expect(trade.tradeItems[0]).not.toBeInstanceOf(TradeItem);
-            expect(trade.tradeParticipants[0]).not.toBeInstanceOf(TradeParticipant);
-            trade.constructRelations();
-            expect(trade.tradeItems[0]).toBeInstanceOf(TradeItem);
-            expect(trade.tradeParticipants[0]).toBeInstanceOf(TradeParticipant);
-        });
-
-        describe("equals/2", () => {
-            const copyTrade = clone(testTrade);
-
-            const diffParticipants = clone(testTrade);
-            const diffRecipient = new TradeParticipant({
-                participantType: TradeParticipantType.RECIPIENT,
-                team: new Team({name: "Mr. Mime Mob", espnId: 3})});
-            diffParticipants.tradeParticipants = [sender, diffRecipient];
-
-            const diffItems = clone(testTrade);
-            diffItems.tradeItems = [tradedMinorPlayer];
-
-            it("should return true if the two instances are identical. Excludes = default", () => {
-                expect(testTrade.equals(copyTrade)).toBeTrue();
-            });
-            it("should return true if the two instances are identical considering the excludes", () => {
-                expect(testTrade.equals(diffParticipants, {tradeParticipants: true})).toBeTrue();
-            });
-            it("should throw a useful error if something doesn't match (complex props)", () => {
-                expect(() => testTrade.equals(diffParticipants))
-                    .toThrowWithMessage(Error, /Not matching: tradeParticipants/);
-                expect(() => testTrade.equals(diffItems)).toThrowWithMessage(Error, /Not matching: tradeItems/);
-            });
-        });
-
-        it("mapByTradeItemType/0", () => {
-            const expectedMap = {
-                tradeId: testTrade.id,
-                majorLeaguePlayers: [tradedMajorPlayer],
-                minorLeaguePlayers: [tradedMinorPlayer],
-                picks: [tradedPick],
-            };
-            expect(testTrade.mapByTradeItemType()).toEqual(expectedMap);
-        });
-
-        it("mapBySender/0", () => {
-            const expectedMap = {
-                tradeId: testTrade.id,
-                [creatorTeam.name]: [tradedMajorPlayer, tradedMinorPlayer],
-                [recipientTeam.name]: [tradedPick],
-            };
-            expect(testTrade.mapBySender()).toEqual(expectedMap);
-        });
-
-        it("mapByRecipient/0", () => {
-            const expectedMap = {
-                tradeId: testTrade.id,
-                [creatorTeam.name]: [tradedPick],
-                [recipientTeam.name]: [tradedMajorPlayer, tradedMinorPlayer],
-            };
-            expect(testTrade.mapByRecipient()).toEqual(expectedMap);
         });
     });
 });

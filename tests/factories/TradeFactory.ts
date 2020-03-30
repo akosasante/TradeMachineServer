@@ -5,15 +5,20 @@ import TradeParticipant, { TradeParticipantType } from "../../src/models/tradePa
 import { DraftPickFactory } from "./DraftPickFactory";
 import { PlayerFactory } from "./PlayerFactory";
 import { TeamFactory } from "./TeamFactory";
+import { v4 as uuid } from "uuid";
+import logger from "../../src/bootstrap/logger";
+import Team from "../../src/models/team";
 
 export class TradeFactory {
     public static getTradeObject(tradeItems = TradeFactory.getTradeItems(),
-                                 tradeParticipants = TradeFactory.getTradeParticipants(), rest = {}) {
-        return {tradeItems, tradeParticipants, ...rest};
+                                 tradeParticipants: TradeParticipant[] = TradeFactory.getTradeParticipants(),
+                                 rest = {}) {
+        return {tradeItems, tradeParticipants, id: uuid(), ...rest};
     }
 
     public static getTrade(tradeItems = TradeFactory.getTradeItems(),
-                           tradeParticipants = TradeFactory.getTradeParticipants(), rest = {}) {
+                           tradeParticipants: TradeParticipant[] = TradeFactory.getTradeParticipants(),
+                           rest = {}) {
         return new Trade(TradeFactory.getTradeObject(tradeItems, tradeParticipants, rest));
     }
 
@@ -30,26 +35,32 @@ export class TradeFactory {
         return [creator, recipient];
     }
 
-    public static getTradedMinorPlayer(player = PlayerFactory.getPlayer(), sender = TeamFactory.getTeam(),
-                                       recipient = TeamFactory.getTeam(), rest = {}) {
-        return new TradeItem({tradeItemType: TradeItemType.PLAYER, player, sender, recipient, ...rest});
+    public static getTradedMinorPlayer(player = PlayerFactory.getPlayer(),
+                                       sender = TeamFactory.getTeam(),
+                                       recipient = TeamFactory.getTeam(),
+                                       rest = {}) {
+        return new TradeItem({id: uuid(), tradeItemType: TradeItemType.PLAYER, tradeItemId: player.id!, entity: player, sender, recipient, ...rest});
     }
 
     public static getTradedMajorPlayer(player = PlayerFactory.getPlayer(undefined, LeagueLevel.MAJOR),
-                                       sender = TeamFactory.getTeam(), recipient = TeamFactory.getTeam(), rest = {}) {
-        return new TradeItem({tradeItemType: TradeItemType.PLAYER, player, sender, recipient, ...rest});
+                                       sender = TeamFactory.getTeam(),
+                                       recipient = TeamFactory.getTeam(),
+                                       rest = {}) {
+        return new TradeItem({id: uuid(), tradeItemType: TradeItemType.PLAYER, tradeItemId: player.id!, entity: player, sender, recipient, ...rest});
     }
 
-    public static getTradedPick(pick = DraftPickFactory.getPick(), sender = TeamFactory.getTeam(),
-                                recipient = TeamFactory.getTeam(), rest = {}) {
-        return new TradeItem({tradeItemType: TradeItemType.PICK, pick, sender, recipient, ...rest});
+    public static getTradedPick(pick = DraftPickFactory.getPick(),
+                                sender = TeamFactory.getTeam(),
+                                recipient = TeamFactory.getTeam(),
+                                rest = {}) {
+        return new TradeItem({id: uuid(), tradeItemType: TradeItemType.PICK, tradeItemId: pick.id!, entity: pick, sender, recipient, ...rest});
     }
 
-    public static getTradeCreator(team = TeamFactory.getTeam()) {
-        return new TradeParticipant({participantType: TradeParticipantType.CREATOR, team});
+    public static getTradeCreator(team?: Team, trade?: Trade) {
+        return new TradeParticipant({id: uuid(), participantType: TradeParticipantType.CREATOR, team, trade});
     }
 
-    public static getTradeRecipient(team = TeamFactory.getTeam()) {
-        return new TradeParticipant({participantType: TradeParticipantType.RECIPIENT, team});
+    public static getTradeRecipient(team = TeamFactory.getTeam(), trade = TradeFactory.getTrade()) {
+        return new TradeParticipant({id: uuid(), participantType: TradeParticipantType.RECIPIENT, trade, team});
     }
 }
