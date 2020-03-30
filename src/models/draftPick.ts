@@ -25,9 +25,6 @@ export default class DraftPick extends BaseModel {
     @ManyToOne(type => Team, team => team.originalDraftPicks, {eager: true, onDelete: "SET NULL"})
     public originalOwner?: Team;
 
-    @OneToMany(type => TradeItem, tradeItem => tradeItem.pick)
-    public tradeItems?: TradeItem[];
-
     constructor(props: Partial<DraftPick> & Required<Pick<DraftPick, "season" | "pickNumber" | "round" | "type">>) {
         super();
         Object.assign(this, props);

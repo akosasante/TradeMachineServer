@@ -1,7 +1,6 @@
 import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
 import { BaseModel } from "./base";
 import Team from "./team";
-import TradeItem from "./tradeItem";
 
 export enum LeagueLevel {
     MAJOR = "Majors",
@@ -26,9 +25,6 @@ export default class Player extends BaseModel {
 
     @ManyToOne(type => Team, team => team.players, {onDelete: "SET NULL"})
     public leagueTeam?: Team;
-
-    @OneToMany(type => TradeItem, tradeItem => tradeItem.player)
-    public tradeItems?: TradeItem[];
 
     constructor(props: Partial<Player> & Required<Pick<Player, "name">>) {
         super();
