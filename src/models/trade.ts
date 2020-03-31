@@ -8,6 +8,9 @@ import TradeParticipant, { TradeParticipantType } from "./tradeParticipant";
 
 @Entity()
 export default class Trade extends BaseModel {
+    public static isValid(trade: Partial<Trade>) {
+        return new Trade(trade).isValid();
+    }
 
     public get creator(): Team|undefined {
         const creator = (this.tradeParticipants || []).find(part =>

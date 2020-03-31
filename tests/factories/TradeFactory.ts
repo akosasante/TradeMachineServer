@@ -16,22 +16,24 @@ export class TradeFactory {
         return {tradeItems, tradeParticipants, id: uuid(), ...rest};
     }
 
-    public static getTrade(tradeItems = TradeFactory.getTradeItems(),
-                           tradeParticipants: TradeParticipant[] = TradeFactory.getTradeParticipants(),
+    public static getTrade(items?: TradeItem[],
+                           participants?: TradeParticipant[],
                            rest = {}) {
+        const tradeParticipants = participants || TradeFactory.getTradeParticipants();
+        const tradeItems = items || TradeFactory.getTradeItems(tradeParticipants[0].team, tradeParticipants[1].team);
         return new Trade(TradeFactory.getTradeObject(tradeItems, tradeParticipants, rest));
     }
 
-    public static getTradeItems() {
-        const majorPlayer = TradeFactory.getTradedMajorPlayer(PlayerFactory.getPlayer("Pete Buttjudge"));
-        const minorPlayer = TradeFactory.getTradedMinorPlayer(PlayerFactory.getPlayer());
-        const pick = TradeFactory.getTradedPick();
+    public static getTradeItems(sender?: Team, recipient?: Team) {
+        const majorPlayer = TradeFactory.getTradedMajorPlayer(PlayerFactory.getPlayer("Pete Buttjudge"), sender, recipient);
+        const minorPlayer = TradeFactory.getTradedMinorPlayer(PlayerFactory.getPlayer(), recipient, sender);
+        const pick = TradeFactory.getTradedPick(DraftPickFactory.getPick(), sender, recipient);
         return [majorPlayer, minorPlayer, pick];
     }
 
-    public static getTradeParticipants() {
-        const creator = TradeFactory.getTradeCreator(TeamFactory.getTeam());
-        const recipient = TradeFactory.getTradeRecipient(TeamFactory.getTeam("Ditto Duo", 2));
+    public static getTradeParticipants(teamA = TeamFactory.getTeam(), teamB = TeamFactory.getTeam("Ditto Duo", 2)) {
+        const creator = TradeFactory.getTradeCreator(teamA);
+        const recipient = TradeFactory.getTradeRecipient(teamB);
         return [creator, recipient];
     }
 
@@ -60,7 +62,7 @@ export class TradeFactory {
         return new TradeParticipant({id: uuid(), participantType: TradeParticipantType.CREATOR, team, trade});
     }
 
-    public static getTradeRecipient(team = TeamFactory.getTeam(), trade = TradeFactory.getTrade()) {
+    public static getTradeRecipient(team?: Team, trade?: Trade) {
         return new TradeParticipant({id: uuid(), participantType: TradeParticipantType.RECIPIENT, trade, team});
     }
 }
