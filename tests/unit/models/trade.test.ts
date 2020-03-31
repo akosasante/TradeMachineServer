@@ -8,7 +8,6 @@ import { PlayerFactory } from "../../factories/PlayerFactory";
 import { TeamFactory } from "../../factories/TeamFactory";
 import { TradeFactory } from "../../factories/TradeFactory";
 import logger from "../../../src/bootstrap/logger";
-import tradeParticipant from "../../../src/models/tradeParticipant";
 
 describe("Trade Class", () => {
     beforeAll(() => {
@@ -133,6 +132,17 @@ describe("Trade Class", () => {
             it("should return true if valid trade", () => {
                 expect(testTrade.isValid()).toBeTrue();
             });
+        });
+    });
+
+    describe("static methods", () => {
+        it("Trade.isValid/1 should return true if a valid trade by passing to instance method", () => {
+            expect(Trade.isValid(testTrade)).toBeTrue();
+        });
+        it("Trade.isValid/1 should return false if an invalid trade by passing to instance method", () => {
+            const invalidTrade = clone(testTrade);
+            invalidTrade.tradeParticipants = [sender];
+            expect(Trade.isValid(invalidTrade)).toBeFalse();
         });
     });
 });

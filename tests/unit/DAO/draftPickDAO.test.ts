@@ -39,7 +39,7 @@ describe("DraftPickDAO", () => {
         logger.debug("~~~~~~DRAFT PICK DAO TESTS COMPLETE~~~~~~");
     });
 
-    it("getAllPicks - should call the db find method once with no args", async () => {
+    it("getAllPicks - should call the db find method once with option args", async () => {
         mockPickDb.find.mockReturnValueOnce([testPick1]);
         const defaultOpts = {order: {id: "ASC"}};
         const res = await draftPickDAO.getAllPicks();

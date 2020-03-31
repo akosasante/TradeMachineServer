@@ -1,4 +1,4 @@
-import {DeleteResult, FindManyOptions, getConnection, In, Repository} from "typeorm";
+import {DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository} from "typeorm";
 import Team from "../models/team";
 import User from "../models/user";
 
@@ -38,8 +38,8 @@ export default class TeamDAO {
     }
 
     public async createTeams(teamObjs: Partial<Team>[]): Promise<Team[]> {
-        const savedTeams = await this.teamDb.save(teamObjs);
-        return await this.teamDb.find({id: In(savedTeams.map(t => t.id))});
+        const result: InsertResult = await this.teamDb.insert(teamObjs);
+        return await this.teamDb.find({id: In(result.identifiers.map(({id}) => id))});
     }
 
     public async updateTeam(id: string, teamObj: Partial<Team>): Promise<Team> {

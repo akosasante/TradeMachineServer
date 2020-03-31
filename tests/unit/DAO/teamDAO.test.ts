@@ -12,7 +12,7 @@ describe("TeamDAO", () => {
     const mockTeamDb: MockObj = {
         find: jest.fn(),
         findOneOrFail: jest.fn(),
-        save: jest.fn(),
+        insert: jest.fn(),
         update: jest.fn(),
         createQueryBuilder: jest.fn(),
     };
@@ -35,7 +35,7 @@ describe("TeamDAO", () => {
         logger.debug("~~~~~~TEAM DAO TESTS COMPLETE~~~~~~");
     });
 
-    it("getAllTeams - should call the db find method once with no args", async () => {
+    it("getAllTeams - should call the db find method once with option args", async () => {
         mockTeamDb.find.mockReturnValueOnce([testTeam]);
         const defaultOpts = {order: {id: "ASC"}};
         const res = await teamDAO.getAllTeams();
@@ -91,12 +91,12 @@ describe("TeamDAO", () => {
     });
 
     it("createTeams - should call the db save once with all the teams passed in", async () => {
-        mockTeamDb.save.mockReturnValueOnce([testTeam]);
+        mockTeamDb.insert.mockReturnValueOnce({identifiers: [{id: testTeam.id!}], generatedMaps: [], raw: []});
         mockTeamDb.find.mockReturnValueOnce([testTeam]);
         const res = await teamDAO.createTeams([testTeam.parse()]);
 
-        expect(mockTeamDb.save).toHaveBeenCalledTimes(1);
-        expect(mockTeamDb.save).toHaveBeenCalledWith([testTeam.parse()]);
+        expect(mockTeamDb.insert).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.insert).toHaveBeenCalledWith([testTeam.parse()]);
         expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testTeam.id]}});
         expect(res).toEqual([testTeam]);

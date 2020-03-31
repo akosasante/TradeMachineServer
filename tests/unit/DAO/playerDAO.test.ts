@@ -37,7 +37,7 @@ describe("PlayerDAO", () => {
         logger.debug("~~~~~~PLAYER DAO TESTS COMPLETE~~~~~~");
     });
 
-    it("getAllPlayers - should call the db find method once with no args", async () => {
+    it("getAllPlayers - should call the db find method once with option args", async () => {
         mockPlayerDb.find.mockReturnValueOnce([testPlayer1]);
         const defaultOpts = {order: {id: "ASC"}};
         const res = await playerDAO.getAllPlayers();
