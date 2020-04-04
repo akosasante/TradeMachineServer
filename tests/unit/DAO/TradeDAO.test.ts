@@ -9,7 +9,6 @@ import logger from "../../../src/bootstrap/logger";
 import { v4 as uuid } from "uuid";
 import TradeItem from "../../../src/models/tradeItem";
 import TradeParticipant from "../../../src/models/tradeParticipant";
-import {inspect} from "util";
 
 
 describe("TradeDAO", () => {

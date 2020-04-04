@@ -54,7 +54,7 @@ public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
             .relation("tradeParticipants")
             .of(id)
             .addAndRemove(participantsToAdd, participantsToRemove);
-        return await this.getTradeById(id);
+        return await this.tradeDb.findOneOrFail(id);
     }
 
     public async updateItems(id: string, itemsToAdd: TradeItem[], itemsToRemove: TradeItem[]): Promise<Trade> {
@@ -64,6 +64,6 @@ public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
             .relation("tradeItems")
             .of(id)
             .addAndRemove(itemsToAdd, itemsToRemove);
-        return await this.getTradeById(id);
+        return await this.tradeDb.findOneOrFail(id);
     }
 }
