@@ -68,9 +68,7 @@ export default class TradeController {
             "tradeItemId");
 
         await this.dao.updateParticipants(id, participantsToAdd, participantsToRemove);
-        const x = await this.dao.updateItems(id, itemsToAdd, itemsToRemove);
-        console.debug(`i: ${inspect(x)}`);
-        return x;
+        return await this.dao.updateItems(id, itemsToAdd, itemsToRemove);
     }
 
     @Authorized(Role.ADMIN)

@@ -2,9 +2,8 @@ import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeor
 import Trade from "../models/trade";
 import TradeItem from "../models/tradeItem";
 import TradeParticipant from "../models/tradeParticipant";
+import { BadRequestError } from "routing-controllers";
 
-const relations = ["tradeParticipants", "tradeItems", "tradeParticipants.team", "tradeItems.sender",
-"tradeItems.recipient", "tradeItems.player", "tradeItems.pick"];
 
 export default class TradeDAO {
     private tradeDb: Repository<Trade>;
@@ -24,7 +23,7 @@ export default class TradeDAO {
 
 public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
         if (!Trade.isValid(tradeObj)) {
-            throw new Error("Trade is not valid");
+            throw new BadRequestError("Trade is not valid");
         }
 
         const saved = await this.tradeDb.save(tradeObj);

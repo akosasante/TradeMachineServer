@@ -5,6 +5,7 @@ import Player, { LeagueLevel } from "./player";
 import Team from "./team";
 import TradeItem from "./tradeItem";
 import TradeParticipant, { TradeParticipantType } from "./tradeParticipant";
+import logger from "../bootstrap/logger";
 
 @Entity()
 export default class Trade extends BaseModel {
@@ -64,6 +65,7 @@ export default class Trade extends BaseModel {
         const creatorExists = !!this.creator;
         const onlyOneCreator = this.tradeParticipants!.filter(part =>
             part.participantType === TradeParticipantType.CREATOR).length === 1;
+        logger.debug(`Result of isTradeValid? hasParticipantsAndItems=${participantsAndItemsExist && participantsAndItemsLength} | hasRecipients=${recipientExists} | hasCreator=${creatorExists && onlyOneCreator}`);
         return participantsAndItemsExist && participantsAndItemsLength &&
             recipientExists && creatorExists && onlyOneCreator;
     }
