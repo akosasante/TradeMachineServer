@@ -22,7 +22,7 @@ export class TeamFactory {
             } else {
                 name = names[i];
             }
-            return TeamFactory.getTeam(name, i + 1, {id: i + 1});
+            return TeamFactory.getTeam(name, i + 1);
         });
     }
 }

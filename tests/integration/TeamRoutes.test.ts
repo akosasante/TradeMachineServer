@@ -225,7 +225,7 @@ describe("Team API endpoints", () => {
             const {body: getAllRes} = await request(app).get("/teams").expect(200);
             expect(getAllRes).toBeArrayOfSize(1);
 
-            // Confirm that users that were previously owners of this team have their TeamID set to none
+            // TODO Confirm that users that were previously owners of this team have their TeamID set to none
         });
             it("should throw a 404 Not Found error if there is no team with that ID", async () => {
             await adminLoggedIn(deleteTeamRequest(uuid(), 404), app);

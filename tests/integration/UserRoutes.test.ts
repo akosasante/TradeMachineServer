@@ -219,8 +219,8 @@ describe("User API endpoints", () => {
         });
 
         it("should return the updated user", async () => {
-            const res = await adminLoggedIn(putRequest(adminUser.id!, { slackUsername }), app);
-            expect(res.body).toMatchObject({...updatedAdmin,
+            const {body} = await adminLoggedIn(putRequest(adminUser.id!, { slackUsername }), app);
+            expect(body).toMatchObject({...updatedAdmin,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),

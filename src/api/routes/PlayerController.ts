@@ -10,7 +10,7 @@ import PlayerDAO from "../../DAO/PlayerDAO";
 import TeamDAO from "../../DAO/TeamDAO";
 import Player, { LeagueLevel } from "../../models/player";
 import { Role } from "../../models/user";
-import {cleanupQuery, fileUploadOptions as uploadOpts, UUIDPattern} from "../helpers/ApiHelpers";
+import { cleanupQuery, fileUploadOptions as uploadOpts, UUIDPattern } from "../helpers/ApiHelpers";
 
 @JsonController("/players")
 export default class PlayerController {
