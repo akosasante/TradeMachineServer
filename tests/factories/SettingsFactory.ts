@@ -4,8 +4,8 @@ import { UserFactory } from "./UserFactory";
 import { v4 as uuid } from "uuid";
 
 export class SettingsFactory {
-    public static DEFAULT_WINDOW_START = new Date(new Date().setHours(18, 0, 0, 0));
-    public static DEFAULT_WINDOW_END = new Date(new Date().setHours(8, 0, 0, 0));
+    public static DEFAULT_WINDOW_START = "18:00:00";
+    public static DEFAULT_WINDOW_END = "08:00:00";
     public static DEFAULT_DOWNTIME_START = new Date("January 1 2019 5:00");
     public static DEFAULT_DOWNTIME_END = new Date("February 1 2019 5:00");
     public static DEFAULT_DOWNTIME_REASON = "off-season";

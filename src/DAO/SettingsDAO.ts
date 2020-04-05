@@ -1,5 +1,8 @@
 import { FindManyOptions, FindOneOptions, getConnection, InsertResult, Repository } from "typeorm";
 import Settings from "../models/settings";
+import logger from "../bootstrap/logger";
+import {inspect} from "util";
+import {BadRequestError} from "routing-controllers";
 
 export default class SettingsDAO {
     private settingsDb: Repository<Settings>;
@@ -24,11 +27,21 @@ export default class SettingsDAO {
 
     public async insertNewSettings(settings: Partial<Settings>): Promise<Settings> {
         // TODO: Consider implementing validation of settings
+        //  eg. if one downtime field is entered, they all must be.
+        logger.debug(inspect(settings));
+        if (!settings.modifiedBy) {
+            throw new BadRequestError("Modifying user must be provided");
+        }
         const mostRecentSettings = await this.getMostRecentSettings();
+        logger.debug(`RECENT: ${inspect(mostRecentSettings)}`);
         const newLine = {...(mostRecentSettings || {}),
-            ...settings, id: undefined, dateModified: undefined, dateCreated: undefined,
+            ...settings, id: (settings.id || undefined), dateModified: undefined, dateCreated: undefined,
         };
+        logger.debug(`NEW: ${inspect(newLine)}`);
+
         const result: InsertResult =  await this.settingsDb.insert(newLine);
+        logger.debug(`RES: ${inspect(mostRecentSettings)}`);
+
         return await this.settingsDb.findOneOrFail(result.identifiers[0]);
     }
 }
