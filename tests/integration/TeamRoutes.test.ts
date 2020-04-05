@@ -65,10 +65,10 @@ describe("Team API endpoints", () => {
 
     describe("POST /teams (create new team)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (teamObj: Partial<Team>, status: number = 200) =>
+        const postRequest = (teamObjs: Partial<Team>[], status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<Team>>(agent, "/teams", teamObj, status);
-        const getOneRequest = (id: number, status: number = 200) =>
+                makePostRequest<Partial<Team>[]>(agent, "/teams", teamObjs, status);
+        const getOneRequest = (id: string, status: number = 200) =>
             makeGetRequest(request(app), `/teams/${id}`, status);
 
         afterEach(async () => {
@@ -80,7 +80,7 @@ describe("Team API endpoints", () => {
             expect(body[0]).toMatchObject(testTeam);
         });
         it("should ignore any invalid properties from the object passed in", async () => {
-            const {body: createBody} = await adminLoggedIn(postRequest([{...testTeam2, blah: "bloop"}]), app);
+            const {body: createBody} = await adminLoggedIn(postRequest([{...testTeam2, blah: "bloop"} as Partial<Team>]), app);
             const {body} = await getOneRequest(createBody[0].id);
             expect(body).toMatchObject({...testTeam2.parse(), owners: expect.any(Array)});
             expect(body.blah).toBeUndefined();
@@ -90,10 +90,10 @@ describe("Team API endpoints", () => {
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a team", async () => {
-            await ownerLoggedIn(postRequest(testTeam, 403), app);
+            await ownerLoggedIn(postRequest([testTeam.parse()], 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
-            await postRequest(testTeam, 403)(request(app));
+            await postRequest([testTeam.parse()], 403)(request(app));
         });
     });
 

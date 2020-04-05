@@ -77,9 +77,9 @@ describe("Pick API endpoints", () => {
 
     describe("POST /picks (create new pick)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (pickObj: Partial<DraftPick>, status: number = 200) =>
+        const postRequest = (pickObjs: Partial<DraftPick>[], status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<DraftPick>>(agent, "/picks", pickObj, status);
+                makePostRequest<Partial<DraftPick>[]>(agent, "/picks", pickObjs, status);
         const getOneRequest = (id: number, status: number = 200) =>
             makeGetRequest(request(app), `/picks/${id}`, status);
 
@@ -88,7 +88,7 @@ describe("Pick API endpoints", () => {
         });
 
         it("should return a single pick object based on object passed in", async () => {
-            const {body} = await adminLoggedIn(postRequest(testPick.parse()), app);
+            const {body} = await adminLoggedIn(postRequest([testPick.parse()]), app);
             const expected = {...testPick,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
@@ -97,7 +97,7 @@ describe("Pick API endpoints", () => {
         });
         it("should ignore any invalid properties from the object passed in", async () => {
             const testInvalidProps = {...testPick2.parse(), blah: "Hello"};
-            const {body} = await adminLoggedIn(postRequest(testInvalidProps), app);
+            const {body} = await adminLoggedIn(postRequest([testInvalidProps]), app);
             const {body: getBody} = await getOneRequest(body[0].id);
             const expected = {...testPick2,
                 dateCreated: expect.stringMatching(DatePatternRegex),
@@ -109,14 +109,14 @@ describe("Pick API endpoints", () => {
         });
         it("should return a 400 Bad Request error if missing a required property", async () => {
             const pickObj = { season: 2017 };
-            const {body} = await adminLoggedIn(postRequest(pickObj, 400), app);
+            const {body} = await adminLoggedIn(postRequest([pickObj], 400), app);
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a pick", async () => {
-            await ownerLoggedIn(postRequest(testPick.parse(), 403), app);
+            await ownerLoggedIn(postRequest([testPick.parse()], 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
-            await postRequest(testPick.parse(), 403)(request(app));
+            await postRequest([testPick.parse()], 403)(request(app));
         });
     });
 

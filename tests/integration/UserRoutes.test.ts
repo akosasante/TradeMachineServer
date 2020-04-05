@@ -96,14 +96,14 @@ describe("User API endpoints", () => {
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should return a 400 Bad Request error if user with this email already exists in db", async () => {
-            const {body} = await adminLoggedIn(postRequest([jatheeshUser], 400), app);
+            const {body} = await adminLoggedIn(postRequest([jatheeshUser.parse()], 400), app);
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should throw a 403 Forbidden Error if a non-admin tries to create a user", async () => {
-            await ownerLoggedIn(postRequest([jatheeshUser], 403), app);
+            await ownerLoggedIn(postRequest([jatheeshUser.parse()], 403), app);
         });
         it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
-            await postRequest([jatheeshUser], 403)(request(app));
+            await postRequest([jatheeshUser.parse()], 403)(request(app));
         });
     });
 

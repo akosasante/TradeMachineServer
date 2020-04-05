@@ -81,9 +81,9 @@ describe("Player API endpoints", () => {
 
     describe("POST /players (create new player)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (playerObj: Partial<Player>, status: number = 200) =>
+        const postRequest = (playerObjs: Partial<Player>[], status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<Player>>(agent, "/players", playerObj, status);
+                makePostRequest<Partial<Player>[]>(agent, "/players", playerObjs, status);
         const getOneRequest = (id: string, status: number = 200) =>
             makeGetRequest(request(app), `/players/${id}`, status);
 
@@ -92,7 +92,7 @@ describe("Player API endpoints", () => {
         });
 
         it("should return a single player object based on object passed in", async () => {
-            const {body} = await adminLoggedIn(postRequest(testPlayer.parse()), app);
+            const {body} = await adminLoggedIn(postRequest([testPlayer.parse()]), app);
             const expected = {...testPlayer,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
@@ -112,14 +112,14 @@ describe("Player API endpoints", () => {
         });
         it("should return a 400 Bad Request error if missing a required property", async () => {
             const playerObj = { mlbTeam: "Boston Red Sox" };
-            const res = await adminLoggedIn(postRequest(playerObj, 400), app);
+            const res = await adminLoggedIn(postRequest([playerObj], 400), app);
             expect(res.body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a player", async () => {
-            await ownerLoggedIn(postRequest(testPlayer.parse(), 403), app);
+            await ownerLoggedIn(postRequest([testPlayer.parse()], 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
-            await postRequest(testPlayer.parse(), 403)(request(app));
+            await postRequest([testPlayer.parse()], 403)(request(app));
         });
     });
 

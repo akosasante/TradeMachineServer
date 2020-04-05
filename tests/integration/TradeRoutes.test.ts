@@ -135,10 +135,10 @@ describe("Trade API endpoints", () => {
             expect(body.message).toEqual(expectErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a trade", async () => {
-            await ownerLoggedIn(postRequest(testTrade, 403), app);
+            await ownerLoggedIn(postRequest(testTrade.parse(), 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
-            await postRequest(testTrade, 403)(request(app));
+            await postRequest(testTrade.parse(), 403)(request(app));
         });
     });
 
