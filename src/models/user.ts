@@ -1,7 +1,6 @@
-import { Column, Entity, Index, ManyToOne, OneToMany, Unique } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, Unique } from "typeorm";
 import { BaseModel } from "./base";
-import GeneralSettings from "./generalSettings";
-import ScheduledDowntime from "./scheduledDowntime";
+import Settings from "./settings";
 import Team from "./team";
 
 export enum Role {
@@ -51,14 +50,8 @@ export default class User extends BaseModel {
     @ManyToOne(type => Team, team => team.owners, {onDelete: "SET NULL"})
     public team?: Team;
 
-    // @OneToMany(type => ScheduledDowntime, schedule => schedule.createdBy)
-    // public createdSchedules?: ScheduledDowntime[];
-    //
-    // @OneToMany(type => ScheduledDowntime, schedule => schedule.modifiedBy)
-    // public updatedSchedules?: ScheduledDowntime[];
-    //
-    // @OneToMany(type => GeneralSettings, setting => setting.modifiedBy)
-    // public updatedSettings?: GeneralSettings[];
+    @OneToMany(type => Settings, setting => setting.modifiedBy)
+    public updatedSettings?: Settings[];
 
     constructor(props: Partial<User> & Required<Pick<User, "email">>) {
         super();
