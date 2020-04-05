@@ -4,7 +4,6 @@ import "jest-extended";
 import AuthController from "../../../../src/api/routes/AuthController";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import { UserFactory } from "../../../factories/UserFactory";
-import logger from "../../../../src/bootstrap/logger";
 
 describe("AuthController", () => {
     const mockUserDAO = {
@@ -25,9 +24,8 @@ describe("AuthController", () => {
             return this;
         }),
     };
-    // @ts-ignore
-    let mockSess = { user: 1 };
-    const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b", passwordResetToken: "xyz-uuid"});
+    const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {passwordResetToken: "xyz-uuid"});
+    let mockSess = { user: testUser.id };
 
     afterEach(() => {
         Object.entries(mockUserDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
@@ -63,7 +61,7 @@ describe("AuthController", () => {
             expect(mockSess.user).toBeUndefined();
             expect(res).toBeTrue();
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.updateUser).toHaveBeenCalledWith(1, {lastLoggedIn: expect.toBeDate()});
+            expect(mockUserDAO.updateUser).toHaveBeenCalledWith(testUser.id, {lastLoggedIn: expect.toBeDate()});
         });
         it("should resolve the promise if there is no userId on the session", async () => {
             const res = await authController.logout(mockReq as unknown as Request, {});
@@ -73,7 +71,7 @@ describe("AuthController", () => {
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
         });
         it("should reject the promise if destroying the request session fails somehow", async () => {
-            mockSess = { user: 1 };
+            mockSess = { user: testUser.id };
             const err = new Error("Failed to destroy request session");
             mockReq.session!.destroy.mockImplementationOnce(cb => {
                 return cb(err);
