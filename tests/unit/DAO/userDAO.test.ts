@@ -80,7 +80,7 @@ describe("UserDAO", () => {
             const res = await userDAO.findUser(condition);
 
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(condition, undefined);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(condition);
 
             expect(res).toEqual(testUser);
             expect(res).toBeInstanceOf(User);
@@ -90,7 +90,7 @@ describe("UserDAO", () => {
             const res = await userDAO.findUser(condition, false);
 
             expect(mockUserDb.findOne).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOne).toHaveBeenCalledWith(condition, undefined);
+            expect(mockUserDb.findOne).toHaveBeenCalledWith(condition);
 
             expect(res).toEqual(testUser);
         });
@@ -152,6 +152,18 @@ describe("UserDAO", () => {
             expect(mockWhereInIds).toHaveBeenCalledWith(testUser.id!);
 
             expect(res).toEqual(deleteResult);
+        });
+    });
+
+    describe("setPasswordExpires", () => {
+        it("should return successfully if db call has on errors", async () => {
+            const updatePartial = { passwordResetExpiresOn: expect.toBeDate(), passwordResetToken: expect.toBeString() };
+            const res = await userDAO.setPasswordExpires(testUser.id!);
+
+            expect(mockUserDb.update).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.update).toHaveBeenCalledWith({id: testUser.id!}, updatePartial);
+
+            expect(res).toBeUndefined();
         });
     });
 });

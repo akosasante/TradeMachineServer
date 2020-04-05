@@ -41,16 +41,25 @@ describe("User Class", () => {
             expect(user.parse()).toEqual(userObj);
             expect(user.parse()).toEqual(expect.any(Object));
         });
+
+        describe("isAdmin/0", () => {
+            it("should return false if the user's role is not set or is owner", () => {
+                const owner = new User({email: "test@example.com", role: Role.OWNER});
+                expect(owner.isAdmin()).toEqual(false);
+            });
+            it("should return true if the user's role is admin", () => {
+                const admin = new User({email: "test@example.com", role: Role.ADMIN});
+                expect(admin.isAdmin()).toEqual(true);
+            });
+        });
     });
 
-    describe("isAdmin/0", () => {
-        it("should return false if the user's role is not set or is owner", () => {
-            const owner = new User({email: "test@example.com", role: Role.OWNER});
-            expect(owner.isAdmin()).toEqual(false);
-        });
-        it("should return true if the user's role is admin", () => {
-            const admin = new User({email: "test@example.com", role: Role.ADMIN});
-            expect(admin.isAdmin()).toEqual(true);
+    describe("static methods", () => {
+        it("generateTimeToPasswordExpires/0", () => {
+            const now = new Date("January 1 2019 1:00:00");
+            const nowPlusHour = new Date("January 1 2019 2:00:00");
+
+            expect(User.generateTimeToPasswordExpires(now.valueOf())).toEqual(nowPlusHour);
         });
     });
 });

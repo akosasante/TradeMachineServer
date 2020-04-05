@@ -16,6 +16,11 @@ export enum UserStatus {
 @Entity()
 @Unique(["email"])
 export default class User extends BaseModel {
+    public static generateTimeToPasswordExpires(dateMs: number = Date.now()) {
+        return new Date(dateMs + User.TIME_TO_EXPIRE_PASSWORD_MS);
+    }
+
+    private static TIME_TO_EXPIRE_PASSWORD_MS: number = (1 * 60 * 60 * 1000);  // 1 hr * 60 min/hr * 60 s/min * 1000ms/s
 
     @Column()
     public email!: string;

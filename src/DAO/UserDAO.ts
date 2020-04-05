@@ -1,5 +1,6 @@
 import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
 import User from "../models/user";
+import { v4 as uuid } from "uuid";
 
 export default class UserDAO {
     private userDb: Repository<User>;
@@ -58,5 +59,15 @@ export default class UserDAO {
             .whereInIds(id)
             .returning("id")
             .execute();
+    }
+
+    public async setPasswordExpires(id: string): Promise<void> {
+        await this.getUserById(id); // This should throw error if the id does not exist
+        await this.userDb.update(
+            {id},
+            {
+                passwordResetExpiresOn: User.generateTimeToPasswordExpires(),
+                passwordResetToken: uuid() });
+        return;
     }
 }
