@@ -22,13 +22,13 @@ export default class SettingsDAO {
         return await this.settingsDb.findOneOrFail(id);
     }
 
-    public async insertNewSettings(settings: Partial<Settings>): Promise<Settings | undefined> {
+    public async insertNewSettings(settings: Partial<Settings>): Promise<Settings> {
+        // TODO: Consider implementing validation of settings
         const mostRecentSettings = await this.getMostRecentSettings();
         const newLine = {...(mostRecentSettings || {}),
             ...settings, id: undefined, dateModified: undefined, dateCreated: undefined,
         };
         const result: InsertResult =  await this.settingsDb.insert(newLine);
-        const retrievedLine =  await this.settingsDb.find(result.identifiers[0]);
-        return retrievedLine && retrievedLine.length ? retrievedLine[0] : undefined;
+        return await this.settingsDb.findOneOrFail(result.identifiers[0]);
     }
 }

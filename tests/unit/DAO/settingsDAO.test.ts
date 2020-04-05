@@ -67,15 +67,15 @@ describe("SettingsDAO", () => {
 
         const newSettings = SettingsFactory.getSettings(undefined, undefined, {downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START, downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END, downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON});
         const expectedSettings = {...testSettings, ...newSettings};
-        mockSettingsDb.find.mockReturnValueOnce([expectedSettings]);
+        mockSettingsDb.findOneOrFail.mockReturnValueOnce(expectedSettings);
         const res = await settingsDAO.insertNewSettings(newSettings);
         logger.debug(inspect(testSettings));
 
         expect(mockSettingsDb.findOne).toHaveBeenCalledTimes(1);
         expect(mockSettingsDb.insert).toHaveBeenCalledTimes(1);
         expect(mockSettingsDb.insert).toHaveBeenCalledWith({...expectedSettings, id: undefined, dateCreated: undefined, dateModified: undefined});
-        expect(mockSettingsDb.find).toHaveBeenCalledTimes(1);
-        expect(mockSettingsDb.find).toHaveBeenCalledWith({id: testSettings.id!});
+        expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
+        expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith({id: testSettings.id!});
         expect(res).toEqual(expectedSettings);
     });
 });
