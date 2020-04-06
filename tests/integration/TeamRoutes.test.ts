@@ -15,6 +15,7 @@ import { adminLoggedIn, DatePatternRegex, doLogout, makeDeleteRequest, makeGetRe
 import { config as dotenvConfig } from "dotenv";
 import startServer from "../../src/bootstrap/app";
 import User from "../../src/models/user";
+import TeamDAO from "../../src/DAO/TeamDAO";
 
 dotenvConfig({path: resolvePath(__dirname, "../.env")});
 
@@ -47,7 +48,7 @@ beforeAll(async () => {
     [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
     [otherUser] = await userDAO.createUsers([UserFactory.getUser().parse()]);
     testTeam = TeamFactory.getTeam();
-    testTeam2 = TeamFactory.getTeam("Team Two", 2, {owners: [ownerUser, otherUser]});
+    testTeam2 = TeamFactory.getTeam("Team Two", 2);
 });
 
 afterAll(async () => {
@@ -73,6 +74,11 @@ describe("Team API endpoints", () => {
 
         afterEach(async () => {
             await doLogout(request.agent(app));
+        });
+
+        afterAll(async () => {
+            const teamDAO = new TeamDAO();
+            await teamDAO.updateTeamOwners(testTeam2.id!, [ownerUser, otherUser], []);
         });
 
         it("should return a single team object based on the object passed in", async () => {
