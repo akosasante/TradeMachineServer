@@ -62,6 +62,10 @@ beforeAll(async () => {
         TeamFactory.getTeamObject( "Squad", 2, {owners: [ownerUser]}),
         TeamFactory.getTeamObject( "Asantes", 3, {owners: [user3]}),
     ]);
+
+    await teamDAO.updateTeamOwners(team1.id!, [adminUser], []);
+    await teamDAO.updateTeamOwners(team2.id!, [ownerUser], []);
+    await teamDAO.updateTeamOwners(team3.id!, [user3], []);
 });
 afterAll(async () => {
     logger.debug("~~~~~~DRAFT PICK ROUTES AFTER ALL~~~~~~");
@@ -259,7 +263,8 @@ describe("Pick API endpoints", () => {
     });
 
     describe("POST /batch (batch add new draft picks via csv file)", () => {
-        const csv = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks.csv`;
+        const csv1 = `${process.env.BASE_DIR}/tests/resources/three-player-25-picks-1.csv`;
+        const csv2 = `${process.env.BASE_DIR}/tests/resources/three-player-25-picks-2.csv`;
         const postFileRequest = (filePath: string, mode?: WriteMode, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 agent
@@ -278,37 +283,37 @@ describe("Pick API endpoints", () => {
             const {body: getAllRes} = await request(app).get("/picks").expect(200);
             expect(getAllRes).toBeArrayOfSize(1);
 
-            const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv), app);
-            expect(batchPutRes).toBeArrayOfSize(50);
+            const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv1), app);
+            expect(batchPutRes).toBeArrayOfSize(33);
             const {body: afterGetAllRes} = await request(app).get("/picks").expect(200);
-            expect(afterGetAllRes).toBeArrayOfSize(51);
+            expect(afterGetAllRes).toBeArrayOfSize(34);
         });
         it("should append with the given mode passed in", async () => {
             const {body: getAllRes} = await request(app).get("/picks").expect(200);
-            expect(getAllRes).toBeArrayOfSize(51);
+            expect(getAllRes).toBeArrayOfSize(34);
 
-            const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv, "append"), app);
-            expect(batchPutRes).toBeArrayOfSize(50);
+            const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv2, "append"), app);
+            expect(batchPutRes).toBeArrayOfSize(17);
             const {body: afterGetAllRes} = await request(app).get("/picks").expect(200);
-            expect(afterGetAllRes).toBeArrayOfSize(101);
+            expect(afterGetAllRes).toBeArrayOfSize(51);
         });
         it("should overwrite with the given mode passed in", async () => {
             const {body: getAllRes} = await request(app).get("/picks").expect(200);
-            expect(getAllRes).toBeArrayOfSize(101);
+            expect(getAllRes).toBeArrayOfSize(51);
 
-            const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv, "overwrite"), app);
-            expect(batchPutRes).toBeArrayOfSize(50);
+            const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv1, "overwrite"), app);
+            expect(batchPutRes).toBeArrayOfSize(33);
             const {body: afterGetAllRes} = await request(app).get("/picks").expect(200);
-            expect(afterGetAllRes).toBeArrayOfSize(50);
+            expect(afterGetAllRes).toBeArrayOfSize(33);
         });
         it("should return a 400 Bad Request if no file is passed in", async () => {
             await (adminLoggedIn(requestWithoutFile("overwrite", 400), app));
         });
         it("should return a 403 Forbidden error if a non-admin tries to upload new picks", async () => {
-            await ownerLoggedIn(postFileRequest(csv, "overwrite", 403), app);
+            await ownerLoggedIn(postFileRequest(csv1, "overwrite", 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged-in request is used", async () => {
-            await postFileRequest(csv, "overwrite", 403)(request(app));
+            await postFileRequest(csv1, "overwrite", 403)(request(app));
         });
     });
 });

@@ -1,13 +1,13 @@
-import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
+import { AfterInsert, AfterLoad, AfterUpdate, Column, Entity, Index, ManyToOne } from "typeorm";
 import { BaseModel } from "./base";
 import { LeagueLevel } from "./player";
 import Team from "./team";
-import TradeItem from "./tradeItem";
+import logger from "../bootstrap/logger";
 
 @Entity()
-@Index(["type", "season", "round", "currentOwner"], {unique: true})
+@Index(["type", "season", "round", "originalOwner"], {unique: true})
 export default class DraftPick extends BaseModel {
-    @Column()
+    @Column({type: "numeric"})
     public round!: number;
 
     @Column({nullable: true})
@@ -29,4 +29,10 @@ export default class DraftPick extends BaseModel {
         super();
         Object.assign(this, props);
     }
+
+    @AfterLoad()
+    ensureRoundType() {
+        this.round = Number(this.round);
+    }
+
 }

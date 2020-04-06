@@ -62,10 +62,14 @@ beforeAll(async () => {
         UserFactory.getUserObject("kwasi@example.com", undefined, undefined, Role.OWNER,  {name: "K", csvName: "Kwasi"}),
     ]);
     [team1, team2, team3] = await teamDAO.createTeams([
-        TeamFactory.getTeamObject( "Camtastic", 1, {owners: [adminUser]}),
-        TeamFactory.getTeamObject( "Squad", 2, {owners: [ownerUser]}),
-        TeamFactory.getTeamObject( "Asantes", 3, {owners: [user3, user4]}),
+        TeamFactory.getTeamObject( "Camtastic", 1),
+        TeamFactory.getTeamObject( "Squad", 2),
+        TeamFactory.getTeamObject( "Asantes", 3),
     ]);
+
+    await teamDAO.updateTeamOwners(team1.id!, [adminUser], []);
+    await teamDAO.updateTeamOwners(team2.id!, [ownerUser], []);
+    await teamDAO.updateTeamOwners(team3.id!, [user3, user4], []);
 });
 afterAll(async () => {
     logger.debug("~~~~~~PLAYER ROUTES AFTER ALL~~~~~~");
@@ -274,7 +278,7 @@ describe("Player API endpoints", () => {
 
         it("should append by default", async () => {
             const {body: getAllRes} = await request(app).get("/players").expect(200);
-            expect(getAllRes).toBeArrayOfSize(1); // This one is a major league player so it'll neverr get deleted
+            expect(getAllRes).toBeArrayOfSize(1); // This one is a major league player so it'll never get deleted
 
             const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv), app);
             expect(batchPutRes).toBeArrayOfSize(99);

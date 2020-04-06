@@ -63,6 +63,7 @@ export default class DraftPickController {
     @Post("/batch")
     public async batchUploadDraftPicks(@UploadedFile("picks", {required: true, options: uploadOpts}) file: any,
                                        @QueryParam("mode") mode: WriteMode): Promise<DraftPick[]> {
+        logger.debug("batch add draft picks endpoint");
         const teams = await this.teamDAO.getAllTeams();
         return await processDraftPickCsv(file.path, teams, this.dao, mode);
     }
