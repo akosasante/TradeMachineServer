@@ -5,12 +5,12 @@ import Team from "./team";
 import TradeItem from "./tradeItem";
 
 @Entity()
-@Index(["season", "round", "pickNumber", "type"], {unique: true})
+@Index(["type", "season", "round", "currentOwner"], {unique: true})
 export default class DraftPick extends BaseModel {
     @Column()
     public round!: number;
 
-    @Column()
+    @Column({nullable: true})
     public pickNumber!: number;
 
     @Column()
@@ -25,7 +25,7 @@ export default class DraftPick extends BaseModel {
     @ManyToOne(type => Team, team => team.originalDraftPicks, {eager: true, onDelete: "SET NULL"})
     public originalOwner?: Team;
 
-    constructor(props: Partial<DraftPick> & Required<Pick<DraftPick, "season" | "pickNumber" | "round" | "type">>) {
+    constructor(props: Partial<DraftPick> & Required<Pick<DraftPick, "season" | "round" | "type">>) {
         super();
         Object.assign(this, props);
     }
