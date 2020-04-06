@@ -1,4 +1,4 @@
-import {DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository} from "typeorm";
+import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
 import Team from "../models/team";
 import User from "../models/user";
 

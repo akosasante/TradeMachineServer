@@ -64,6 +64,7 @@ export default class PlayerController {
     @Post("/batch")
     public async batchUploadMinorLeaguePlayers(@UploadedFile("minors", {required: true, options: uploadOpts}) file: any,
                                                @QueryParam("mode") mode: WriteMode): Promise<Player[]> {
+        logger.debug("batch add minor league players endpoint");
         const teams = await this.teamDAO.getAllTeams();
         return await processMinorLeagueCsv(file.path, teams, this.dao, mode);
     }
