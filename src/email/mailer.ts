@@ -6,9 +6,10 @@ import path from "path";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import User from "../models/user";
+// import {config as dotenvConfig} from "dotenv";
+// dotenvConfig({path: path.resolve(__dirname, "../../.env")});
 
 export class Emailer {
-
     // tslint:disable-next-line
     public trafficController: { [key: string]: Function } = {
         reset_pass: this.sendPasswordResetEmail.bind(this),
@@ -16,41 +17,46 @@ export class Emailer {
         registration_email: this.sendRegistrationEmail.bind(this),
     };
     private emailer: Email;
-    private transportOpts = {
+
+    private SendInBlueOpts = {
         apiKey: process.env.EMAIL_KEY,
         apiUrl: process.env.EMAIL_API_URL,
     };
+    private SendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(this.SendInBlueOpts));
 
-    private transport = nodemailer.createTransport(SendinBlueTransport(this.transportOpts));
     private baseDomain = process.env.BASE_URL;
 
-    constructor(env: string) {
-        logger.debug("creating Emailer class");
+    constructor() {
         this.emailer = new Email({
+            juice: true,
+            juiceResources: {
+                webResources: {
+                    relativeTo: path.resolve("./src/email/templates"),
+                    images: false,
+                },
+            },
             message: {
                 from: "tradebot@flexfoxfantasy.com",
             },
-            preview: false,
-            send: env !== "test",
-            juice: true,
-            juiceResources: {
-                preserveImportant: true,
-                webResources: {
-                    relativeTo: path.resolve("./src/email/templates"),
-                    images: true,
-                },
-            },
-            // htmlToText: false, // set to false if we decide to manually make text versions
+            subjectPrefix: "FlexFoxFantasy TradeMachine - ",
+            transport: this.SendInBlueTransport,
             views: {
                 root: path.resolve("./src/email/templates"),
             },
-            transport: this.transport,
         });
         logger.debug("Emailer class created");
     }
 
+    /* Shape of response:
+    { messageId: string (<something@smtp-relay.sendinblue.com>),
+    code: string (success),
+    message: string,
+    originalMessage (an obect with to, from, html, and text versions of the email)
+    }
+    */
+
     public async sendPasswordResetEmail(user: User) {
-        const resetPassPage = `${this.baseDomain}/reset_password?u=${User.sanitizeUUID(user.userIdToken!)}`;
+        const resetPassPage = `${this.baseDomain}/reset_password?u=${encodeURI(user.id!)}`;
         logger.debug("sending password reset email");
         return this.emailer.send({
             template: "reset_password",
@@ -58,40 +64,40 @@ export class Emailer {
                 to: user.email,
             },
             locals: {
-                name: user.name || user.email,
+                name: user.displayName || user.email,
                 url: resetPassPage,
             },
-        }).then((res: any) => {
+        })
+        .then((res: any) => {
+            logger.info(`Successfully sent password reset email: ${inspect(res)}`);
             return res;
-            /* Shape of response:
-            { messageId: string (<something@smtp-relay.sendinblue.com>),
-            code: string (success),
-            message: string,
-            originalMessage (an obect with to, from, html, and text versions of the email)
-            }
-             */
-        }).catch((err: Error) => {
-            logger.error(inspect(err));
+        })
+        .catch((err: Error) => {
+            logger.error(`Ran into an error while sending password reset email: ${inspect(err)}`);
             return undefined;
         });
     }
 
     public async sendTestEmail(user: User) {
-        logger.debug("sending test email");
+        logger.debug(`sending test email to user: ${user}`);
         return this.emailer.send({
             template: "test_email",
             message: {
                 to: user.email,
+                subject: "Test Email",
             },
             locals: {
-                name: user.name || user.email,
+                name: user.displayName || user.email,
             },
         })
-            .then((res: any) => res)
-            .catch((err: Error) => {
-                logger.error(inspect(err));
-                return undefined;
-            });
+        .then((res: any) => {
+            logger.info(`Successfully sent test email: ${inspect(res)}`);
+            return res;
+        })
+        .catch((err: Error) => {
+            logger.error(`Ran into an error while sending test email: ${inspect(err)}`);
+            return undefined;
+        });
     }
 
     public async sendRegistrationEmail(user: User) {
@@ -103,21 +109,26 @@ export class Emailer {
                 to: user.email,
             },
             locals: {
-                name: user.name || user.email,
+                name: user.displayName || user.email,
                 url: registrationLink,
             },
         })
-            .then((res: any) => res)
-            .catch((err: Error) => {
-                logger.error(inspect(err));
-                return undefined;
-            });
+        .then((res: any) => {
+            logger.info(`Successfully sent registration email: ${inspect(res)}`);
+            return res;
+        })
+        .catch((err: Error) => {
+            logger.error(`Ran into an error while sending registration email: ${inspect(err)}`);
+            return undefined;
+        });
     }
 }
 
 // async function test() {
 //     const mailer = new Emailer();
-//     const user = new User({name: "Akosua", email: "asante@gmail.com"});
-//     await mailer.sendPasswordResetEmail(user);
+//     const user = new User({displayName: "Akosua", email: "tripleabatt@example.com"});
+//     logger.info("BEFORE")
+//     const res = await mailer.sendTestEmail(user);
+//     logger.info(`RESULT: ${inspect(res)}`);
 // }
 // test();

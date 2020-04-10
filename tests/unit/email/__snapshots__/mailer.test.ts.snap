@@ -1,0 +1,82 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Emailer Class sendTestEmail should call emailer.send with the correct options 1`] = `
+Object {
+  "code": "success",
+  "message": "Email sent successfully.",
+  "originalMessage": Object {
+    "attachments": Array [],
+    "from": "tradebot@flexfoxfantasy.com",
+    "html": "<!DOCTYPE html PUBLIC \\"-//W3C//DTD XHTML 1.0 Strict//EN\\" \\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\\">
+<html xmlns=\\"http://www.w3.org/1999/xhtml\\" style=\\"height: 100%; background: #f7f7f7;\\">
+  <head>
+    <meta charset=\\"utf-8\\">
+    <meta name=\\"viewport\\" content=\\"width=device-width; initial-scale=1.0;\\">
+    <meta http-equiv=\\"X-UA-Compatible\\" content=\\"IE=edge\\">
+    <meta name=\\"x-apple-disable-message-reformatting\\">
+    
+    <style>
+@media screen and (max-width: 600px) {
+  u + .body {
+    width: 100vw !important;
+  }
+}
+</style>
+    <style>
+a.button-link {
+  background-color: #3b459a;
+  display: inline-block;
+  border: 2px solid transparent;
+  color: #fafafa;
+  padding: calc(.375em - 1px) .75em;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  font-size: 1rem;
+  text-decoration: none;
+  white-space: nowrap;
+  height: 1.5em;
+  vertical-align: top;
+  line-height: 1.5;
+}
+@media only screen and (max-width:700px) {
+  .main,
+.header,
+.footer {
+    width: 100% !important;
+  }
+
+  .main .container h1 {
+    font-size: 1.8rem !important;
+  }
+
+  a.button-link {
+    margin: 1rem 0 !important;
+    text-decoration: underline !important;
+  }
+}
+</style>
+    <title>Trade Machine Test Email</title>
+  </head>
+  <body style=\\"font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;\\">
+    <header class=\\"title\\" style=\\"height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;\\"></header>
+    <div class=\\"main\\" style=\\"height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;\\">
+      <div class=\\"container\\" style=\\"width: 70%; margin-left: 10%; padding: 5% 0;\\">
+        <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
+        <h2>Testing... Testing...</h2>
+        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Hi Jatheesh, this is a test email.</p>
+      </div>
+    </div>
+    <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
+  </body>
+</html>",
+    "subject": "FlexFoxFantasy TradeMachine - Test Email",
+    "text": " TRADEMACHINE
+TESTING... TESTING...
+Hi Jatheesh, this is a test email.",
+    "to": "test@example.com",
+  },
+}
+`;

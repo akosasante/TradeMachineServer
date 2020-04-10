@@ -1,19 +1,35 @@
-/*@import url('https://fonts.googleapis.com/css?family=Graduate');*/
+html, body {
+    height: 100%;
+    background: #f7f7f7;
+}
+
+/*body {*/
+/*    flex-direction: column;*/
+/*    align-items: center;*/
+/*}*/
 
 header {
     /*height: 200px;*/
-    height: 25%;
-    background-color: #4abdad;
-    padding: 20px;
+    /*height: 25%;*/
+    /*height: 15%;*/
+    height: 100px;
+    /*background-color: #2d294a;*/
+    background-color: #a9c07c; /* dominant colour from bg image */
+    /*padding: 20px;*/
     /*background: #244c8e;*/
-    color: #f8f8f8;
-    /*background-image: url("https://i.imgur.com/jqlYp2Y.png");*/
-    /*background-size: cover;*/
+    /*color: #203860; !* good contrast color *!*/
+    /*color: #f8f8f8; !* good contrast color *!*/
+    /*background-image: url("https://www.ballparksofbaseball.com/wp-content/uploads/2016/03/rogers14965.jpg");*/
+    background-image: url("https://imgur.com/VKEupAm.jpg");
+    background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
     /*background-position: 0 60%;*/
-    font-size: 18px;
-    text-align: center;
+    /*text-align: center;*/
+    width: 75%;
+    margin: auto;
+    /*margin-left: auto;*/
+    /*margin-right: auto;*/
 }
 
 header h1, header h2 {
@@ -21,7 +37,7 @@ header h1, header h2 {
 }
 
 header .title {
-    font-size: 150%;
+    /*font-size: 150%;*/
     /*height: 30%;*/
     /*padding: 20px;*/
     text-align: center;
@@ -37,35 +53,91 @@ header .title, header .subtitle {
     /*font-family: 'Graduate', "Times New Roman", Times, serif;*/
 }
 
-main {
-    /*height: 300px;*/
-    height: 70%;
-    background: #0074D9;
+header.title div {
+    padding-top: 1rem;
 }
 
-main .container {
-    width: 50%;
-    margin-left: 25%;
+.main {
+    /*height: 300px;*/
+    /*height: 70%;*/
+    height: 80%;
+    background: #fff;
+    width: 75%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.main .container {
+    width: 70%;
+    margin-left: 10%;
     padding: 5% 0;
+}
+
+.main h1 {
+    color: #3b459a;
+    font-weight: 600;
+    font-size: 3rem;
+    font-family: "Lucida Grande", "Montserrat", "Roboto", monospace;
 }
 
 footer {
     /*height: 100px;*/
+    /*height: 5%;*/
     height: 5%;
     /*background: #C21F39;*/
-    background: #4abdad;
+    /*background: #3b469a;*/
+    background: #4b528b;
+    width: 75%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+a.button-link {
+    background-color: #3b459a;
+    display: inline-block;
+    border: 2px solid transparent;
+    color: #fafafa;
+    padding: calc(.375em - 1px) .75em;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    font-size: 1rem;
+    text-decoration: none;
+    /*margin-left: 25%;*/
+    white-space: nowrap;
+    height: 1.5em;
+    vertical-align: top;
+    line-height: 1.5;
+    /*margin-top: 1.5rem;*/
 }
 
 @media only screen and (max-width:700px) {
-    header {
-        height: 100px !important;
-        font-size: 55% !important;
-        background-size: cover;
+    .main, .header, .footer {
+        width: 100% !important;
     }
-    footer {
-        height: 50px !important;
+    .main .container h1 {
+        font-size: 1.8rem !important;
     }
-    /*header .title {*/
-        /*font-size*/
-    /*}*/
+
+    a.button-link {
+        margin: 1rem 0 !important;
+        text-decoration: underline !important;
+    }
 }
+
+
+/*@media only screen and (max-width:700px) {*/
+/*    header {*/
+/*        height: 100px !important;*/
+/*        font-size: 55% !important;*/
+/*        background-size: cover;*/
+/*    }*/
+/*    footer {*/
+/*        height: 50px !important;*/
+/*    }*/
+/*    !*header .title {*!*/
+/*        !*font-size*!*/
+/*    !*}*!*/
+/*}*/
