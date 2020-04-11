@@ -1,8 +1,8 @@
-import { Emailer, SendInBlueSendResponse } from "@/email/mailer";
 import { Job } from "bull";
-import User from "@/models/user";
-import {inspect} from "util";
-import logger from "@/bootstrap/logger";
+import { inspect } from "util";
+import logger from "../bootstrap/logger";
+import { Emailer, SendInBlueSendResponse } from "../email/mailer";
+import User from "../models/user";
 
 export type EmailJobName = "reset_pass" | "registration_email" | "test_email";
 
