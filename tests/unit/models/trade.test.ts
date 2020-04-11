@@ -70,7 +70,7 @@ describe("Trade Class", () => {
     });
 
     describe("instance methods", () => {
-        it("toString/0", () => {
+        it("toString/0 - should return a string with the UUID", () => {
             expect(testTrade.toString()).toMatch(testTrade.id!);
             expect(testTrade.toString()).toMatch("Trade#");
         });

@@ -30,7 +30,7 @@ describe("User Class", () => {
     });
 
     describe("instance methods", () => {
-        it("toString/0 - should return a string with the DO id", () => {
+        it("toString/0 - should return a string with the UUID", () => {
             expect(user.toString()).toMatch(user.id!);
             expect(user.toString()).toMatch("User#");
         });

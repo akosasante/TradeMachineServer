@@ -3,7 +3,7 @@ import "jest-extended";
 import DraftPick from "../../../src/models/draftPick";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import logger from "../../../src/bootstrap/logger";
-import {inspect} from "util";
+import { inspect } from "util";
 
 describe("DraftPick Class", () => {
     beforeAll(() => {
@@ -24,19 +24,18 @@ describe("DraftPick Class", () => {
             expect(draftPick.season).toEqual(draftPickObj.season);
             expect(draftPick.currentOwner).toBeUndefined();
             expect(draftPick.originalOwner).toBeUndefined();
-            expect(draftPick.tradeItems).toBeUndefined();
             expect(draftPick).toBeInstanceOf(DraftPick);
             expect(draftPickObj).not.toBeInstanceOf(DraftPick);
         });
     });
 
     describe("instance methods", () => {
-        it("toString/0", () => {
+        it("toString/0 - should return a string with the UUID", () => {
             logger.debug(inspect(draftPick.toString()));
             expect(draftPick.toString()).toMatch(draftPick.id!);
             expect(draftPick.toString()).toMatch("DraftPick#");
         });
-        it("parse/1 - should take a player and return a POJO", () => {
+        it("parse/1 - should take a draft pick and return a POJO", () => {
             expect(draftPick).toBeInstanceOf(DraftPick);
             expect(draftPick.parse()).not.toBeInstanceOf(DraftPick);
             expect(draftPick.parse()).toEqual(draftPickObj);

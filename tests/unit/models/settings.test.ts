@@ -29,12 +29,12 @@ describe("GeneralSettings Class", () => {
     });
 
     describe("instance methods", () => {
-        it("toString/0", () => {
+        it("toString/0 - should return a string with the UUID", () => {
             expect(settings.toString()).toMatch(settings.id!);
             expect(settings.toString()).toMatch("Settings#");
         });
 
-        it("parse/1 - should take a user and return a POJO", () => {
+        it("parse/1 - should take a setting and return a POJO", () => {
             expect(settings).toBeInstanceOf(Settings);
             expect(settings.parse()).not.toBeInstanceOf(Settings);
             expect(settings.parse()).toEqual(settingsObj);

@@ -25,7 +25,7 @@ describe("Team Class", () => {
     });
 
     describe("instance methods", () => {
-        it("toString/0", async () => {
+        it("toString/0 - should return a string with the UUID", () => {
             expect(team.toString()).toMatch(team.id!);
             expect(team.toString()).toMatch("Team#");
         });
