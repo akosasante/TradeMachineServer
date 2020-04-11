@@ -39,7 +39,7 @@ describe("PlayerController", () => {
         logger.debug("~~~~~~PLAYER CONTROLLER TESTS COMPLETE~~~~~~");
     });
     afterEach(() => {
-        [mockPlayerDAO, mockTeamDAO].map(mockedThing =>
+        [mockPlayerDAO, mockTeamDAO].forEach(mockedThing =>
             Object.entries(mockedThing).forEach((kvp: [string, jest.Mock<any, any>]) => {
                 kvp[1].mockClear();
             }));
