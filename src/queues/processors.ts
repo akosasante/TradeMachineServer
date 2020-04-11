@@ -18,8 +18,8 @@ export const emailCallbacks: {[key in EmailJobName]: (u: User) => Promise<SendIn
 };
 
 export async function processEmailJob(emailJob: Job<EmailJob>) {
-    const emailTask = emailCallbacks[emailJob.data.mailType];
     logger.debug(inspect(emailJob));
+    const emailTask = emailCallbacks[emailJob.data.mailType];
     const user = JSON.parse(emailJob.data.user);
     return await emailTask(user);
 }
