@@ -3,6 +3,7 @@ import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import { EmailJob, EmailJobName } from "./processors";
 import User from "../models/user";
+import { EmailStatusEvent } from "../api/routes/EmailController";
 
 export class EmailPublisher {
     private static instance: EmailPublisher;
@@ -29,6 +30,16 @@ export class EmailPublisher {
         return await EmailPublisher.emailQueue.add(job, opts);
     }
 
+    private static async queueWebhookEmail(event: EmailStatusEvent, jobName: EmailJobName) {
+        const job: EmailJob = {
+            event: JSON.stringify(event),
+            mailType: jobName,
+        };
+        const opts: JobOptions = { attempts: 3, backoff: 10000 };
+        logger.debug(`queuing webhook response: ${inspect(event)}`);
+        return await EmailPublisher.emailQueue.add(job, opts);
+    }
+
     public async queueResetEmail(user: User): Promise<Job<EmailJob>> {
         return await EmailPublisher.queueEmail(user, "reset_pass");
     }
@@ -39,5 +50,9 @@ export class EmailPublisher {
 
     public async queueTestEmail(user: User): Promise<Job<EmailJob>> {
         return await EmailPublisher.queueEmail(user, "test_email");
+    }
+
+    public async queueWebhookResponse(event: EmailStatusEvent): Promise<Job<EmailJob>> {
+        return await EmailPublisher.queueWebhookEmail(event, "handle_webhook");
     }
 }
