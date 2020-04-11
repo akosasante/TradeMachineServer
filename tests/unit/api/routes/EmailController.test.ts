@@ -1,7 +1,6 @@
 import { Response } from "express";
 import "jest";
 import "jest-extended";
-import { clone } from "lodash";
 import { NotFoundError } from "routing-controllers";
 import EmailController from "../../../../src/api/routes/EmailController";
 import UserDAO from "../../../../src/DAO/UserDAO";
@@ -18,6 +17,7 @@ describe("EmailController", () => {
         queueResetEmail: jest.fn(),
         queueTestEmail: jest.fn(),
         queueRegistrationEmail: jest.fn(),
+        queueWebhookResponse: jest.fn(),
     };
 
     const mockRes = {
@@ -136,6 +136,8 @@ describe("EmailController", () => {
 
             await emailController.receiveSendInMailWebhook(webhookEvent, mockRes as unknown as Response);
 
+            expect(mockMailPublisher.queueWebhookResponse).toHaveBeenCalledTimes(1);
+            expect(mockMailPublisher.queueWebhookResponse).toHaveBeenCalledWith(webhookEvent);
             expect(mockRes.status).toHaveBeenCalledTimes(1);
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledTimes(1);

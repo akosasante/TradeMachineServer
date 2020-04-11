@@ -5,7 +5,7 @@ import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import { EmailPublisher } from "../../queues/publishers";
 
-interface EmailStatusEvent {
+export interface EmailStatusEvent {
     id: number;
     event: string;
     email: string;
@@ -32,7 +32,8 @@ export default class EmailController {
 
     @Post("/sendInMailWebhook")
     public async receiveSendInMailWebhook(@Body() event: EmailStatusEvent, @Res() response: Response): Promise<Response> {
-        logger.debug(inspect(event));
+        logger.debug(`Received email webhook: ${inspect(event)}`);
+        await this.emailPublisher.queueWebhookResponse(event);
         return response.status(200).json({});
     }
 
