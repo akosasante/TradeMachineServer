@@ -12,6 +12,7 @@ dotenvConfig({path: path.resolve(__dirname, "../../.env")});
 export interface SendInBlueSendResponse {
     code: string; // "success",
     message: string; // "Email sent successfully."
+    messageId?: string;
     originalMessage: {
         to: string;
         from: string;
@@ -66,7 +67,7 @@ export const Emailer = {
             },
         })
         .then((res: any) => {
-            logger.info(`Successfully sent password reset email: ${inspect(res)}`);
+            logger.info(`Successfully sent password reset email: ${inspect(res.messageId)}`);
             return res;
         })
         .catch((err: Error) => {
@@ -88,7 +89,7 @@ export const Emailer = {
             },
         })
         .then((res: any) => {
-            logger.info(`Successfully sent test email: ${inspect(res)}`);
+            logger.info(`Successfully sent test email: ${inspect(res.messageId)}`);
             return res;
         })
         .catch((err: Error) => {
@@ -111,7 +112,7 @@ export const Emailer = {
             },
         })
         .then((res: any) => {
-            logger.info(`Successfully sent registration email: ${inspect(res)}`);
+            logger.info(`Successfully sent registration email: ${inspect(res.messageId)}`);
             return res;
         })
         .catch((err: Error) => {

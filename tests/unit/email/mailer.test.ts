@@ -8,24 +8,23 @@ import { resolve as resolvePath } from "path";
 dotenvConfig({path: resolvePath(__dirname, "../../.env")}); // required for api keys
 
 describe("Emailer Class", () => {
-    const emailer = new Emailer();
-    const testUser = UserFactory.getUser("test@example.com", "Jatheesh");
+    const testUser = UserFactory.getUser("test@example.com", "Jatheesh", undefined, undefined, {id: "test-uuid"});
 
     describe("email snapshots", () => {
         it("sendTestEmail", async () => {
-            const res = await emailer.sendTestEmail(testUser);
+            const res = await Emailer.sendTestEmail(testUser);
             delete res.messageId; // value varies so keep it out of the snapshot
             expect(res).toMatchSnapshot();
         });
 
         it("sendRegistrationEmail", async () => {
-            const res = await emailer.sendRegistrationEmail(testUser);
+            const res = await Emailer.sendRegistrationEmail(testUser);
             delete res.messageId; // value varies so keep it out of the snapshot
             expect(res).toMatchSnapshot();
         });
 
         it("sendPasswordResetEmail", async () => {
-            const res = await emailer.sendPasswordResetEmail(testUser);
+            const res = await Emailer.sendPasswordResetEmail(testUser);
             delete res.messageId; // value varies so keep it out of the snapshot
             expect(res).toMatchSnapshot();
         });
