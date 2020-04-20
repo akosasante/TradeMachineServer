@@ -6,7 +6,7 @@ import path from "path";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import User from "../models/user";
-import {config as dotenvConfig} from "dotenv";
+import { config as dotenvConfig } from "dotenv";
 dotenvConfig({path: path.resolve(__dirname, "../../.env")});
 
 export interface SendInBlueSendResponse {
@@ -126,7 +126,7 @@ Object.freeze(Emailer);
 async function test() {
     const mailer = Emailer;
     const user = new User({displayName: "Akosua", email: "tripleabatt@gmail.com"});
-    logger.info("BEFORE")
+    logger.info("BEFORE");
     const res = await mailer.sendTestEmail(user);
     logger.info(`RESULT: ${inspect(res)}`);
 }
