@@ -3,16 +3,25 @@ import "jest-extended";
 import { processDraftPickCsv } from "../../../src/csv/DraftPickParser";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import DraftPick from "../../../src/models/draftPick";
-import User from "../../../src/models/user";
 import { TeamFactory } from "../../factories/TeamFactory";
+import { UserFactory } from "../../factories/UserFactory";
+import { config as dotenvConfig } from "dotenv";
+import { resolve as resolvePath } from "path";
+
+dotenvConfig({path: resolvePath(__dirname, "../../.env")});
 
 describe("DraftPickParser", () => {
+    const owner1 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Akos"});
+    const owner2 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Kwasi"});
+    const owner3 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Cam"});
+    const owner4 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Jatheesh"});
     const testTeam1 = TeamFactory.getTeam(undefined, undefined,
-        {owners: [new User({shortName: "Akos"})]});
+        {owners: [owner1]});
     const testTeam2 = TeamFactory.getTeam(undefined, undefined,
-        {owners: [new User({shortName: "Kwasi"})]});
+        {owners: [owner2]});
     const testTeam3 = TeamFactory.getTeam(undefined, undefined,
-        {owners: [new User({shortName: "Cam"})]});
+        {owners: [owner3, owner4]});
+
     const mockDAO = {
         deleteAllPicks: jest.fn(),
         batchCreatePicks: jest.fn(),
@@ -23,6 +32,9 @@ describe("DraftPickParser", () => {
             kvp[1].mockClear();
         });
     });
+
+    const draftPickObjKeys = ["currentOwner", "originalOwner", "round", "type", "season"];
+    const pickPredicate = (pick: DraftPick) => Object.keys(pick).every(k => draftPickObjKeys.includes(k));
 
     it("should not call deleteAllPicks if mode is undefined", async () => {
         const csv = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks.csv`;
@@ -43,6 +55,7 @@ describe("DraftPickParser", () => {
         expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(1);
         expect(mockDAO.deleteAllPicks).toHaveBeenCalledWith();
     });
+
     it("should return an error if error while deleting existing picks", async () => {
         mockDAO.deleteAllPicks.mockImplementationOnce(() => {
             throw new Error("Error deleting draft picks");
@@ -53,48 +66,47 @@ describe("DraftPickParser", () => {
         expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(1);
         expect(mockDAO.batchCreatePicks).toHaveBeenCalledTimes(0);
     });
+
     it("should call DAO.batchCreatePicks once if less than 50 rows", async () => {
         const csv = `${process.env.BASE_DIR}/tests/resources/two-player-less-picks.csv`;
-        const draftPickObjKeys = ["currentOwner", "originalOwner", "round", "type"];
         await processDraftPickCsv(csv, [testTeam1, testTeam2],
             mockDAO as unknown as DraftPickDAO);
         expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
         expect(mockDAO.batchCreatePicks).toHaveBeenCalledTimes(1);
         expect(mockDAO.batchCreatePicks).toHaveBeenCalledWith(expect.toBeArrayOfSize(6));
-        expect(mockDAO.batchCreatePicks.mock.calls[0][0][0]).toEqual(expect.toContainAllKeys(draftPickObjKeys));
+        expect(mockDAO.batchCreatePicks.mock.calls[0][0]).toSatisfyAll(pickPredicate);
     });
     it("should call DAO.batchCreatePicks once even if more than 50 rows", async () => {
          const csv = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks.csv`;
-         const draftPickObjKeys = ["currentOwner", "originalOwner", "round", "type"];
          await processDraftPickCsv(csv, [testTeam1, testTeam2, testTeam3],
              mockDAO as unknown as DraftPickDAO);
          expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
          expect(mockDAO.batchCreatePicks).toHaveBeenCalledTimes(1);
          expect(mockDAO.batchCreatePicks).toHaveBeenCalledWith(expect.toBeArrayOfSize(50));
-         expect(mockDAO.batchCreatePicks.mock.calls[0][0][0]).toEqual(expect.toContainAllKeys(draftPickObjKeys));
+         expect(mockDAO.batchCreatePicks.mock.calls[0][0]).toSatisfyAll(pickPredicate);
     });
+
     it("should return all the rows from the csv as draft picks", async () => {
-        mockDAO.batchCreatePicks.mockImplementationOnce((arr: Array<Partial<DraftPick>>) =>
-            Promise.resolve(arr.map(draftPickObj => new DraftPick(draftPickObj))));
+        mockDAO.batchCreatePicks.mockImplementationOnce((arr: Partial<DraftPick>[]) =>
+            Promise.resolve(arr.map(draftPickObj => new DraftPick(draftPickObj as DraftPick))));
         const csv = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks.csv`;
-        const draftPickObjKeys = ["currentOwner", "originalOwner", "round", "type"];
         const res = await processDraftPickCsv(csv, [testTeam1, testTeam2, testTeam3],
             mockDAO as unknown as DraftPickDAO);
         await expect(res).toBeArrayOfSize(50);
-        expect(res[0]).toBeInstanceOf(DraftPick);
-        expect(res[0]).toEqual(expect.toContainKeys(draftPickObjKeys));
+        expect(res).toSatisfyAll(p => p instanceof DraftPick);
+        expect(res).toSatisfyAll(pickPredicate);
     });
-    it("should skip any  rows from the csv that don't have a user in the db", async () => {
-        mockDAO.batchCreatePicks.mockImplementationOnce((arr: Array<Partial<DraftPick>>) =>
-            Promise.resolve(arr.map(draftPickObj => new DraftPick(draftPickObj))));
+    it("should skip any rows from the csv that don't have a user in the db", async () => {
+        mockDAO.batchCreatePicks.mockImplementationOnce((arr: Partial<DraftPick>[]) =>
+            Promise.resolve(arr.map(draftPickObj => new DraftPick(draftPickObj as DraftPick))));
         const csv = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks.csv`;
         const res = await processDraftPickCsv(csv, [testTeam1, testTeam2],
             mockDAO as unknown as DraftPickDAO);
         await expect(res).toBeArrayOfSize(32);
     });
-    it("should skip any  rows from the csv that don't have required props", async () => {
-        mockDAO.batchCreatePicks.mockImplementationOnce((arr: Array<Partial<DraftPick>>) =>
-            Promise.resolve(arr.map(draftPickObj => new DraftPick(draftPickObj))));
+    it("should skip any rows from the csv that don't have required props", async () => {
+        mockDAO.batchCreatePicks.mockImplementationOnce((arr: Partial<DraftPick>[]) =>
+            Promise.resolve(arr.map(draftPickObj => new DraftPick(draftPickObj as DraftPick))));
         const csv1 = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks-with-invalid.csv`;
         const res1 = await processDraftPickCsv(csv1, [testTeam1, testTeam2, testTeam3],
             mockDAO as unknown as DraftPickDAO);

@@ -1,81 +1,71 @@
 import "jest";
 import "jest-extended";
-import { NotFoundError } from "routing-controllers";
-import { mocked } from "ts-jest/utils";
+import { MockObj } from "../../DAO/daoHelpers";
 import EspnController from "../../../../src/api/routes/EspnController";
 import EspnAPI from "../../../../src/espn/espnApi";
-
-jest.mock("../../../../src/espn/espnApi");
-const mockAPI = mocked(EspnAPI);
+import logger from "../../../../src/bootstrap/logger";
+import { EspnFactory } from "../../../factories/EspnFactory";
 
 describe("EspnController", () => {
-    beforeEach(() => {
-        // @ts-ignore
-        mockAPI.mockClear();
+    const mockEspnApi: MockObj = {
+        getAllMembers: jest.fn(),
+        getAllLeagueTeams: jest.fn(),
+    };
+    const espnController = new EspnController(mockEspnApi as unknown as EspnAPI);
+    const member = EspnFactory.getMember();
+    const team = EspnFactory.getTeam();
+
+    beforeAll(() => {
+        logger.debug("~~~~~~ESPN CONTROLLER TESTS BEGIN~~~~~~");
     });
-    const FFLeagueId = 545;
-
-    it("should create a new ESPNApi instance when constructed with the FF League ID", async () => {
-        const _ = new EspnController();
-        expect(mockAPI).toHaveBeenCalledTimes(1);
-        expect(mockAPI).toHaveBeenCalledWith(FFLeagueId);
+    afterAll(() => {
+        logger.debug("~~~~~~ESPN CONTROLLER TESTS COMPLETE~~~~~~");
     });
-
-    describe("getTeamName method", () => {
-        const testTeam = {name: "testTeam"};
-        const teamId = 1;
-        it("should return the location + nickname of the given team based on id", async () => {
-            const loadAndRunSpy = jest.fn().mockImplementation((func: any) => func());
-            // @ts-ignore
-            const getTeamByIdSpy = jest.fn().mockReturnValue(Promise.resolve(testTeam));
-
-            // @ts-ignore
-            mockAPI.mockImplementation(() => {
-                return {
-                    loadAndRun: loadAndRunSpy,
-                    getTeamById: getTeamByIdSpy,
-                };
-            });
-            // @ts-ignore
-            mockAPI.getTeamName.mockReturnValue(testTeam.name);
-
-            const router = new EspnController();
-            const res = await router.getTeamName(teamId);
-
-            expect(mockAPI).toHaveBeenCalledTimes(1);
-            expect(mockAPI).toHaveBeenCalledWith(FFLeagueId);
-            expect(loadAndRunSpy).toHaveBeenCalledTimes(1);
-            expect(getTeamByIdSpy).toHaveBeenCalledTimes(1);
-            expect(getTeamByIdSpy).toHaveBeenCalledWith(teamId);
-            expect(mockAPI.getTeamName).toHaveBeenCalledTimes(1);
-            expect(mockAPI.getTeamName).toHaveBeenCalledWith(testTeam);
-            expect(res).toEqual(testTeam.name);
+    afterEach(() => {
+        Object.entries(mockEspnApi).forEach((kvp: [string, jest.Mock<any, any>]) => {
+            kvp[1].mockClear();
         });
-        it("should throw a NotFoundError if there is no team with that Id", async () => {
-            const loadAndRunSpy = jest.fn().mockImplementation((func: any) => func());
-            const getTeamByIdSpy = jest.fn().mockImplementation(() => {
-                throw new NotFoundError("Id Not Found.");
-            });
+    });
 
-            // @ts-ignore
-            mockAPI.mockImplementation(() => {
-                return {
-                    loadAndRun: loadAndRunSpy,
-                    getTeamById: getTeamByIdSpy,
-                };
-            });
-            // @ts-ignore
-            mockAPI.getTeamName.mockClear();
+    describe("getAllEspnMembers method", () => {
+        it("should return an array of ESPN members", async () => {
+            const year = 2018;
+            mockEspnApi.getAllMembers.mockResolvedValueOnce([member]);
+            const res = await espnController.getAllEspnMembers(year);
 
-            const router = new EspnController();
-            await expect(router.getTeamName(999)).rejects.toThrow(NotFoundError);
+            expect(mockEspnApi.getAllMembers).toHaveBeenCalledTimes(1);
+            expect(mockEspnApi.getAllMembers).toHaveBeenCalledWith(year);
+            expect(res).toEqual([member]);
+        });
+        it("should pass the current year by default if nothing is passed in", async () => {
+            const currentYear = new Date().getFullYear();
+            mockEspnApi.getAllMembers.mockResolvedValueOnce([member]);
+            const res = await espnController.getAllEspnMembers();
 
-            expect(mockAPI).toHaveBeenCalledTimes(1);
-            expect(mockAPI).toHaveBeenCalledWith(FFLeagueId);
-            expect(loadAndRunSpy).toHaveBeenCalledTimes(1);
-            expect(getTeamByIdSpy).toHaveBeenCalledTimes(1);
-            expect(getTeamByIdSpy).toHaveBeenCalledWith(999);
-            expect(mockAPI.getTeamName).toHaveBeenCalledTimes(0);
+            expect(mockEspnApi.getAllMembers).toHaveBeenCalledTimes(1);
+            expect(mockEspnApi.getAllMembers).toHaveBeenCalledWith(currentYear);
+            expect(res).toEqual([member]);
+        });
+    });
+
+    describe("getAllEspnTeams method", () => {
+        it("should return an array of ESPN teams", async () => {
+            const year = 2018;
+            mockEspnApi.getAllLeagueTeams.mockResolvedValueOnce([team]);
+            const res = await espnController.getAllEspnTeams(year);
+
+            expect(mockEspnApi.getAllLeagueTeams).toHaveBeenCalledTimes(1);
+            expect(mockEspnApi.getAllLeagueTeams).toHaveBeenCalledWith(year);
+            expect(res).toEqual([team]);
+        });
+        it("should pass the current year by default if nothing is passed in", async () => {
+            const currentYear = new Date().getFullYear();
+            mockEspnApi.getAllLeagueTeams.mockResolvedValueOnce([team]);
+            const res = await espnController.getAllEspnTeams();
+
+            expect(mockEspnApi.getAllLeagueTeams).toHaveBeenCalledTimes(1);
+            expect(mockEspnApi.getAllLeagueTeams).toHaveBeenCalledWith(currentYear);
+            expect(res).toEqual([team]);
         });
     });
 });

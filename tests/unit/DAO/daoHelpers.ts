@@ -4,3 +4,7 @@ export const mockDeleteChain = {
     delete: jest.fn().mockReturnValue(
         {whereInIds: mockWhereInIds}),
 };
+
+export interface MockObj {
+    [key: string]: jest.Mock<any, any>;
+}

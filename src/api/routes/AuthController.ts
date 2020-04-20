@@ -1,10 +1,10 @@
-import { User } from "@akosasante/trade-machine-models";
 import { Request, Response } from "express";
 import { BodyParam, Controller, Post, Req, Res, Session, UseBefore } from "routing-controllers";
 import { deserializeUser, generateHashedPassword, passwordResetDateIsValid } from "../../authentication/auth";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import { LoginHandler, RegisterHandler } from "../middlewares/AuthenticationHandler";
+import User from "../../models/user";
 
 @Controller("/auth")
 export default class AuthController {
@@ -56,7 +56,7 @@ export default class AuthController {
                                @BodyParam("password") newPassword: string,
                                @BodyParam("token") passwordResetToken: string,
                                @Res() response: Response): Promise<Response> {
-        const existingUser = await this.userDao.getUserDbObj(userId);
+        const existingUser = await this.userDao.getUserById(userId);
 
         if (!existingUser || !existingUser.passwordResetToken ||
             existingUser.passwordResetToken !== passwordResetToken) {

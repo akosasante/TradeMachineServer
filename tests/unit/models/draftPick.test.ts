@@ -1,13 +1,18 @@
 import "jest";
 import "jest-extended";
-import { clone } from "lodash";
 import DraftPick from "../../../src/models/draftPick";
-import { LeagueLevel } from "../../../src/models/player";
-import User, { Role } from "../../../src/models/user";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
-import { TeamFactory } from "../../factories/TeamFactory";
+import logger from "../../../src/bootstrap/logger";
+import { inspect } from "util";
 
 describe("DraftPick Class", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~DRAFT PICK TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~DRAFT PICK TESTS COMPLETE~~~~~~");
+    });
+
     const draftPickObj = DraftPickFactory.getPickObject();
     const draftPick = new DraftPick(draftPickObj);
 
@@ -16,46 +21,25 @@ describe("DraftPick Class", () => {
             expect(draftPick.round).toEqual(draftPickObj.round);
             expect(draftPick.pickNumber).toEqual(draftPickObj.pickNumber);
             expect(draftPick.type).toEqual(draftPickObj.type);
+            expect(draftPick.season).toEqual(draftPickObj.season);
             expect(draftPick.currentOwner).toBeUndefined();
-            expect(draftPick.season).toBeUndefined();
+            expect(draftPick.originalOwner).toBeUndefined();
+            expect(draftPick).toBeInstanceOf(DraftPick);
+            expect(draftPickObj).not.toBeInstanceOf(DraftPick);
         });
     });
 
     describe("instance methods", () => {
-        it("toString/0", () => {
-            // tslint:disable-next-line:max-line-length
-            const pattern = new RegExp(`${draftPick.type} draft pick, round: ${draftPick.round}, pick #${draftPick.pickNumber}`);
-            expect(draftPick.toString()).toMatch(pattern);
-            expect(draftPick.toString()).not.toMatch("Currently owned");
+        it("toString/0 - should return a string with the UUID", () => {
+            logger.debug(inspect(draftPick.toString()));
+            expect(draftPick.toString()).toMatch(draftPick.id!);
+            expect(draftPick.toString()).toMatch("DraftPick#");
         });
-
-        describe("equals/2", () => {
-            const draftClone = clone(draftPick);
-            const draftDiffLevel = new DraftPick({...draftPickObj, type: LeagueLevel.HIGH});
-            const owner = new User({email: "test@example.com", password: "lol", roles: [Role.ADMIN]});
-            const owner2 = new User({email: "test2@example.com", password: "lol", roles: [Role.ADMIN]});
-            const team1 = TeamFactory.getTeam("team1", 1, {owners: [owner]});
-            const team2 = TeamFactory.getTeam("team2", 2, {owners: [owner2]});
-            const draftWithOwner = new DraftPick({...draftPickObj, currentOwner: team1});
-            const draftOwnerCloned = clone(draftWithOwner);
-            const draftWithDiffOwner = new DraftPick({...draftPickObj, currentOwner: team2});
-
-            it("should return true if the two instances are identical. Excludes = default", () => {
-                expect(draftPick.equals(draftClone)).toBeTrue();
-                expect(draftWithOwner.equals(draftOwnerCloned)).toBeTrue();
-            });
-            it("should return true if the two instances are identical considering the excludes", () => {
-                expect(draftPick.equals(draftWithOwner, {currentOwner: true})).toBeTrue();
-                expect(draftPick.equals(draftDiffLevel, {type: true})).toBeTrue();
-            });
-            it("should throw a useful error if something doesn't match (simple props)", () => {
-                expect(() => draftPick.equals(draftDiffLevel)).toThrowWithMessage(Error, "Not matching: type");
-            });
-            it("should throw a useful error if something doesn't match (model fields)", () => {
-                expect(() => draftPick.equals(draftWithOwner)).toThrowWithMessage(Error, "Not matching: currentOwner");
-                expect(() => draftWithDiffOwner.equals(draftWithOwner))
-                    .toThrowWithMessage(Error, "Not matching: name");
-            });
+        it("parse/1 - should take a draft pick and return a POJO", () => {
+            expect(draftPick).toBeInstanceOf(DraftPick);
+            expect(draftPick.parse()).not.toBeInstanceOf(DraftPick);
+            expect(draftPick.parse()).toEqual(draftPickObj);
+            expect(draftPick.parse()).toEqual(expect.any(Object));
         });
     });
 });

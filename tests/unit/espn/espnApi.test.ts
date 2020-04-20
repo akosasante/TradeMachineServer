@@ -1,102 +1,58 @@
-import axios, { AxiosPromise } from "axios";
+import axios, { AxiosPromise, AxiosInstance } from "axios";
 import "jest";
 import "jest-extended";
-import { NotFoundError } from "routing-controllers";
 import { mocked } from "ts-jest/utils";
 import EspnAPI from "../../../src/espn/espnApi";
+import allDataJson from "../../resources/espn-general-resp.json";
+import membersJson from "../../resources/espn-members-resp.json";
+import teamsJson from "../../resources/espn-teams-resp.json";
+import playersJson from "../../resources/espn-all-players.json";
+import scheduleJson from "../../resources/espn-schedule.json";
+import rosterJson from "../../resources/espn-roster.json";
+let mockedGet = jest.fn();
+jest.mock("axios", () => ({
+    create: jest.fn(() => ({
+        get: mockedGet,
+    })),
+}) as unknown as AxiosPromise);
 
 describe("EspnApi Class", () => {
-    const mockAxios = mocked(axios);
     const testLeagueId = 545;
-    const testMember1 = {id: "some-id", isLeagueManager: true, displayName: "some name"};
-    const testTeam1 = {id: 123, abbrev: "AZ", location: "Squirtle", nickname: "Squad", owners: [testMember1.id]};
-    const testName = "Team Name";
-    const testSettings = {name: testName};
+    const Api = new EspnAPI(testLeagueId);
 
-    beforeAll(() => {
-        mockAxios.create = jest.fn(() => axios);
-        mockAxios.get = jest.fn(() => {
-            return Promise.resolve({
-                data: {
-                    members: [testMember1],
-                    teams: [testTeam1],
-                    settings: testSettings,
-                },
-            }) as AxiosPromise;
-        });
+    it("getAllLeagueData/1 - should return general league data", async () => {
+        mockedGet.mockResolvedValueOnce({data: allDataJson} as unknown as AxiosPromise);
+        const res = await Api.getAllLeagueData(2019);
+        expect(res).toEqual(allDataJson);
     });
 
-    it("should construct the API instance and base url with a passed in leagueId", () => {
-        const api = new EspnAPI(testLeagueId);
-        // tslint:disable-next-line:max-line-length
-        expect(api.leagueBaseUrl).toEqual(`http://fantasy.espn.com/apis/v3/games/flb/seasons/2019/segments/0/leagues/${testLeagueId}`);
+    it("getAllMembers/1 - should return league member data", async () => {
+        mockedGet.mockResolvedValueOnce({data: membersJson} as unknown as AxiosPromise);
+        const res = await Api.getAllMembers(2019);
+        expect(res).toEqual(membersJson);
     });
 
-    it("preloadData - should load the members, teams, leagueName, loaded based on return from axios", async () => {
-        const api = new EspnAPI(testLeagueId);
-        await api.preloadData();
-        expect(api.members).toEqual([testMember1]);
-        expect(api.teams).toEqual([testTeam1]);
-        expect(api.leagueName).toEqual(testName);
+    it("getAllLeagueTeams/1 - should return league member data", async () => {
+        mockedGet.mockResolvedValueOnce({data: teamsJson} as unknown as AxiosPromise);
+        const res = await Api.getAllLeagueTeams(2019);
+        expect(res).toEqual(teamsJson);
     });
 
-    it("should return a team if it is found in the teams array", async () => {
-        const api = new EspnAPI(testLeagueId);
-        const getTeam = api.getTeamById.bind(api, testTeam1.id);
-        const res = await api.loadAndRun(getTeam);
-        expect(res).toEqual(testTeam1);
+    it("getAllMajorLeaguePlayers/1 - should return league member data", async () => {
+        mockedGet.mockResolvedValueOnce({data: playersJson} as unknown as AxiosPromise);
+        const res = await Api.getAllMajorLeaguePlayers(2019);
+        expect(res).toEqual(playersJson.players);
     });
 
-    it("should throw NotFoundError if a team is not found in the array", async () => {
-        const api = new EspnAPI(testLeagueId);
-        const getTeam = api.getTeamById.bind(api, 999);
-        await expect(api.loadAndRun(getTeam)).rejects.toThrow(NotFoundError);
+    it("getScheduleForYear/1 - should return league member data", async () => {
+        mockedGet.mockResolvedValueOnce({data: scheduleJson} as unknown as AxiosPromise);
+        const res = await Api.getScheduleForYear(2019);
+        expect(res).toEqual(scheduleJson);
     });
 
-    it("should return a team name based on the location and nickname", async () => {
-        const res = EspnAPI.getTeamName(testTeam1);
-        expect(res).toEqual("Squirtle Squad");
-    });
-
-    it("should return the owner objects for a team's owners as an array", async () => {
-        const api = new EspnAPI(testLeagueId);
-        const getOwners = api.getEspnTeamOwners.bind(api, testTeam1);
-        const res = await api.loadAndRun(getOwners);
-        expect(res).toEqual([testMember1]);
-    });
-
-    it("should return an empty array if the team has no owners", async () => {
-        const api = new EspnAPI(testLeagueId);
-        const testTeamNoOwners = {...testTeam1, owners: []};
-        const getOwners = api.getEspnTeamOwners.bind(api, testTeamNoOwners);
-        const res = await api.loadAndRun(getOwners);
-        expect(res).toEqual([]);
-    });
-
-    it("should skip any owners that are not found in the members array", async () => {
-        const api = new EspnAPI(testLeagueId);
-        const testTeamOtherOwner = {...testTeam1, owners: ["some-other-id"]};
-        const getOwners = api.getEspnTeamOwners.bind(api, testTeamOtherOwner);
-        const res = await api.loadAndRun(getOwners);
-        expect(res).toEqual([]);
-    });
-
-    it("should call preload data if not loaded yet and call the function", async () => {
-        const api = new EspnAPI(testLeagueId);
-        const spy = jest.spyOn(api, "preloadData");
-
-        const getOwners = api.getEspnTeamOwners.bind(api, testTeam1);
-        await api.loadAndRun(getOwners);
-        expect(spy).toHaveBeenCalledTimes(1);
-    });
-    //
-    it("should not call preload data if it's already loaded, and should call the function", async () => {
-        const api = new EspnAPI(testLeagueId);
-        await api.preloadData();
-        const spy = jest.spyOn(api, "preloadData");
-
-        const getOwners = api.getEspnTeamOwners.bind(api, testTeam1);
-        await api.loadAndRun(getOwners);
-        expect(spy).toHaveBeenCalledTimes(0);
+    it("getRosterForTeamAndDay/1 - should return league member data", async () => {
+        mockedGet.mockResolvedValueOnce({data: rosterJson} as unknown as AxiosPromise);
+        const res = await Api.getRosterForTeamAndDay(2019, 2, 0);
+        expect(res).toEqual(rosterJson.teams[0].roster);
     });
 });

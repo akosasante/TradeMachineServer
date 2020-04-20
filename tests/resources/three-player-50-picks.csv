@@ -9,8 +9,8 @@ Akos,22,Akos,Major
 Akos,23,Akos,Major
 Akos,24,Akos,Major
 Akos,25,Akos,Major
-Akos,1,Kwasi,High
-Akos,2,Cam,High
+Cam,1,Akos,High
+Kwasi,2,Akos,High
 Akos,1,Akos,Low
 Akos,2,Akos,Low
 Akos,3,Akos,Low
@@ -28,7 +28,7 @@ Kwasi,24,Kwasi,Major
 Kwasi,25,Kwasi,Major
 Kwasi,1,Kwasi,High
 Kwasi,2,Kwasi,High
-Kwasi,1,Akos,Low
+Akos,1,Kwasi,Low
 Kwasi,2,Kwasi,Low
 Kwasi,4,Kwasi,Low
 Kwasi,5,Kwasi,Low
@@ -40,8 +40,8 @@ Cam,20,Cam,Major
 Cam,21,Cam,Major
 Cam,22,Cam,Major
 Cam,24,Cam,Major
-Cam,19,Akos,Major
-Cam,25,Kwasi,Major
+Akos,1.5,Cam,Major
+Kwasi,25,Cam,Major
 Cam,1,Cam,High
 Cam,2,Cam,High
 Cam,1,Cam,Low

@@ -1,70 +1,42 @@
-import { NotFoundError } from "routing-controllers";
-import { Connection, DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
-import { ConstructorError } from "../models/base";
+import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
 import Trade from "../models/trade";
 import TradeItem from "../models/tradeItem";
 import TradeParticipant from "../models/tradeParticipant";
+import { BadRequestError } from "routing-controllers";
 
-const relations = ["tradeParticipants", "tradeItems", "tradeParticipants.team", "tradeItems.sender",
-"tradeItems.recipient", "tradeItems.player", "tradeItems.pick"];
 
 export default class TradeDAO {
-    public connection: Connection;
     private tradeDb: Repository<Trade>;
-    private participantDb: Repository<TradeParticipant>;
-    private itemDb: Repository<TradeItem>;
 
-    constructor() {
-        this.connection = getConnection(process.env.NODE_ENV);
-        this.tradeDb = this.connection.getRepository("Trade");
-        this.participantDb = this.connection.getRepository("TradeParticipant");
-        this.itemDb = this.connection.getRepository("TradeItem");
+    constructor(repo?: Repository<Trade>) {
+        this.tradeDb = repo || getConnection(process.env.NODE_ENV).getRepository("Trade");
     }
 
     public async getAllTrades(): Promise<Trade[]> {
-        const options: FindManyOptions = {order: {id: "ASC"}, relations};
-        const dbTrades = await this.tradeDb.find(options);
-        return dbTrades.map(trade => new Trade(trade));
+        const options: FindManyOptions = {order: {id: "ASC"}};
+        return await this.tradeDb.find(options);
     }
 
-    public async getTradeById(id: number): Promise<Trade> {
-        if (!id) {
-            throw new NotFoundError("Id is required");
+    public async getTradeById(id: string): Promise<Trade> {
+        return await this.tradeDb.findOneOrFail(id);
+    }
+
+public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
+        if (!Trade.isValid(tradeObj)) {
+            throw new BadRequestError("Trade is not valid");
         }
-        const dbTrade = await this.tradeDb.findOneOrFail(id, {relations});
-        return new Trade(dbTrade);
+
+        const saved = await this.tradeDb.save(tradeObj);
+
+        return this.tradeDb.findOneOrFail(saved.id);
     }
 
-    public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
-        return this.connection.transaction(async tran => {
-            const partDb = tran.getRepository("TradeParticipant");
-            const itemDb = tran.getRepository("TradeItem");
-            const tradeDb = tran.getRepository("Trade");
-
-            tradeObj.tradeParticipants = await partDb.save(tradeObj.tradeParticipants || []);
-            tradeObj.tradeItems = await itemDb.save(tradeObj.tradeItems || []);
-
-            const trade = await tradeDb.save(tradeObj);
-            const newTrade = new Trade(trade);
-            newTrade.constructRelations();
-
-            if (!newTrade.isValid()) {
-                throw new ConstructorError("Trade is not valid");
-            }
-
-            return newTrade;
-        });
-    }
-
-    // public async updateTrade(id: number, tradeObj: Partial<Trade>): Promise<Trade> {
+    // public async updateTrade(id: string, tradeObj: Partial<Trade>): Promise<Trade> {
     //
     //     return await this.getTradeById(id);
     // }
 
-    public async deleteTrade(id: number): Promise<DeleteResult> {
-        if (!id) {
-            throw new NotFoundError("Id is required");
-        }
+    public async deleteTrade(id: string): Promise<DeleteResult> {
         await this.tradeDb.findOneOrFail(id);
         return await this.tradeDb.createQueryBuilder()
             .delete()
@@ -73,32 +45,24 @@ export default class TradeDAO {
             .execute();
     }
 
-    public async updateParticipants(id: number, participantsToAdd: TradeParticipant[],
+    public async updateParticipants(id: string, participantsToAdd: TradeParticipant[],
                                     participantsToRemove: TradeParticipant[]): Promise<Trade> {
-        if (!id) {
-            throw new NotFoundError("Id is required");
-        }
-        await this.participantDb.save([...participantsToAdd, ...participantsToRemove]);
         await this.tradeDb.findOneOrFail(id);
         await this.tradeDb
             .createQueryBuilder()
             .relation("tradeParticipants")
             .of(id)
             .addAndRemove(participantsToAdd, participantsToRemove);
-        return await this.getTradeById(id);
+        return await this.tradeDb.findOneOrFail(id);
     }
 
-    public async updateItems(id: number, itemsToAdd: TradeItem[], itemsToRemove: TradeItem[]): Promise<Trade> {
-        if (!id) {
-            throw new NotFoundError("Id is required");
-        }
-        await this.itemDb.save([...itemsToAdd, itemsToRemove]);
+    public async updateItems(id: string, itemsToAdd: TradeItem[], itemsToRemove: TradeItem[]): Promise<Trade> {
         await this.tradeDb.findOneOrFail(id);
         await this.tradeDb
             .createQueryBuilder()
             .relation("tradeItems")
             .of(id)
             .addAndRemove(itemsToAdd, itemsToRemove);
-        return await this.getTradeById(id);
+        return await this.tradeDb.findOneOrFail(id);
     }
 }

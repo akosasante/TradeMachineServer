@@ -5,9 +5,10 @@ import UserController from "../../../../src/api/routes/UserController";
 import logger from "../../../../src/bootstrap/logger";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import { UserFactory } from "../../../factories/UserFactory";
+import { MockObj } from "../../DAO/daoHelpers";
 
 describe("UserController", () => {
-    const mockUserDAO = {
+    const mockUserDAO: MockObj = {
         getAllUsers: jest.fn(),
         getAllUsersWithTeams: jest.fn(),
         getUserById: jest.fn(),
@@ -18,8 +19,7 @@ describe("UserController", () => {
         deleteUser: jest.fn(),
     };
     const userController = new UserController(mockUserDAO as unknown as UserDAO);
-    const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
-    const testUserModel = testUser.toUserModel();
+    const testUser = UserFactory.getUser("j@gm.com", "Jatheesh");
 
     beforeAll(() => {
         logger.debug("~~~~~~USER CONTROLLER TESTS BEGIN~~~~~~");
@@ -38,12 +38,10 @@ describe("UserController", () => {
             mockUserDAO.getAllUsers.mockReturnValue([testUser]);
             const res = await userController.getAll();
 
-            // Testing that the correct dao function is called and with the correct params
             expect(mockUserDAO.getAllUsers).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.getAllUsers).toHaveBeenCalledWith();
 
-            // Testing that the return value from the controller method is as expected
-            expect(res).toEqual([testUserModel]);
+            expect(res).toEqual([testUser]);
         });
         it("should call the getAll method if 'full' param is false", async () => {
             mockUserDAO.getAllUsers.mockReturnValue([testUser]);
@@ -58,7 +56,7 @@ describe("UserController", () => {
 
             expect(mockUserDAO.getAllUsersWithTeams).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.getAllUsersWithTeams).toHaveBeenCalledWith();
-            expect(res).toEqual([testUserModel]);
+            expect(res).toEqual([testUser]);
         });
     });
 
@@ -67,41 +65,40 @@ describe("UserController", () => {
             mockUserDAO.getUserById.mockReturnValue(testUser);
             const res = await userController.getById(testUser.id!);
 
-            // Must call the correct DAO method
             expect(mockUserDAO.getUserById).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.getUserById).toHaveBeenCalledWith(testUser.id!);
 
-            expect(res).toEqual(testUserModel);
+            expect(res).toEqual(testUser);
         });
     });
 
     describe("findUser method", () => {
-        const query: {[key: string]: string} = { name: "Jatheesh" };
+        const query: string = "name=Jatheesh";
+        const expectedQuery = {name: "Jatheesh"};
         it("should find a user by the given query options", async () => {
-            mockUserDAO.findUser.mockReturnValueOnce(testUser);
-            // @ts-ignore
-            const res = await userController.findUser(query, undefined);
+            mockUserDAO.findUser.mockResolvedValueOnce(testUser);
+            const res = await userController.findUser(query);
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.findUser).toHaveBeenCalledWith(query, true);
+            expect(mockUserDAO.findUser).toHaveBeenCalledWith(expectedQuery, true);
 
-            expect(res).toEqual(testUserModel);
+            expect(res).toEqual(testUser);
         });
         it("should return an array of users if multiple is a key in the query", async () => {
-            mockUserDAO.findUsers.mockReturnValueOnce([testUser]);
+            mockUserDAO.findUsers.mockResolvedValueOnce([testUser]);
             const res = await userController.findUser(query, true);
 
             expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.findUsers).toHaveBeenCalledWith(query);
+            expect(mockUserDAO.findUsers).toHaveBeenCalledWith(expectedQuery);
 
-            expect(res).toEqual([testUserModel]);
+            expect(res).toEqual([testUser]);
         });
         it("should throw an error if no entities are found with the multiple key", async () => {
-            mockUserDAO.findUsers.mockReturnValueOnce([]);
+            mockUserDAO.findUsers.mockResolvedValueOnce([]);
             const res = userController.findUser(query, true);
 
             expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.findUsers).toHaveBeenCalledWith(query);
+            expect(mockUserDAO.findUsers).toHaveBeenCalledWith(expectedQuery);
 
             await expect(res).rejects.toThrowError(NotFoundError);
         });
@@ -115,7 +112,7 @@ describe("UserController", () => {
             expect(mockUserDAO.createUsers).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.createUsers).toHaveBeenCalledWith([testUser.parse()]);
 
-            expect(res).toEqual([testUserModel]);
+            expect(res).toEqual([testUser]);
         });
     });
 
@@ -127,7 +124,7 @@ describe("UserController", () => {
             expect(mockUserDAO.updateUser).toBeCalledTimes(1);
             expect(mockUserDAO.updateUser).toBeCalledWith(testUser.id!, testUser.parse());
 
-            expect(res).toEqual(testUserModel);
+            expect(res).toEqual(testUser);
         });
     });
 

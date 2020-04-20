@@ -28,11 +28,10 @@ export function cleanupQuery(initQuery: {[key: string]: string}) {
     return queryWithNull;
 }
 
-export const UUIDPattern = "/:id([0-9a-fA-F]{8}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{12})"
+export const UUIDPattern = "/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})";
 
-function coerceStringToNull(kvps: Array<[string, string]>) {
+function coerceStringToNull(kvps: [string, string][]) {
     return kvps.reduce((updatedQuery: {[key: string]: string|FindOperator<any>}, kvp: [string, string]) => {
-        // tslint:disable-next-line:no-null-keyword
         updatedQuery[kvp[0]] = isNullString(kvp[1]) ?
             IsNull() : (isNotNullString(kvp[1])) ?
                 Not(IsNull()) : kvp[1];

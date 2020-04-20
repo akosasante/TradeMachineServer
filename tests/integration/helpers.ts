@@ -2,6 +2,7 @@ import { Server } from "http";
 import request from "supertest";
 import UserDAO from "../../src/DAO/UserDAO";
 import { UserFactory } from "../factories/UserFactory";
+import { generateHashedPassword } from "../../src/authentication/auth";
 
 export async function makeLoggedInRequest(agent: request.SuperTest<request.Test>, email: string, password: string,
                                           req: (ag: request.SuperTest<request.Test>) => any) {
@@ -60,17 +61,19 @@ export async function makePatchRequest<T>(agent: request.SuperTest<request.Test>
         .expect(expectedStatus);
 }
 
-export function stringifyQuery(query: any) {
-    return Object.entries(query).reduce((queryString: string, kvp: any) =>
-        `${queryString}${kvp[0]}=${kvp[1]}&`, "?");
+export function stringifyQuery(query: {[key: string]: string}) {
+    return "?".concat(Object.entries(query).map(([key, val]) => {
+        if (typeof val === "object") val = stringifyQuery(val);
+        return `${key}=${encodeURIComponent(val)}`;
+    }).join("&"));
 }
 
 export async function setupOwnerAndAdminUsers() {
     const userDAO = new UserDAO();
     const ownerUser = UserFactory.getOwnerUser();
     const adminUser = UserFactory.getAdminUser();
-    const [savedAdmin] = await userDAO.createUsers([adminUser.parse()]);
-    const [savedOwner] = await userDAO.createUsers([ownerUser.parse()]);
+    const password = await generateHashedPassword(UserFactory.GENERIC_PASSWORD);
+    const [savedAdmin, savedOwner] = await userDAO.createUsers([{...adminUser.parse(), password}, {...ownerUser.parse(), password}]);
     return [savedAdmin, savedOwner];
 }
 
@@ -78,3 +81,6 @@ export const adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) =
     makeLoggedInRequest(request.agent(app), UserFactory.ADMIN_EMAIL, UserFactory.GENERIC_PASSWORD, requestFn);
 export const ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any, app: Server) =>
     makeLoggedInRequest(request.agent(app), UserFactory.OWNER_EMAIL, UserFactory.GENERIC_PASSWORD, requestFn);
+
+export const DatePatternRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
+export const UUIDPatternRegex = /([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/;

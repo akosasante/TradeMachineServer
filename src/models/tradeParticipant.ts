@@ -1,6 +1,7 @@
-import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, ManyToOne } from "typeorm";
 import Team from "./team";
 import Trade from "./trade";
+import { BaseModel } from "./base";
 
 export enum TradeParticipantType {
     CREATOR,
@@ -9,27 +10,18 @@ export enum TradeParticipantType {
 
 @Entity()
 @Index(["trade", "team"], {unique: true})
-export default class TradeParticipant {
-    @PrimaryGeneratedColumn()
-    public readonly tradeParticipantId: number;
-
+export default class TradeParticipant extends BaseModel {
     @Column({type: "enum", enum: TradeParticipantType, default: TradeParticipantType.RECIPIENT})
-    public participantType: TradeParticipantType;
+    public participantType!: TradeParticipantType;
 
     @ManyToOne(type => Trade, trade => trade.tradeParticipants, {onDelete: "CASCADE"})
-    public trade: Trade;
+    public trade!: Trade;
 
     @ManyToOne(type => Team, team => team.tradeParticipants, {cascade: true, eager: true})
-    public team: Team;
+    public team!: Team;
 
-    constructor(tradeParticipantObj: Partial<TradeParticipant> = {}) {
-        this.tradeParticipantId = tradeParticipantObj.tradeParticipantId!;
-        this.participantType = tradeParticipantObj.participantType!;
-        this.trade = tradeParticipantObj.trade!;
-        this.team = new Team(tradeParticipantObj.team!);
-    }
-
-    public toString(): string {
-        return `TP#${this.tradeParticipantId} for trade#${this.trade.id} and team#${this.team.id}`;
+    constructor(props: Partial<TradeParticipant> = {}) {
+        super();
+        Object.assign(this, props);
     }
 }

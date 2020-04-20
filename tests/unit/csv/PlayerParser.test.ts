@@ -3,17 +3,28 @@ import "jest-extended";
 import { processMinorLeagueCsv } from "../../../src/csv/PlayerParser";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import Player from "../../../src/models/player";
-import User from "../../../src/models/user";
 import { TeamFactory } from "../../factories/TeamFactory";
+import { config as dotenvConfig } from "dotenv";
+import { resolve as resolvePath } from "path";
+import { UserFactory } from "../../factories/UserFactory";
+
+dotenvConfig({path: resolvePath(__dirname, "../../.env")});
 
 describe("PlayerParser", () => {
+    const owner1 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Akos"});
+    const owner2 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Squad"});
+    const owner3 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Cam"});
+    const owner4 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Kwasi"});
     const testTeam1 = TeamFactory.getTeam(undefined, undefined,
-        {owners: [new User({shortName: "Akos"}), new User({shortName: "Kwasi"})]});
+        {owners: [owner1]});
     const testTeam2 = TeamFactory.getTeam(undefined, undefined,
-        {owners: [new User({shortName: "Squad"})]});
+        {owners: [owner2]});
     const testTeam3 = TeamFactory.getTeam(undefined, undefined,
-        {owners: [new User({shortName: "Cam"})]});
+        {owners: [owner3, owner4]});
+
     const playerKeys = ["name", "mlbTeam", "league", "leagueTeam", "meta"];
+    const playerPredicate = (player: Player) => Object.keys(player).every(k => playerKeys.includes(k));
+
     const threeOwnerCsv = `${process.env.BASE_DIR}/tests/resources/three-teams-three-owners-minor-players.csv`;
     const fourOwnerCsv = `${process.env.BASE_DIR}/tests/resources/three-teams-four-owners-minor-players.csv`;
     const invalidPlayersCsv = `${process.env.BASE_DIR}/tests/resources/three-teams-three-owners-invalid-props.csv`;
@@ -44,6 +55,7 @@ describe("PlayerParser", () => {
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(1);
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledWith("minor");
     });
+
     it("should return an error if error occurs while deleting existing players", async () => {
         mockDAO.deleteAllPlayers.mockImplementationOnce(() => {
             throw new Error("Error deleting players");
@@ -54,39 +66,41 @@ describe("PlayerParser", () => {
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledWith("minor");
         expect(mockDAO.batchCreatePlayers).toHaveBeenCalledTimes(0);
     });
+
     it("should call DAO.batchCreatePlayers", async () => {
         await processMinorLeagueCsv(threeOwnerCsv, [testTeam1, testTeam2, testTeam3], mockDAO as unknown as PlayerDAO);
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(0);
         expect(mockDAO.batchCreatePlayers).toHaveBeenCalledTimes(1);
         expect(mockDAO.batchCreatePlayers).toHaveBeenCalledWith(expect.toBeArrayOfSize(99));
-        expect(mockDAO.batchCreatePlayers.mock.calls[0][0][0]).toEqual(expect.toContainAllKeys(playerKeys));
+        expect(mockDAO.batchCreatePlayers.mock.calls[0][0]).toSatisfyAll(playerPredicate);
     });
     it("should return all the rows from the csv as players", async () => {
-        mockDAO.batchCreatePlayers.mockImplementationOnce((arr: Array<Partial<Player>>) =>
-            Promise.resolve(arr.map(player => new Player(player))));
+        mockDAO.batchCreatePlayers.mockImplementationOnce((arr: Partial<Player>[]) =>
+            Promise.resolve(arr.map(player => new Player(player as Player))));
         const res = await processMinorLeagueCsv(threeOwnerCsv,
             [testTeam1, testTeam2, testTeam3], mockDAO as unknown as PlayerDAO);
         await expect(res).toBeArrayOfSize(99);
-        expect(res[0]).toBeInstanceOf(Player);
-        expect(res[0]).toEqual(expect.toContainKeys(playerKeys));
+        expect(res).toSatisfyAll(player => player instanceof Player);
+        expect(res).toSatisfyAll(playerPredicate);
     });
+
     it("should skip any rows from the csv that don't have a team with that owner in the db", async () => {
-        mockDAO.batchCreatePlayers.mockImplementationOnce((arr: Array<Partial<Player>>) =>
-            Promise.resolve(arr.map(player => new Player(player))));
+        mockDAO.batchCreatePlayers.mockImplementationOnce((arr: Partial<Player>[]) =>
+            Promise.resolve(arr.map(player => new Player(player as Player))));
         const res = await processMinorLeagueCsv(threeOwnerCsv,
             [testTeam1, testTeam2], mockDAO as unknown as PlayerDAO);
         await expect(res).toBeArrayOfSize(64);
     });
     it("should find owners that aren't the first one in the array", async () => {
-        mockDAO.batchCreatePlayers.mockImplementationOnce((arr: Array<Partial<Player>>) =>
-            Promise.resolve(arr.map(player => new Player(player))));
+        mockDAO.batchCreatePlayers.mockImplementationOnce((arr: Partial<Player>[]) =>
+            Promise.resolve(arr.map(player => new Player(player as Player))));
         const res = await processMinorLeagueCsv(fourOwnerCsv,
             [testTeam1, testTeam2, testTeam3], mockDAO as unknown as PlayerDAO);
         await expect(res).toBeArrayOfSize(99);
     });
     it("should skip any rows that don't have the required props", async () => {
-        mockDAO.batchCreatePlayers.mockImplementationOnce((arr: Array<Partial<Player>>) =>
-            Promise.resolve(arr.map(player => new Player(player))));
+        mockDAO.batchCreatePlayers.mockImplementationOnce((arr: Partial<Player>[]) =>
+            Promise.resolve(arr.map(player => new Player(player as Player))));
         const res = await processMinorLeagueCsv(invalidPlayersCsv,
             [testTeam1, testTeam2, testTeam3], mockDAO as unknown as PlayerDAO);
         await expect(res).toBeArrayOfSize(89);
