@@ -1,6 +1,6 @@
 import { JsonController, Param, Authorized, Get } from "routing-controllers";
 import logger from "../../bootstrap/logger";
-import EspnAPI, { EspnLeagueMember } from "../../espn/espnApi";
+import EspnAPI, { EspnFantasyTeam, EspnLeagueMember } from "../../espn/espnApi";
 import { Role } from "../../models/user";
 
 @JsonController("/espn")
@@ -19,5 +19,14 @@ export default class EspnController {
         const members = await this.api.getAllMembers(year || new Date().getFullYear());
         logger.debug(`got ${members.length} members`);
         return members;
+    }
+
+    @Authorized(Role.ADMIN)
+    @Get("/teams")
+    public async getAllEspnTeams(@Param("year") year?: number): Promise<EspnFantasyTeam[]> {
+        logger.debug("get all ESPN teams endpoint");
+        const teams = await this.api.getAllLeagueTeams(year || new Date().getFullYear());
+        logger.debug(`got ${teams.length} teams`);
+        return teams;
     }
 }

@@ -5,6 +5,7 @@ import Player from "./player";
 import TradeItem from "./tradeItem";
 import TradeParticipant from "./tradeParticipant";
 import User from "./user";
+import { EspnFantasyTeam } from "../espn/espnApi";
 
 export enum TeamStatus {
     ACTIVE = "active",
@@ -24,6 +25,9 @@ export default class Team extends BaseModel {
 
     @Column({type: "enum", enum: TeamStatus, default: [TeamStatus.DISABLED]})
     public status?: TeamStatus;
+
+    @Column({type: "jsonb", nullable: true})
+    public espnTeam?: EspnFantasyTeam;
 
     @OneToMany(type => User, user => user.team, { eager: true, onDelete: "SET NULL"})
     public owners?: User[];

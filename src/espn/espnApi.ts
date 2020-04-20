@@ -25,7 +25,7 @@ interface EspnRecordObj {
     overall: EspnRecord;
 }
 
-interface EspnFantasyTeam {
+export interface EspnFantasyTeam {
     id: number;
     abbrev?: string;
     location?: string;
