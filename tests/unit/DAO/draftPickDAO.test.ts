@@ -1,40 +1,46 @@
 import "jest";
 import "jest-extended";
-import { NotFoundError } from "routing-controllers";
-import * as typeorm from "typeorm";
+import { Repository } from "typeorm";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import { LeagueLevel } from "../../../src/models/player";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
-import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
+import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
+import DraftPick from "../../../src/models/draftPick";
+import logger from "../../../src/bootstrap/logger";
 
-const mockPickDb = {
-    find: jest.fn(),
-    findOneOrFail: jest.fn(),
-    save: jest.fn(),
-    update: jest.fn(),
-    remove: jest.fn(),
-    createQueryBuilder: jest.fn(),
-};
-
-// @ts-ignore
-jest.spyOn(typeorm, "getConnection").mockReturnValue({
-    getRepository: jest.fn().mockReturnValue(mockPickDb)});
 
 describe("DraftPickDAO", () => {
-    const draftPickDAO = new DraftPickDAO();
+    const mockPickDb: MockObj = {
+        find: jest.fn(),
+        findOneOrFail: jest.fn(),
+        save: jest.fn(),
+        insert: jest.fn(),
+        update: jest.fn(),
+        remove: jest.fn(),
+        createQueryBuilder: jest.fn(),
+    };
+
     const testPick1 = DraftPickFactory.getPick();
+    const draftPickDAO = new DraftPickDAO(mockPickDb as unknown as Repository<DraftPick>);
 
     afterEach(() => {
-        Object.entries(mockPickDb).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockClear();
+        Object.keys(mockPickDb).forEach((action: string) => {
+            (mockPickDb[action as keyof MockObj] as jest.Mock).mockClear();
         });
 
         mockExecute.mockClear();
         mockWhereInIds.mockClear();
     });
 
-    it("getAllPicks - should call the db find method once with no args", async () => {
-        mockPickDb.find.mockReturnValueOnce([testPick1.parse()]);
+    beforeAll(() => {
+        logger.debug("~~~~~~DRAFT PICK DAO TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~DRAFT PICK DAO TESTS COMPLETE~~~~~~");
+    });
+
+    it("getAllPicks - should call the db find method once with option args", async () => {
+        mockPickDb.find.mockResolvedValueOnce([testPick1]);
         const defaultOpts = {order: {id: "ASC"}};
         const res = await draftPickDAO.getAllPicks();
 
@@ -43,85 +49,92 @@ describe("DraftPickDAO", () => {
         expect(res).toEqual([testPick1]);
     });
 
-    it("getPickById - should throw NotFoundError if no id is passed in", async () => {
-        // @ts-ignore
-        await expect(draftPickDAO.getPickById(undefined)).rejects.toThrow(NotFoundError);
-        expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(0);
-    });
-
     it("getPickById - should call the db findOneOrFail once with id", async () => {
-        mockPickDb.findOneOrFail.mockReturnValueOnce(testPick1.parse());
-        const res = await draftPickDAO.getPickById(1);
+        mockPickDb.findOneOrFail.mockResolvedValueOnce(testPick1);
+        const res = await draftPickDAO.getPickById(testPick1.id!);
 
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(1);
+        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id);
         expect(res).toEqual(testPick1);
     });
 
     it("findPicks - should call the db find once with query", async () => {
         const query = {type: LeagueLevel.HIGH};
-        mockPickDb.find.mockReturnValueOnce([testPick1.parse()]);
+        mockPickDb.find.mockResolvedValueOnce([testPick1]);
         const res = await draftPickDAO.findPicks(query);
 
         expect(mockPickDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.find).toHaveBeenCalledWith({where: query, order: {id: "ASC"}});
+        expect(mockPickDb.find).toHaveBeenCalledWith({where: query});
         expect(res).toEqual([testPick1]);
     });
 
     it("createPick - should call the db save once with pickObj", async () => {
-        mockPickDb.save.mockReturnValueOnce(testPick1.parse());
-        const res = await draftPickDAO.createPick(testPick1.parse());
+        mockPickDb.insert.mockResolvedValueOnce({identifiers: [{id: testPick1.id!}], generatedMaps: [], raw: []});
+        mockPickDb.find.mockResolvedValueOnce(testPick1);
+        const res = await draftPickDAO.createPicks([testPick1]);
 
-        expect(mockPickDb.save).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.save).toHaveBeenCalledWith(testPick1.parse());
+        expect(mockPickDb.insert).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.insert).toHaveBeenCalledWith([testPick1.parse()]);
+        expect(mockPickDb.find).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testPick1.id]}});
+
         expect(res).toEqual(testPick1);
     });
 
     it("updatePick - should call the db update and findOneOrFail once with id and teamObj", async () => {
-        mockPickDb.findOneOrFail.mockReturnValueOnce(testPick1.parse());
-        const res = await draftPickDAO.updatePick(1, testPick1.parse());
+        mockPickDb.findOneOrFail.mockResolvedValueOnce(testPick1);
+        const res = await draftPickDAO.updatePick(testPick1.id!, testPick1.parse());
 
         expect(mockPickDb.update).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.update).toHaveBeenCalledWith({id: 1}, testPick1.parse());
+        expect(mockPickDb.update).toHaveBeenCalledWith({id: testPick1.id}, testPick1.parse());
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(1);
+        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id);
         expect(res).toEqual(testPick1);
     });
 
-    it("deletePick - should throw NotFoundError if no id is passed", async () => {
-        // @ts-ignore
-        await expect(draftPickDAO.deletePick(undefined)).rejects.toThrow(NotFoundError);
-        expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(0);
-        expect(mockPickDb.createQueryBuilder).toHaveBeenCalledTimes(0);
-    });
-
     it("deletePick - should call the db delete once with id", async () => {
+        mockPickDb.findOneOrFail.mockResolvedValueOnce(testPick1);
         mockPickDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
-        const deleteResult = { raw: [ {id: 1} ], affected: 1};
-        mockExecute.mockReturnValueOnce(deleteResult);
-        const res = await draftPickDAO.deletePick(1);
+        const deleteResult = { affected: 1, raw: {id: testPick1.id!} };
+        mockExecute.mockResolvedValueOnce(deleteResult);
+        const res = await draftPickDAO.deletePick(testPick1.id!);
 
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(1);
+        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id!);
         expect(mockPickDb.createQueryBuilder).toHaveBeenCalledTimes(1);
-        expect(mockWhereInIds).toHaveBeenCalledWith(1);
+        expect(mockWhereInIds).toHaveBeenCalledWith(testPick1.id!);
+
         expect(res).toEqual(deleteResult);
     });
 
-    it("deleteAllPicks - delete all the picks in chunks", async () => {
-        mockPickDb.find.mockReturnValueOnce([]);
-        await draftPickDAO.deleteAllPicks();
-        expect(mockPickDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.remove).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.remove).toHaveBeenCalledWith([], {chunk: 10});
+    describe("deleteAllPicks - delete all the picks in chunks", () => {
+        it("should delete all draft picks if no query passed in", async () => {
+            const query = {type: LeagueLevel.LOW};
+            mockPickDb.find.mockResolvedValueOnce([testPick1]);
+            await draftPickDAO.deleteAllPicks(query);
+
+            expect(mockPickDb.find).toHaveBeenCalledTimes(1);
+            expect(mockPickDb.find).toHaveBeenCalledWith({where: query});
+            expect(mockPickDb.remove).toHaveBeenCalledTimes(1);
+            expect(mockPickDb.remove).toHaveBeenCalledWith([testPick1], {chunk: 10});
+        });
+        it("should delete queried draft picks if no query passed in", async () => {
+            mockPickDb.find.mockResolvedValueOnce([testPick1]);
+            await draftPickDAO.deleteAllPicks();
+
+            expect(mockPickDb.find).toHaveBeenCalledTimes(1);
+            expect(mockPickDb.find).toHaveBeenCalledWith({order: {id: "ASC"}});
+            expect(mockPickDb.remove).toHaveBeenCalledTimes(1);
+            expect(mockPickDb.remove).toHaveBeenCalledWith([testPick1], {chunk: 10});
+        });
     });
 
     it("batchCreatePicks - should call the db save once with pickObjs", async () => {
-        mockPickDb.save.mockReturnValueOnce([testPick1.parse()]);
-        const res = await draftPickDAO.batchCreatePicks([testPick1.parse()]);
+        mockPickDb.save.mockResolvedValueOnce([testPick1]);
+        const res = await draftPickDAO.batchCreatePicks([testPick1]);
 
         expect(mockPickDb.save).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.save).toHaveBeenCalledWith([testPick1.parse()], {chunk: 10});
+        expect(mockPickDb.save).toHaveBeenCalledWith([testPick1], {chunk: 10});
         expect(res).toEqual([testPick1]);
     });
 });

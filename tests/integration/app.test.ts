@@ -5,7 +5,7 @@ import path from "path";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
-import server from "../../src/server";
+import startServer from "../../src/bootstrap/app";
 
 dotenvConfig({path: path.resolve(__dirname, "../.env")});
 
@@ -23,11 +23,13 @@ async function shutdown() {
 describe("GET /random-url", () => {
     let app: Server;
     beforeAll(async () => {
-        app = await server;
+        logger.debug("~~~~~~BASIC APP ROUTES BEFORE ALL~~~~~~");
+        app = await startServer();
     });
     afterAll(async () => {
-    await shutdown();
-    app.close(() => {
+        logger.debug("~~~~~~BASIC APP ROUTES AFTEr ALL~~~~~~");
+        await shutdown();
+        app.close(() => {
         logger.debug("CLOSED SERVER");
     });
 });

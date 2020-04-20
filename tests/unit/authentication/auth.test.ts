@@ -2,26 +2,16 @@ import "jest";
 import "jest-extended";
 import { Action } from "routing-controllers";
 import { ConflictError } from "../../../src/api/middlewares/ErrorHandler";
-import {
-    authorizationChecker,
-    currentUserChecker,
-    deserializeUser,
-    generateHashedPassword,
-    passwordResetDateIsValid,
-    serializeUser,
-    signInAuthentication,
-    signUpAuthentication,
-} from "../../../src/authentication/auth";
+import { authorizationChecker, currentUserChecker, deserializeUser, generateHashedPassword,
+    passwordResetDateIsValid, serializeUser, signInAuthentication, signUpAuthentication } from "../../../src/authentication/auth";
 import UserDAO from "../../../src/DAO/UserDAO";
-import UserDO, { Role } from "../../../src/models/user";
+import { Role } from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
 
-const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, Role.OWNER, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
-const testUserModel = testUser.toUserModel();
+const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, Role.OWNER);
 const mockUserDAO = {
     getUserById: jest.fn(),
-    findUser: jest.fn(),
-    getUserDbObj: jest.fn(),
+    findUserWithPassword: jest.fn(),
     createUsers: jest.fn(),
     updateUser: jest.fn(),
 };
@@ -29,19 +19,19 @@ const mockUserDAO = {
 describe("Authorization helper methods", () => {
     describe("serializeUser", () => {
         it("should return the user ID", async () => {
-            const id = await serializeUser(testUserModel);
+            const id = await serializeUser(testUser);
 
             expect(id).toBeString();
-            expect(id).toEqual(testUserModel.id);
+            expect(id).toEqual(testUser.id);
         });
     });
 
     describe("deserializeUser", () => {
         it("should return the user from a given ID", async () => {
-            mockUserDAO.getUserById.mockReturnValueOnce(testUserModel);
+            mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
             const user = await deserializeUser("uuid", mockUserDAO as unknown as UserDAO);
 
-            expect(user).toEqual(testUserModel);
+            expect(user).toEqual(testUser);
         });
     });
 
@@ -52,25 +42,25 @@ describe("Authorization helper methods", () => {
         });
 
         it("should create and return a new user if none existed before", async () => {
-            mockUserDAO.findUser.mockReturnValueOnce(undefined);
-            mockUserDAO.createUsers.mockReturnValueOnce([testUserModel]);
+            mockUserDAO.findUserWithPassword.mockResolvedValueOnce(undefined);
+            mockUserDAO.createUsers.mockResolvedValueOnce([testUser]);
             await signUpAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
 
             expect(cb).toBeCalledTimes(1);
-            expect(cb).toBeCalledWith(undefined, testUserModel);
+            expect(cb).toBeCalledWith(undefined, testUser);
         });
         it("should update and return an existing user with no password", async () => {
-            const passwordlessUser = new UserDO({...testUser, password: undefined});
-            const passwordlessUserModel = passwordlessUser.toUserModel();
-            mockUserDAO.findUser.mockReturnValueOnce(passwordlessUserModel);
-            mockUserDAO.updateUser.mockReturnValueOnce(testUserModel);
+            const passwordlessUser = {...testUser};
+            delete passwordlessUser.password;
+            mockUserDAO.findUserWithPassword.mockResolvedValueOnce(passwordlessUser);
+            mockUserDAO.updateUser.mockResolvedValueOnce(testUser);
             await signUpAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
 
             expect(cb).toBeCalledTimes(1);
-            expect(cb).toBeCalledWith(undefined, testUserModel);
+            expect(cb).toBeCalledWith(undefined, testUser);
         });
         it("should return a ConflictError if the player is already signed up", async () => {
-            mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
+            mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testUser);
             await signUpAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
 
             expect(cb).toBeCalledTimes(1);
@@ -85,18 +75,21 @@ describe("Authorization helper methods", () => {
         });
 
         it("should return an updated user if the password is matching", async () => {
-            mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
             const hashedPassword = await generateHashedPassword(testUser.password!);
-            mockUserDAO.getUserDbObj.mockReturnValueOnce({...testUser, password: hashedPassword});
-            mockUserDAO.updateUser.mockReturnValueOnce(testUserModel);
+            const testsUserWithHashedPassword = {...testUser, password: hashedPassword};
+            const cleanedUser = {...testUser};
+            delete cleanedUser.password;
+            mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testsUserWithHashedPassword);
+            mockUserDAO.getUserById.mockResolvedValueOnce(testsUserWithHashedPassword);
+            mockUserDAO.updateUser.mockResolvedValueOnce(cleanedUser);
             await signInAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
 
             expect(cb).toBeCalledTimes(1);
-            expect(cb).toBeCalledWith(undefined, testUserModel);
+            expect(cb).toBeCalledWith(undefined, cleanedUser);
         });
         it("should return an error if the password is not matching", async () => {
-            mockUserDAO.findUser.mockReturnValueOnce(testUserModel);
-            mockUserDAO.getUserDbObj.mockReturnValueOnce(
+            mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testUser);
+            mockUserDAO.getUserById.mockResolvedValueOnce(
                 {...testUser, password: "completely-different-saved-password"}
             );
             await signInAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
@@ -111,20 +104,20 @@ describe("Authorization helper methods", () => {
         const roles = [ Role.OWNER, Role.ADMIN ];
 
         it("should return true if the user has at least one of the required roles", async () => {
-            mockUserDAO.getUserById.mockReturnValueOnce(testUserModel);
+            mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
 
             const res = await authorizationChecker(action, roles, mockUserDAO as unknown as UserDAO);
             expect(res).toBeTrue();
         });
         it("should return true if the user is an admin no matter what", async () => {
             const adminUser = UserFactory.getAdminUser();
-            mockUserDAO.getUserById.mockReturnValueOnce(adminUser.toUserModel());
+            mockUserDAO.getUserById.mockResolvedValueOnce(adminUser);
 
             const res = await authorizationChecker(action, [roles[0]], mockUserDAO as unknown as UserDAO);
             expect(res).toBeTrue();
         });
         it("should return false if the user does not have any of the required roles", async () => {
-            mockUserDAO.getUserById.mockReturnValueOnce(testUserModel);
+            mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
 
             const res = await authorizationChecker(action, [roles[1]], mockUserDAO as unknown as UserDAO);
             expect(res).toBeFalse();
@@ -141,7 +134,7 @@ describe("Authorization helper methods", () => {
         const action: Action = {request: {session: {user: 1}}, response: {}};
 
         it("should return the true from the action if it exists on the request.session object", async () => {
-            mockUserDAO.getUserById.mockReturnValueOnce(testUserModel);
+            mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
 
             const res = await currentUserChecker(action, mockUserDAO as unknown as UserDAO);
             expect(res).toBeTrue();

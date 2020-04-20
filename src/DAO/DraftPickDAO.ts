@@ -1,56 +1,41 @@
-import { NotFoundError } from "routing-controllers";
-import { Connection, DeleteResult, FindManyOptions, getConnection, IsNull, Not, Repository } from "typeorm";
+import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
 import DraftPick from "../models/draftPick";
 
 export default class DraftPickDAO {
-    public connection: Connection;
     private draftPickDb: Repository<DraftPick>;
 
-    constructor() {
-        this.connection = getConnection(process.env.NODE_ENV);
-        this.draftPickDb = this.connection.getRepository("DraftPick");
+    constructor(repo?: Repository<DraftPick>) {
+        this.draftPickDb = repo || getConnection(process.env.NODE_ENV).getRepository("DraftPick");
     }
 
     public async getAllPicks(): Promise<DraftPick[]> {
         const options: FindManyOptions = {order: {id: "ASC"}};
-        const dbPicks = await this.draftPickDb.find(options);
-        return dbPicks.map(pick => new DraftPick(pick));
+        return await this.draftPickDb.find(options);
     }
 
-    public async getPickById(id: number): Promise<DraftPick> {
-        if (!id) {
-            throw new NotFoundError("Id is required");
-        }
-        const dbPick = await this.draftPickDb.findOneOrFail(id);
-        return new DraftPick(dbPick);
+    public async getPickById(id: string): Promise<DraftPick> {
+        return await this.draftPickDb.findOneOrFail(id);
     }
 
     public async findPicks(query: Partial<DraftPick>): Promise<DraftPick[]> {
-        // @ts-ignore
-        const dbPicks = await this.draftPickDb.find({order: {id: "ASC"}, where: query});
-        if (dbPicks.length) {
-            return dbPicks.map((draftPick: DraftPick) => new DraftPick(draftPick));
-        } else {
-            throw new NotFoundError("No picks found for that query");
-        }
+        return await this.draftPickDb.find({where: query});
     }
 
-    public async createPick(pickObj: Partial<DraftPick>): Promise<DraftPick> {
-        const dbPick = await this.draftPickDb.save(pickObj);
-        return new DraftPick(dbPick);
+    public async createPicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
+        const result: InsertResult = await this.draftPickDb.insert(pickObjs);
+        return await this.draftPickDb.find({id: In(result.identifiers.map(({id}) => id))});
     }
 
-    public async batchCreatePicks(pickObjs: Array<Partial<DraftPick>>): Promise<DraftPick[]> {
-        const dbPicks = await this.draftPickDb.save(pickObjs, {chunk: 10});
-        return dbPicks.map(pick => new DraftPick(pick));
+    public async batchCreatePicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
+        return await this.draftPickDb.save(pickObjs, {chunk: 10});
     }
 
-    public async updatePick(id: number, pickObj: Partial<DraftPick>): Promise<DraftPick> {
+    public async updatePick(id: string, pickObj: Partial<DraftPick>): Promise<DraftPick> {
         await this.draftPickDb.update({ id }, pickObj);
         return await this.getPickById(id);
     }
 
-    public async deletePick(id: number): Promise<DeleteResult> {
+    public async deletePick(id: string): Promise<DeleteResult> {
         await this.getPickById(id);
         return await this.draftPickDb.createQueryBuilder()
             .delete()
@@ -59,8 +44,13 @@ export default class DraftPickDAO {
             .execute();
     }
 
-    public async deleteAllPicks(): Promise<void> {
-        const allEntities = await this.getAllPicks(); // Workaround because delete no longer takes options
-        await this.draftPickDb.remove(allEntities, {chunk: 10});
+    public async deleteAllPicks(query?: Partial<DraftPick>): Promise<void> {
+        let allPicks: DraftPick[];
+        if (query) {
+            allPicks = await this.findPicks(query);
+        } else {
+            allPicks = await this.getAllPicks();
+        }
+        await this.draftPickDb.remove(allPicks, {chunk: 10});
     }
 }

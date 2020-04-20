@@ -1,47 +1,48 @@
-import { Team } from "@akosasante/trade-machine-models";
-import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
-import TeamDO from "../models/team";
-import UserDO from "../models/user";
+import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
+import Team from "../models/team";
+import User from "../models/user";
 
 export default class TeamDAO {
-    private teamDb: Repository<TeamDO>;
+    private teamDb: Repository<Team>;
 
-    constructor(repo?: Repository<TeamDO>) {
+    constructor(repo?: Repository<Team>) {
         this.teamDb = repo || getConnection(process.env.NODE_ENV).getRepository("Team");
     }
 
     public async getAllTeams(): Promise<Team[]> {
         const options: FindManyOptions = {order: {id: "ASC"}};
-        const dbTeams = await this.teamDb.find(options);
-        return dbTeams.map(team => team.toTeamModel());
+        return await this.teamDb.find(options);
     }
 
-    public async getTeamsByOwnerStatus(hasOwners: boolean): Promise<Team[]> {
-        const condition = `owner."teamId" IS ${(hasOwners ? "NOT NULL" : "NULL")}`;
-        const dbTeams = await this.teamDb
+    public async getTeamsWithOwners(): Promise<Team[]> {
+        return await this.teamDb
             .createQueryBuilder("team")
-            .leftJoinAndSelect("team.owners", "owner")
-            .where(condition)
+            .innerJoinAndSelect("team.owners", "owners")
             .getMany();
-        return dbTeams.map(team => team.toTeamModel());
+    }
+
+    public async getTeamsWithNoOwners(): Promise<Team[]> {
+        return await this.teamDb
+            .createQueryBuilder("team")
+            .leftJoinAndSelect("team.owners", "owners")
+            .where("owners IS NULL")
+            .getMany();
     }
 
     public async getTeamById(id: string): Promise<Team> {
-        const dbTeam = await this.teamDb.findOneOrFail(id);
-        return dbTeam.toTeamModel();
+        return await this.teamDb.findOneOrFail(id);
     }
 
-    public async findTeams(query: Partial<TeamDO>): Promise<Team[]> {
-        const dbTeams = await this.teamDb.find({where: query});
-        return dbTeams.map(team => team.toTeamModel());
+    public async findTeams(query: Partial<Team>): Promise<Team[]> {
+        return await this.teamDb.find({where: query});
     }
 
-    public async createTeams(teamObjs: Array<Partial<TeamDO>>): Promise<Team[]> {
-        const dbTeams = await this.teamDb.save(teamObjs);
-        return dbTeams.map(team => team.toTeamModel());
+    public async createTeams(teamObjs: Partial<Team>[]): Promise<Team[]> {
+        const result: InsertResult = await this.teamDb.insert(teamObjs);
+        return await this.teamDb.find({id: In(result.identifiers.map(({id}) => id))});
     }
 
-    public async updateTeam(id: string, teamObj: Partial<TeamDO>): Promise<Team> {
+    public async updateTeam(id: string, teamObj: Partial<Team>): Promise<Team> {
         await this.teamDb.update({ id }, teamObj);
         return await this.getTeamById(id);
     }
@@ -55,7 +56,7 @@ export default class TeamDAO {
             .execute();
     }
 
-    public async updateTeamOwners(id: string, ownersToAdd: UserDO[], ownersToRemove: UserDO[]): Promise<Team> {
+    public async updateTeamOwners(id: string, ownersToAdd: User[], ownersToRemove: User[]): Promise<Team> {
         await this.teamDb.findOneOrFail(id);
         await this.teamDb
             .createQueryBuilder()

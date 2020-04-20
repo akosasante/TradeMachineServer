@@ -1,22 +1,32 @@
-import { Get, JsonController, Param } from "routing-controllers";
-import { inspect } from "util";
+import { JsonController, Authorized, Get, QueryParam } from "routing-controllers";
 import logger from "../../bootstrap/logger";
-import EspnAPI from "../../espn/espnApi";
+import EspnAPI, { EspnFantasyTeam, EspnLeagueMember } from "../../espn/espnApi";
+import { Role } from "../../models/user";
 
 @JsonController("/espn")
 export default class EspnController {
     private readonly api: EspnAPI;
     private FFLeagueId: number = 545;
 
-    constructor() {
-        this.api = new EspnAPI(this.FFLeagueId);
+    constructor(api?: EspnAPI) {
+        this.api = api || new EspnAPI(this.FFLeagueId);
     }
 
-    @Get("/teams/:id([0-9]+)/name")
-    public async getTeamName(@Param("id") id: number): Promise<string> {
-        logger.debug(`Searching for ESPN team with ID: ${id}`);
-        const team = await this.api.loadAndRun(() => this.api.getTeamById(id));
-        logger.debug(`Fetched team: ${inspect(team)}`);
-        return EspnAPI.getTeamName(team);
+    @Authorized(Role.ADMIN)
+    @Get("/members")
+    public async getAllEspnMembers(@QueryParam("year") year?: number): Promise<EspnLeagueMember[]> {
+        logger.debug("get all ESPN members endpoint");
+        const members = await this.api.getAllMembers(year || new Date().getFullYear());
+        logger.debug(`got ${members.length} members`);
+        return members;
+    }
+
+    @Authorized(Role.ADMIN)
+    @Get("/teams")
+    public async getAllEspnTeams(@QueryParam("year") year?: number): Promise<EspnFantasyTeam[]> {
+        logger.debug("get all ESPN teams endpoint");
+        const teams = await this.api.getAllLeagueTeams(year || new Date().getFullYear());
+        logger.debug(`got ${teams.length} teams`);
+        return teams;
     }
 }

@@ -4,10 +4,16 @@ import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
-import server from "../../src/server";
-import { makeGetRequest } from "./helpers";
+import { adminLoggedIn, makeGetRequest, setupOwnerAndAdminUsers } from "./helpers";
+import startServer from "../../src/bootstrap/app";
+import { config as dotenvConfig } from "dotenv";
+import { resolve as resolvePath } from "path";
+import User from "../../src/models/user";
+dotenvConfig({path: resolvePath(__dirname, "../.env")});
+
 
 let app: Server;
+let adminUser: User;
 
 async function shutdown() {
     await new Promise(resolve => {
@@ -21,7 +27,9 @@ async function shutdown() {
 }
 
 beforeAll(async () => {
-    app = await server;
+    logger.debug("~~~~~~ESPN ROUTES BEFORE ALL~~~~~~");
+    app = await startServer();
+    [adminUser] = await setupOwnerAndAdminUsers();
 });
 
 afterAll(async () => {
@@ -32,17 +40,44 @@ afterAll(async () => {
 });
 
 describe("ESPN API endpoints", () => {
-    describe("GET /espn/teams/:id/name (get a team's full name from its id)", () => {
-        const getOneRequest = (id: number, status: number = 200) =>
-            makeGetRequest(request(app), `/espn/teams/${id}/name`, status);
+    describe("GET /espn/teams?year (get all ESPN teams)", () => {
+        const getAllRequest = (year?: number, status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) => {
+                const yearParam = year ? `?year=${year}` : "";
+                return makeGetRequest(agent, `/espn/teams${yearParam}`, status);
+            };
 
-        it("should return the location + nickname for the given team ID", async () => {
-            const res = await getOneRequest(20);
-            expect(res.body).toEqual("Squirtle Squad");
-        }, 30000);
+        it("should return all teams in the default year", async () => {
+            const {body} = await adminLoggedIn(getAllRequest(), app);
+            expect(body).toBeArray();
+            // There are other keys, but these are the ones we definitely want to know if they're gone
+            expect(body[0]).toContainKeys(["id", "abbrev", "location", "nickname", "owners", "divisionId", "isActive"]);
+        }, 10000);
 
-        it("should throw a 404 error if a team with that ID is not found", async () => {
-            await getOneRequest(999, 404);
-        }, 30000);
+        it("should return all teams in a given year", async () => {
+            const {body} = await adminLoggedIn(getAllRequest(2019), app);
+            expect(body).toBeArray();
+            expect(body[0]).toContainKeys(["id", "abbrev", "location", "nickname", "owners", "divisionId", "isActive"]);
+        }, 10000);
+    });
+
+    describe("GET /espn/members?year (get all ESPN teams)", () => {
+        const getAllRequest = (year?: number, status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) => {
+                const yearParam = year ? `?year=${year}` : "";
+                return makeGetRequest(agent, `/espn/members${yearParam}`, status);
+            };
+
+        it("should return all members in the default year", async () => {
+            const {body} = await adminLoggedIn(getAllRequest(), app);
+            expect(body).toBeArray();
+            expect(body[0]).toContainAllKeys(["id", "isLeagueManager", "displayName"]);
+        }, 10000);
+
+        it("should return all members in a given year", async () => {
+            const {body} = await adminLoggedIn(getAllRequest(2019), app);
+            expect(body).toBeArray();
+            expect(body[0]).toContainAllKeys(["id", "isLeagueManager", "displayName"]);
+        }, 10000);
     });
 });

@@ -1,13 +1,13 @@
 import { compare, hash } from "bcryptjs";
 import { isAfter } from "date-fns";
 import { get } from "lodash";
-import { Action, BadRequestError } from "routing-controllers";
-import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
+import { Action, BadRequestError, NotFoundError } from "routing-controllers";
 import { inspect } from "util";
 import { ConflictError } from "../api/middlewares/ErrorHandler";
 import logger from "../bootstrap/logger";
 import UserDAO from "../DAO/UserDAO";
 import UserDO, { Role } from "../models/user";
+import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 
 
 export async function serializeUser(user: UserDO): Promise<string | undefined> {
@@ -24,7 +24,7 @@ export async function signUpAuthentication(email: string, password: string, user
                                            done: (err?: Error, user?: UserDO) => any): Promise<void> {
     try {
         logger.debug("sign up strategy");
-        const user = await userDAO.findUser({email}, false);
+        const user = await userDAO.findUserWithPassword({email});
         if (!user) {
             logger.debug("no existing user with that email");
             const hashedPass = await generateHashedPassword(password);
@@ -50,17 +50,20 @@ export async function signInAuthentication(email: string, password: string, user
     try {
         logger.debug("sign in strategy");
         // Will throw EntityNotFoundError if user is not found
-        const user = await userDAO.findUser({email});
+        const user = await userDAO.findUserWithPassword({email});
         if (user) {
             logger.debug("found user with matching email");
             const validPassword = user.password && await isPasswordMatching(password, user.password);
             if (validPassword) {
                 logger.debug("password matched - updating user last logged in");
-                await userDAO.updateUser(user.id!, {lastLoggedIn: new Date()});
-                return done(undefined, user);
+                const returnedUser = await userDAO.updateUser(user.id!, {lastLoggedIn: new Date()});
+                return done(undefined, returnedUser);
             } else {
                 return done(new BadRequestError("Incorrect password"));
             }
+        } else {
+            logger.error("Could not find user with this email when trying to sign in");
+            return done(new NotFoundError("Error with sign-in strategy: no user found"));
         }
     } catch (error) {
         logger.error(`${error instanceof EntityNotFoundError ?

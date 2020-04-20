@@ -1,15 +1,16 @@
 import { name as fakeName } from "faker";
-import TeamDO from "../../src/models/team";
+import Team from "../../src/models/team";
+import { v4 as uuid } from "uuid";
 
 export class TeamFactory {
     public static NAME = "Squirtle Squad";
 
     public static getTeamObject(name = TeamFactory.NAME, espnId = 1, rest = {}) {
-        return { name, espnId, ...rest };
+        return { id: uuid(), name, espnId, ...rest };
     }
 
     public static getTeam(name = TeamFactory.NAME, espnId = 1, rest = {}) {
-        return new TeamDO(TeamFactory.getTeamObject(name, espnId, rest));
+        return new Team(TeamFactory.getTeamObject(name, espnId, rest));
     }
 
     public static getTeams(num: number) {
@@ -21,7 +22,7 @@ export class TeamFactory {
             } else {
                 name = names[i];
             }
-            return TeamFactory.getTeam(name, i + 1, {id: i + 1});
+            return TeamFactory.getTeam(name, i + 1);
         });
     }
 }

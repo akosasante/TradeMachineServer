@@ -5,6 +5,8 @@ import logger from "../../bootstrap/logger";
 import TradeDAO from "../../DAO/TradeDAO";
 import Trade from "../../models/trade";
 import { Role } from "../../models/user";
+import { UUIDPattern } from "../helpers/ApiHelpers";
+import TradeParticipant from "../../models/tradeParticipant";
 
 @JsonController("/trades")
 export default class TradeController {
@@ -22,32 +24,39 @@ export default class TradeController {
         return trades;
     }
 
-    @Get("/:id([0-9]+)")
-    public async getOneTrade(@Param("id") id: number): Promise<Trade> {
+    @Get(UUIDPattern)
+    public async getOneTrade(@Param("id") id: string): Promise<Trade> {
         logger.debug("get one trade endpoint");
-        return await this.dao.getTradeById(id);
+        const trade = await this.dao.getTradeById(id);
+        logger.debug(`got trade: ${trade}`);
+        return trade;
     }
 
+    // TODO: Probably don't want to restrict creating trades to admins; leaving as is for now but will adjust. Updates might depend on if we want to do trade drafts
     @Authorized(Role.ADMIN)
     @Post("/")
     public async createTrade(@Body() tradeObj: Partial<Trade>): Promise<Trade> {
         logger.debug("create trade endpoint");
-        return await this.dao.createTrade(tradeObj);
+        const trade = await this.dao.createTrade(tradeObj);
+        logger.debug(`created trade: ${inspect(trade)}`);
+        return trade;
     }
 
     @Authorized(Role.ADMIN)
-    @Put("/:id([0-9]+)")
-    public async updateTrade(@Param("id") id: number, @Body() tradeObj: Partial<Trade>): Promise<Trade> {
+    @Put(UUIDPattern)
+    public async updateTrade(@Param("id") id: string, @Body() tradeObj: Partial<Trade>): Promise<Trade> {
         logger.debug("update trade endpoint");
         const existingTrade = await this.dao.getTradeById(id);
+        logger.debug(`EXISTING PART: ${inspect(existingTrade.tradeParticipants)}`);
+        logger.debug(`NEW PART: ${inspect(tradeObj.tradeParticipants)}`);
         const participantsToAdd = differenceBy(
             (tradeObj.tradeParticipants || []),
             (existingTrade.tradeParticipants || []),
-            "tradeParticipantId");
+            (participant: TradeParticipant) => `${participant.participantType}|${participant.team.id}`);
         const participantsToRemove = differenceBy(
             (existingTrade.tradeParticipants || []),
             (tradeObj.tradeParticipants || []),
-            "tradeParticipantId");
+            (participant: TradeParticipant) => `${participant.participantType}|${participant.team.id}`);
 
         const itemsToAdd = differenceBy(
             (tradeObj.tradeItems || []),
@@ -59,13 +68,12 @@ export default class TradeController {
             "tradeItemId");
 
         await this.dao.updateParticipants(id, participantsToAdd, participantsToRemove);
-        await this.dao.updateItems(id, itemsToAdd, itemsToRemove);
-        return await this.dao.getTradeById(id);
+        return await this.dao.updateItems(id, itemsToAdd, itemsToRemove);
     }
 
     @Authorized(Role.ADMIN)
-    @Delete("/:id([0-9]+)")
-    public async deleteTrade(@Param("id") id: number) {
+    @Delete(UUIDPattern)
+    public async deleteTrade(@Param("id") id: string) {
         logger.debug("delete trade endpoint");
         const result = await this.dao.deleteTrade(id);
         logger.debug(`delete successful: ${inspect(result)}`);

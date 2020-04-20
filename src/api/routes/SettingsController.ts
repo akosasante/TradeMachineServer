@@ -1,10 +1,10 @@
-import { Body, Delete, Get, JsonController, NotFoundError, Param, Post, Put, QueryParam } from "routing-controllers";
+import { Body, Get, JsonController, Param, Post } from "routing-controllers";
 import { Authorized } from "routing-controllers/decorator/Authorized";
 import logger from "../../bootstrap/logger";
-import SettingsDAO, { ScheduleGetAllOptions } from "../../DAO/SettingsDAO";
-import GeneralSettings from "../../models/generalSettings";
-import ScheduledDowntime from "../../models/scheduledDowntime";
+import SettingsDAO from "../../DAO/SettingsDAO";
+import Settings from "../../models/settings";
 import { Role } from "../../models/user";
+import { UUIDPattern } from "../helpers/ApiHelpers";
 
 @JsonController("/settings")
 export default class SettingsController {
@@ -14,84 +14,39 @@ export default class SettingsController {
         this.dao = DAO || new SettingsDAO();
     }
 
-    @Get("/downtime")
-    public async getAllScheduledDowntime(@QueryParam("option") option?: "future"|"previous"):
-        Promise<ScheduledDowntime[]> {
-        logger.debug("get all scheduled downtimes endpoint" + `${option ? " -- " + option : ""}`);
-        let getAllOption: ScheduleGetAllOptions|undefined;
-        if (option) {
-            getAllOption = option === "future"
-                ? ScheduleGetAllOptions.FUTURE
-                : option === "previous"
-                    ? ScheduleGetAllOptions.PREVIOUS : undefined;
-        }
-        return await this.dao.getAllScheduledDowntimes(getAllOption);
-    }
-
-    @Get("/downtime/current")
-    public async getCurrentlyScheduledDowntime(): Promise<ScheduledDowntime> {
-        logger.debug("get currently scheduled downtime endpoint");
-        return await this.dao.getCurrentlyScheduledDowntime();
-    }
-
-    @Get("/downtime/:id([0-9]+)")
-    public async getOneScheduledDowntime(@Param("id") id: number): Promise<ScheduledDowntime> {
-        logger.debug("get one downtime endpoint");
-        return await this.dao.getScheduledDowntimeById(id);
-    }
-
-    @Get("/general")
-    public async getAllGeneralSettings(): Promise<GeneralSettings[]> {
-        logger.debug("get all general settings log entries");
-        const settings = await this.dao.getAllGeneralSettings();
-        logger.debug(`got ${settings.length} entries`);
+    @Authorized(Role.ADMIN)
+    @Get("/")
+    public async getAllSettings(): Promise<Settings[]> {
+        logger.debug("get all settings endpoint");
+        const settings = await this.dao.getAllSettings();
+        logger.debug(`got ${settings.length} settings lines`);
         return settings;
     }
 
-    @Get("/general/:id([0-9]+)")
-    public async getOneGeneralSettings(@Param("id") id: number): Promise<GeneralSettings> {
-        logger.debug(`get one setting by id: ${id}`);
-        return await this.dao.getSettingsById(id);
-    }
-
-    @Get("/general/recent")
-    public async getMostRecentSettings(): Promise<GeneralSettings> {
-        logger.debug("getting most recent settings entry");
-        const setting = await this.dao.getMostRecentSettings();
-        if (setting) {
-            return setting;
-        } else {
-            throw new NotFoundError("There are no settings in the db");
-        }
+    @Authorized(Role.ADMIN)
+    @Get("/current")
+    public async getCurrentSettings(): Promise<Settings | undefined> {
+        logger.debug("get most recent settings endpoint");
+        const settings = await this.dao.getMostRecentSettings();
+        logger.debug(`got settings: ${settings}`);
+        return settings;
     }
 
     @Authorized(Role.ADMIN)
-    @Post("/downtime")
-    public async createScheduledDowntime(@Body() downtimeObj: Partial<ScheduledDowntime>): Promise<ScheduledDowntime> {
-        logger.debug("create downtime endpoint");
-        return await this.dao.createScheduledDowntime(downtimeObj);
+    @Get(UUIDPattern)
+    public async getOneSettingsLine(@Param("id") id: string): Promise<Settings> {
+        logger.debug("get one settings line by id endpoint");
+        const settings = await this.dao.getSettingsById(id);
+        logger.debug(`got settings: ${settings}`);
+        return settings;
     }
 
     @Authorized(Role.ADMIN)
-    @Post("/general")
-    public async createNewSettings(@Body() settingsObj: Partial<GeneralSettings>): Promise<GeneralSettings> {
+    @Post("/")
+    public async appendNewSettingsLine(@Body() settingsObj: Partial<Settings>): Promise<Settings> {
         logger.debug("create new settings entry");
-        return await this.dao.insertNewSettingsLine(settingsObj);
-    }
-
-    @Authorized(Role.ADMIN)
-    @Put("/downtime/:id")
-    public async updateScheduledDowntime(@Param("id") id: number, @Body() downtimeObj: Partial<ScheduledDowntime>):
-        Promise<ScheduledDowntime> {
-        logger.debug("update downtime endpoint");
-        return await this.dao.updateScheduledDowntime(id, downtimeObj);
-    }
-
-    @Authorized(Role.ADMIN)
-    @Delete("/downtime/:id")
-    public async deleteScheduledDowntime(@Param("id") id: number) {
-        logger.debug("delete downtime endpoint");
-        const result = await this.dao.deleteScheduledDowntime(id);
-        return {deleteCount: result.affected, id: result.raw[0].id};
+        const settings = await this.dao.insertNewSettings(settingsObj);
+        logger.debug(`created new settings entry: ${settings}`);
+        return settings;
     }
 }

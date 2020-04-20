@@ -5,11 +5,9 @@ block head
     title Trade Machine Password Reset
 
 block content
-    main
-        .container
-            h2 Forgot Your Password?
-            p Hi #{name}, you are receiving this email because you have requested a password reset for your account. #[br]#[br]
-            p Please click on the following link to complete the process:
-            a.button-link(href=`${url}`)
-                span Reset Password
-            .divider
+    h2 Forgot Your Password?
+    p Hi #{name}, you are receiving this email because you have requested a password reset for your account. #[br]#[br]
+    p Please click on the following link to complete the process:
+    a.button-link(href=`${url}`)
+        span Reset Password
+    .divider

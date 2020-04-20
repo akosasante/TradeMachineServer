@@ -1,27 +1,30 @@
-import { TradeDeadlineStatus } from "../../src/models/generalSettings";
-import ScheduledDowntime from "../../src/models/scheduledDowntime";
+import Settings, { DowntimeSettings, TradeWindowSettings } from "../../src/models/settings";
+import User from "../../src/models/user";
+import { UserFactory } from "./UserFactory";
+import { v4 as uuid } from "uuid";
 
 export class SettingsFactory {
-    public static DEFAULT_START = new Date("January 1 2019 1:00");
-    public static DEFAULT_END = new Date("February 1 2019 5:00");
+    public static DEFAULT_WINDOW_START = "18:00:00";
+    public static DEFAULT_WINDOW_END = "08:00:00";
+    public static DEFAULT_DOWNTIME_START = new Date("January 1 2019 5:00");
+    public static DEFAULT_DOWNTIME_END = new Date("February 1 2019 5:00");
+    public static DEFAULT_DOWNTIME_REASON = "off-season";
 
-    public static getTradeDailyDeadline(startTime = SettingsFactory.DEFAULT_START,
-                                        endTime = SettingsFactory.DEFAULT_END, rest = {}) {
-        return {status: TradeDeadlineStatus.ON, startTime, endTime, ...rest};
+    public static getSettingsObject(modifiedBy: User = UserFactory.getUser(),
+                                    tradeWindow?: TradeWindowSettings,
+                                    downtimeWindow?: DowntimeSettings) {
+        return { id: uuid(),
+            modifiedBy,
+            tradeWindowStart: tradeWindow?.tradeWindowStart,
+            tradeWindowEnd: tradeWindow?.tradeWindowEnd,
+            downtimeStartDate: downtimeWindow?.downtimeStartDate,
+            downtimeEndDate: downtimeWindow?.downtimeEndDate,
+            downtimeReason: downtimeWindow?.downtimeReason };
     }
 
-    public static getTradeDailyDeadlineOff(startTime = SettingsFactory.DEFAULT_START,
-                                           endTime = SettingsFactory.DEFAULT_END, rest = {}) {
-        return SettingsFactory.getTradeDailyDeadline(startTime, endTime, {status: TradeDeadlineStatus.OFF, ...rest});
-    }
-
-    public static getTradeDowntimeObj(startTime = SettingsFactory.DEFAULT_START,
-                                      endTime = SettingsFactory.DEFAULT_END, rest = {}) {
-        return {startTime, endTime, ...rest};
-    }
-
-    public static getTradeDowntime(startTime = SettingsFactory.DEFAULT_START,
-                                   endTime = SettingsFactory.DEFAULT_END, rest = {}) {
-        return new ScheduledDowntime(SettingsFactory.getTradeDowntimeObj(startTime, endTime, rest));
+    public static getSettings(modifiedBy: User = UserFactory.getUser(),
+                              tradeWindow?: TradeWindowSettings,
+                              downtimeWindow?: DowntimeSettings): Settings {
+        return new Settings(SettingsFactory.getSettingsObject(modifiedBy, tradeWindow, downtimeWindow));
     }
 }

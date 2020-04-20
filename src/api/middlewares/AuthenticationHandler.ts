@@ -20,7 +20,7 @@ export class LoginHandler implements ExpressMiddlewareInterface {
             if (err || !user) {
                 const message = `User could not be authenticated. ${err ? err.message : ""}`;
                 request.session!.destroy((sessionDestroyErr: Error) => {
-                    logger.debug(`Attempting to destroy unauthd session: ${sessionDestroyErr}`);
+                    logger.debug(`Attempting to destroy un-auth'd session: ${sessionDestroyErr}`);
                 });
                 return next(new UnauthorizedError(message));
             } else {

@@ -4,29 +4,28 @@ import logger from "../../../src/bootstrap/logger";
 import TeamDAO from "../../../src/DAO/TeamDAO";
 import User from "../../../src/models/user";
 import { TeamFactory } from "../../factories/TeamFactory";
-import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
+import { MockObj, mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
+import Team from "../../../src/models/team";
+import { Repository } from "typeorm";
 
 describe("TeamDAO", () => {
-    const mockTeamDb = {
+    const mockTeamDb: MockObj = {
         find: jest.fn(),
         findOneOrFail: jest.fn(),
-        save: jest.fn(),
+        insert: jest.fn(),
         update: jest.fn(),
         createQueryBuilder: jest.fn(),
     };
-    const testTeam = TeamFactory.getTeam(undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
-    const testTeamModel = testTeam.toTeamModel();
-    // @ts-ignore
-    const teamDAO = new TeamDAO(mockTeamDb);
-    // const [testTeam1, testTeam2] = TeamFactory.getTeams(2);
+    const testTeam = TeamFactory.getTeam();
+    const teamDAO = new TeamDAO(mockTeamDb as unknown as Repository<Team>);
 
-    afterEach(() => {
-        Object.entries(mockTeamDb).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockClear();
+    afterEach(async () => {
+        Object.keys(mockTeamDb).forEach((action: string) => {
+            (mockTeamDb[action as keyof MockObj] as jest.Mock).mockClear();
         });
 
-        mockWhereInIds.mockClear();
         mockExecute.mockClear();
+        mockWhereInIds.mockClear();
     });
 
     beforeAll(() => {
@@ -36,82 +35,89 @@ describe("TeamDAO", () => {
         logger.debug("~~~~~~TEAM DAO TESTS COMPLETE~~~~~~");
     });
 
-    it("getAllTeams - should call the db find method once with no args", async () => {
-        mockTeamDb.find.mockReturnValueOnce([testTeam]);
+    it("getAllTeams - should call the db find method once with option args", async () => {
+        mockTeamDb.find.mockResolvedValueOnce([testTeam]);
         const defaultOpts = {order: {id: "ASC"}};
         const res = await teamDAO.getAllTeams();
 
         expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.find).toHaveBeenCalledWith(defaultOpts);
-        expect(res).toEqual([testTeamModel]);
+        expect(res).toEqual([testTeam]);
     });
 
-    describe("getTeamsByOwnerStatus - should call the db createQueryBuilder with the correct methods", () => {
+    it("getTeamsWithOwners - should call createQueryBuilder with the correct methods", async () => {
+        const getMany = jest.fn(() => [testTeam]);
+        const innerJoin = jest.fn(() => ({ getMany }));
+        mockTeamDb.createQueryBuilder.mockImplementation(() => ({ innerJoinAndSelect: innerJoin }));
+        const res = await teamDAO.getTeamsWithOwners();
+
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith("team");
+        expect(innerJoin).toHaveBeenCalledWith("team.owners", "owners");
+        expect(res).toEqual([testTeam]);
+    });
+
+    it("getTeamsWithNoOwners - should call createQueryBuilder with the correct methods", async () => {
         const getMany = jest.fn(() => [testTeam]);
         const where = jest.fn(() => ({ getMany }));
         const leftJoinAndSelect = jest.fn(() => ({ where }));
         mockTeamDb.createQueryBuilder.mockImplementation(() => ({ leftJoinAndSelect }));
+        const res = await teamDAO.getTeamsWithNoOwners();
 
-        it("if hasOwners is true, should search using `owners IS NOT NULL`", async () => {
-            const resTrue = await teamDAO.getTeamsByOwnerStatus(true);
-            expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
-            expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith("team");
-            expect(where).toHaveBeenLastCalledWith('owner."teamId" IS NOT NULL');
-            expect(resTrue).toEqual([testTeamModel]);
-        });
-        it("if hasOwners is false, should search using `owners IS NULL`", async () => {
-            const resFalse = await teamDAO.getTeamsByOwnerStatus(false);
-            expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
-            expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith("team");
-            expect(where).toHaveBeenLastCalledWith('owner."teamId" IS NULL');
-            expect(resFalse).toEqual([testTeamModel]);
-        });
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith("team");
+        expect(leftJoinAndSelect).toHaveBeenCalledWith("team.owners", "owners");
+        expect(where).toHaveBeenCalledWith("owners IS NULL");
+        expect(res).toEqual([testTeam]);
     });
 
     it("getTeamById - should call the db findOneOrFail once with id", async () => {
-        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam);
+        mockTeamDb.findOneOrFail.mockResolvedValueOnce(testTeam);
         const res = await teamDAO.getTeamById(testTeam.id!);
 
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id);
-        expect(res).toEqual(testTeamModel);
+        expect(res).toEqual(testTeam);
     });
 
     it("findTeams - should call the db find once with query", async () => {
         const condition = {espnId: 1};
-        mockTeamDb.find.mockReturnValueOnce([testTeam]);
+        mockTeamDb.find.mockResolvedValueOnce([testTeam]);
         const res = await teamDAO.findTeams(condition);
 
         expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.find).toHaveBeenCalledWith({where: condition});
-        expect(res).toEqual([testTeamModel]);
+        expect(res).toEqual([testTeam]);
     });
 
     it("createTeams - should call the db save once with all the teams passed in", async () => {
-        mockTeamDb.save.mockReturnValueOnce([testTeam]);
-        const res = await teamDAO.createTeams(testTeam.parse());
+        mockTeamDb.insert.mockResolvedValueOnce({identifiers: [{id: testTeam.id!}], generatedMaps: [], raw: []});
+        mockTeamDb.find.mockResolvedValueOnce([testTeam]);
+        const res = await teamDAO.createTeams([testTeam.parse()]);
 
-        expect(mockTeamDb.save).toHaveBeenCalledTimes(1);
-        expect(mockTeamDb.save).toHaveBeenCalledWith(testTeam.parse());
-        expect(res).toEqual([testTeamModel]);
+        expect(mockTeamDb.insert).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.insert).toHaveBeenCalledWith([testTeam.parse()]);
+        expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testTeam.id]}});
+        expect(res).toEqual([testTeam]);
     });
 
     it("updateTeam - should call the db update and findOneOrFail once with id and teamObj", async () => {
-        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam);
+        mockTeamDb.findOneOrFail.mockResolvedValueOnce(testTeam);
         const res = await teamDAO.updateTeam(testTeam.id!, testTeam.parse());
 
         expect(mockTeamDb.update).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.update).toHaveBeenCalledWith({id: testTeam.id}, testTeam.parse());
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id);
-        expect(res).toEqual(testTeamModel);
+        expect(res).toEqual(testTeam);
     });
 
     it("deleteTeam - should call the db delete once with id", async () => {
-        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam);
+        mockTeamDb.findOneOrFail.mockResolvedValueOnce(testTeam);
         mockTeamDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
         const deleteResult = { raw: [{id: testTeam.id!}], affected: 1};
-        mockExecute.mockReturnValueOnce(deleteResult);
+        mockExecute.mockResolvedValueOnce(deleteResult);
         const res = await teamDAO.deleteTeam(testTeam.id!);
 
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
@@ -128,13 +134,13 @@ describe("TeamDAO", () => {
         mockTeamDb.createQueryBuilder.mockImplementationOnce(() => ({ relation }));
         mockTeamDb.findOneOrFail.mockReturnValue(testTeam);
         const res = await teamDAO.updateTeamOwners(
-            testTeam.id,
+            testTeam.id!,
             [new User({email: "1@example.com"})], [new User({email: "2@example.com"})]);
 
         expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith();
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(2);
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id);
-        expect(res).toEqual(testTeamModel);
+        expect(res).toEqual(testTeam);
     });
 });

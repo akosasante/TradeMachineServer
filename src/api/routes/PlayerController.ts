@@ -1,15 +1,6 @@
 import {
-    Authorized,
-    Body,
-    Delete,
-    Get,
-    JsonController,
-    Param,
-    Post,
-    Put,
-    QueryParam,
-    QueryParams,
-    UploadedFile
+    Authorized, Body, Delete, Get, JsonController, NotFoundError, Param,
+    Post, Put, QueryParam, QueryParams, UploadedFile
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -19,7 +10,7 @@ import PlayerDAO from "../../DAO/PlayerDAO";
 import TeamDAO from "../../DAO/TeamDAO";
 import Player, { LeagueLevel } from "../../models/player";
 import { Role } from "../../models/user";
-import { cleanupQuery, fileUploadOptions as uploadOpts } from "../helpers/ApiHelpers";
+import { cleanupQuery, fileUploadOptions as uploadOpts, UUIDPattern } from "../helpers/ApiHelpers";
 
 @JsonController("/players")
 export default class PlayerController {
@@ -45,8 +36,8 @@ export default class PlayerController {
         return players;
     }
 
-    @Get("/:id([0-9]+)")
-    public async getOnePlayer(@Param("id") id: number): Promise<Player> {
+    @Get(UUIDPattern)
+    public async getOnePlayer(@Param("id") id: string): Promise<Player> {
         logger.debug("get one player endpoint");
         return await this.dao.getPlayerById(id);
     }
@@ -54,34 +45,40 @@ export default class PlayerController {
     @Get("/search")
     public async findPlayersByQuery(@QueryParams() query: Partial<Player>): Promise<Player[]> {
         logger.debug(`searching for player with props: ${inspect(query)}`);
-        return await this.dao.findPlayers(cleanupQuery(query as {[key: string]: string}));
+        const players = await this.dao.findPlayers(cleanupQuery(query as {[key: string]: string}));
+        if (players.length) {
+            return players;
+        } else {
+            throw new NotFoundError("No players found matching that query");
+        }
     }
 
     @Authorized(Role.ADMIN)
     @Post("/")
-    public async createPlayer(@Body() playerObj: Partial<Player>): Promise<Player> {
+    public async createPlayers(@Body() playerObj: Partial<Player>[]): Promise<Player[]> {
         logger.debug("create player endpoint");
-        return await this.dao.createPlayer(playerObj);
+        return await this.dao.createPlayers(playerObj);
     }
 
     @Authorized(Role.ADMIN)
     @Post("/batch")
     public async batchUploadMinorLeaguePlayers(@UploadedFile("minors", {required: true, options: uploadOpts}) file: any,
                                                @QueryParam("mode") mode: WriteMode): Promise<Player[]> {
+        logger.debug("batch add minor league players endpoint");
         const teams = await this.teamDAO.getAllTeams();
         return await processMinorLeagueCsv(file.path, teams, this.dao, mode);
     }
 
     @Authorized(Role.ADMIN)
-    @Put("/:id([0-9]+)")
-    public async updatePlayer(@Param("id") id: number, @Body() playerObj: Partial<Player>): Promise<Player> {
+    @Put(UUIDPattern)
+    public async updatePlayer(@Param("id") id: string, @Body() playerObj: Partial<Player>): Promise<Player> {
         logger.debug("update player endpoint");
         return await this.dao.updatePlayer(id, playerObj);
     }
 
     @Authorized(Role.ADMIN)
-    @Delete("/:id([0-9]+)")
-    public async deletePlayer(@Param("id") id: number) {
+    @Delete(UUIDPattern)
+    public async deletePlayer(@Param("id") id: string) {
         logger.debug("delete player endpoint");
         const result = await this.dao.deletePlayer(id);
         logger.debug(`delete successful: ${inspect(result)}`);

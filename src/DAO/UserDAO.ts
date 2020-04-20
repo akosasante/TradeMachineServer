@@ -1,42 +1,53 @@
-import { User } from "@akosasante/trade-machine-models";
-import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
-import UserDO from "../models/user";
+import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
+import User from "../models/user";
+import { v4 as uuid } from "uuid";
 
 export default class UserDAO {
-    private userDb: Repository<UserDO>;
+    private userDb: Repository<User>;
 
-    constructor(repo?: Repository<UserDO>) {
-        this.userDb = repo || getConnection(process.env.NODE_ENV).getRepository("user");
+    constructor(repo?: Repository<User>) {
+        this.userDb = repo || getConnection(process.env.NODE_ENV).getRepository("User");
     }
 
-    public async getAllUsers(): Promise<UserDO[]> {
+    public async getAllUsers(): Promise<User[]> {
         const options: FindManyOptions = { order: { id: "ASC" } };
         return await this.userDb.find(options);
     }
 
-    public async getAllUsersWithTeams(): Promise<UserDO[]> {
+    public async getAllUsersWithTeams(): Promise<User[]> {
         const options: FindManyOptions = { order: { id: "ASC" }, relations: ["team"]};
         return await this.userDb.find(options);
     }
 
-    public async getUserById(id: string): Promise<UserDO> {
+    public async getUserById(id: string): Promise<User> {
         return await this.userDb.findOneOrFail(id);
     }
 
-    public async findUser(query: Partial<UserDO>, failIfNotFound: boolean = true): Promise<UserDO|undefined> {
-        const findFn = failIfNotFound ? this.userDb.findOneOrFail : this.userDb.findOne;
-        return await findFn({where: query});
+    public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User|undefined> {
+        const findFn = failIfNotFound ? this.userDb.findOneOrFail.bind(this.userDb) : this.userDb.findOne.bind(this.userDb);
+        return await findFn(query);
     }
 
-    public async findUsers(query: Partial<UserDO>): Promise<UserDO[]> {
+    public async findUserWithPassword(query: Partial<User>): Promise<User|undefined> {
+        return await this.userDb
+            .createQueryBuilder("user")
+            .select("user.id")
+            .addSelect("user.password")
+            .addSelect("user.email")
+            .where(query)
+            .getOne();
+    }
+
+    public async findUsers(query: Partial<User>): Promise<User[]> {
         return await this.userDb.find({where: query});
     }
 
-    public async createUsers(userObjs: Partial<UserDO>[]): Promise<UserDO[]> {
-        return await this.userDb.save(userObjs);
+    public async createUsers(userObjs: Partial<User>[]): Promise<User[]> {
+        const result: InsertResult = await this.userDb.insert(userObjs);
+        return await this.userDb.find({id: In(result.identifiers.map(({id}) => id))});
     }
 
-    public async updateUser(id: string, userObj: Partial<UserDO>): Promise<UserDO> {
+    public async updateUser(id: string, userObj: Partial<User>): Promise<User> {
         await this.userDb.update({id}, userObj);
         return await this.getUserById(id);
     }
@@ -48,5 +59,15 @@ export default class UserDAO {
             .whereInIds(id)
             .returning("id")
             .execute();
+    }
+
+    public async setPasswordExpires(id: string): Promise<void> {
+        await this.getUserById(id); // This should throw error if the id does not exist
+        await this.userDb.update(
+            {id},
+            {
+                passwordResetExpiresOn: User.generateTimeToPasswordExpires(),
+                passwordResetToken: uuid() });
+        return;
     }
 }
