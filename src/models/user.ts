@@ -2,6 +2,7 @@ import { Column, Entity, ManyToOne, OneToMany, Unique } from "typeorm";
 import { BaseModel } from "./base";
 import Settings from "./settings";
 import Team from "./team";
+import { EspnLeagueMember } from "../espn/espnApi";
 
 export enum Role {
     ADMIN = "admin",
@@ -51,6 +52,9 @@ export default class User extends BaseModel {
 
     @Column({ type: "enum", enum: UserStatus, default: UserStatus.ACTIVE })
     public status?: UserStatus;
+
+    @Column({type: "jsonb", nullable: true})
+    public espnMember?: EspnLeagueMember;
 
     @ManyToOne(type => Team, team => team.owners, {onDelete: "SET NULL"})
     public team?: Team;

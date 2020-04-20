@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 
-interface EspnLeagueMember {
+export interface EspnLeagueMember {
     id: string;
     isLeagueManager: boolean;
     displayName: string;
@@ -121,15 +121,6 @@ type EspnSchedule = EspnScheduleItem[];
 
 
 export default class EspnAPI {
-
-    public static getTeamName(team: EspnFantasyTeam): string {
-        return team ? `${team.location} ${team.nickname}` : "";
-    }
-
-    public leagueName: string = "";
-    public teams: EspnFantasyTeam[] = [];
-    public members: EspnLeagueMember[] = [];
-
     private leagueId: number;
     private req: AxiosInstance;
     private ESPNS2_COOKIE = process.env.ESPN_COOKIE;
@@ -155,27 +146,27 @@ export default class EspnAPI {
         return data;
     }
 
-    public async getAllMembers(year: number) {
+    public async getAllMembers(year: number): Promise<EspnLeagueMember[]> {
         const { data: members } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/members`);
         return members;
     }
 
-    public async getAllLeagueTeams(year: number) {
+    public async getAllLeagueTeams(year: number): Promise<EspnFantasyTeam[]> {
         const { data: teams } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/teams?view=mTeam`);
         return teams;
     }
 
-    public async getAllMajorLeaguePlayers(year: number) {
+    public async getAllMajorLeaguePlayers(year: number): Promise<EspnMajorLeaguePlayer[]> {
         const { data: {players: players} } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`);
         return players;
     }
 
-    public async getScheduleForYear(year: number) {
+    public async getScheduleForYear(year: number): Promise<EspnSchedule> {
         const { data: schedule } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/schedule?view=mScoreboard`);
         return schedule;
     }
 
-    public async getRosterForTeamAndDay(year: number, teamId: number, scoringPeriodId: number) {
+    public async getRosterForTeamAndDay(year: number, teamId: number, scoringPeriodId: number): Promise<EspnRoster> {
         const { data: {teams: teams} } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?forTeamId=${teamId}&scoringPeriodId=${scoringPeriodId}&view=mRoster`);
         return teams[0].roster;
     }
