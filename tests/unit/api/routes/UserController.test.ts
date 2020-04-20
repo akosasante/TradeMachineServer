@@ -76,7 +76,7 @@ describe("UserController", () => {
         const query: string = "name=Jatheesh";
         const expectedQuery = {name: "Jatheesh"};
         it("should find a user by the given query options", async () => {
-            mockUserDAO.findUser.mockReturnValueOnce(testUser);
+            mockUserDAO.findUser.mockResolvedValueOnce(testUser);
             const res = await userController.findUser(query);
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
@@ -85,7 +85,7 @@ describe("UserController", () => {
             expect(res).toEqual(testUser);
         });
         it("should return an array of users if multiple is a key in the query", async () => {
-            mockUserDAO.findUsers.mockReturnValueOnce([testUser]);
+            mockUserDAO.findUsers.mockResolvedValueOnce([testUser]);
             const res = await userController.findUser(query, true);
 
             expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);
@@ -94,7 +94,7 @@ describe("UserController", () => {
             expect(res).toEqual([testUser]);
         });
         it("should throw an error if no entities are found with the multiple key", async () => {
-            mockUserDAO.findUsers.mockReturnValueOnce([]);
+            mockUserDAO.findUsers.mockResolvedValueOnce([]);
             const res = userController.findUser(query, true);
 
             expect(mockUserDAO.findUsers).toHaveBeenCalledTimes(1);

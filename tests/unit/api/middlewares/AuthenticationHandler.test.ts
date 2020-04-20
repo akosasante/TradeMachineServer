@@ -21,7 +21,7 @@ describe("Authentication middleware", () => {
         it("should serialize the user and return the next function if sign in was successful", async () => {
             const testUserWithPass = {...testUser, password: await hash(testUser.password!, 1)};
             mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testUserWithPass);
-            mockUserDAO.updateUser.mockReturnValueOnce(testUserWithPass);
+            mockUserDAO.updateUser.mockResolvedValueOnce(testUserWithPass);
             const next: NextFunction = jest.fn();
             const request: Request = {
                 body: {email: testUser.email!, password: testUser.password!},
@@ -59,8 +59,8 @@ describe("Authentication middleware", () => {
         it("should serialize the user and return the next function if sign up was successful", async () => {
             const passwordlessUser ={...testUser};
             delete passwordlessUser.password;
-            mockUserDAO.findUserWithPassword.mockReturnValueOnce(passwordlessUser);
-            mockUserDAO.updateUser.mockReturnValueOnce(testUser);
+            mockUserDAO.findUserWithPassword.mockResolvedValueOnce(passwordlessUser);
+            mockUserDAO.updateUser.mockResolvedValueOnce(testUser);
             const next: NextFunction = jest.fn();
             const request: Request = {
                 body: {email: testUser.email!, password: testUser.password!},
@@ -78,7 +78,7 @@ describe("Authentication middleware", () => {
             expect(request.session!.user).toEqual(testUser.id);
         });
         it("should return the original error if the signup method returns an error", async () => {
-            mockUserDAO.findUserWithPassword.mockReturnValueOnce(testUser);
+            mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testUser);
             const next: NextFunction = jest.fn();
             const request: Request = {
                 body: {email: testUser.email!, password: testUser.password!},

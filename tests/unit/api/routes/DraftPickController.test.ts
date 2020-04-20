@@ -49,7 +49,7 @@ describe("DraftPickController", () => {
 
     describe("getAllDraftPicks method", () => {
         it("should return an array of draftPicks if no params is passed", async () => {
-            mockDraftPickDAO.getAllPicks.mockReturnValueOnce([testDraftPick]);
+            mockDraftPickDAO.getAllPicks.mockResolvedValueOnce([testDraftPick]);
             const res = await draftPickController.getAllDraftPicks();
 
             expect(mockDraftPickDAO.findPicks).toHaveBeenCalledTimes(0);
@@ -58,7 +58,7 @@ describe("DraftPickController", () => {
             expect(res).toEqual([testDraftPick]);
         });
         it("should return an array of draftPicks if a param is passed and call the find method", async () => {
-            mockDraftPickDAO.findPicks.mockReturnValueOnce([testDraftPick]);
+            mockDraftPickDAO.findPicks.mockResolvedValueOnce([testDraftPick]);
             const res = await draftPickController.getAllDraftPicks(["high", "majors"]);
 
             expect(mockDraftPickDAO.getAllPicks).toHaveBeenCalledTimes(0);

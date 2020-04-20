@@ -36,7 +36,7 @@ describe("TradeController", () => {
 
     describe("getAllTrades method", () => {
         it("should return an array of trades", async () => {
-            mockTradeDAO.getAllTrades.mockReturnValueOnce([testTrade]);
+            mockTradeDAO.getAllTrades.mockResolvedValueOnce([testTrade]);
             const res = await tradeController.getAllTrades();
 
             expect(mockTradeDAO.getAllTrades).toHaveBeenCalledTimes(1);
@@ -54,7 +54,7 @@ describe("TradeController", () => {
 
     describe("getOneTrade method", () => {
         it("should return a trade by id", async () => {
-            mockTradeDAO.getTradeById.mockReturnValueOnce(testTrade);
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(testTrade);
             const res = await tradeController.getOneTrade(testTrade.id!);
 
             expect(mockTradeDAO.getTradeById).toHaveBeenCalledTimes(1);
@@ -65,7 +65,7 @@ describe("TradeController", () => {
 
     describe("createTrade method", () => {
         it("should create a trade", async () => {
-            mockTradeDAO.createTrade.mockReturnValueOnce(testTrade);
+            mockTradeDAO.createTrade.mockResolvedValueOnce(testTrade);
             const res = await tradeController.createTrade(testTrade.parse());
 
             expect(mockTradeDAO.createTrade).toHaveBeenCalledTimes(1);
@@ -76,14 +76,14 @@ describe("TradeController", () => {
 
     describe("updateTrade method", () => {
         it("should call getTradeById once for validation", async () => {
-            mockTradeDAO.getTradeById.mockReturnValueOnce(testTrade);
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(testTrade);
             await tradeController.updateTrade(testTrade.id!, testTrade.parse());
 
             expect(mockTradeDAO.getTradeById).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id);
         });
         it("should call the updateParticipants method", async () => {
-            mockTradeDAO.getTradeById.mockReturnValueOnce(testTrade);
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(testTrade);
 
             const newCreator = TradeFactory.getTradeCreator(TeamFactory.getTeam());
             const existingRecipient = testTrade.tradeParticipants!.find(p => p.participantType === TradeParticipantType.RECIPIENT);
@@ -105,7 +105,7 @@ describe("TradeController", () => {
             });
         });
         it("should call the updateItems method", async () => {
-            mockTradeDAO.getTradeById.mockReturnValueOnce(testTrade);
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(testTrade);
 
 
             const newPick = TradeFactory.getTradedPick(undefined,
@@ -133,7 +133,7 @@ describe("TradeController", () => {
 
     describe("deleteTrade method", () => {
         it("should delete a trade by id from the db", async () => {
-            mockTradeDAO.deleteTrade.mockReturnValueOnce({raw: [ {id: testTrade.id} ], affected: 1});
+            mockTradeDAO.deleteTrade.mockResolvedValueOnce({raw: [ {id: testTrade.id} ], affected: 1});
             const res = await tradeController.deleteTrade(testTrade.id!);
 
             expect(mockTradeDAO.deleteTrade).toHaveBeenCalledTimes(1);

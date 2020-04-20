@@ -33,7 +33,7 @@ describe("SettingsDAO", () => {
     });
 
     it("getAllSettings - should call the db find method", async () => {
-        mockSettingsDb.find.mockReturnValueOnce([testSettings]);
+        mockSettingsDb.find.mockResolvedValueOnce([testSettings]);
         const defaultOpts = {order: {dateCreated: "DESC"}};
         const res = await settingsDAO.getAllSettings();
 
@@ -43,7 +43,7 @@ describe("SettingsDAO", () => {
     });
 
     it("getMostRecentSettings - should call the db findOne method", async () => {
-        mockSettingsDb.findOne.mockReturnValueOnce(testSettings);
+        mockSettingsDb.findOne.mockResolvedValueOnce(testSettings);
         const defaultOpts = {order: {dateCreated: "DESC"}};
         const res = await settingsDAO.getMostRecentSettings();
 
@@ -53,7 +53,7 @@ describe("SettingsDAO", () => {
     });
 
     it("getSettingsById - should call the db findOneOrFail method", async () => {
-        mockSettingsDb.findOneOrFail.mockReturnValueOnce(testSettings);
+        mockSettingsDb.findOneOrFail.mockResolvedValueOnce(testSettings);
         const res = await settingsDAO.getSettingsById(testSettings.id!);
 
         expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
@@ -62,18 +62,18 @@ describe("SettingsDAO", () => {
     });
 
     it("insertNewSettings - should first get most recent settings and then insert and return the new value", async () => {
-        mockSettingsDb.findOne.mockReturnValueOnce(testSettings);
-        mockSettingsDb.insert.mockReturnValueOnce({identifiers: [{id: testSettings.id!}], generatedMaps: [], raw: []});
+        mockSettingsDb.findOne.mockResolvedValueOnce(testSettings);
+        mockSettingsDb.insert.mockResolvedValueOnce({identifiers: [{id: testSettings.id!}], generatedMaps: [], raw: []});
 
         const newSettings = SettingsFactory.getSettings(undefined, undefined, {downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START, downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END, downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON});
         const expectedSettings = {...testSettings, ...newSettings};
-        mockSettingsDb.findOneOrFail.mockReturnValueOnce(expectedSettings);
+        mockSettingsDb.findOneOrFail.mockResolvedValueOnce(expectedSettings);
         const res = await settingsDAO.insertNewSettings(newSettings);
         logger.debug(inspect(testSettings));
 
         expect(mockSettingsDb.findOne).toHaveBeenCalledTimes(1);
         expect(mockSettingsDb.insert).toHaveBeenCalledTimes(1);
-        expect(mockSettingsDb.insert).toHaveBeenCalledWith({...expectedSettings, id: undefined, dateCreated: undefined, dateModified: undefined});
+        expect(mockSettingsDb.insert).toHaveBeenCalledWith({...expectedSettings, id: newSettings.id, dateCreated: undefined, dateModified: undefined});
         expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith({id: testSettings.id!});
         expect(res).toEqual(expectedSettings);

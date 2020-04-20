@@ -36,7 +36,7 @@ describe("TeamController", () => {
 
     describe("getAllTeams method", () => {
         it("should return an array of teams if no hasOwner param is passed", async () => {
-            mockTeamDAO.getAllTeams.mockReturnValueOnce([testTeam]);
+            mockTeamDAO.getAllTeams.mockResolvedValueOnce([testTeam]);
             const res = await teamController.getAllTeams();
 
             expect(mockTeamDAO.getAllTeams).toHaveBeenCalledTimes(1);

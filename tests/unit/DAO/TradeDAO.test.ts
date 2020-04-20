@@ -40,7 +40,7 @@ describe("TradeDAO", () => {
 
 
     it("getAllTrades - should call the db find method once with option args", async () => {
-        mockTradeDb.find.mockReturnValueOnce([testTrade]);
+        mockTradeDb.find.mockResolvedValueOnce([testTrade]);
         const defaultOpts = { order: {id: "ASC"} };
         const res = await tradeDAO.getAllTrades();
 
@@ -50,7 +50,7 @@ describe("TradeDAO", () => {
     });
 
     it("getTradeById - should call the db findOneOrFail once with id", async () => {
-        mockTradeDb.findOneOrFail.mockReturnValueOnce(testTrade);
+        mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
         const res = await tradeDAO.getTradeById(testTrade.id!);
 
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
@@ -59,8 +59,8 @@ describe("TradeDAO", () => {
     });
 
     it("createTrade - should call the db save once with tradeObj", async () => {
-        mockTradeDb.save.mockReturnValueOnce(testTrade);
-        mockTradeDb.findOneOrFail.mockReturnValueOnce(testTrade);
+        mockTradeDb.save.mockResolvedValueOnce(testTrade);
+        mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
         const res = await tradeDAO.createTrade(testTrade.parse());
 
         expect(mockTradeDb.save).toHaveBeenCalledTimes(1);
@@ -71,7 +71,7 @@ describe("TradeDAO", () => {
     });
 
     // it("updateTrade - should call the db update and findOneOrFail once with id and tradeObj", async () => {
-    //     mockTradeDb.findOneOrFail.mockReturnValueOnce(testTrade);
+    //     mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
     //     const res = await tradeDAO.updateTrade(1, testTrade);
     //
     //     expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
@@ -118,10 +118,10 @@ describe("TradeDAO", () => {
     });
 
     it("deleteTrade - should call the db delete once with id", async () => {
-        mockTradeDb.findOneOrFail.mockReturnValueOnce(testTrade);
+        mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
         mockTradeDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
         const deleteResult = { raw: [{id: testTrade.id!}], affected: 1};
-        mockExecute.mockReturnValueOnce(deleteResult);
+        mockExecute.mockResolvedValueOnce(deleteResult);
         const res = await tradeDAO.deleteTrade(testTrade.id!);
 
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);

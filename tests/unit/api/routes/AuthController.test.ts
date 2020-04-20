@@ -36,7 +36,7 @@ describe("AuthController", () => {
 
     describe("login method", () => {
         it("should return the user model that logged in", async () => {
-            mockUserDAO.getUserById.mockReturnValueOnce(testUser);
+            mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
             const res = await authController.login(mockReq as unknown as Request, mockSess);
             expect(res).toEqual(testUser);
         });
@@ -44,7 +44,7 @@ describe("AuthController", () => {
 
     describe("signup method", () => {
         it("should return the user model that signed in", async () => {
-            mockUserDAO.getUserById.mockReturnValueOnce(testUser);
+            mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
             const res = await authController.signup(mockReq as unknown as Request, mockSess);
             expect(res).toEqual(testUser);
         });

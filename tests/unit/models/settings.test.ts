@@ -18,8 +18,8 @@ describe("GeneralSettings Class", () => {
     describe("constructor", () => {
         it("should construct the obj as expected", () => {
             expect(settings.modifiedBy).toBeDefined();
-            expect(settings.tradeWindowStart).toBeDate();
-            expect(settings.tradeWindowEnd).toBeDate();
+            expect(settings.tradeWindowStart).toBeDefined();
+            expect(settings.tradeWindowEnd).toBeDefined();
             expect(settings.downtimeStartDate).toBeUndefined();
             expect(settings.downtimeEndDate).toBeUndefined();
             expect(settings.downtimeReason).toBeUndefined();

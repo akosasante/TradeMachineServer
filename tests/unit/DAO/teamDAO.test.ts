@@ -36,7 +36,7 @@ describe("TeamDAO", () => {
     });
 
     it("getAllTeams - should call the db find method once with option args", async () => {
-        mockTeamDb.find.mockReturnValueOnce([testTeam]);
+        mockTeamDb.find.mockResolvedValueOnce([testTeam]);
         const defaultOpts = {order: {id: "ASC"}};
         const res = await teamDAO.getAllTeams();
 
@@ -72,7 +72,7 @@ describe("TeamDAO", () => {
     });
 
     it("getTeamById - should call the db findOneOrFail once with id", async () => {
-        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam);
+        mockTeamDb.findOneOrFail.mockResolvedValueOnce(testTeam);
         const res = await teamDAO.getTeamById(testTeam.id!);
 
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
@@ -82,7 +82,7 @@ describe("TeamDAO", () => {
 
     it("findTeams - should call the db find once with query", async () => {
         const condition = {espnId: 1};
-        mockTeamDb.find.mockReturnValueOnce([testTeam]);
+        mockTeamDb.find.mockResolvedValueOnce([testTeam]);
         const res = await teamDAO.findTeams(condition);
 
         expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
@@ -91,8 +91,8 @@ describe("TeamDAO", () => {
     });
 
     it("createTeams - should call the db save once with all the teams passed in", async () => {
-        mockTeamDb.insert.mockReturnValueOnce({identifiers: [{id: testTeam.id!}], generatedMaps: [], raw: []});
-        mockTeamDb.find.mockReturnValueOnce([testTeam]);
+        mockTeamDb.insert.mockResolvedValueOnce({identifiers: [{id: testTeam.id!}], generatedMaps: [], raw: []});
+        mockTeamDb.find.mockResolvedValueOnce([testTeam]);
         const res = await teamDAO.createTeams([testTeam.parse()]);
 
         expect(mockTeamDb.insert).toHaveBeenCalledTimes(1);
@@ -103,7 +103,7 @@ describe("TeamDAO", () => {
     });
 
     it("updateTeam - should call the db update and findOneOrFail once with id and teamObj", async () => {
-        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam);
+        mockTeamDb.findOneOrFail.mockResolvedValueOnce(testTeam);
         const res = await teamDAO.updateTeam(testTeam.id!, testTeam.parse());
 
         expect(mockTeamDb.update).toHaveBeenCalledTimes(1);
@@ -114,10 +114,10 @@ describe("TeamDAO", () => {
     });
 
     it("deleteTeam - should call the db delete once with id", async () => {
-        mockTeamDb.findOneOrFail.mockReturnValueOnce(testTeam);
+        mockTeamDb.findOneOrFail.mockResolvedValueOnce(testTeam);
         mockTeamDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
         const deleteResult = { raw: [{id: testTeam.id!}], affected: 1};
-        mockExecute.mockReturnValueOnce(deleteResult);
+        mockExecute.mockResolvedValueOnce(deleteResult);
         const res = await teamDAO.deleteTeam(testTeam.id!);
 
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);

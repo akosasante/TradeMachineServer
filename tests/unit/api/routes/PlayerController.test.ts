@@ -48,7 +48,7 @@ describe("PlayerController", () => {
 
     describe("getAllPlayers method", () => {
         it("should return an array of players if no params is passed", async () => {
-            mockPlayerDAO.getAllPlayers.mockReturnValueOnce([testPlayer]);
+            mockPlayerDAO.getAllPlayers.mockResolvedValueOnce([testPlayer]);
             const res = await playerController.getAllPlayers();
 
             expect(mockPlayerDAO.findPlayers).toHaveBeenCalledTimes(0);
@@ -57,7 +57,7 @@ describe("PlayerController", () => {
             expect(res).toEqual([testPlayer]);
         });
         it("should return an array of players if a param is passed and call the find method", async () => {
-            mockPlayerDAO.findPlayers.mockReturnValueOnce([testPlayer]);
+            mockPlayerDAO.findPlayers.mockResolvedValueOnce([testPlayer]);
             const res = await playerController.getAllPlayers(["high", "majors"]);
 
             expect(mockPlayerDAO.getAllPlayers).toHaveBeenCalledTimes(0);

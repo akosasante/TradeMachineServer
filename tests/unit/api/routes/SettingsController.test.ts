@@ -30,7 +30,7 @@ describe("SettingsController", () => {
 
    describe("getAllSettings method", () => {
        it("should return an array of settings", async () => {
-           mockSettingsDAO.getAllSettings.mockReturnValueOnce([testSettings]);
+           mockSettingsDAO.getAllSettings.mockResolvedValueOnce([testSettings]);
            const res = await settingsController.getAllSettings();
 
            expect(mockSettingsDAO.getAllSettings).toHaveBeenCalledTimes(1);
@@ -48,7 +48,7 @@ describe("SettingsController", () => {
 
    describe("getCurrentSettings method", () => {
        it("should return the most recent settings line", async () => {
-           mockSettingsDAO.getMostRecentSettings.mockReturnValueOnce(testSettings);
+           mockSettingsDAO.getMostRecentSettings.mockResolvedValueOnce(testSettings);
            const res = await settingsController.getCurrentSettings();
 
            expect(mockSettingsDAO.getMostRecentSettings).toHaveBeenCalledTimes(1);
@@ -59,7 +59,7 @@ describe("SettingsController", () => {
 
    describe("getOneSettingsLine method", () => {
        it("should return a settings line by id", async () => {
-           mockSettingsDAO.getSettingsById.mockReturnValueOnce(testSettings);
+           mockSettingsDAO.getSettingsById.mockResolvedValueOnce(testSettings);
            const res = await settingsController.getOneSettingsLine(testSettings.id!);
 
            expect(mockSettingsDAO.getSettingsById).toHaveBeenCalledTimes(1);
@@ -70,7 +70,7 @@ describe("SettingsController", () => {
 
    describe("appendNewSettingsLine method", () => {
        it("should create a new settings line", async () => {
-           mockSettingsDAO.insertNewSettings.mockReturnValueOnce(testSettings);
+           mockSettingsDAO.insertNewSettings.mockResolvedValueOnce(testSettings);
            const res = await settingsController.appendNewSettingsLine({downtimeReason: "hello"});
 
            expect(mockSettingsDAO.insertNewSettings).toHaveBeenCalledTimes(1);

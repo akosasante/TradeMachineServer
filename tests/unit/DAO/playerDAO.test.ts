@@ -38,7 +38,7 @@ describe("PlayerDAO", () => {
     });
 
     it("getAllPlayers - should call the db find method once with option args", async () => {
-        mockPlayerDb.find.mockReturnValueOnce([testPlayer1]);
+        mockPlayerDb.find.mockResolvedValueOnce([testPlayer1]);
         const defaultOpts = {order: {id: "ASC"}};
         const res = await playerDAO.getAllPlayers();
 
@@ -48,7 +48,7 @@ describe("PlayerDAO", () => {
     });
 
     it("getPlayerById - should call the db findOneOrFail once with id", async () => {
-        mockPlayerDb.findOneOrFail.mockReturnValueOnce(testPlayer1);
+        mockPlayerDb.findOneOrFail.mockResolvedValueOnce(testPlayer1);
         const res = await playerDAO.getPlayerById(testPlayer1.id!);
 
         expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledTimes(1);
@@ -58,7 +58,7 @@ describe("PlayerDAO", () => {
 
     it("findPlayers - should call the db find once with query", async () => {
         const query = {league: LeagueLevel.HIGH};
-        mockPlayerDb.find.mockReturnValueOnce([testPlayer1]);
+        mockPlayerDb.find.mockResolvedValueOnce([testPlayer1]);
         const res = await playerDAO.findPlayers(query);
 
         expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
@@ -67,8 +67,8 @@ describe("PlayerDAO", () => {
     });
 
     it("createPlayer - should call the db save once with playerObj", async () => {
-        mockPlayerDb.insert.mockReturnValueOnce({identifiers: [{id: testPlayer1.id!}], generatedMaps: [], raw: []});
-        mockPlayerDb.find.mockReturnValueOnce(testPlayer1);
+        mockPlayerDb.insert.mockResolvedValueOnce({identifiers: [{id: testPlayer1.id!}], generatedMaps: [], raw: []});
+        mockPlayerDb.find.mockResolvedValueOnce(testPlayer1);
         const res = await playerDAO.createPlayers([testPlayer1]);
 
         expect(mockPlayerDb.insert).toHaveBeenCalledTimes(1);
@@ -80,7 +80,7 @@ describe("PlayerDAO", () => {
     });
 
     it("updatePlayer - should call the db update and findOneOrFail once with id and teamObj", async () => {
-        mockPlayerDb.findOneOrFail.mockReturnValueOnce(testPlayer1);
+        mockPlayerDb.findOneOrFail.mockResolvedValueOnce(testPlayer1);
         const res = await playerDAO.updatePlayer(testPlayer1.id!, testPlayer1.parse());
 
         expect(mockPlayerDb.update).toHaveBeenCalledTimes(1);
@@ -91,10 +91,10 @@ describe("PlayerDAO", () => {
     });
 
     it("deletePlayer - should call the db delete once with id", async () => {
-        mockPlayerDb.findOneOrFail.mockReturnValueOnce(testPlayer1);
+        mockPlayerDb.findOneOrFail.mockResolvedValueOnce(testPlayer1);
         mockPlayerDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
         const deleteResult = { affected: 1, raw: {id: testPlayer1.id!} };
-        mockExecute.mockReturnValueOnce(deleteResult);
+        mockExecute.mockResolvedValueOnce(deleteResult);
         const res = await playerDAO.deletePlayer(testPlayer1.id!);
 
         expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledTimes(1);
@@ -106,7 +106,7 @@ describe("PlayerDAO", () => {
     });
 
     it("deleteAllPlayers - should delete the players in chunks", async () => {
-        mockPlayerDb.find.mockReturnValueOnce([]);
+        mockPlayerDb.find.mockResolvedValueOnce([]);
         await playerDAO.deleteAllPlayers();
         expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
         expect(mockPlayerDb.remove).toHaveBeenCalledTimes(1);
@@ -142,7 +142,7 @@ describe("PlayerDAO", () => {
     });
 
     it("batchCreatePlayers - should call the db save once with playerObjs", async () => {
-        mockPlayerDb.save.mockReturnValueOnce([testPlayer1]);
+        mockPlayerDb.save.mockResolvedValueOnce([testPlayer1]);
         const res = await playerDAO.batchCreatePlayers([testPlayer1]);
 
         expect(mockPlayerDb.save).toHaveBeenCalledTimes(1);

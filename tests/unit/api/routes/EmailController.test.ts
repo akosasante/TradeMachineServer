@@ -48,7 +48,7 @@ describe("EmailController", () => {
 
     describe("sendResetEmail method", () => {
         it("should find a user, set a new password expiry date, and call mailQueue", async () => {
-            mockUserDAO.findUser.mockReturnValueOnce(testUser);
+            mockUserDAO.findUser.mockResolvedValueOnce(testUser);
 
             await emailController.sendResetEmail(testUser.email!, mockRes as unknown as Response);
 
@@ -74,7 +74,7 @@ describe("EmailController", () => {
 
     describe("sendTestEmail method", () => {
         it("should find a user and call mailQueue", async () => {
-            mockUserDAO.findUser.mockReturnValueOnce(testUser);
+            mockUserDAO.findUser.mockResolvedValueOnce(testUser);
 
             await emailController.sendTestEmail(testUser.email!, mockRes as unknown as Response);
 
@@ -99,7 +99,7 @@ describe("EmailController", () => {
 
     describe("sendRegistrationEmail method", () => {
         it("should find a user and call mailQueue", async () => {
-            mockUserDAO.findUser.mockReturnValueOnce(testUser);
+            mockUserDAO.findUser.mockResolvedValueOnce(testUser);
 
             await emailController.sendRegistrationEmail(testUser.email!, mockRes as unknown as Response);
 
