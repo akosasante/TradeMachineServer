@@ -14,7 +14,7 @@ async function run() {
     let user = getUserObj(args);
     if (user) {
         [user] = await saveUser(user);
-        return registerUser(user);
+        return await registerUser(user);
     }
 }
 

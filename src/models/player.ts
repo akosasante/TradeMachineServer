@@ -1,6 +1,8 @@
-import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
+import { Column, Entity, Index, ManyToOne } from "typeorm";
 import { BaseModel } from "./base";
 import Team from "./team";
+import { EspnMajorLeaguePlayer } from "../espn/espnApi";
+import { espnMajorLeagueTeamFromId, EspnPositionMapping } from "../espn/espnConstants";
 
 export enum LeagueLevel {
     MAJOR = "Majors",
@@ -20,7 +22,7 @@ export default class Player extends BaseModel {
     @Column({nullable: true})
     public mlbTeam?: string;
 
-    @Column({nullable: true, type: "json"})
+    @Column({nullable: true, type: "jsonb"})
     public meta?: any;
 
     @ManyToOne(type => Team, team => team.players, {onDelete: "SET NULL"})
@@ -29,5 +31,15 @@ export default class Player extends BaseModel {
     constructor(props: Partial<Player> & Required<Pick<Player, "name">>) {
         super();
         Object.assign(this, props);
+    }
+
+    public static convertEspnMajorLeaguerToPlayer(espnPlayer: EspnMajorLeaguePlayer): Player {
+        const position = espnPlayer.player?.defaultPositionId ? EspnPositionMapping[espnPlayer.player?.defaultPositionId] : undefined;
+        return new Player({
+            league: LeagueLevel.MAJOR,
+            name: espnPlayer.player?.fullName || `ESPN Player #${espnPlayer.id}`,
+            mlbTeam: espnMajorLeagueTeamFromId(espnPlayer.player?.proTeamId)?.abbrev.toUpperCase(),
+            meta: { espnPlayer, position },
+        });
     }
 }
