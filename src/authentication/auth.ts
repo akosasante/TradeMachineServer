@@ -6,22 +6,22 @@ import { inspect } from "util";
 import { ConflictError } from "../api/middlewares/ErrorHandler";
 import logger from "../bootstrap/logger";
 import UserDAO from "../DAO/UserDAO";
-import UserDO, { Role } from "../models/user";
+import User, { Role } from "../models/user";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 
 
-export async function serializeUser(user: UserDO): Promise<string | undefined> {
+export async function serializeUser(user: User): Promise<string | undefined> {
     logger.debug("serializing user");
     return user ? user.id : undefined;
 }
 
-export async function deserializeUser(id: string, userDAO: UserDAO = new UserDAO()): Promise<UserDO> {
+export async function deserializeUser(id: string, userDAO: UserDAO = new UserDAO()): Promise<User> {
     logger.debug("deserializing user");
     return await userDAO.getUserById(id);
 }
 
 export async function signUpAuthentication(email: string, password: string, userDAO: UserDAO = new UserDAO(),
-                                           done: (err?: Error, user?: UserDO) => any): Promise<void> {
+                                           done: (err?: Error, user?: User) => any): Promise<void> {
     try {
         logger.debug("sign up strategy");
         const user = await userDAO.findUserWithPassword({email});
@@ -46,7 +46,7 @@ export async function signUpAuthentication(email: string, password: string, user
 }
 
 export async function signInAuthentication(email: string, password: string, userDAO: UserDAO = new UserDAO(),
-                                           done: (err?: Error, user?: UserDO) => any): Promise<void> {
+                                           done: (err?: Error, user?: User) => any): Promise<void> {
     try {
         logger.debug("sign in strategy");
         // Will throw EntityNotFoundError if user is not found
@@ -107,7 +107,7 @@ export async function generateHashedPassword(plainPassword: string): Promise<str
     return hash(plainPassword, saltFactor);
 }
 
-async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO()): Promise<UserDO | undefined> {
+async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO()): Promise<User | undefined> {
     const userId = get(action, "request.session.user");
     logger.debug(inspect(action.request.session));
     logger.debug(inspect(action.request.sessionID));
