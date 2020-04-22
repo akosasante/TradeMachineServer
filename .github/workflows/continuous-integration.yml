@@ -5,7 +5,10 @@ on : [push]
 jobs:
   test-in-container:
     runs-on: ubuntu-18.04
-    container: node:lts-buster
+
+    strategy:
+      matrix:
+        node-version: [8.x, 10.x, 12.x]
 
     services:
       redis:
