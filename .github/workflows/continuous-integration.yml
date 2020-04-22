@@ -51,7 +51,7 @@ jobs:
           PG_USER: ${{ job.services.postgres.env.POSTGRES_USER }}
           PG_PASSWORD: ${{ job.services.postgres.env.POSTGRES_PASSWORD }}
           PG_DB: ${{ job.services.postgres.env.POSTGRES_DB }}
-          BASE_DIR: ${{ GITHUB_WORKSPACE }}
+          BASE_DIR: ${{ env.GITHUB_WORKSPACE }}
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
 
