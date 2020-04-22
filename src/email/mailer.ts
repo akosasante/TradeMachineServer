@@ -41,8 +41,6 @@ export const Emailer = {
                 images: false,
             },
         },
-        send: true,
-        preview: false,
         message: {
             from: "tradebot@flexfoxfantasy.com",
         },
