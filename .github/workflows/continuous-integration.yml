@@ -44,6 +44,11 @@ jobs:
 
       - name: Build js files
         run: npm run build-ts
+      - name: Debugging
+        run: |
+          psql -l -U postgres -a
+          echo '\dn' | psql -U postgres -d ${{ secrets.PG_DB }} -a
+          echo '\dt' | psql -U postgres -d ${{ secrets.PG_DB }} -a
 
       - name: Run unit and integration tests
         run: npm run test-debug
