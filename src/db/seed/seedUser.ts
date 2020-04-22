@@ -23,7 +23,7 @@ function getUserObj(args: any[]) {
         case "custom":
             console.log("Creating a custom user");
             if (args[1]) {
-                console.log(args[1])
+                console.log(args[1]);
                 const userObj = JSON.parse(args[1]);
                 console.log(`Passing in the object: ${userObj}`);
                 return new User(userObj);
