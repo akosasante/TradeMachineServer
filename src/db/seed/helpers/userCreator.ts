@@ -2,30 +2,35 @@ import { internet, name as fakeName } from "faker";
 import UserDAO from "../../../DAO/UserDAO";
 import User, { Role, UserStatus } from "../../../models/user";
 
+let dao: UserDAO | null;
+
 async function init() {
-    return new UserDAO();
+    if (!dao) {
+        dao = new UserDAO();
+    }
+    return dao;
 }
 
 export function createGenericUser() {
-    const username = internet.userName();
+    const slackUsername = internet.userName();
     const email = internet.email();
-    const name = fakeName.findName();
-    return new User({username, email, name});
+    const displayName = fakeName.findName();
+    return new User({slackUsername, email, displayName, role: Role.OWNER});
 }
 
-export async function createAdminUser() {
+export function createAdminUser() {
     const user = createGenericUser();
-    user.roles = [Role.ADMIN];
+    user.role = Role.ADMIN;
     return user;
 }
 
-export async function createInactiveUser() {
+export function createInactiveUser() {
     const user = createGenericUser();
     user.status = UserStatus.INACTIVE;
     return user;
 }
 
 export async function saveUser(user: User) {
-    const dao = await init();
-    return await dao.createUser(user);
+    const userDAO = await init();
+    return await userDAO.createUsers([user]);
 }

@@ -1,12 +1,14 @@
-import UserDAO from "../../../DAO/UserDAO";
 import User from "../../../models/user";
-
-async function init() {
-    return new UserDAO();
-}
+import { signUpAuthentication } from "../../../authentication/auth";
 
 export async function registerUser(user: User) {
-    const userDAO = await init();
-    const hashedPass = await User.generateHashedPassword("testing123");
-    return await userDAO.updateUser(user.id!, {password: hashedPass, lastLoggedIn: new Date()});
+    return new Promise((resolve, reject) => {
+        signUpAuthentication(user.email, "testing123", undefined, (err, registeredUser) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(registeredUser);
+            }
+        });
+    });
 }

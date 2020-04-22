@@ -25,6 +25,15 @@ interface EspnRecordObj {
     overall: EspnRecord;
 }
 
+export interface EspnProTeam {
+    id: number;
+    abbrev: string;
+    location: string;
+    name: string;
+    byeWeek: number;
+    universeId?: number;
+}
+
 export interface EspnFantasyTeam {
     id: number;
     abbrev?: string;
@@ -49,8 +58,8 @@ interface EspnPlayerInfo {
     lastName?: string;
     fullName?: string;
     proTeamId?: number;
-    eligibleSlots?: number[]; // TODO: figure out what this maps to
-    defaultPositionId?: number; // TODO: Map position number to position text
+    eligibleSlots?: number[];
+    defaultPositionId?: number;
     ownership?: object;
     jersey?: string;
     injured?: boolean;
@@ -66,7 +75,7 @@ interface EspnPlayerPoolEntry {
     onTeamId: number;
     id: number;
     appliedStatTotal: number;
-    status: string; // "ONTEAM" idk what else
+    status: string; // "ONTEAM"|"FREEAGENT" idk what else, maybe waivers?
 }
 
 interface EspnOwnedPlayer {
@@ -79,7 +88,7 @@ interface EspnOwnedPlayer {
     acquisitionType?: any;
 }
 
-interface EspnMajorLeaguePlayer {
+export interface EspnMajorLeaguePlayer {
     id: number;
     status?: string;
     onTeamId?: any;
@@ -138,6 +147,7 @@ export default class EspnAPI {
         this.req = axios.create({
             withCredentials: true,
             headers: {Cookie: `espn_s2=${this.ESPNS2_COOKIE}; SWID=${this.ESPN_SWID};`},
+            timeout: 30000,
         });
     }
 
@@ -171,3 +181,4 @@ export default class EspnAPI {
         return teams[0].roster;
     }
 }
+
