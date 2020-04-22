@@ -1,0 +1,50 @@
+name: CI Workflow
+
+on : [push]
+
+jobs:
+  test-in-container:
+    runs-on: ubuntu-18.04
+    container: node:lts-buster
+
+    services:
+      redis:
+        image: redis
+        # Set health checks to wait until redis has started
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --entrypoint redis-server
+
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: ${{ secrets.PG_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.PG_DB }}
+        ports:
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        uses: npm ci
+
+      - name: Build js files
+        uses: npm run build-ts
+
+      - name: Run unit and integration tests
+        uses: npm run test
+
