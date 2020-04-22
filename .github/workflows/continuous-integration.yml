@@ -40,11 +40,11 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install dependencies
-        uses: npm ci
+        run: npm ci
 
       - name: Build js files
-        uses: npm run build-ts
+        run: npm run build-ts
 
       - name: Run unit and integration tests
-        uses: npm run test
+        run: npm run test
 
