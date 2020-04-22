@@ -49,11 +49,11 @@ jobs:
         run: npm run build-ts
       - name: Debugging
         run: |
-          ps aux
           docker ps
-          docker exec -d postgres psql -l -U postgres -a
-          echo '\dn' | docker exec -d postgres psql -U postgres -d ${{ secrets.PG_DB }} -a
-          echo '\dt' | docker exec -d postgres psql -U postgres -d ${{ secrets.PG_DB }} -a
+          docker ps -q -f "name=postgres" -l
+          docker exec -d $(docker ps -q -f "name=postgres" -l) psql -l -U postgres -a
+          echo '\dn' | docker exec -d $(docker ps -q -f "name=postgres" -l) psql -U postgres -d ${{ secrets.PG_DB }} -a
+          echo '\dt' | docker exec -d $(docker ps -q -f "name=postgres" -l) psql -U postgres -d ${{ secrets.PG_DB }} -a
 
       - name: Run unit and integration tests
         run: npm run test-debug
