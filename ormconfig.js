@@ -34,7 +34,7 @@ module.exports = [
         name: "test",
         schema: "test",
         synchronize: true,
-        dropSchema: false,
+        dropSchema: true,
     },
     {
         ...commonOpts,
