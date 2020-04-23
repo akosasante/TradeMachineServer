@@ -56,7 +56,7 @@ jobs:
           PGDATABASE: ${{ secrets.PG_DB }}
 
       - name: Run unit and integration tests
-        run: npm run test-debug
+        run: npm run test
         env:
           PG_USER: ${{ secrets.PG_USER }}
           PG_PASSWORD: ${{ secrets.PG_PASSWORD }}

@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
           script: |
-            cd TradeMachine
+            cd /opt/Apps/TradeMachine
             git checkout master
             git pull
             npm install
