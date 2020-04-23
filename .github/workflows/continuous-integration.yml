@@ -5,13 +5,6 @@ on : [push]
 jobs:
   test-in-container:
     runs-on: ubuntu-18.04
-    env:
-      PG_USER: ${{ job.services.postgres.env.POSTGRES_USER }}
-      PG_PASSWORD: ${{ job.services.postgres.env.POSTGRES_PASSWORD }}
-      PG_DB: ${{ job.services.postgres.env.POSTGRES_DB }}
-      BASE_DIR: ${{ env.GITHUB_WORKSPACE }}
-      ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
-      ESPN_SWID: ${{ secrets.ESPN_SWID }}
 
     strategy:
       matrix:
@@ -32,20 +25,20 @@ jobs:
 
       postgres:
         image: postgres
+        env:
+          POSTGRES_USER: ${{ secrets.PG_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.PG_DB }}
+        ports:
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-      env:
-        POSTGRES_USER: ${{ secrets.PG_USER }}
-        POSTGRES_PASSWORD: ${{ secrets.PG_PASSWORD }}
-        POSTGRES_DB: ${{ secrets.PG_DB }}
-      ports:
-        - 5432:5432
-      # Set health checks to wait until postgres has started
-      options: >-
-        --health-cmd pg_isready
-        --health-interval 10s
-        --health-timeout 5s
-        --health-retries 5
       - name: Check out repository code
         uses: actions/checkout@v2
 
@@ -65,4 +58,11 @@ jobs:
 
       - name: Run unit and integration tests
         run: npm run test-debug
+        env:
+          PG_USER: ${{ job.services.postgres.env.POSTGRES_USER }}
+          PG_PASSWORD: ${{ job.services.postgres.env.POSTGRES_PASSWORD }}
+          PG_DB: ${{ job.services.postgres.env.POSTGRES_DB }}
+          BASE_DIR: ${{ env.GITHUB_WORKSPACE }}
+          ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
 
