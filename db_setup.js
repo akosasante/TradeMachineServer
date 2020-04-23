@@ -1,9 +1,9 @@
 const { Client } = require('pg')
 const client = new Client()
 
-const dbSetup = `CREATE DATABASE trade_machine OWNER ${process.env.PG_USER};`
+const dbSetup = `CREATE DATABASE trade_machine OWNER ${process.env.PGUSER};`
 const uuidSetup = `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`
-const schemaSetup = `CREATE SCHEMA test AUTHORIZATION ${process.env.PG_USER};`
+const schemaSetup = `CREATE SCHEMA test AUTHORIZATION ${process.env.PGUSER};`
 
 client.connect().then(async () => {
   try {
