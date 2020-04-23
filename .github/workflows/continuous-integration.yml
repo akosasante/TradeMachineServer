@@ -48,8 +48,9 @@ jobs:
       - name: Build js files
         run: npm run build-ts
 
-      - name: Debug connect to postgres
+      - name: Setup db
         run: |
+          node db_setup.js
           npm run gen-migrate-test-ci
           npm run run-migrate-test-ci
         env:
