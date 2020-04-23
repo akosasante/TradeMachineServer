@@ -46,10 +46,7 @@ jobs:
         run: npm ci
 
       - name: Build js files
-        run: |
-          npm run build-ts
-          ls -la ${{ env.GITHUB_WORKSPACE }}
-          ls -la "${{ github.workspace }}/tests"
+        run: npm run build-ts
 
       - name: Run unit and integration tests
         run: npm run test
@@ -57,7 +54,7 @@ jobs:
           PG_USER: ${{ secrets.PG_USER }}
           PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
           PG_DB: ${{ secrets.PG_DB }}
-          BASE_DIR: ${{ env.GITHUB_WORKSPACE }}
+          BASE_DIR: ${{ github.workspace }}
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
 
