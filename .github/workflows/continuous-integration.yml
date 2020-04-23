@@ -57,4 +57,5 @@ jobs:
           BASE_DIR: ${{ github.workspace }}
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
+          BASE_URL: http://localhost:8080
 
