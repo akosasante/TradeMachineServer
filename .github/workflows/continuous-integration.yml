@@ -49,15 +49,14 @@ jobs:
         run: npm run build-ts
 
       - name: Setup db
-        run: |
-          node db_setup.js
+        run: node db_setup.js
         env:
           PGUSER: ${{ secrets.PG_USER }}
           PGPASSWORD: ${{ secrets.PG_PASSWORD }}
           PGDATABASE: ${{ secrets.PG_DB }}
 
       - name: Run unit and integration tests
-        run: npm run test-debug -- --testPathPattern=app.test.ts
+        run: npm run test-debug
         env:
           PG_USER: ${{ secrets.PG_USER }}
           PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
