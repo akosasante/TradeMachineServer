@@ -10,9 +10,11 @@ import { config as dotenvConfig } from "dotenv";
 dotenvConfig({path: path.resolve(__dirname, "../../.env")});
 
 export interface SendInBlueSendResponse {
-    code: string; // "success",
-    message: string; // "Email sent successfully."
-    messageId?: string;
+    envelope: {
+        from: string;
+        to: string[];
+    };
+    message: string;
     originalMessage: {
         to: string;
         from: string;
