@@ -4,8 +4,6 @@ const client = new Client()
 const uuidSetup = `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`
 const schemaSetup = `CREATE SCHEMA test AUTHORIZATION ${process.env.PGUSER};`
 
-console.log(schemaSetup);
-
 client.connect().then(async () => {
   try {
     await client.query(uuidSetup);
