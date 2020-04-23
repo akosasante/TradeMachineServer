@@ -52,7 +52,7 @@ jobs:
         run: |
           sudo apt-get install -y postgresql-client
           psql --version
-          netstat -vantp tcp | grep 'Proto\|9092'
+          netstat -vantp tcp | grep 'Proto\|5432'
           psql -l -U postgres -a
           echo '\dn' | psql -U postgres -d ${{ secrets.PG_DB }}
           echo '\dt' | psql -U postgres -d ${{ secrets.PG_DB }}
