@@ -7,16 +7,16 @@ export default async function initializeDb(logQueries: boolean = false) {
     let connection: Connection|undefined;
     try {
         const dbConfigName = process.env.NODE_ENV;
-        logger.debug(`GETTING CONNECTION OPTIONS: ${dbConfigName}`);
+        logger.debug(`GETTING CONNECTION OPTIONS: ${inspect(dbConfigName)}`);
         const connectionConfig = await getConnectionOptions(dbConfigName);
-        logger.debug(`USING CONNECTION CONFIG: ${connectionConfig}`);
+        logger.debug(`USING CONNECTION CONFIG: ${inspect(connectionConfig)}`);
         connection = await createConnection({
             ...connectionConfig,
             logger: logQueries ? new CustomQueryLogger(logger) : undefined,
         });
         logger.debug(`GOT CONNECTION: ${connection}`);
         const pgClient = (await connection.driver.obtainMasterConnection())[0];
-        logger.debug(`OBTAINED MASTER CONNECTION: ${pgClient}`);
+        logger.debug(`OBTAINED MASTER CONNECTION: ${inspect(pgClient)}`);
         pgClient.on("error", (dbErr: any) => {
             logger.error(`DBERROR: ${inspect(dbErr)}`);
             setTimeout(async () => {
