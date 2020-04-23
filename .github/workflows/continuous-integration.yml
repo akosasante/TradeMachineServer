@@ -49,11 +49,13 @@ jobs:
         run: npm run build-ts
 
       - name: Setup db
-        run: node db_setup.js
+        run: |
+          node db_setup.js
+          npm run run-migrate-test-ci
         env:
           PGUSER: ${{ secrets.PG_USER }}
           PGPASSWORD: ${{ secrets.PG_PASSWORD }}
-          PGDATABASE: postgres
+          PGDATABASE: ${{ secrets.PG_DB }}
 
       - name: Run unit and integration tests
         run: npm run test-debug
