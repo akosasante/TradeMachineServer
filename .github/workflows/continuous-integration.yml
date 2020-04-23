@@ -48,19 +48,6 @@ jobs:
       - name: Build js files
         run: npm run build-ts
 
-      - name: Database setup
-        run: |
-          npm run gen-migrate-test -- "init"
-          npm run build
-          ls src/db/migrations -la
-          ls dist/db/migrations -la
-          npm run run-migrate-test
-        env:
-          PG_USER: ${{ job.services.postgres.env.POSTGRES_USER }}
-          PG_PASSWORD: ${{ job.services.postgres.env.POSTGRES_PASSWORD }}
-          PG_DB: ${{ job.services.postgres.env.POSTGRES_DB }}
-          BASE_DIR: ${{ env.GITHUB_WORKSPACE }}
-
 #      - name: Debugging
 #        run: |
 #          docker exec -d $(docker ps -q -f "name=postgres" -l) ls
@@ -70,7 +57,13 @@ jobs:
 #          docker exec -d $(docker ps -q -f "name=postgres" -l) sh echo '\dt' | psql -U postgres -d ${{ secrets.PG_DB }} -a
 
       - name: Run unit and integration tests
-        run: npm run test-debug
+        run: |
+          npm run gen-migrate-test -- "init"
+          npm run build
+          ls src/db/migrations -la
+          ls dist/db/migrations -la
+          npm run run-migrate-test
+          npm run test-debug
         env:
           PG_USER: ${{ job.services.postgres.env.POSTGRES_USER }}
           PG_PASSWORD: ${{ job.services.postgres.env.POSTGRES_PASSWORD }}
