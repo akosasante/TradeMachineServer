@@ -60,8 +60,8 @@ jobs:
         run: npm run test-debug
         env:
           PG_USER: ${{ secrets.PG_USER }}
-          PG_PASSWORD: ${{ job.services.postgres.env.POSTGRES_PASSWORD }}
-          PG_DB: ${{ job.services.postgres.env.POSTGRES_DB }}
+          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          PG_DB: ${{ secrets.PG_DB }}
           BASE_DIR: ${{ env.GITHUB_WORKSPACE }}
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
