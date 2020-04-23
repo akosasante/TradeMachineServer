@@ -1,7 +1,7 @@
 const { Client } = require('pg')
 const client = new Client()
 
-const dbSetup = "CREATE DATABASE test OWNER $1;"
+const dbSetup = "CREATE DATABASE trade_machine OWNER $1;"
 const uuidSetup = `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`
 const schemaSetup = "CREATE SCHEMA test AUTHORIZATION $1;"
 
