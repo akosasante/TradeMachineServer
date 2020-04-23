@@ -3,16 +3,15 @@ name: CI Workflow
 on : [push]
 
 jobs:
-  env:
-    PG_USER: ${{ job.services.postgres.env.POSTGRES_USER }}
-    PG_PASSWORD: ${{ job.services.postgres.env.POSTGRES_PASSWORD }}
-    PG_DB: ${{ job.services.postgres.env.POSTGRES_DB }}
-    BASE_DIR: ${{ env.GITHUB_WORKSPACE }}
-    ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
-    ESPN_SWID: ${{ secrets.ESPN_SWID }}
-
   test-in-container:
     runs-on: ubuntu-18.04
+    env:
+      PG_USER: ${{ job.services.postgres.env.POSTGRES_USER }}
+      PG_PASSWORD: ${{ job.services.postgres.env.POSTGRES_PASSWORD }}
+      PG_DB: ${{ job.services.postgres.env.POSTGRES_DB }}
+      BASE_DIR: ${{ env.GITHUB_WORKSPACE }}
+      ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
+      ESPN_SWID: ${{ secrets.ESPN_SWID }}
 
     strategy:
       matrix:
