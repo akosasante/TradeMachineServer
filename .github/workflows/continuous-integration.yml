@@ -47,13 +47,21 @@ jobs:
 
       - name: Build js files
         run: npm run build-ts
-      - name: Debugging
+
+      - name: Database setup
         run: |
-          docker exec -d $(docker ps -q -f "name=postgres" -l) ls
-          docker exec -d $(docker ps -q -f "name=postgres" -l) ps aux
-          docker exec -d $(docker ps -q -f "name=postgres" -l) psql -l -U postgres -a
-          docker exec -d $(docker ps -q -f "name=postgres" -l) sh echo '\dn' | psql -U postgres -d ${{ secrets.PG_DB }} -a
-          docker exec -d $(docker ps -q -f "name=postgres" -l) sh echo '\dt' | psql -U postgres -d ${{ secrets.PG_DB }} -a
+          npm run gen-migrate-test -- "init"
+          npm run build
+          ls src/db/migrations -la
+          ls dist/db/migrations -la
+          npm run run-migrate-test
+#      - name: Debugging
+#        run: |
+#          docker exec -d $(docker ps -q -f "name=postgres" -l) ls
+#          docker exec -d $(docker ps -q -f "name=postgres" -l) ps aux
+#          docker exec -d $(docker ps -q -f "name=postgres" -l) psql -l -U postgres -a
+#          docker exec -d $(docker ps -q -f "name=postgres" -l) sh echo '\dn' | psql -U postgres -d ${{ secrets.PG_DB }} -a
+#          docker exec -d $(docker ps -q -f "name=postgres" -l) sh echo '\dt' | psql -U postgres -d ${{ secrets.PG_DB }} -a
 
       - name: Run unit and integration tests
         run: npm run test-debug
