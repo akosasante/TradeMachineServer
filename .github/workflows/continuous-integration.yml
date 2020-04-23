@@ -50,12 +50,8 @@ jobs:
 
       - name: Debug connect to postgres
         run: |
-          sudo apt-get install -y postgresql-client
-          psql --version
-          netstat -vantp tcp | grep 'Proto\|5432'
-          psql -l -U postgres -a
-          echo '\dn' | psql -U postgres -d ${{ secrets.PG_DB }}
-          echo '\dt' | psql -U postgres -d ${{ secrets.PG_DB }}
+          npm run gen-migrate-test
+          npm run run-migrate-test
 
       - name: Run unit and integration tests
         run: npm run test-debug
