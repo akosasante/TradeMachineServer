@@ -52,6 +52,14 @@ jobs:
         run: |
           npm run gen-migrate-test
           npm run run-migrate-test
+        env:
+          PG_USER: ${{ secrets.PG_USER }}
+          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          PG_DB: ${{ secrets.PG_DB }}
+          BASE_DIR: ${{ github.workspace }}
+          ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
+          BASE_URL: http://localhost:8080
 
       - name: Run unit and integration tests
         run: npm run test-debug
