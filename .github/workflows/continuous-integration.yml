@@ -59,7 +59,7 @@ jobs:
       - name: Run unit and integration tests
         run: npm run test-debug
         env:
-          PG_USER: ${{ job.services.postgres.env.POSTGRES_USER }}
+          PG_USER: ${{ secrets.PG_USER }}
           PG_PASSWORD: ${{ job.services.postgres.env.POSTGRES_PASSWORD }}
           PG_DB: ${{ job.services.postgres.env.POSTGRES_DB }}
           BASE_DIR: ${{ env.GITHUB_WORKSPACE }}
