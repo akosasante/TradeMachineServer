@@ -48,8 +48,7 @@ jobs:
       - name: Build js files
         run: |
           npm run build-ts
-          ls -la
-          ls ${{ env.GITHUB_WORKSPACE }}
+          ls -la ${{ env.GITHUB_WORKSPACE }}/tests/resources/three-player-50-picks.csv
 
       - name: Run unit and integration tests
         run: npm run test
