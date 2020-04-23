@@ -13,9 +13,13 @@ client.connect().then(async () => {
     await client.query(uuidSetup);
     await client.query(schemaSetup);
   } catch (e) {
-    console.error(`Failed to setup db: ${e.toString()}`)
-    console.error(e.stack)
-    throw e
+    if (e.toString().includes("already exists")) {
+      await client.query(uuidSetup);
+      await client.query(schemaSetup);
+    } else {
+      console.error("Failed to setup db")
+      throw e
+    }
   }
 }).finally(async () => {
   await client.end();
