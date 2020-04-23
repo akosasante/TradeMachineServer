@@ -55,6 +55,12 @@ jobs:
           ls src/db/migrations -la
           ls dist/db/migrations -la
           npm run run-migrate-test
+        env:
+          PG_USER: ${{ job.services.postgres.env.POSTGRES_USER }}
+          PG_PASSWORD: ${{ job.services.postgres.env.POSTGRES_PASSWORD }}
+          PG_DB: ${{ job.services.postgres.env.POSTGRES_DB }}
+          BASE_DIR: ${{ env.GITHUB_WORKSPACE }}
+
 #      - name: Debugging
 #        run: |
 #          docker exec -d $(docker ps -q -f "name=postgres" -l) ls
