@@ -3,7 +3,7 @@ name: CI Workflow
 on : [push]
 
 jobs:
-  test-in-container:
+  test:
     runs-on: ubuntu-18.04
 
     strategy:

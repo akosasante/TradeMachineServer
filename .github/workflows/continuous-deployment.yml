@@ -1,0 +1,27 @@
+name: CD Workflow
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Pull the repo and restart the service
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          script: |
+            cd TradeMachine
+            git checkout master
+            git pull
+            npm install
+            npm run build
+            pm2 restart trademachine
+
+
