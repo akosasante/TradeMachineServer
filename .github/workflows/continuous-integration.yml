@@ -48,8 +48,8 @@ jobs:
       - name: Build js files
         run: |
           npm run build-ts
-          ls -la ${{ env.GITHUB_WORKSPACE }}/tests
-          ls -la ${{ env.GITHUB_WORKSPACE }}/tests/resources
+          ls -la ${{ env.GITHUB_WORKSPACE }}
+          ls -la "${{ env.GITHUB_WORKSPACE }}/tests/resources"
 
       - name: Run unit and integration tests
         run: npm run test
