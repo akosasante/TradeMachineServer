@@ -14,6 +14,7 @@ export interface SendInBlueSendResponse {
         from: string;
         to: string[];
     };
+    messageId?: string;
     message: string;
     originalMessage: {
         to: string;

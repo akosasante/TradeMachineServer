@@ -14,18 +14,21 @@ describe("Emailer Class", () => {
         it("sendTestEmail", async () => {
             const res = await Emailer.sendTestEmail(testUser);
             delete res.message; // value varies due to include a dynamic messageId so keep it out of the snapshot
+            delete res.messageId;
             expect(res).toMatchSnapshot();
         });
 
         it("sendRegistrationEmail", async () => {
             const res = await Emailer.sendRegistrationEmail(testUser);
             delete res.message; // value varies due to include a dynamic messageId so keep it out of the snapshot
+            delete res.messageId;
             expect(res).toMatchSnapshot();
         });
 
         it("sendPasswordResetEmail", async () => {
             const res = await Emailer.sendPasswordResetEmail(testUser);
             delete res.message; // value varies due to include a dynamic messageId so keep it out of the snapshot
+            delete res.messageId;
             expect(res).toMatchSnapshot();
         });
     });
