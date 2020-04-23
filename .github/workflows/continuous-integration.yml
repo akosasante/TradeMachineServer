@@ -46,7 +46,10 @@ jobs:
         run: npm ci
 
       - name: Build js files
-        run: npm run build-ts
+        run: |
+          npm run build-ts
+          ls -la
+          ls ${{ env.GITHUB_WORKSPACE }}
 
       - name: Run unit and integration tests
         run: npm run test
