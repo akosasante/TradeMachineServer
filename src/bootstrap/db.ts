@@ -7,6 +7,7 @@ export default async function initializeDb(logQueries: boolean = false) {
     let connection: Connection|undefined;
     try {
         const dbConfigName = process.env.NODE_ENV;
+        logger.debug(`secret: ${process.env.PG_USER}`);
         logger.debug(`GETTING CONNECTION OPTIONS: ${inspect(dbConfigName)}`);
         const connectionConfig = await getConnectionOptions(dbConfigName);
         logger.debug(`USING CONNECTION CONFIG: ${inspect(connectionConfig)}`);
