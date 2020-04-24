@@ -21,8 +21,8 @@ jobs:
             cd /opt/Apps/TradeMachine
             git checkout master
             git pull
-            npm install
-            npm run build
-            pm2 restart trademachine
+            /home/dev_deployer/.asdf/shims/npm install
+            /home/dev_deployer/.asdf/shims/npm run build
+            /home/dev_deployer/.asdf/shims/pm2 restart trademachine
 
 
