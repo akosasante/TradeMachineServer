@@ -1,11 +1,9 @@
-import Bull, { Job } from "bull";
-import { inspect } from "util";
-import { EmailJob, processEmailJob } from "./processors";
-import logger from "../bootstrap/logger";
+import Bull from "bull";
+import { processEmailJob } from "./processors";
 
 const emailQueue = new Bull("email_queue");
 
-emailQueue.process(async (emailJob: Job<EmailJob>) => {
-    logger.debug(`processing job: ${inspect(emailJob)}`);
-    return await processEmailJob(emailJob);
-});
+emailQueue.process("reset_pass", processEmailJob);
+emailQueue.process("registration_email", processEmailJob);
+emailQueue.process("test_email", processEmailJob);
+emailQueue.process("handle_webhook", processEmailJob);
