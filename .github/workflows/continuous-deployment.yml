@@ -23,6 +23,6 @@ jobs:
             git pull
             /home/dev_deployer/.asdf/shims/npm install
             /home/dev_deployer/.asdf/shims/npm run build
-            /home/dev_deployer/.asdf/shims/pm2 restart trademachine
+            /home/dev_deployer/.asdf/shims/npx pm2 restart trademachine
 
 
