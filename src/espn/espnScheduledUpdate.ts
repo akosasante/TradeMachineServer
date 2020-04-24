@@ -16,7 +16,7 @@ export function setupScheduledEspnUpdates() {
     espnQueue.add({}, {repeat: { cron }});
 }
 
-interface EspnUpdateDaos {
+export interface EspnUpdateDaos {
     playerDao?: PlayerDAO;
     teamDao?: TeamDAO;
     espnApi?: EspnAPI;
@@ -46,14 +46,16 @@ async function updateMajorLeaguePlayers(year: number, playerDao: PlayerDAO, espn
 
 async function updateTeamInfo(year: number, teamDao: TeamDAO, espnApi: EspnAPI) {
     logger.debug("reloading ESPN league team objects");
-    const allEspnTeams = await espnApi.getAllLeagueTeams(new Date().getFullYear());
+    const allEspnTeams = await espnApi.getAllLeagueTeams(year);
     logger.debug("got all espn fantasy teams");
     const allLeagueTeams = await teamDao.getAllTeams();
     for (const team of allLeagueTeams) {
         const associatedEspnTeam = allEspnTeams.find((foundEspnTeam: EspnFantasyTeam) =>
             foundEspnTeam.id === team.espnId
         );
-        const espnTeam = associatedEspnTeam || team.espnTeam; // only update espn team if we found a match
-        await teamDao.updateTeam(team.id!, {espnTeam});
+
+        if (associatedEspnTeam) {
+            await teamDao.updateTeam(team.id!, {espnTeam: associatedEspnTeam});
+        }
     }
 }

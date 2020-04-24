@@ -1,7 +1,6 @@
-import axios, { AxiosPromise, AxiosInstance } from "axios";
+import axios, { AxiosPromise } from "axios";
 import "jest";
 import "jest-extended";
-import { mocked } from "ts-jest/utils";
 import EspnAPI from "../../../src/espn/espnApi";
 import allDataJson from "../../resources/espn-general-resp.json";
 import membersJson from "../../resources/espn-members-resp.json";
@@ -9,7 +8,9 @@ import teamsJson from "../../resources/espn-teams-resp.json";
 import playersJson from "../../resources/espn-all-players.json";
 import scheduleJson from "../../resources/espn-schedule.json";
 import rosterJson from "../../resources/espn-roster.json";
-let mockedGet = jest.fn();
+
+const mockedGet = jest.fn();
+
 jest.mock("axios", () => ({
     create: jest.fn(() => ({
         get: mockedGet,
