@@ -1,7 +1,7 @@
 import { Job } from "bull";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
-import { Emailer, SendInBlueSendResponse } from "../email/mailer";
+import { Emailer, SendInBlueSendResponse } from "./mailer";
 import User from "../models/user";
 import { EmailStatusEvent } from "../api/routes/EmailController";
 import EmailDAO from "../DAO/EmailDAO";

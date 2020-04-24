@@ -1,6 +1,6 @@
 import "jest";
 import "jest-extended";
-import { EmailPublisher } from "../../../src/queues/publishers";
+import { EmailPublisher } from "../../../src/email/publishers";
 import Bull from "bull";
 import { UserFactory } from "../../factories/UserFactory";
 
