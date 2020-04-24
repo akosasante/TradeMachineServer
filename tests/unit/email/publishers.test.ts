@@ -32,24 +32,24 @@ describe("EmailPublisher", () => {
     it("queueResetEmail/1 - should add email job with correct parameters to the emailQueue", async () => {
         await publisher.queueResetEmail(user);
         expect(mockQueue.add).toBeCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith({user: userJson, mailType: "reset_pass"}, exponentialBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("reset_pass", {user: userJson, mailType: "reset_pass"}, exponentialBackoff);
     });
 
     it("queueRegistrationEmail/1 - should add email job with correct parameters to the emailQueue", async () => {
         await publisher.queueRegistrationEmail(user);
         expect(mockQueue.add).toBeCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith({user: userJson, mailType: "registration_email"}, exponentialBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("registration_email", {user: userJson, mailType: "registration_email"}, exponentialBackoff);
     });
 
     it("queueTestEmail/1 - should add email job with correct parameters to the emailQueue", async () => {
         await publisher.queueTestEmail(user);
         expect(mockQueue.add).toBeCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith({user: userJson, mailType: "test_email"}, exponentialBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("test_email", {user: userJson, mailType: "test_email"}, exponentialBackoff);
     });
 
     it("queueWebhookResponse/1 - should add job to handle the webhook response", async () => {
         await publisher.queueWebhookResponse(event);
         expect(mockQueue.add).toBeCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith({event: eventJson, mailType: "handle_webhook"}, linearBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("handle_webhook", {event: eventJson, mailType: "handle_webhook"}, linearBackoff);
     });
 });
