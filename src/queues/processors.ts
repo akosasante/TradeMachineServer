@@ -36,8 +36,9 @@ export async function processEmailJob(emailJob: Job<EmailJob>) {
 
 export async function handleWebhookResponse(event: EmailStatusEvent, dao?: EmailDAO): Promise<void> {
     const emailDAO = dao || new EmailDAO();
-    const email = emailDAO.getEmailByMessageId(event["message-id"]);
+    const email = await emailDAO.getEmailByMessageId(event["message-id"]);
     if (email) {
-        logger.debug("FOUND AN EMAIL; UPDATE ITS STATUS AND STUFF (LATER)"); // TODO
+        email.status = event.event;
+        await emailDAO.updateEmail(email);
     }
 }
