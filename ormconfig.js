@@ -39,5 +39,6 @@ module.exports = [
     {
         ...commonOpts,
         name: "production",
+        schema: "public"
     },
 ];
