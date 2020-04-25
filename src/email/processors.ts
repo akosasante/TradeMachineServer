@@ -1,7 +1,7 @@
 import { Job } from "bull";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
-import { Emailer, SendInBlueSendResponse } from "../email/mailer";
+import { Emailer, SendInBlueSendResponse } from "./mailer";
 import User from "../models/user";
 import { EmailStatusEvent } from "../api/routes/EmailController";
 import EmailDAO from "../DAO/EmailDAO";
@@ -36,8 +36,9 @@ export async function processEmailJob(emailJob: Job<EmailJob>) {
 
 export async function handleWebhookResponse(event: EmailStatusEvent, dao?: EmailDAO): Promise<void> {
     const emailDAO = dao || new EmailDAO();
-    const email = emailDAO.getEmailByMessageId(event["message-id"]);
+    const email = await emailDAO.getEmailByMessageId(event["message-id"]);
     if (email) {
-        logger.debug("FOUND AN EMAIL; UPDATE ITS STATUS AND STUFF (LATER)"); // TODO
+        email.status = event.event;
+        await emailDAO.updateEmail(email);
     }
 }

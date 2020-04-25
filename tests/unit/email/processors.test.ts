@@ -1,7 +1,7 @@
 import "jest";
 import "jest-extended";
 import { UserFactory } from "../../factories/UserFactory";
-import { processEmailJob, handleWebhookResponse } from "../../../src/queues/processors";
+import { processEmailJob, handleWebhookResponse } from "../../../src/email/processors";
 import { Emailer } from "../../../src/email/mailer";
 import logger from "../../../src/bootstrap/logger";
 import EmailDAO from "../../../src/DAO/EmailDAO";

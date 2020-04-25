@@ -5,7 +5,7 @@ import { NotFoundError } from "routing-controllers";
 import EmailController from "../../../../src/api/routes/EmailController";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import { UserFactory } from "../../../factories/UserFactory";
-import { EmailPublisher } from "../../../../src/queues/publishers";
+import { EmailPublisher } from "../../../../src/email/publishers";
 import logger from "../../../../src/bootstrap/logger";
 
 describe("EmailController", () => {

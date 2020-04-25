@@ -11,4 +11,8 @@ export default class EmailDAO {
     public async getEmailByMessageId(id: string): Promise<Email | undefined> {
         return await this.emailDb.findOne(id);
     }
+
+    public async updateEmail(email: Email): Promise<Email> {
+        return await this.emailDb.save(email);
+    }
 }
