@@ -3,7 +3,7 @@ import { Body, BodyParam, Controller, NotFoundError, Post, Res } from "routing-c
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
-import { EmailPublisher } from "../../queues/publishers";
+import { EmailPublisher } from "../../email/publishers";
 
 export interface EmailStatusEvent {
     id: number;

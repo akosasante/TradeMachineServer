@@ -27,17 +27,7 @@ export class EmailPublisher {
         };
         const opts: JobOptions = { attempts: 3, backoff: {type: "exponential", delay: 30000}};
         logger.debug(`queuing email: ${inspect(job)}`);
-        return await EmailPublisher.emailQueue.add(job, opts);
-    }
-
-    private static async queueWebhookEmail(event: EmailStatusEvent, jobName: EmailJobName) {
-        const job: EmailJob = {
-            event: JSON.stringify(event),
-            mailType: jobName,
-        };
-        const opts: JobOptions = { attempts: 3, backoff: 10000 };
-        logger.debug(`queuing webhook response: ${inspect(event)}`);
-        return await EmailPublisher.emailQueue.add(job, opts);
+        return await EmailPublisher.emailQueue.add(jobName, job, opts);
     }
 
     public async queueResetEmail(user: User): Promise<Job<EmailJob>> {
@@ -52,7 +42,14 @@ export class EmailPublisher {
         return await EmailPublisher.queueEmail(user, "test_email");
     }
 
-    public async queueWebhookResponse(event: EmailStatusEvent): Promise<Job<EmailJob>> {
-        return await EmailPublisher.queueWebhookEmail(event, "handle_webhook");
+    public async queueWebhookResponse(event: EmailStatusEvent) {
+        const jobName = "handle_webhook";
+        const job: EmailJob = {
+            event: JSON.stringify(event),
+            mailType: jobName,
+        };
+        const opts: JobOptions = { attempts: 3, backoff: 10000 };
+        logger.debug(`queuing webhook response: ${inspect(event)}`);
+        return await EmailPublisher.emailQueue.add(jobName, job, opts);
     }
 }
