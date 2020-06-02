@@ -7,7 +7,7 @@ import logger from "../../src/bootstrap/logger";
 import { WriteMode } from "../../src/csv/CsvUtils";
 import TeamDAO from "../../src/DAO/TeamDAO";
 import UserDAO from "../../src/DAO/UserDAO";
-import Player, { LeagueLevel } from "../../src/models/player";
+import Player, { PlayerLeagueType } from "../../src/models/player";
 import Team from "../../src/models/team";
 import User, { Role } from "../../src/models/user";
 import { PlayerFactory } from "../factories/PlayerFactory";
@@ -81,7 +81,7 @@ afterAll(async () => {
 
 describe("Player API endpoints", () => {
     const testPlayer = PlayerFactory.getPlayer();
-    const testPlayer2 = PlayerFactory.getPlayer("Aaron Judge", LeagueLevel.MAJOR, {mlbTeam: "Boston Red Sox"});
+    const testPlayer2 = PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"});
 
     describe("POST /players (create new player)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);

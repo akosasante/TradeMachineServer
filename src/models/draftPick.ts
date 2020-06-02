@@ -1,8 +1,14 @@
-import { AfterInsert, AfterLoad, AfterUpdate, Column, Entity, Index, ManyToOne } from "typeorm";
+import { AfterLoad, Column, Entity, Index, ManyToOne } from "typeorm";
 import { BaseModel } from "./base";
-import { LeagueLevel } from "./player";
 import Team from "./team";
-import logger from "../bootstrap/logger";
+
+export enum LeagueLevel {
+    MAJORS = "Majors",
+    HIGH = "High Minors",
+    LOW = "Low Minors",
+}
+
+export const MinorLeagueLevels = [LeagueLevel.HIGH, LeagueLevel.LOW];
 
 @Entity()
 @Index(["type", "season", "round", "originalOwner"], {unique: true})

@@ -1,15 +1,12 @@
 import csv from "fast-csv";
-import * as fs from "fs";
+import { createReadStream } from "fs";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import PlayerDAO from "../DAO/PlayerDAO";
-import Player, { LeagueLevel } from "../models/player";
+import Player, { PlayerLeagueType } from "../models/player";
 import Team from "../models/team";
 import { validateRow, WriteMode } from "./CsvUtils";
-import { config as dotenvConfig } from "dotenv";
-import { resolve as resolvePath } from "path";
 
-dotenvConfig({path: resolvePath(__dirname, "../../.env")});
 
 interface PlayerCSVRow {
     Owner: string;
@@ -47,7 +44,7 @@ async function readAndParseMinorLeagueCsv(path: string, teams: Team[]): Promise<
     const parsedPlayers: Partial<Player>[] = [];
     return new Promise((resolve, reject) => {
         logger.debug("----------- starting to read csv ----------");
-        fs.createReadStream(path)
+        createReadStream(path)
             .pipe(csv.parse({headers: true}))
             .on("data", (row: PlayerCSVRow) => {
                 const parsedPlayer = parseMinorLeaguePlayer(row, teams);
@@ -66,10 +63,6 @@ async function readAndParseMinorLeagueCsv(path: string, teams: Team[]): Promise<
 
 function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Player>|undefined {
     const MINOR_LEAGUE_PLAYER_PROPS = ["Owner", "Player", "Position", "Team", "Level"];
-    const LEVEL_TO_LEAGUE: {[key: string]: LeagueLevel} = {
-        High: LeagueLevel.HIGH,
-        Low: LeagueLevel.LOW,
-    };
 
     const validRow = validateRow(row, MINOR_LEAGUE_PLAYER_PROPS);
     if (!validRow) {
@@ -89,8 +82,8 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
     return {
         name: row.Player,
         mlbTeam: row.Team,
-        league: LEVEL_TO_LEAGUE[row.Level],
+        league: PlayerLeagueType.MINOR,
         leagueTeam,
-        meta: {position: row.Position},
+        meta: {position: row.Position, minorLeagueLevel: row.Level},
     };
 }

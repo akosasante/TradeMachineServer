@@ -3,8 +3,7 @@ import * as fs from "fs";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import DraftPickDAO from "../DAO/DraftPickDAO";
-import DraftPick from "../models/draftPick";
-import { LeagueLevel } from "../models/player";
+import DraftPick, { LeagueLevel } from "../models/draftPick";
 import Team from "../models/team";
 import { validateRow, WriteMode } from "./CsvUtils";
 
@@ -69,7 +68,7 @@ function parseDraftPick(row: DraftPickCSVRow, teams: Team[], index: number): Par
     const KEYWORD_TO_LEVEL: {[key: string]: LeagueLevel} = {
         High: LeagueLevel.HIGH,
         Low: LeagueLevel.LOW,
-        Major: LeagueLevel.MAJOR,
+        Major: LeagueLevel.MAJORS,
     };
 
     const validRow = validateRow(row, DRAFT_PICK_PROPS);

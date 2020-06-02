@@ -5,6 +5,7 @@ import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import { cleanupQuery, UUIDPattern } from "../helpers/ApiHelpers";
+import { URLSearchParams } from "url";
 
 @JsonController("/users")
 export default class UserController {

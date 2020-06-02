@@ -2,7 +2,7 @@ import "jest";
 import "jest-extended";
 import { Repository } from "typeorm";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
-import Player, { LeagueLevel } from "../../../src/models/player";
+import Player, { PlayerLeagueType } from "../../../src/models/player";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import { MockObj, mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 import logger from "../../../src/bootstrap/logger";
@@ -57,7 +57,7 @@ describe("PlayerDAO", () => {
     });
 
     it("findPlayers - should call the db find once with query", async () => {
-        const query = {league: LeagueLevel.HIGH};
+        const query = {league: PlayerLeagueType.MINOR};
         mockPlayerDb.find.mockResolvedValueOnce([testPlayer1]);
         const res = await playerDAO.findPlayers(query);
 
@@ -105,39 +105,25 @@ describe("PlayerDAO", () => {
         expect(res).toEqual(deleteResult);
     });
 
-    it("deleteAllPlayers - should delete the players in chunks", async () => {
-        mockPlayerDb.find.mockResolvedValueOnce([]);
-        await playerDAO.deleteAllPlayers();
-        expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.remove).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.remove).toHaveBeenCalledWith([], {chunk: 10});
-    });
+    describe("deleteAllPlayers - should delete all queried players in chunks",  () => {
+        it("should delete queried players", async () => {
+            const query = {league: PlayerLeagueType.MINOR};
+            mockPlayerDb.find.mockResolvedValueOnce([testPlayer1]);
+            await playerDAO.deleteAllPlayers(query);
 
-    describe("deleteAllPlayers - should pass in the appropriate query parameter if required",  () => {
-        const findMinorLeaguesCondition = {league:
-                {_multipleParameters: true, _type: "in", _useParameter: true, _value: ["High Minors", "Low Minors"]}};
-        mockPlayerDb.find.mockReturnValue([]);
+            expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
+            expect(mockPlayerDb.find).toHaveBeenCalledWith({where: query});
+            expect(mockPlayerDb.remove).toHaveBeenCalledTimes(1);
+            expect(mockPlayerDb.remove).toHaveBeenCalledWith([testPlayer1], {chunk: 10});
+        });
+        it("should delete all players if no query passed in", async () => {
+            mockPlayerDb.find.mockResolvedValueOnce([testPlayer1]);
+            await playerDAO.deleteAllPlayers();
 
-        it("should handle the case 'major' correctly", async () => {
-            await playerDAO.deleteAllPlayers("major");
             expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
-            expect(mockPlayerDb.find).toHaveBeenCalledWith({league: LeagueLevel.MAJOR});
+            expect(mockPlayerDb.find).toHaveBeenCalledWith({order: {id: "ASC"}});
             expect(mockPlayerDb.remove).toHaveBeenCalledTimes(1);
-            expect(mockPlayerDb.remove).toHaveBeenCalledWith([], {chunk: 10});
-        });
-        it("should handle the case 'minor' correctly", async () => {
-            await playerDAO.deleteAllPlayers("minor");
-            expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
-            expect(mockPlayerDb.find).toHaveBeenCalledWith(findMinorLeaguesCondition);
-            expect(mockPlayerDb.remove).toHaveBeenCalledTimes(1);
-            expect(mockPlayerDb.remove).toHaveBeenCalledWith([], {chunk: 10});
-        });
-        it("should handle the case with specific LeagueLevels correctly", async () => {
-            await playerDAO.deleteAllPlayers(LeagueLevel.LOW);
-            expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
-            expect(mockPlayerDb.find).toHaveBeenCalledWith({league: LeagueLevel.LOW});
-            expect(mockPlayerDb.remove).toHaveBeenCalledTimes(1);
-            expect(mockPlayerDb.remove).toHaveBeenCalledWith([], {chunk: 10});
+            expect(mockPlayerDb.remove).toHaveBeenCalledWith([testPlayer1], {chunk: 10});
         });
     });
 

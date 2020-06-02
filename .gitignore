@@ -27,6 +27,7 @@ node_modules
 # Optional npm cache directory
 .npm
 
-# Ignore migrations for now
+# Ignore migrations for now. We use diff schemas in development vs public so it's easier to just generate migration in prod as needed for now.
 src/db/migrations-old
+src/db/migrations
 tests/coverage

@@ -4,10 +4,9 @@ import Team from "./team";
 import { EspnMajorLeaguePlayer } from "../espn/espnApi";
 import { espnMajorLeagueTeamFromId, EspnPositionMapping } from "../espn/espnConstants";
 
-export enum LeagueLevel {
+export enum PlayerLeagueType {
     MAJOR = "Majors",
-    HIGH = "High Minors",
-    LOW = "Low Minors",
+    MINOR = "Minors",
 }
 
 @Entity()
@@ -16,8 +15,8 @@ export default class Player extends BaseModel {
     @Index()
     public name!: string;
 
-    @Column({type: "enum", enum: LeagueLevel, nullable: true})
-    public league?: LeagueLevel;
+    @Column({type: "enum", enum: PlayerLeagueType, nullable: true})
+    public league?: PlayerLeagueType;
 
     @Column({nullable: true})
     public mlbTeam?: string;
@@ -36,7 +35,7 @@ export default class Player extends BaseModel {
     public static convertEspnMajorLeaguerToPlayer(espnPlayer: EspnMajorLeaguePlayer): Player {
         const position = espnPlayer.player?.defaultPositionId ? EspnPositionMapping[espnPlayer.player?.defaultPositionId] : undefined;
         return new Player({
-            league: LeagueLevel.MAJOR,
+            league: PlayerLeagueType.MAJOR,
             name: espnPlayer.player?.fullName || `ESPN Player #${espnPlayer.id}`,
             mlbTeam: espnMajorLeagueTeamFromId(espnPlayer.player?.proTeamId)?.abbrev.toUpperCase(),
             meta: { espnPlayer, position },

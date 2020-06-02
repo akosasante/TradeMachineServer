@@ -1,8 +1,6 @@
 import "jest";
 import "jest-extended";
-import { clone } from "lodash";
-import Player, { LeagueLevel } from "../../../src/models/player";
-import Team from "../../../src/models/team";
+import Player from "../../../src/models/player";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import logger from "../../../src/bootstrap/logger";
 

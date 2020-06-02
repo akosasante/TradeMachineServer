@@ -8,7 +8,7 @@ import { WriteMode } from "../../csv/CsvUtils";
 import { processMinorLeagueCsv } from "../../csv/PlayerParser";
 import PlayerDAO from "../../DAO/PlayerDAO";
 import TeamDAO from "../../DAO/TeamDAO";
-import Player, { LeagueLevel } from "../../models/player";
+import Player, { PlayerLeagueType } from "../../models/player";
 import { Role } from "../../models/user";
 import { cleanupQuery, fileUploadOptions as uploadOpts, UUIDPattern } from "../helpers/ApiHelpers";
 
@@ -87,10 +87,9 @@ export default class PlayerController {
 }
 
 function getAllPlayersQuery(includes: string[]) {
-    const keywordToLevelMap: {[key: string]: LeagueLevel} = {
-        high: LeagueLevel.HIGH,
-        low: LeagueLevel.LOW,
-        majors: LeagueLevel.MAJOR,
+    const keywordToLevelMap: {[key: string]: PlayerLeagueType} = {
+        minors: PlayerLeagueType.MINOR,
+        majors: PlayerLeagueType.MAJOR,
     };
     return includes.map(include => ({ league: keywordToLevelMap[include] }));
 }

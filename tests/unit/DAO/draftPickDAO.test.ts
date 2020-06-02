@@ -2,10 +2,9 @@ import "jest";
 import "jest-extended";
 import { Repository } from "typeorm";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
-import { LeagueLevel } from "../../../src/models/player";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
-import DraftPick from "../../../src/models/draftPick";
+import DraftPick, { LeagueLevel } from "../../../src/models/draftPick";
 import logger from "../../../src/bootstrap/logger";
 
 
@@ -107,8 +106,8 @@ describe("DraftPickDAO", () => {
         expect(res).toEqual(deleteResult);
     });
 
-    describe("deleteAllPicks - delete all the picks in chunks", () => {
-        it("should delete all draft picks if no query passed in", async () => {
+    describe("deleteAllPicks - delete all the queried picks in chunks", () => {
+        it("should delete queried draft picks if query passed in", async () => {
             const query = {type: LeagueLevel.LOW};
             mockPickDb.find.mockResolvedValueOnce([testPick1]);
             await draftPickDAO.deleteAllPicks(query);
@@ -118,7 +117,7 @@ describe("DraftPickDAO", () => {
             expect(mockPickDb.remove).toHaveBeenCalledTimes(1);
             expect(mockPickDb.remove).toHaveBeenCalledWith([testPick1], {chunk: 10});
         });
-        it("should delete queried draft picks if no query passed in", async () => {
+        it("should delete all draft picks if no query passed in", async () => {
             mockPickDb.find.mockResolvedValueOnce([testPick1]);
             await draftPickDAO.deleteAllPicks();
 

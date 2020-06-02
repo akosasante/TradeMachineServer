@@ -1,5 +1,5 @@
-import { DeleteResult, FindConditions, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
-import Player, { LeagueLevel } from "../models/player";
+import {DeleteResult, FindConditions, FindManyOptions, getConnection, In, InsertResult, Repository} from "typeorm";
+import Player, {PlayerLeagueType} from "../models/player";
 
 export default class PlayerDAO {
     private playerDb: Repository<Player>;
@@ -44,15 +44,13 @@ export default class PlayerDAO {
             .execute();
     }
 
-    public async deleteAllPlayers(type?: "major"|"minor"|LeagueLevel): Promise<void> {
-        if (!type) {
-            const allPlayers = await this.getAllPlayers(); // Workaround because delete no longer takes options
-            await this.playerDb.remove(allPlayers, {chunk: 10});
+    public async deleteAllPlayers(query?: Partial<Player>): Promise<void> {
+        let allPlayers: Player[];
+        if (query) {
+            allPlayers = await this.findPlayers(query);
         } else {
-            const query: FindConditions<Player> = type === "major" ? {league: LeagueLevel.MAJOR} : type === "minor" ?
-                {league: In([LeagueLevel.HIGH, LeagueLevel.LOW])} : {league: type};
-            const foundPlayers = await this.playerDb.find(query);
-            await this.playerDb.remove(foundPlayers, {chunk: 10});
+            allPlayers = await this.getAllPlayers();
         }
+        await this.playerDb.remove(allPlayers, {chunk: 10});
     }
 }

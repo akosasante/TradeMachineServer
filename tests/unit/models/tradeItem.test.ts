@@ -1,13 +1,10 @@
 import "jest";
 import "jest-extended";
-import { clone } from "lodash";
-import { LeagueLevel } from "../../../src/models/player";
-import Trade from "../../../src/models/trade";
 import TradeItem, { TradeItemType } from "../../../src/models/tradeItem";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import { TeamFactory } from "../../factories/TeamFactory";
-import {TradeFactory} from "../../factories/TradeFactory";
+import { TradeFactory } from "../../factories/TradeFactory";
 
 describe("Trade Item Class", () => {
     const player = PlayerFactory.getPlayer();
