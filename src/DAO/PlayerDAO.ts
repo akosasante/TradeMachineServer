@@ -31,14 +31,18 @@ export default class PlayerDAO {
     }
 
     public async batchUpsertPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
-        const result: InsertResult = await this.playerDb
-            .createQueryBuilder()
-            .insert()
-            .values(playerObjs)
-            .onConflict('("name", "playerDataId") DO UPDATE SET "meta" = EXCLUDED.meta')
-            .execute();
+        if (playerObjs.length) {
+            const result: InsertResult = await this.playerDb
+                .createQueryBuilder()
+                .insert()
+                .values(playerObjs)
+                .onConflict('("name", "playerDataId") DO UPDATE SET "meta" = player.meta || EXCLUDED.meta')
+                .execute();
 
-        return await this.playerDb.find({id: In(result.identifiers.filter(res => !!res).map(({id}) => id))});
+            return await this.playerDb.find({id: In(result.identifiers.filter(res => !!res).map(({id}) => id))});
+        } else {
+            return [];
+        }
     }
 
     public async updatePlayer(id: string, playerObj: Partial<Player>): Promise<Player> {

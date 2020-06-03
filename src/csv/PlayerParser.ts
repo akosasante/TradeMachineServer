@@ -1,5 +1,4 @@
-import csv from "fast-csv";
-import { createReadStream } from "fs";
+import { parseFile } from "@fast-csv/parse";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import PlayerDAO from "../DAO/PlayerDAO";
@@ -26,10 +25,11 @@ export async function processMinorLeagueCsv(csvFilePath: string, teams: Team[], 
     const parsedPlayers = await readAndParseMinorLeagueCsv(csvFilePath, teams);
     logger.debug("DONE PARSING");
 
-    logger.debug("DEDUPING");
-    const dedupedPlayers = uniqWith(parsedPlayers.filter(player => !!player), (player1, player2) => (player1.name === player2.name) && (player1.playerDataId === player2.playerDataId));
+    logger.debug("DEDUPING, ADDING PLAYER IDS, FILTERING OUT SAME NAME NULL PID ENTRIES");
+    const playersToInsert = await formatForDb(parsedPlayers, dao);
 
-    return dao.batchUpsertPlayers(dedupedPlayers);
+    logger.debug(`INSERTING INTO DB ${playersToInsert.length} items`);
+    return dao.batchUpsertPlayers(playersToInsert);
 }
 
 async function maybeDropMinorPlayers(dao: PlayerDAO, mode?: WriteMode) {
@@ -48,8 +48,7 @@ async function readAndParseMinorLeagueCsv(path: string, teams: Team[]): Promise<
     const parsedPlayers: Partial<Player>[] = [];
     return new Promise((resolve, reject) => {
         logger.debug("----------- starting to read csv ----------");
-        createReadStream(path)
-            .pipe(csv.parse({headers: true}))
+        parseFile(path, {headers: true})
             .on("data", (row: PlayerCSVRow) => {
                 const parsedPlayer = parseMinorLeaguePlayer(row, teams);
                 if (parsedPlayer) {
@@ -58,8 +57,8 @@ async function readAndParseMinorLeagueCsv(path: string, teams: Team[]): Promise<
                 // logger.debug(`parsed: ${parsedPlayers.length}`);
             })
             .on("error", (e: any) => reject(e))
-            .on("end", () => {
-                logger.debug("~~~~~~ reached end of stream ~~~~~~~~~");
+            .on("end", (rowCount: number) => {
+                logger.debug(`~~~~~~ reached end of stream. parsed ${rowCount} rows ~~~~~~~~~`);
                 resolve(parsedPlayers);
             });
     });
@@ -88,6 +87,23 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
         mlbTeam: row.Team,
         league: PlayerLeagueType.MINOR,
         leagueTeam,
-        meta: { minorLeaguePlayer: { position: row.Position, minorLeagueLevel: row.Level } },
+        meta: { minorLeaguePlayerFromSheet: { position: row.Position, leagueLevel: row.Level } },
     };
+}
+
+async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO): Promise<Partial<Player>[]> {
+    const existingPlayers = await playerDAO.getAllPlayers();
+
+    return uniqWith(csvPlayers.filter(player => !!player), (player1, player2) =>
+        (player1.name === player2.name) &&
+        (player1.playerDataId === player2.playerDataId) &&
+        (player1.mlbTeam === player2.mlbTeam)
+    ).map(player => {
+        const existingPlayerSameName = existingPlayers.find(existing => existing.name === player.name);
+        player.playerDataId = existingPlayerSameName?.playerDataId;
+        return player;
+    }).filter(player => {
+        const existingPlayerSameName = existingPlayers.find(existing => existing.name === player.name);
+        return !(existingPlayerSameName && !existingPlayerSameName.playerDataId);
+    });
 }
