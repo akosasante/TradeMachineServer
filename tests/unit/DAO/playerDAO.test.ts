@@ -135,4 +135,23 @@ describe("PlayerDAO", () => {
         expect(mockPlayerDb.save).toHaveBeenCalledWith([testPlayer1], {chunk: 10});
         expect(res).toEqual([testPlayer1]);
     });
+
+    it("batchUpsertPlayers - should call the db upsert chain", async () => {
+        const mockOnConflict = jest.fn().mockReturnValue({execute: mockExecute});
+        const mockValues = jest.fn().mockReturnValue({onConflict: mockOnConflict});
+        const mockInsertChain = jest.fn().mockReturnValue({values: mockValues});
+        mockPlayerDb.createQueryBuilder.mockReturnValueOnce({insert: mockInsertChain});
+        mockExecute.mockResolvedValueOnce({identifiers: [{id: testPlayer1.id!}], generatedMaps: [], raw: []});
+        mockPlayerDb.find.mockResolvedValueOnce([testPlayer1]);
+
+        const res = await playerDAO.batchUpsertPlayers([testPlayer1]);
+
+        expect(mockPlayerDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockPlayerDb.createQueryBuilder).toHaveBeenCalledWith();
+        expect(mockValues).toHaveBeenCalledTimes(1);
+        expect(mockValues).toHaveBeenCalledWith([testPlayer1]);
+        expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
+        expect(mockPlayerDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testPlayer1.id]}});
+        expect(res).toEqual([testPlayer1]);
+    });
 });

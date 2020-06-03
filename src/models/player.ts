@@ -1,4 +1,4 @@
-import { Column, Entity, Index, ManyToOne } from "typeorm";
+import { Column, Entity, Index, ManyToOne, Unique } from "typeorm";
 import { BaseModel } from "./base";
 import Team from "./team";
 import { EspnMajorLeaguePlayer } from "../espn/espnApi";
@@ -10,6 +10,7 @@ export enum PlayerLeagueType {
 }
 
 @Entity()
+@Unique(["name", "playerDataId"])
 export default class Player extends BaseModel {
     @Column()
     @Index()
@@ -20,6 +21,9 @@ export default class Player extends BaseModel {
 
     @Column({nullable: true})
     public mlbTeam?: string;
+
+    @Column({nullable: true})
+    public playerDataId?: number;
 
     @Column({nullable: true, type: "jsonb"})
     public meta?: any;
@@ -38,6 +42,7 @@ export default class Player extends BaseModel {
             league: PlayerLeagueType.MAJOR,
             name: espnPlayer.player?.fullName || `ESPN Player #${espnPlayer.id}`,
             mlbTeam: espnMajorLeagueTeamFromId(espnPlayer.player?.proTeamId)?.abbrev.toUpperCase(),
+            playerDataId: espnPlayer.id,
             meta: { espnPlayer, position },
         });
     }

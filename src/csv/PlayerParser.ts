@@ -6,6 +6,7 @@ import PlayerDAO from "../DAO/PlayerDAO";
 import Player, { PlayerLeagueType } from "../models/player";
 import Team from "../models/team";
 import { validateRow, WriteMode } from "./CsvUtils";
+import { uniqWith } from "lodash";
 
 
 interface PlayerCSVRow {
@@ -25,7 +26,10 @@ export async function processMinorLeagueCsv(csvFilePath: string, teams: Team[], 
     const parsedPlayers = await readAndParseMinorLeagueCsv(csvFilePath, teams);
     logger.debug("DONE PARSING");
 
-    return dao.batchCreatePlayers(parsedPlayers.filter(player => !!player));
+    logger.debug("DEDUPING");
+    const dedupedPlayers = uniqWith(parsedPlayers.filter(player => !!player), (player1, player2) => (player1.name === player2.name) && (player1.playerDataId === player2.playerDataId));
+
+    return dao.batchUpsertPlayers(dedupedPlayers);
 }
 
 async function maybeDropMinorPlayers(dao: PlayerDAO, mode?: WriteMode) {
@@ -84,6 +88,6 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
         mlbTeam: row.Team,
         league: PlayerLeagueType.MINOR,
         leagueTeam,
-        meta: {position: row.Position, minorLeagueLevel: row.Level},
+        meta: { minorLeaguePlayer: { position: row.Position, minorLeagueLevel: row.Level } },
     };
 }

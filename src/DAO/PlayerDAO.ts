@@ -1,5 +1,5 @@
-import {DeleteResult, FindConditions, FindManyOptions, getConnection, In, InsertResult, Repository} from "typeorm";
-import Player, {PlayerLeagueType} from "../models/player";
+import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
+import Player from "../models/player";
 
 export default class PlayerDAO {
     private playerDb: Repository<Player>;
@@ -28,6 +28,17 @@ export default class PlayerDAO {
 
     public async batchCreatePlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
         return await this.playerDb.save(playerObjs, {chunk: 10});
+    }
+
+    public async batchUpsertPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
+        const result: InsertResult = await this.playerDb
+            .createQueryBuilder()
+            .insert()
+            .values(playerObjs)
+            .onConflict('("name", "playerDataId") DO UPDATE SET "meta" = EXCLUDED.meta')
+            .execute();
+
+        return await this.playerDb.find({id: In(result.identifiers.filter(res => !!res).map(({id}) => id))});
     }
 
     public async updatePlayer(id: string, playerObj: Partial<Player>): Promise<Player> {

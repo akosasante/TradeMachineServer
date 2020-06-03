@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from "axios";
 import initializeDb from "../../bootstrap/db";
 import PlayerDAO from "../../DAO/PlayerDAO";
 import Player, { PlayerLeagueType } from "../../models/player";
+import { uniqWith } from "lodash";
 
 // tslint:disable:no-console
 
@@ -36,13 +37,15 @@ function parsePlayerJson(allPlayers: any[]): Player[] {
         return new Player({
             name: player.split(",").reverse().join(" "),
             league: PlayerLeagueType.MINOR,
-            meta: rest,
+            playerDataId: rest.player_id,
+            meta: { minorLeaguePlayer: rest },
         });
     });
 }
 
 async function insertParsedPlayers(dao: PlayerDAO, parsedPlayers: Player[]) {
-    return dao.batchCreatePlayers(parsedPlayers);
+    const dedupedPlayers = uniqWith(parsedPlayers, (player1, player2) => (player1.name === player2.name) && (player1.playerDataId === player2.playerDataId));
+    return dao.batchUpsertPlayers(dedupedPlayers);
 }
 
 run()
