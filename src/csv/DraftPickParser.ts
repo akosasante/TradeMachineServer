@@ -6,6 +6,7 @@ import DraftPickDAO from "../DAO/DraftPickDAO";
 import DraftPick, { LeagueLevel } from "../models/draftPick";
 import Team from "../models/team";
 import { validateRow, WriteMode } from "./CsvUtils";
+import { uniqWith } from "lodash";
 
 interface DraftPickCSVRow {
     Owner: string;
@@ -26,7 +27,14 @@ export async function processDraftPickCsv(csvFilePath: string, teams: Team[], da
     const parsedPicks = await readAndParsePickCsv(csvFilePath, teams);
     logger.debug("DONE PARSING");
 
-    return dao.batchCreatePicks(parsedPicks.filter(pick => !!pick));
+    logger.debug("deduping list of picks");
+    const dedupedPicks = uniqWith(parsedPicks, (pick1, pick2) =>
+        (pick1.type === pick2.type) &&
+        (pick1.season === pick2.season) &&
+        (pick1.round === pick2.round) &&
+        (pick1.originalOwner === pick2.originalOwner)
+    );
+    return dao.batchUpsertPicks(dedupedPicks.filter(pick => !!pick));
 }
 
 async function maybeDeleteExistingPicks(dao: DraftPickDAO, mode?: WriteMode) {

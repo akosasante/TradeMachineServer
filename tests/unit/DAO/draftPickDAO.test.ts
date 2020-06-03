@@ -136,4 +136,23 @@ describe("DraftPickDAO", () => {
         expect(mockPickDb.save).toHaveBeenCalledWith([testPick1], {chunk: 10});
         expect(res).toEqual([testPick1]);
     });
+
+    it("batchUpsertPicks - should call the db upsert chain", async () => {
+        const mockOnConflict = jest.fn().mockReturnValue({execute: mockExecute});
+        const mockValues = jest.fn().mockReturnValue({onConflict: mockOnConflict});
+        const mockInsertChain = jest.fn().mockReturnValue({values: mockValues});
+        mockPickDb.createQueryBuilder.mockReturnValueOnce({insert: mockInsertChain});
+        mockExecute.mockResolvedValueOnce({identifiers: [{id: testPick1.id!}], generatedMaps: [], raw: []});
+        mockPickDb.find.mockResolvedValueOnce([testPick1]);
+
+        const res = await draftPickDAO.batchUpsertPicks([testPick1]);
+
+        expect(mockPickDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.createQueryBuilder).toHaveBeenCalledWith();
+        expect(mockValues).toHaveBeenCalledTimes(1);
+        expect(mockValues).toHaveBeenCalledWith([testPick1]);
+        expect(mockPickDb.find).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testPick1.id]}});
+        expect(res).toEqual([testPick1]);
+    });
 });
