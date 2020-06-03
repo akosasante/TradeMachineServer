@@ -1,5 +1,4 @@
-import csv from "fast-csv";
-import * as fs from "fs";
+import { parseFile } from "@fast-csv/parse";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import DraftPickDAO from "../DAO/DraftPickDAO";
@@ -23,7 +22,7 @@ export async function processDraftPickCsv(csvFilePath: string, teams: Team[], da
 
     await maybeDeleteExistingPicks(dao, mode);
 
-    logger.debug("WAITING ON STREAM");
+    logger.debug(`WAITING ON STREAM ${csvFilePath}`);
     const parsedPicks = await readAndParsePickCsv(csvFilePath, teams);
     logger.debug("DONE PARSING");
 
@@ -53,8 +52,7 @@ async function readAndParsePickCsv(path: string, teams: Team[]): Promise<Partial
     const parsedPicks: Partial<DraftPick>[] = [];
     return new Promise((resolve, reject) => {
         logger.debug("----------- starting to read csv ----------");
-        fs.createReadStream(path)
-            .pipe(csv.parse({headers: true}))
+        parseFile(path, {headers: true})
             .on("data", (row: DraftPickCSVRow) => {
                 const parsedPick = parseDraftPick(row, teams, i);
                 if (parsedPick) {
@@ -63,8 +61,8 @@ async function readAndParsePickCsv(path: string, teams: Team[]): Promise<Partial
                 // logger.debug(`parsed: ${parsedPicks.length}, promised: ${promisedPicks.length}`);
             })
             .on("error", (e: any) => reject(e))
-            .on("end", () => {
-                logger.debug("~~~~~~ reached end of stream ~~~~~~~~~");
+            .on("end", (rowCount: number) => {
+                logger.debug(`~~~~~~ reached end of stream. parsed ${rowCount} rows ~~~~~~~~~`);
                 resolve(parsedPicks);
             });
     });

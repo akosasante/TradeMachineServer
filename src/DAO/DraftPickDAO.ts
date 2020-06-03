@@ -31,14 +31,18 @@ export default class DraftPickDAO {
     }
 
     public async batchUpsertPicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
-        const result: InsertResult = await this.draftPickDb
-            .createQueryBuilder()
-            .insert()
-            .values(pickObjs)
-            .onConflict('("type", "season", "round", "originalOwner") DO UPDATE SET "meta" = EXCLUDED.meta')
-            .execute();
+        if (pickObjs.length) {
+            const result: InsertResult = await this.draftPickDb
+                .createQueryBuilder()
+                .insert()
+                .values(pickObjs)
+                .onConflict('("type", "season", "round", "originalOwnerId") DO UPDATE SET "currentOwnerId" = EXCLUDED."currentOwnerId", "pickNumber" = EXCLUDED."pickNumber"')
+                .execute();
 
-        return await this.draftPickDb.find({id: In(result.identifiers.filter(res => !!res).map(({id}) => id))});
+            return await this.draftPickDb.find({id: In(result.identifiers.filter(res => !!res).map(({id}) => id))});
+        } else {
+            return [];
+        }
     }
 
     public async updatePick(id: string, pickObj: Partial<DraftPick>): Promise<DraftPick> {
