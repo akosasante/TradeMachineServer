@@ -6,8 +6,8 @@ import path from "path";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import User from "../models/user";
-import { config as dotenvConfig } from "dotenv";
-dotenvConfig({path: path.resolve(__dirname, "../../.env")});
+// import { config as dotenvConfig } from "dotenv";
+// dotenvConfig({path: path.resolve(__dirname, "../../.env")});
 
 export interface SendInBlueSendResponse {
     envelope: {
