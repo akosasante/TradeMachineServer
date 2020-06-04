@@ -33,6 +33,7 @@ export async function processDraftPickCsv(csvFilePath: string, teams: Team[], da
         (pick1.round === pick2.round) &&
         (pick1.originalOwner === pick2.originalOwner)
     );
+    logger.debug(`deduped from ${parsedPicks.length} to ${dedupedPicks.length}`);
     return dao.batchUpsertPicks(dedupedPicks.filter(pick => !!pick));
 }
 
