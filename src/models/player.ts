@@ -40,7 +40,7 @@ export default class Player extends BaseModel {
         const position = espnPlayer.player?.defaultPositionId ? EspnPositionMapping[espnPlayer.player?.defaultPositionId] : undefined;
         return new Player({
             league: PlayerLeagueType.MAJOR,
-            name: espnPlayer.player?.fullName || `ESPN Player #${espnPlayer.id}`,
+            name: espnPlayer.player?.fullName || `ESPN Player #${espnPlayer.id || ""}`,
             mlbTeam: espnMajorLeagueTeamFromId(espnPlayer.player?.proTeamId)?.abbrev.toUpperCase(),
             playerDataId: espnPlayer.id,
             meta: { espnPlayer, position },
