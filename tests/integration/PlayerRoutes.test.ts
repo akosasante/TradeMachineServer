@@ -147,10 +147,10 @@ describe("Player API endpoints", () => {
             const {body: majorPlayers} = await getAllRequest("?include[]=majors");
 
             expect(minorPlayers).toBeArrayOfSize(1);
-            expect(majorPlayers).toBeArrayOfSize(2);
+            expect(majorPlayers).toBeArrayOfSize(1);
 
             expect(majorPlayers.find((player: Player) => player.id === testPlayer2.id)).toBeDefined();
-            expect(majorPlayers.find((player: Player) => player.id === testPlayer.id)).toBeDefined();
+            expect(majorPlayers.find((player: Player) => player.id === testPlayer.id)).toBeUndefined();
 
             expect(minorPlayers.find((player: Player) => player.id === testPlayer.id)).toBeDefined();
             expect(minorPlayers.find((player: Player) => player.id === testPlayer2.id)).toBeUndefined();

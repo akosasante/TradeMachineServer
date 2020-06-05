@@ -26,7 +26,7 @@ export async function processMinorLeagueCsv(csvFilePath: string, teams: Team[], 
     logger.debug("DONE PARSING");
 
     logger.debug("DEDUPING, ADDING PLAYER IDS, FILTERING OUT SAME NAME NULL PID ENTRIES");
-    const playersToInsert = await formatForDb(parsedPlayers, dao);
+    const playersToInsert = await formatForDb(parsedPlayers, dao, mode === "append");
 
     logger.debug(`INSERTING INTO DB ${playersToInsert.length} items`);
     return dao.batchUpsertPlayers(playersToInsert);
@@ -36,7 +36,7 @@ async function maybeDropMinorPlayers(dao: PlayerDAO, mode?: WriteMode) {
     if (mode === "overwrite") {
         try {
             logger.debug("overwrite, so deleting all minor league players");
-            await dao.deleteAllPlayers("minor");
+            await dao.deleteAllPlayers({league: PlayerLeagueType.MINOR});
         } catch (e) {
             logger.error(inspect(e));
             throw e;
@@ -90,10 +90,12 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
     };
 }
 
-async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO): Promise<Partial<Player>[]> {
+async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO, append: boolean = false): Promise<Partial<Player>[]> {
+    logger.debug(`CSV PLAYERS: ${csvPlayers.length}`);
     const existingPlayers = await playerDAO.getAllPlayers();
+    logger.debug(`EXISTING PLAYERS: ${existingPlayers.length}`);
 
-    return uniqWith(csvPlayers.filter(player => !!player), (player1, player2) =>
+    const uniqueWithIds = uniqWith(csvPlayers.filter(player => !!player), (player1, player2) =>
         (player1.name === player2.name) &&
         (player1.playerDataId === player2.playerDataId) &&
         (player1.mlbTeam === player2.mlbTeam)
@@ -101,7 +103,9 @@ async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO):
         const existingPlayerSameName = existingPlayers.find(existing => existing.name === player.name);
         player.playerDataId = existingPlayerSameName?.playerDataId;
         return player;
-    }).filter(player => {
+    });
+
+    return append ? uniqueWithIds : uniqueWithIds.filter(player => {
         const existingPlayerSameName = existingPlayers.find(existing => existing.name === player.name);
         return !(existingPlayerSameName && !existingPlayerSameName.playerDataId);
     });
