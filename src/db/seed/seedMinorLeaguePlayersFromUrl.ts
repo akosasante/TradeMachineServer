@@ -10,6 +10,10 @@ import logger from "../../bootstrap/logger";
 async function run() {
     await initializeDb(false);
     const playerDAO = new PlayerDAO();
+    return await doSeed(playerDAO);
+}
+
+export async function doSeed(playerDAO: PlayerDAO) {
     const axiosInst = axios.create({
         timeout: 20000,
     });
