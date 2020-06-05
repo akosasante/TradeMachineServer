@@ -84,10 +84,9 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
 
     return {
         name: row.Player,
-        mlbTeam: row.Team,
         league: PlayerLeagueType.MINOR,
         leagueTeam,
-        meta: { minorLeaguePlayerFromSheet: { position: row.Position, leagueLevel: row.Level } },
+        meta: { minorLeaguePlayerFromSheet: { position: row.Position, leagueLevel: row.Level, mlbTeam: row.Team } },
     };
 }
 

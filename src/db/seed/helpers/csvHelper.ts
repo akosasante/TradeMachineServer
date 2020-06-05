@@ -9,9 +9,9 @@ async function ensureDirectoryExists(tempPath: string) {
 
 
 export async function getCsvFromUrl(url: string, tempPath: string, csvName: string) {
-    const fullPath = tempPath + csvName
+    const fullPath = tempPath + csvName;
     console.log(`Downloading sheet from url: ${url}`);
-    const { data } = await axios.get(url);
+    const { data } = await axios.get(`${url}`, {headers: {"Cache-Control": "max-age=60"}});
     console.log(`Ensuring ${tempPath} exists and saving ${csvName}`);
     await ensureDirectoryExists(tempPath)
         .then(() => promises.writeFile(fullPath, data));
