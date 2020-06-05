@@ -1,7 +1,7 @@
 import Bull from "bull";
 import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";
-import EspnAPI, { EspnFantasyTeam } from "./espnApi";
+import EspnAPI, { EspnFantasyTeam } from "../espn/espnApi";
 import Player from "../models/player";
 import logger from "../bootstrap/logger";
 import { uniqWith } from "lodash";

@@ -1,7 +1,7 @@
 import "jest";
 import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
-import { EspnUpdateDaos, updateEspnData } from "../../../src/espn/espnScheduledUpdate";
+import { EspnUpdateDaos, updateEspnData } from "../../../src/jobs/espnScheduledUpdate";
 import { TeamFactory } from "../../factories/TeamFactory";
 
 const mockPlayerDao = {
