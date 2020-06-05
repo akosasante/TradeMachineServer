@@ -8,6 +8,10 @@ import teamsJson from "../../resources/espn-teams-resp.json";
 import playersJson from "../../resources/espn-all-players.json";
 import scheduleJson from "../../resources/espn-schedule.json";
 import rosterJson from "../../resources/espn-roster.json";
+import { TeamFactory } from "../../factories/TeamFactory";
+import PlayerDAO from "../../../src/DAO/PlayerDAO";
+import TeamDAO from "../../../src/DAO/TeamDAO";
+import Team from "../../../src/models/team";
 
 const mockedGet = jest.fn();
 
@@ -16,6 +20,16 @@ jest.mock("axios", () => ({
         get: mockedGet,
     })),
 }) as unknown as AxiosPromise);
+
+const team = TeamFactory.getTeam();
+const mockTeamDao = {
+    getAllTeams: jest.fn(() => [team]),
+    updateTeam: jest.fn(),
+};
+
+const mockPlayerDao = {
+    batchUpsertPlayers: jest.fn(),
+};
 
 describe("EspnApi Class", () => {
     const testLeagueId = 545;
@@ -55,5 +69,23 @@ describe("EspnApi Class", () => {
         mockedGet.mockResolvedValueOnce({data: rosterJson} as unknown as AxiosPromise);
         const res = await Api.getRosterForTeamAndDay(2019, 2, 0);
         expect(res).toEqual(rosterJson.teams[0].roster);
+    });
+
+    it("updateMajorLeaguePlayers/2 - should prepare and perform a batch upsert of major league players", async () => {
+        mockedGet.mockResolvedValueOnce({data: playersJson} as unknown as AxiosPromise);
+        await Api.updateMajorLeaguePlayers(2019, mockPlayerDao as unknown as PlayerDAO);
+
+        expect(mockPlayerDao.batchUpsertPlayers).toBeCalledTimes(1);
+        expect(mockPlayerDao.batchUpsertPlayers).toBeCalledWith(expect.toBeArrayOfSize(4));
+    });
+
+    it("updateEspnTeamInfo/2 - should prepare and perform many updates of espn league teams", async () => {
+        mockedGet.mockResolvedValueOnce({data: teamsJson} as unknown as AxiosPromise);
+        const fakeTeamsWithIds = Array.from(Array(10).keys()).map(espnId => new Team({name: "Fake Team", espnId: espnId + 1}));
+        mockTeamDao.getAllTeams.mockReturnValueOnce(fakeTeamsWithIds);
+        await Api.updateEspnTeamInfo(2019, mockTeamDao as unknown as TeamDAO);
+
+        expect(mockTeamDao.getAllTeams).toBeCalledTimes(1);
+        expect(mockTeamDao.updateTeam).toBeCalledTimes(10);
     });
 });
