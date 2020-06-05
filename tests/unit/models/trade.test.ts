@@ -1,13 +1,14 @@
 import "jest";
 import "jest-extended";
-import { clone } from "lodash";
-import { LeagueLevel } from "../../../src/models/player";
+import {clone} from "lodash";
+import {PlayerLeagueType} from "../../../src/models/player";
 import Trade from "../../../src/models/trade";
-import { DraftPickFactory } from "../../factories/DraftPickFactory";
-import { PlayerFactory } from "../../factories/PlayerFactory";
-import { TeamFactory } from "../../factories/TeamFactory";
-import { TradeFactory } from "../../factories/TradeFactory";
+import {DraftPickFactory} from "../../factories/DraftPickFactory";
+import {PlayerFactory} from "../../factories/PlayerFactory";
+import {TeamFactory} from "../../factories/TeamFactory";
+import {TradeFactory} from "../../factories/TradeFactory";
 import logger from "../../../src/bootstrap/logger";
+import {LeagueLevel} from "../../../src/models/draftPick";
 
 describe("Trade Class", () => {
     beforeAll(() => {
@@ -20,18 +21,26 @@ describe("Trade Class", () => {
     const [creatorTeam, recipientTeam] = TeamFactory.getTeams(2);
 
     const [minorPlayer, majorPlayer] = [
-        PlayerFactory.getPlayer(undefined, LeagueLevel.HIGH),
-        PlayerFactory.getPlayer("Pete Buttjudge", LeagueLevel.MAJOR),
+        PlayerFactory.getPlayer(),
+        PlayerFactory.getPlayer("Pete Buttjudge", PlayerLeagueType.MAJOR),
         ];
     const [tradedMajorPlayer, tradedMinorPlayer] = [
         TradeFactory.getTradedMajorPlayer(majorPlayer, creatorTeam, recipientTeam),
         TradeFactory.getTradedMinorPlayer(minorPlayer, creatorTeam, recipientTeam),
         ];
 
-    const pick = DraftPickFactory.getPick();
-    const tradedPick = TradeFactory.getTradedPick(pick, recipientTeam, creatorTeam);
+    const [lowPick, highPick, majorPick] = [
+        DraftPickFactory.getPick(),
+        DraftPickFactory.getPick(1, 13, LeagueLevel.HIGH),
+        DraftPickFactory.getPick(1, 14, LeagueLevel.MAJORS),
+    ];
+    const [tradedLowPick, tradedHighPick, tradedMajorPick] = [
+        TradeFactory.getTradedPick(lowPick, recipientTeam, creatorTeam),
+        TradeFactory.getTradedPick(highPick, recipientTeam, creatorTeam),
+        TradeFactory.getTradedPick(majorPick, creatorTeam, recipientTeam),
+    ];
 
-    const tradeItems = [tradedMajorPlayer, tradedMinorPlayer, tradedPick];
+    const tradeItems = [tradedMajorPlayer, tradedMinorPlayer, tradedLowPick, tradedHighPick, tradedMajorPick];
     const testTrade = TradeFactory.getTrade(tradeItems, []);
 
     const [sender, recipient] = [
@@ -64,8 +73,20 @@ describe("Trade Class", () => {
         it("minorPlayers/0 - should return only minor league players", () => {
             expect(testTrade.minorPlayers).toEqual([minorPlayer]);
         });
-        it("picks/0 - should return picks", () => {
-            expect(testTrade.picks).toEqual([pick]);
+        it("picks/0 - should return all picks", () => {
+            expect(testTrade.picks).toEqual([lowPick, highPick, majorPick]);
+        });
+        it("majorPicks/0 - should return array of only major league picks", () => {
+            expect(testTrade.majorPicks).toEqual([majorPick]);
+        });
+        it("minorPicks/0 - should return array of all minor league picks", () => {
+            expect(testTrade.minorPicks).toEqual([lowPick, highPick]);
+        });
+        it("highMinorPicks/0 - should return array of only high minor league picks", () => {
+            expect(testTrade.highMinorPicks).toEqual([highPick]);
+        });
+        it("lowMinorPicks/0 - should return array of only low minor league picks", () => {
+            expect(testTrade.lowMinorPicks).toEqual([lowPick]);
         });
     });
 

@@ -1,7 +1,7 @@
 import { Entity, OneToMany } from "typeorm";
 import { BaseModel } from "./base";
-import DraftPick from "./draftPick";
-import Player, { LeagueLevel } from "./player";
+import DraftPick, { LeagueLevel, MinorLeagueLevels } from "./draftPick";
+import Player, { PlayerLeagueType } from "./player";
 import Team from "./team";
 import TradeItem from "./tradeItem";
 import TradeParticipant, { TradeParticipantType } from "./tradeParticipant";
@@ -31,16 +31,32 @@ export default class Trade extends BaseModel {
     }
 
     public get majorPlayers(): Player[] {
-        return this.players.filter(player => player.league === LeagueLevel.MAJOR);
+        return this.players.filter(player => player.league === PlayerLeagueType.MAJOR);
     }
 
     public get minorPlayers(): Player[] {
-        return this.players.filter(player => (player.league === LeagueLevel.LOW) || (player.league === LeagueLevel.HIGH));
+        return this.players.filter(player => player.league === PlayerLeagueType.MINOR);
     }
 
     public get picks(): DraftPick[] {
         return TradeItem.filterPicks(this.tradeItems)
             .map(item => item.entity as DraftPick);
+    }
+
+    public get majorPicks(): DraftPick[] {
+        return this.picks.filter(pick => pick.type === LeagueLevel.MAJORS);
+    }
+
+    public get minorPicks(): DraftPick[] {
+        return this.picks.filter(pick => MinorLeagueLevels.includes(pick.type));
+    }
+
+    public get highMinorPicks(): DraftPick[] {
+        return this.picks.filter(pick => pick.type === LeagueLevel.HIGH);
+    }
+
+    public get lowMinorPicks(): DraftPick[] {
+        return this.picks.filter(pick => pick.type === LeagueLevel.LOW);
     }
 
     @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade,

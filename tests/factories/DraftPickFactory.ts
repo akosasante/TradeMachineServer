@@ -1,5 +1,4 @@
-import DraftPick from "../../src/models/draftPick";
-import { LeagueLevel } from "../../src/models/player";
+import DraftPick, { LeagueLevel } from "../../src/models/draftPick";
 import { v4 as uuid } from "uuid";
 
 export class DraftPickFactory {

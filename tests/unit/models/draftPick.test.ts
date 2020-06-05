@@ -3,7 +3,6 @@ import "jest-extended";
 import DraftPick from "../../../src/models/draftPick";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import logger from "../../../src/bootstrap/logger";
-import { inspect } from "util";
 
 describe("DraftPick Class", () => {
     beforeAll(() => {
@@ -31,7 +30,6 @@ describe("DraftPick Class", () => {
 
     describe("instance methods", () => {
         it("toString/0 - should return a string with the UUID", () => {
-            logger.debug(inspect(draftPick.toString()));
             expect(draftPick.toString()).toMatch(draftPick.id!);
             expect(draftPick.toString()).toMatch("DraftPick#");
         });

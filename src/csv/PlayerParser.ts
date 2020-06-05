@@ -1,15 +1,12 @@
-import csv from "fast-csv";
-import * as fs from "fs";
+import { parseFile } from "@fast-csv/parse";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import PlayerDAO from "../DAO/PlayerDAO";
-import Player, { LeagueLevel } from "../models/player";
+import Player, { PlayerLeagueType } from "../models/player";
 import Team from "../models/team";
 import { validateRow, WriteMode } from "./CsvUtils";
-import { config as dotenvConfig } from "dotenv";
-import { resolve as resolvePath } from "path";
+import { uniqWith } from "lodash";
 
-dotenvConfig({path: resolvePath(__dirname, "../../.env")});
 
 interface PlayerCSVRow {
     Owner: string;
@@ -28,14 +25,18 @@ export async function processMinorLeagueCsv(csvFilePath: string, teams: Team[], 
     const parsedPlayers = await readAndParseMinorLeagueCsv(csvFilePath, teams);
     logger.debug("DONE PARSING");
 
-    return dao.batchCreatePlayers(parsedPlayers.filter(player => !!player));
+    logger.debug("DEDUPING, ADDING PLAYER IDS, FILTERING OUT SAME NAME NULL PID ENTRIES");
+    const playersToInsert = await formatForDb(parsedPlayers, dao, mode === "append");
+
+    logger.debug(`INSERTING INTO DB ${playersToInsert.length} items`);
+    return dao.batchUpsertPlayers(playersToInsert);
 }
 
 async function maybeDropMinorPlayers(dao: PlayerDAO, mode?: WriteMode) {
     if (mode === "overwrite") {
         try {
             logger.debug("overwrite, so deleting all minor league players");
-            await dao.deleteAllPlayers("minor");
+            await dao.deleteAllPlayers({league: PlayerLeagueType.MINOR});
         } catch (e) {
             logger.error(inspect(e));
             throw e;
@@ -47,8 +48,7 @@ async function readAndParseMinorLeagueCsv(path: string, teams: Team[]): Promise<
     const parsedPlayers: Partial<Player>[] = [];
     return new Promise((resolve, reject) => {
         logger.debug("----------- starting to read csv ----------");
-        fs.createReadStream(path)
-            .pipe(csv.parse({headers: true}))
+        parseFile(path, {headers: true})
             .on("data", (row: PlayerCSVRow) => {
                 const parsedPlayer = parseMinorLeaguePlayer(row, teams);
                 if (parsedPlayer) {
@@ -57,8 +57,8 @@ async function readAndParseMinorLeagueCsv(path: string, teams: Team[]): Promise<
                 // logger.debug(`parsed: ${parsedPlayers.length}`);
             })
             .on("error", (e: any) => reject(e))
-            .on("end", () => {
-                logger.debug("~~~~~~ reached end of stream ~~~~~~~~~");
+            .on("end", (rowCount: number) => {
+                logger.debug(`~~~~~~ reached end of stream. parsed ${rowCount} rows ~~~~~~~~~`);
                 resolve(parsedPlayers);
             });
     });
@@ -66,10 +66,6 @@ async function readAndParseMinorLeagueCsv(path: string, teams: Team[]): Promise<
 
 function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Player>|undefined {
     const MINOR_LEAGUE_PLAYER_PROPS = ["Owner", "Player", "Position", "Team", "Level"];
-    const LEVEL_TO_LEAGUE: {[key: string]: LeagueLevel} = {
-        High: LeagueLevel.HIGH,
-        Low: LeagueLevel.LOW,
-    };
 
     const validRow = validateRow(row, MINOR_LEAGUE_PLAYER_PROPS);
     if (!validRow) {
@@ -88,9 +84,29 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
 
     return {
         name: row.Player,
-        mlbTeam: row.Team,
-        league: LEVEL_TO_LEAGUE[row.Level],
+        league: PlayerLeagueType.MINOR,
         leagueTeam,
-        meta: {position: row.Position},
+        meta: { minorLeaguePlayerFromSheet: { position: row.Position, leagueLevel: row.Level, mlbTeam: row.Team } },
     };
+}
+
+async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO, append: boolean = false): Promise<Partial<Player>[]> {
+    logger.debug(`CSV PLAYERS: ${csvPlayers.length}`);
+    const existingPlayers = await playerDAO.getAllPlayers();
+    logger.debug(`EXISTING PLAYERS: ${existingPlayers.length}`);
+
+    const uniqueWithIds = uniqWith(csvPlayers.filter(player => !!player), (player1, player2) =>
+        (player1.name === player2.name) &&
+        (player1.playerDataId === player2.playerDataId) &&
+        (player1.mlbTeam === player2.mlbTeam)
+    ).map(player => {
+        const existingPlayerSameName = existingPlayers.find(existing => existing.name === player.name);
+        player.playerDataId = existingPlayerSameName?.playerDataId;
+        return player;
+    });
+
+    return append ? uniqueWithIds : uniqueWithIds.filter(player => {
+        const existingPlayerSameName = existingPlayers.find(existing => existing.name === player.name);
+        return !(existingPlayerSameName && !existingPlayerSameName.playerDataId);
+    });
 }

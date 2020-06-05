@@ -6,7 +6,7 @@ import PlayerController from "../../../../src/api/routes/PlayerController";
 import { processMinorLeagueCsv } from "../../../../src/csv/PlayerParser";
 import PlayerDAO from "../../../../src/DAO/PlayerDAO";
 import TeamDAO from "../../../../src/DAO/TeamDAO";
-import Player, { LeagueLevel } from "../../../../src/models/player";
+import Player, { PlayerLeagueType } from "../../../../src/models/player";
 import { PlayerFactory } from "../../../factories/PlayerFactory";
 import { TeamFactory } from "../../../factories/TeamFactory";
 import logger from "../../../../src/bootstrap/logger";
@@ -58,13 +58,13 @@ describe("PlayerController", () => {
         });
         it("should return an array of players if a param is passed and call the find method", async () => {
             mockPlayerDAO.findPlayers.mockResolvedValueOnce([testPlayer]);
-            const res = await playerController.getAllPlayers(["high", "majors"]);
+            const res = await playerController.getAllPlayers(["minors", "majors"]);
 
             expect(mockPlayerDAO.getAllPlayers).toHaveBeenCalledTimes(0);
             expect(mockPlayerDAO.findPlayers).toHaveBeenCalledTimes(1);
             expect(mockPlayerDAO.findPlayers).toHaveBeenCalledWith([
-                {league: LeagueLevel.HIGH},
-                {league: LeagueLevel.MAJOR}]);
+                {league: PlayerLeagueType.MINOR},
+                {league: PlayerLeagueType.MAJOR}]);
             expect(res).toEqual([testPlayer]);
         });
         it("should bubble up any errors from the DAO", async () => {
