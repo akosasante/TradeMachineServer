@@ -6,8 +6,7 @@ import DraftPickController from "../../../../src/api/routes/DraftPickController"
 import { processDraftPickCsv } from "../../../../src/csv/DraftPickParser";
 import DraftPickDAO from "../../../../src/DAO/DraftPickDAO";
 import TeamDAO from "../../../../src/DAO/TeamDAO";
-import DraftPick from "../../../../src/models/draftPick";
-import { LeagueLevel } from "../../../../src/models/player";
+import DraftPick, { LeagueLevel } from "../../../../src/models/draftPick";
 import { DraftPickFactory } from "../../../factories/DraftPickFactory";
 import logger from "../../../../src/bootstrap/logger";
 import { v4 as uuid } from "uuid";
@@ -65,7 +64,7 @@ describe("DraftPickController", () => {
             expect(mockDraftPickDAO.findPicks).toHaveBeenCalledTimes(1);
             expect(mockDraftPickDAO.findPicks).toHaveBeenCalledWith([
                 {type: LeagueLevel.HIGH},
-                {type: LeagueLevel.MAJOR}]);
+                {type: LeagueLevel.MAJORS}]);
             expect(res).toEqual([testDraftPick]);
         });
         it("should bubble up any errors from the DAO", async () => {

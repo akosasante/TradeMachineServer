@@ -5,6 +5,7 @@ import initializeDb from "../../bootstrap/db";
 import PlayerDAO from "../../DAO/PlayerDAO";
 import Player from "../../models/player";
 import EspnAPI from "../../espn/espnApi";
+import { uniqWith } from "lodash";
 
 // tslint:disable:no-console
 
@@ -22,8 +23,10 @@ async function run() {
     const allEspnPlayers = await espnApi.getAllMajorLeaguePlayers(year);
     console.log("mapping to player objects");
     const allPlayers = allEspnPlayers.map(player => Player.convertEspnMajorLeaguerToPlayer(player));
+    console.log("deduping all players");
+    const dedupedPlayers = uniqWith(allPlayers, (player1, player2) => (player1.name === player2.name) && (player1.playerDataId === player2.playerDataId));
     console.log("batch save to db");
-    return await playerDAO.batchCreatePlayers(allPlayers);
+    return await playerDAO.batchUpsertPlayers(dedupedPlayers);
 }
 
 run()

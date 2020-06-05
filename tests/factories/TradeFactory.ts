@@ -1,4 +1,4 @@
-import { LeagueLevel } from "../../src/models/player";
+import { PlayerLeagueType } from "../../src/models/player";
 import Trade from "../../src/models/trade";
 import TradeItem, { TradeItemType } from "../../src/models/tradeItem";
 import TradeParticipant, { TradeParticipantType } from "../../src/models/tradeParticipant";
@@ -6,7 +6,6 @@ import { DraftPickFactory } from "./DraftPickFactory";
 import { PlayerFactory } from "./PlayerFactory";
 import { TeamFactory } from "./TeamFactory";
 import { v4 as uuid } from "uuid";
-import logger from "../../src/bootstrap/logger";
 import Team from "../../src/models/team";
 
 export class TradeFactory {
@@ -44,7 +43,7 @@ export class TradeFactory {
         return new TradeItem({id: uuid(), tradeItemType: TradeItemType.PLAYER, tradeItemId: player.id!, entity: player, sender, recipient, ...rest});
     }
 
-    public static getTradedMajorPlayer(player = PlayerFactory.getPlayer(undefined, LeagueLevel.MAJOR),
+    public static getTradedMajorPlayer(player = PlayerFactory.getPlayer(undefined, PlayerLeagueType.MAJOR),
                                        sender = TeamFactory.getTeam(),
                                        recipient = TeamFactory.getTeam(),
                                        rest = {}) {

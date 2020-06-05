@@ -1,11 +1,17 @@
-import { AfterInsert, AfterLoad, AfterUpdate, Column, Entity, Index, ManyToOne } from "typeorm";
+import { AfterLoad, Column, Entity, ManyToOne, Unique } from "typeorm";
 import { BaseModel } from "./base";
-import { LeagueLevel } from "./player";
 import Team from "./team";
-import logger from "../bootstrap/logger";
+
+export enum LeagueLevel {
+    MAJORS = "Majors",
+    HIGH = "High Minors",
+    LOW = "Low Minors",
+}
+
+export const MinorLeagueLevels = [LeagueLevel.HIGH, LeagueLevel.LOW];
 
 @Entity()
-@Index(["type", "season", "round", "originalOwner"], {unique: true})
+@Unique(["type", "season", "round", "originalOwner"])
 export default class DraftPick extends BaseModel {
     @Column({type: "numeric"})
     public round!: number;

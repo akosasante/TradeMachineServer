@@ -1,10 +1,9 @@
 import "jest";
 import "jest-extended";
-import { clone } from "lodash";
-import Player, { LeagueLevel } from "../../../src/models/player";
-import Team from "../../../src/models/team";
+import Player, {PlayerLeagueType} from "../../../src/models/player";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import logger from "../../../src/bootstrap/logger";
+import { clone } from "lodash";
 
 describe("Player Class", () => {
     beforeAll(() => {
@@ -41,4 +40,53 @@ describe("Player Class", () => {
         });
     });
 
+    describe("static methods", () => {
+        const espnPlayer = {
+            "id": 2966,
+            "lineupLocked": true,
+            "onTeamId": 0,
+            "player": {
+                "active": true,
+                "defaultPositionId": 1,
+                "droppable": true,
+                "eligibleSlots": [13, 14, 16, 17],
+                "firstName": "Luis",
+                "fullName": "Luis Ortiz",
+                "gamesPlayedByPosition": {"1": 1},
+                "id": 2966,
+                "injured": false,
+                "injuryStatus": "ACTIVE",
+                "jersey": "59",
+                "lastName": "Ortiz",
+                "proTeamId": 1,
+            },
+            "ratings": {
+                "0": {"positionalRanking": 326, "totalRanking": 1353, "totalRating": -3.5},
+                "1": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0},
+                "2": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0},
+                "3": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0}
+            },
+            "rosterLocked": true,
+            "status": "FREEAGENT",
+            "tradeLocked": false,
+        };
+        const convertedPlayer = Player.convertEspnMajorLeaguerToPlayer(espnPlayer);
+        const noNamePlayer = clone(espnPlayer);
+        delete noNamePlayer.player.fullName;
+
+        it("convertEspnMajorLeaguerToPlayer/1 - should always assume major league players", () => {
+            expect(convertedPlayer.league).toEqual(PlayerLeagueType.MAJOR);
+        });
+        it("convertEspnMajorLeaguerToPlayer/1 - should use the full name field if available or the player id otherwise", () => {
+            expect(convertedPlayer.name).toEqual("Luis Ortiz");
+            expect(Player.convertEspnMajorLeaguerToPlayer(noNamePlayer).name).toEqual("ESPN Player #2966");
+        });
+        it("convertEspnMajorLeaguerToPlayer/1 - should convert the mlb team id to the abbreviated team name", () => {
+            expect(convertedPlayer.mlbTeam).toEqual("BAL");
+        });
+        it("convertEspnMajorLeaguerToPlayer/1 - should pass along the espn player id and other info", () => {
+            expect(convertedPlayer.meta).toMatchObject({espnPlayer});
+            expect(convertedPlayer.meta).toMatchObject({position: "1B"});
+        });
+    });
 });

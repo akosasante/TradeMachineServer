@@ -1,12 +1,11 @@
-import csv from "fast-csv";
-import * as fs from "fs";
+import { parseFile } from "@fast-csv/parse";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import DraftPickDAO from "../DAO/DraftPickDAO";
-import DraftPick from "../models/draftPick";
-import { LeagueLevel } from "../models/player";
+import DraftPick, { LeagueLevel } from "../models/draftPick";
 import Team from "../models/team";
 import { validateRow, WriteMode } from "./CsvUtils";
+import { uniqWith } from "lodash";
 
 interface DraftPickCSVRow {
     Owner: string;
@@ -23,11 +22,19 @@ export async function processDraftPickCsv(csvFilePath: string, teams: Team[], da
 
     await maybeDeleteExistingPicks(dao, mode);
 
-    logger.debug("WAITING ON STREAM");
+    logger.debug(`WAITING ON STREAM ${csvFilePath}`);
     const parsedPicks = await readAndParsePickCsv(csvFilePath, teams);
     logger.debug("DONE PARSING");
 
-    return dao.batchCreatePicks(parsedPicks.filter(pick => !!pick));
+    logger.debug("deduping list of picks");
+    const dedupedPicks = uniqWith(parsedPicks, (pick1, pick2) =>
+        (pick1.type === pick2.type) &&
+        (pick1.season === pick2.season) &&
+        (pick1.round === pick2.round) &&
+        (pick1.originalOwner === pick2.originalOwner)
+    );
+    logger.debug(`deduped from ${parsedPicks.length} to ${dedupedPicks.length}`);
+    return dao.batchUpsertPicks(dedupedPicks.filter(pick => !!pick));
 }
 
 async function maybeDeleteExistingPicks(dao: DraftPickDAO, mode?: WriteMode) {
@@ -46,8 +53,7 @@ async function readAndParsePickCsv(path: string, teams: Team[]): Promise<Partial
     const parsedPicks: Partial<DraftPick>[] = [];
     return new Promise((resolve, reject) => {
         logger.debug("----------- starting to read csv ----------");
-        fs.createReadStream(path)
-            .pipe(csv.parse({headers: true}))
+        parseFile(path, {headers: true})
             .on("data", (row: DraftPickCSVRow) => {
                 const parsedPick = parseDraftPick(row, teams, i);
                 if (parsedPick) {
@@ -56,8 +62,8 @@ async function readAndParsePickCsv(path: string, teams: Team[]): Promise<Partial
                 // logger.debug(`parsed: ${parsedPicks.length}, promised: ${promisedPicks.length}`);
             })
             .on("error", (e: any) => reject(e))
-            .on("end", () => {
-                logger.debug("~~~~~~ reached end of stream ~~~~~~~~~");
+            .on("end", (rowCount: number) => {
+                logger.debug(`~~~~~~ reached end of stream. parsed ${rowCount} rows ~~~~~~~~~`);
                 resolve(parsedPicks);
             });
     });
@@ -69,7 +75,7 @@ function parseDraftPick(row: DraftPickCSVRow, teams: Team[], index: number): Par
     const KEYWORD_TO_LEVEL: {[key: string]: LeagueLevel} = {
         High: LeagueLevel.HIGH,
         Low: LeagueLevel.LOW,
-        Major: LeagueLevel.MAJOR,
+        Major: LeagueLevel.MAJORS,
     };
 
     const validRow = validateRow(row, DRAFT_PICK_PROPS);

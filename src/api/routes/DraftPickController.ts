@@ -6,8 +6,7 @@ import { WriteMode } from "../../csv/CsvUtils";
 import { processDraftPickCsv } from "../../csv/DraftPickParser";
 import DraftPickDAO from "../../DAO/DraftPickDAO";
 import TeamDAO from "../../DAO/TeamDAO";
-import DraftPick from "../../models/draftPick";
-import { LeagueLevel } from "../../models/player";
+import DraftPick, { LeagueLevel } from "../../models/draftPick";
 import { Role } from "../../models/user";
 import { cleanupQuery, fileUploadOptions as uploadOpts, UUIDPattern } from "../helpers/ApiHelpers";
 
@@ -90,7 +89,7 @@ function getAllDraftPicksQuery(includes: string[]) {
     const keywordToLevelMap: {[key: string]: LeagueLevel} = {
         high: LeagueLevel.HIGH,
         low: LeagueLevel.LOW,
-        majors: LeagueLevel.MAJOR,
+        majors: LeagueLevel.MAJORS,
     };
     return includes.map(include => ({ type: keywordToLevelMap[include] }));
 }

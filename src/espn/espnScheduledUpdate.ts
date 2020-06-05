@@ -4,6 +4,7 @@ import TeamDAO from "../DAO/TeamDAO";
 import EspnAPI, { EspnFantasyTeam } from "./espnApi";
 import Player from "../models/player";
 import logger from "../bootstrap/logger";
+import { uniqWith } from "lodash";
 
 export function setupScheduledEspnUpdates() {
     const cron = "22 6 * * *"; // daily at 2:22AM ET
@@ -40,8 +41,10 @@ async function updateMajorLeaguePlayers(year: number, playerDao: PlayerDAO, espn
     const allEspnPlayers = await espnApi.getAllMajorLeaguePlayers(year);
     logger.debug("got all espn players");
     const allPlayers = allEspnPlayers.map(player => Player.convertEspnMajorLeaguerToPlayer(player));
+    logger.debug("deduping list of players");
+    const dedupedPlayers = uniqWith(allPlayers, (player1, player2) => (player1.name === player2.name) && (player1.playerDataId === player2.playerDataId));
     logger.debug("batch save to db");
-    return await playerDao.batchCreatePlayers(allPlayers);
+    return await playerDao.batchUpsertPlayers(dedupedPlayers);
 }
 
 async function updateTeamInfo(year: number, teamDao: TeamDAO, espnApi: EspnAPI) {

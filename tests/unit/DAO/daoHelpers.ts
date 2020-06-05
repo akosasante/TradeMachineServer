@@ -1,8 +1,11 @@
 export const mockExecute = jest.fn();
-export const mockWhereInIds = jest.fn().mockReturnValue({returning: jest.fn().mockReturnValue({execute: mockExecute})});
+export const mockReturning = jest.fn();
+export const mockWhereInIds = jest.fn();
 export const mockDeleteChain = {
-    delete: jest.fn().mockReturnValue(
-        {whereInIds: mockWhereInIds}),
+    delete: jest.fn()
+        .mockReturnValue({ whereInIds: mockWhereInIds
+                .mockReturnValue({ returning: mockReturning
+                        .mockReturnValue({ execute: mockExecute })})}),
 };
 
 export interface MockObj {

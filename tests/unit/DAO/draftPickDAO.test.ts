@@ -2,10 +2,9 @@ import "jest";
 import "jest-extended";
 import { Repository } from "typeorm";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
-import { LeagueLevel } from "../../../src/models/player";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
-import DraftPick from "../../../src/models/draftPick";
+import DraftPick, { LeagueLevel } from "../../../src/models/draftPick";
 import logger from "../../../src/bootstrap/logger";
 
 
@@ -107,8 +106,8 @@ describe("DraftPickDAO", () => {
         expect(res).toEqual(deleteResult);
     });
 
-    describe("deleteAllPicks - delete all the picks in chunks", () => {
-        it("should delete all draft picks if no query passed in", async () => {
+    describe("deleteAllPicks - delete all the queried picks in chunks", () => {
+        it("should delete queried draft picks if query passed in", async () => {
             const query = {type: LeagueLevel.LOW};
             mockPickDb.find.mockResolvedValueOnce([testPick1]);
             await draftPickDAO.deleteAllPicks(query);
@@ -118,7 +117,7 @@ describe("DraftPickDAO", () => {
             expect(mockPickDb.remove).toHaveBeenCalledTimes(1);
             expect(mockPickDb.remove).toHaveBeenCalledWith([testPick1], {chunk: 10});
         });
-        it("should delete queried draft picks if no query passed in", async () => {
+        it("should delete all draft picks if no query passed in", async () => {
             mockPickDb.find.mockResolvedValueOnce([testPick1]);
             await draftPickDAO.deleteAllPicks();
 
@@ -135,6 +134,25 @@ describe("DraftPickDAO", () => {
 
         expect(mockPickDb.save).toHaveBeenCalledTimes(1);
         expect(mockPickDb.save).toHaveBeenCalledWith([testPick1], {chunk: 10});
+        expect(res).toEqual([testPick1]);
+    });
+
+    it("batchUpsertPicks - should call the db upsert chain", async () => {
+        const mockOnConflict = jest.fn().mockReturnValue({execute: mockExecute});
+        const mockValues = jest.fn().mockReturnValue({onConflict: mockOnConflict});
+        const mockInsertChain = jest.fn().mockReturnValue({values: mockValues});
+        mockPickDb.createQueryBuilder.mockReturnValueOnce({insert: mockInsertChain});
+        mockExecute.mockResolvedValueOnce({identifiers: [{id: testPick1.id!}], generatedMaps: [], raw: []});
+        mockPickDb.find.mockResolvedValueOnce([testPick1]);
+
+        const res = await draftPickDAO.batchUpsertPicks([testPick1]);
+
+        expect(mockPickDb.createQueryBuilder).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.createQueryBuilder).toHaveBeenCalledWith();
+        expect(mockValues).toHaveBeenCalledTimes(1);
+        expect(mockValues).toHaveBeenCalledWith([testPick1]);
+        expect(mockPickDb.find).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testPick1.id]}});
         expect(res).toEqual([testPick1]);
     });
 });
