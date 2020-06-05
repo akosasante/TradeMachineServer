@@ -2,7 +2,7 @@ import "jest";
 import "jest-extended";
 import { processMinorLeagueCsv } from "../../../src/csv/PlayerParser";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
-import Player from "../../../src/models/player";
+import Player, {PlayerLeagueType} from "../../../src/models/player";
 import { TeamFactory } from "../../factories/TeamFactory";
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
@@ -59,7 +59,7 @@ describe("PlayerParser", () => {
         await processMinorLeagueCsv(threeOwnerCsv, [testTeam1, testTeam2, testTeam3],
             mockDAO as unknown as PlayerDAO, "overwrite");
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(1);
-        expect(mockDAO.deleteAllPlayers).toHaveBeenCalledWith("minor");
+        expect(mockDAO.deleteAllPlayers).toHaveBeenCalledWith({league: PlayerLeagueType.MINOR});
     });
 
     it("should return an error if error occurs while deleting existing players", async () => {
@@ -69,7 +69,7 @@ describe("PlayerParser", () => {
         await expect(processMinorLeagueCsv(threeOwnerCsv, [testTeam1, testTeam2, testTeam3],
             mockDAO as unknown as PlayerDAO, "overwrite")).rejects.toThrow(Error);
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(1);
-        expect(mockDAO.deleteAllPlayers).toHaveBeenCalledWith("minor");
+        expect(mockDAO.deleteAllPlayers).toHaveBeenCalledWith({league: PlayerLeagueType.MINOR});
         expect(mockDAO.batchUpsertPlayers).toHaveBeenCalledTimes(0);
     });
 
