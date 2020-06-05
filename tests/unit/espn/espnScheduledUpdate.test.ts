@@ -5,7 +5,7 @@ import { EspnUpdateDaos, updateEspnData } from "../../../src/espn/espnScheduledU
 import { TeamFactory } from "../../factories/TeamFactory";
 
 const mockPlayerDao = {
-    batchCreatePlayers: jest.fn(),
+    batchUpsertPlayers: jest.fn(),
 };
 
 const team = TeamFactory.getTeam();

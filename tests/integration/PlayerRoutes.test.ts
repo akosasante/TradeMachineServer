@@ -143,18 +143,17 @@ describe("Player API endpoints", () => {
             expect(returnedPlayer).toMatchObject(expected);
         });
         it("should return an array of all players in a given league or leagues", async () => {
-            logger.debug("AKOSUA");
-            const {body: highMinors} = await getAllRequest("?include[]=high");
-            const {body: highAndMajors} = await getAllRequest("?include[]=high&include[]=majors");
+            const {body: minorPlayers} = await getAllRequest("?include[]=minors");
+            const {body: majorPlayers} = await getAllRequest("?include[]=majors");
 
-            expect(highMinors).toBeArrayOfSize(1);
-            expect(highAndMajors).toBeArrayOfSize(2);
+            expect(minorPlayers).toBeArrayOfSize(1);
+            expect(majorPlayers).toBeArrayOfSize(2);
 
-            expect(highAndMajors.find((player: Player) => player.id === testPlayer2.id)).toBeDefined();
-            expect(highAndMajors.find((player: Player) => player.id === testPlayer.id)).toBeDefined();
+            expect(majorPlayers.find((player: Player) => player.id === testPlayer2.id)).toBeDefined();
+            expect(majorPlayers.find((player: Player) => player.id === testPlayer.id)).toBeDefined();
 
-            expect(highMinors.find((player: Player) => player.id === testPlayer.id)).toBeDefined();
-            expect(highMinors.find((player: Player) => player.id === testPlayer2.id)).toBeUndefined();
+            expect(minorPlayers.find((player: Player) => player.id === testPlayer.id)).toBeDefined();
+            expect(minorPlayers.find((player: Player) => player.id === testPlayer2.id)).toBeUndefined();
         });
     });
 

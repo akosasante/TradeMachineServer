@@ -112,7 +112,7 @@ describe("DraftPickParser", () => {
 
         const res2 = await processDraftPickCsv(invalidHeadersCsv, [testTeam1, testTeam2, testTeam3],
             mockDAO as unknown as DraftPickDAO);
-        await expect(res2).toBeUndefined();
+        await expect(res2).toEqual([]);
     });
 
     it("should filter out duplicate picks - picks with the same pick owner, league level, and round", async () => {

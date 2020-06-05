@@ -7,8 +7,7 @@ import logger from "../../src/bootstrap/logger";
 import { WriteMode } from "../../src/csv/CsvUtils";
 import TeamDAO from "../../src/DAO/TeamDAO";
 import UserDAO from "../../src/DAO/UserDAO";
-import DraftPick from "../../src/models/draftPick";
-import { PlayerLeagueType } from "../../src/models/player";
+import DraftPick, { LeagueLevel } from "../../src/models/draftPick";
 import Team from "../../src/models/team";
 import User, { Role } from "../../src/models/user";
 import { DraftPickFactory } from "../factories/DraftPickFactory";
@@ -76,8 +75,8 @@ afterAll(async () => {
 });
 
 describe("Pick API endpoints", () => {
-    const testPick = DraftPickFactory.getPick(undefined, undefined, PlayerLeagueType.HIGH);
-    const testPick2 =  DraftPickFactory.getPick(2, 6, PlayerLeagueType.MAJOR);
+    const testPick = DraftPickFactory.getPick(undefined, undefined, LeagueLevel.HIGH);
+    const testPick2 =  DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS);
 
     describe("POST /picks (create new pick)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
