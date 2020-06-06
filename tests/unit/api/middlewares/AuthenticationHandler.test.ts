@@ -8,6 +8,7 @@ import { ConflictError } from "../../../../src/api/middlewares/ErrorHandler";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import User from "../../../../src/models/user";
 import { UserFactory } from "../../../factories/UserFactory";
+import logger from "../../../../src/bootstrap/logger";
 
 const mockUserDAO = {
     findUserWithPassword: jest.fn(),
@@ -15,6 +16,12 @@ const mockUserDAO = {
 };
 
 describe("Authentication middleware", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~AUTHENTICATION MIDDLEWARE TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~AUTHENTICATION MIDDLEWARE TESTS COMPLETE~~~~~~");
+    });
     const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined);
 
     describe("LoginHandler", () => {

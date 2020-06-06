@@ -1,4 +1,9 @@
 import axios, { AxiosInstance } from "axios";
+import Player from "../models/player";
+import {uniqWith} from "lodash";
+import logger from "../bootstrap/logger";
+import PlayerDAO from "../DAO/PlayerDAO";
+import TeamDAO from "../DAO/TeamDAO";
 
 export interface EspnLeagueMember {
     id: string;
@@ -179,6 +184,33 @@ export default class EspnAPI {
     public async getRosterForTeamAndDay(year: number, teamId: number, scoringPeriodId: number): Promise<EspnRoster> {
         const { data: {teams: teams} } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?forTeamId=${teamId}&scoringPeriodId=${scoringPeriodId}&view=mRoster`);
         return teams[0].roster;
+    }
+
+    public async updateMajorLeaguePlayers(year: number, playerDAO: PlayerDAO) {
+        logger.debug(`making espn api call for year: ${year}`);
+        const allEspnPlayers = await this.getAllMajorLeaguePlayers(year);
+        logger.debug("mapping to player objects");
+        const allPlayers = allEspnPlayers.map(player => Player.convertEspnMajorLeaguerToPlayer(player));
+        logger.debug("deduping all players");
+        const dedupedPlayers = uniqWith(allPlayers, (player1, player2) => (player1.name === player2.name) && (player1.playerDataId === player2.playerDataId));
+        logger.debug("batch save to db");
+        return await playerDAO.batchUpsertPlayers(dedupedPlayers);
+    }
+
+    public async updateEspnTeamInfo(year: number, teamDao: TeamDAO) {
+        logger.debug("reloading ESPN league team objects");
+        const allEspnTeams = await this.getAllLeagueTeams(year);
+        logger.debug("got all espn fantasy teams");
+        const allLeagueTeams = await teamDao.getAllTeams();
+        for (const team of allLeagueTeams) {
+            const associatedEspnTeam = allEspnTeams.find((foundEspnTeam: EspnFantasyTeam) =>
+                foundEspnTeam.id === team.espnId
+            );
+
+            if (associatedEspnTeam) {
+                await teamDao.updateTeam(team.id!, {espnTeam: associatedEspnTeam});
+            }
+        }
     }
 }
 

@@ -6,8 +6,15 @@ import { QueryFailedError } from "typeorm";
 import { EntityColumnNotFound } from "typeorm/error/EntityColumnNotFound";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import CustomErrorHandler from "../../../../src/api/middlewares/ErrorHandler";
+import logger from "../../../../src/bootstrap/logger";
 
 describe("Error handler middleware", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~ERROR HANDLER MIDDLEWARE TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~ERROR HANDLER MIDDLEWARE TESTS COMPLETE~~~~~~");
+    });
     const errorObjectExpect = expect.objectContaining({message: expect.any(String), stack: expect.any(String)});
     it("should send to next if the headers have already been sent", async () => {
         const error = new Error("generic error");

@@ -1,11 +1,18 @@
 import "jest";
 import "jest-extended";
 import { validateRow } from "../../../src/csv/CsvUtils";
+import logger from "../../../src/bootstrap/logger";
 
 describe("CSV Util Functions", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~CSV UTIL TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~CSV UTIL TESTS COMPLETE~~~~~~");
+    });
     describe("validateRow/2", () => {
-        // tslint:disable-next-line:object-literal-key-quotes
         const row = {keyA: 1, keyB: 2, "Complex Key C": 3};
+        // tslint:disable-next-line:no-null-keyword
         const rowWithNull = {keyA: null, keyB: 2, "Complex Key C": 3};
         const rowWithUndefined = {keyA: 1, keyB: undefined, "Complex Key C": 3};
 

@@ -3,8 +3,15 @@ import "jest-extended";
 import { TradeParticipantType } from "../../../src/models/tradeParticipant";
 import { TeamFactory } from "../../factories/TeamFactory";
 import { TradeFactory } from "../../factories/TradeFactory";
+import logger from "../../../src/bootstrap/logger";
 
 describe("Trade Participant Class", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~TRADE PARTICIPANT TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~TRADE PARTICIPANT TESTS COMPLETE~~~~~~");
+    });
     const team = TeamFactory.getTeam(undefined, undefined, {id: 1});
     const trade = TradeFactory.getTrade(undefined, undefined, {id: 1});
     const participant = TradeFactory.getTradeRecipient(team, trade);

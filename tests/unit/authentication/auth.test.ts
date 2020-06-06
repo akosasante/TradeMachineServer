@@ -7,6 +7,7 @@ import { authorizationChecker, currentUserChecker, deserializeUser, generateHash
 import UserDAO from "../../../src/DAO/UserDAO";
 import { Role } from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
+import logger from "../../../src/bootstrap/logger";
 
 const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, Role.OWNER);
 const mockUserDAO = {
@@ -17,6 +18,12 @@ const mockUserDAO = {
 };
 
 describe("Authorization helper methods", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~AUTH TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~AUTH TESTS COMPLETE~~~~~~");
+    });
     describe("serializeUser", () => {
         it("should return the user ID", async () => {
             const id = await serializeUser(testUser);
