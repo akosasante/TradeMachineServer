@@ -71,9 +71,11 @@ beforeAll(async () => {
 afterAll(async () => {
     logger.debug("~~~~~~TRADE ROUTES AFTER ALL~~~~~~");
     await shutdown();
-    app.close(() => {
-        logger.debug("CLOSED SERVER");
-    });
+    if (app) {
+        app.close(() => {
+            logger.debug("CLOSED SERVER");
+        });
+    }
 });
 
 describe("Trade API endpoints", () => {

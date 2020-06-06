@@ -54,9 +54,11 @@ beforeAll(async () => {
 afterAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES AFTER ALL~~~~~~");
     await shutdown();
-    app.close(() => {
-        logger.debug("CLOSED SERVER");
-    });
+    if (app) {
+        app.close(() => {
+            logger.debug("CLOSED SERVER");
+        });
+    }
 });
 
 describe("Team API endpoints", () => {

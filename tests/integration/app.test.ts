@@ -29,9 +29,11 @@ describe("GET /random-url", () => {
     afterAll(async () => {
         logger.debug("~~~~~~BASIC APP ROUTES AFTEr ALL~~~~~~");
         await shutdown();
-        app.close(() => {
-        logger.debug("CLOSED SERVER");
-    });
+        if (app) {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+            });
+        }
 });
     it("should return 404", done => {
         request(app)

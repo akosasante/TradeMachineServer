@@ -9,6 +9,7 @@ import startServer from "../../src/bootstrap/app";
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
 import User from "../../src/models/user";
+
 dotenvConfig({path: resolvePath(__dirname, "../.env")});
 
 
@@ -34,9 +35,11 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await shutdown();
-    app.close(() => {
-        logger.debug("CLOSED SERVER");
-    });
+    if (app) {
+        app.close(() => {
+            logger.debug("CLOSED SERVER");
+        });
+    }
 });
 
 describe("ESPN API endpoints", () => {

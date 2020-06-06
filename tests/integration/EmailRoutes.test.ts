@@ -5,11 +5,12 @@ import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
-import User, { Role } from "../../src/models/user";
+import User from "../../src/models/user";
 import startServer from "../../src/bootstrap/app";
-import {doLogout, makeGetRequest, makeLoggedInRequest, makePostRequest, setupOwnerAndAdminUsers} from "./helpers";
+import { makePostRequest, setupOwnerAndAdminUsers } from "./helpers";
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
+
 dotenvConfig({path: resolvePath(__dirname, "../.env")});
 
 let app: Server;
@@ -39,9 +40,11 @@ beforeAll(async () => {
 afterAll(async () => {
     logger.debug("~~~~~~EMAIL ROUTES AFTER ALL~~~~~~");
     await shutdown();
-    app.close(() => {
-        logger.debug("CLOSED SERVER");
-    });
+    if (app) {
+        app.close(() => {
+            logger.debug("CLOSED SERVER");
+        });
+    }
 });
 
 describe("Email API endpoints", () => {

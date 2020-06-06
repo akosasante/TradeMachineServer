@@ -74,9 +74,11 @@ beforeAll(async () => {
 afterAll(async () => {
     logger.debug("~~~~~~PLAYER ROUTES AFTER ALL~~~~~~");
     await shutdown();
-    app.close(() => {
-        logger.debug("CLOSED SERVER");
-    });
+    if (app) {
+        app.close(() => {
+            logger.debug("CLOSED SERVER");
+        });
+    }
 });
 
 describe("Player API endpoints", () => {
