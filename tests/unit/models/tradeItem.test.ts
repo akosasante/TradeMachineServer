@@ -5,8 +5,15 @@ import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import { TeamFactory } from "../../factories/TeamFactory";
 import { TradeFactory } from "../../factories/TradeFactory";
+import logger from "../../../src/bootstrap/logger";
 
 describe("Trade Item Class", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~TRADE ITEM TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~TRADE ITEM TESTS COMPLETE~~~~~~");
+    });
     const player = PlayerFactory.getPlayer();
     const pick = DraftPickFactory.getPick();
     const [sender, recipient] = TeamFactory.getTeams(2);
