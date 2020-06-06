@@ -1,7 +1,7 @@
 import "jest";
 import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
-import { doUpdate } from "../../../src/jobs/mlbMinorsScheduledUpdate";
+import { doUpdate } from "../../../src/scheduled_jobs/mlbMinorsScheduledUpdate";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import { AxiosPromise } from "axios";
 

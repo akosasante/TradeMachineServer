@@ -4,10 +4,17 @@ import { Emailer } from "../../../src/email/mailer";
 import { UserFactory } from "../../factories/UserFactory";
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
+import logger from "../../../src/bootstrap/logger";
 
 dotenvConfig({path: resolvePath(__dirname, "../../.env")}); // required for api keys
 
 describe("Emailer Class", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~EMAILER TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~EMAILER TESTS COMPLETE~~~~~~");
+    });
     const testUser = UserFactory.getUser("test@example.com", "Jatheesh", undefined, undefined, {id: "test-uuid"});
 
     describe("email snapshots", () => {

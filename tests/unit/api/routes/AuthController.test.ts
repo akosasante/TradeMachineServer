@@ -4,8 +4,15 @@ import "jest-extended";
 import AuthController from "../../../../src/api/routes/AuthController";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import { UserFactory } from "../../../factories/UserFactory";
+import logger from "../../../../src/bootstrap/logger";
 
 describe("AuthController", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~AUTH CONTROLLER TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~AUTH CONTROLLER TESTS COMPLETE~~~~~~");
+    });
     const mockUserDAO = {
         getUserById: jest.fn(),
         updateUser: jest.fn(),

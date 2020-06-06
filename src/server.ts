@@ -1,7 +1,7 @@
 import { Server } from "http";
 import startServer from "./bootstrap/app";
-import { setupScheduledEspnUpdates } from "./jobs/espnScheduledUpdate";
-import { setupScheduledMlbMinorLeagueUpdates } from "./jobs/mlbMinorsScheduledUpdate";
+import { setupScheduledEspnUpdates } from "./scheduled_jobs/espnScheduledUpdate";
+import { setupScheduledMlbMinorLeagueUpdates } from "./scheduled_jobs/mlbMinorsScheduledUpdate";
 
 const server: Promise<Server> = startServer();
 setupScheduledEspnUpdates();

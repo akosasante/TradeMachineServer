@@ -3,11 +3,18 @@ import "jest-extended";
 import { EmailPublisher } from "../../../src/email/publishers";
 import Bull from "bull";
 import { UserFactory } from "../../factories/UserFactory";
+import logger from "../../../src/bootstrap/logger";
 
 const mockQueue = {
     add: jest.fn(),
 };
 
+beforeAll(() => {
+    logger.debug("~~~~~~EMAIL PUBLISHER TESTS BEGIN~~~~~~");
+});
+afterAll(() => {
+    logger.debug("~~~~~~EMAIL PUBLISHER COMPLETE~~~~~~");
+});
 afterEach(() => {
     mockQueue.add.mockClear();
 });

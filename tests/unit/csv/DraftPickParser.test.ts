@@ -7,10 +7,17 @@ import { TeamFactory } from "../../factories/TeamFactory";
 import { UserFactory } from "../../factories/UserFactory";
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
+import logger from "../../../src/bootstrap/logger";
 
 dotenvConfig({path: resolvePath(__dirname, "../../.env")});
 
 describe("DraftPickParser", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~DRAFT PICK PARSER TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~DRAFT PICK PARSER TESTS COMPLETE~~~~~~");
+    });
     const owner1 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Akos"});
     const owner2 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Kwasi"});
     const owner3 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Cam"});

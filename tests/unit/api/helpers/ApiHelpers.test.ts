@@ -1,7 +1,14 @@
 import { IsNull, Not } from "typeorm";
 import { cleanupQuery } from "../../../../src/api/helpers/ApiHelpers";
+import logger from "../../../../src/bootstrap/logger";
 
 describe("ApiHelpers utility functions", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~API HELPERS TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~API HELPERS TESTS COMPLETE~~~~~~");
+    });
     describe("cleanupQuery/1", () => {
         const baseQuery: any = { username: "aasante" };
         it("should turn all of the accepted values into ISNULL", () => {

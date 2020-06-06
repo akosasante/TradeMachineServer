@@ -1,6 +1,6 @@
 import initializeDb from "../../bootstrap/db";
 import PlayerDAO from "../../DAO/PlayerDAO";
-import { doUpdate } from "../../jobs/mlbMinorsScheduledUpdate";
+import { doUpdate } from "../../scheduled_jobs/mlbMinorsScheduledUpdate";
 
 // tslint:disable:no-console
 

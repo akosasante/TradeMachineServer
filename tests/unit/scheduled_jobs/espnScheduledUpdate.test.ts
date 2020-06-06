@@ -4,7 +4,7 @@ import logger from "../../../src/bootstrap/logger";
 import TeamDAO from "../../../src/DAO/TeamDAO";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import EspnAPI from "../../../src/espn/espnApi";
-import { EspnUpdateDaos, updateEspnData } from "../../../src/jobs/espnScheduledUpdate";
+import { EspnUpdateDaos, updateEspnData } from "../../../src/scheduled_jobs/espnScheduledUpdate";
 
 const mockPlayerDao = {} as unknown as PlayerDAO;
 const mockTeamDao = {} as unknown as TeamDAO;

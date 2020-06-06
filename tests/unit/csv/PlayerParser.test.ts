@@ -2,18 +2,23 @@ import "jest";
 import "jest-extended";
 import { processMinorLeagueCsv } from "../../../src/csv/PlayerParser";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
-import Player, {PlayerLeagueType} from "../../../src/models/player";
+import Player, { PlayerLeagueType } from "../../../src/models/player";
 import { TeamFactory } from "../../factories/TeamFactory";
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
 import { UserFactory } from "../../factories/UserFactory";
-import {PlayerFactory} from "../../factories/PlayerFactory";
+import { PlayerFactory } from "../../factories/PlayerFactory";
 import logger from "../../../src/bootstrap/logger";
-import {inspect} from "util";
 
 dotenvConfig({path: resolvePath(__dirname, "../../.env")});
 
 describe("PlayerParser", () => {
+    beforeAll(() => {
+        logger.debug("~~~~~~PLAYER PARSER TESTS BEGIN~~~~~~");
+    });
+    afterAll(() => {
+        logger.debug("~~~~~~PLAYER PARSER TESTS COMPLETE~~~~~~");
+    });
     const owner1 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Akos"});
     const owner2 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Squad"});
     const owner3 = UserFactory.getUser(undefined, undefined, undefined, undefined, {csvName: "Cam"});
