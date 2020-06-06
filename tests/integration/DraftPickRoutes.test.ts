@@ -69,9 +69,11 @@ beforeAll(async () => {
 afterAll(async () => {
     logger.debug("~~~~~~DRAFT PICK ROUTES AFTER ALL~~~~~~");
     await shutdown();
-    app.close(() => {
-        logger.debug("CLOSED SERVER");
-    });
+    if (app) {
+        app.close(() => {
+            logger.debug("CLOSED SERVER");
+        });
+    }
 });
 
 describe("Pick API endpoints", () => {

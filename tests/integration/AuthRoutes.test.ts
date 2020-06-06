@@ -5,11 +5,12 @@ import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
-import User, { Role } from "../../src/models/user";
+import User from "../../src/models/user";
 import startServer from "../../src/bootstrap/app";
 import { config as dotenvConfig } from "dotenv";
 import path from "path";
 import { makeLoggedInRequest } from "./helpers";
+
 dotenvConfig({path: path.resolve(__dirname, "../.env")});
 
 
@@ -35,9 +36,11 @@ beforeAll(async () => {
 afterAll(async () => {
     logger.debug("~~~~~~AUTH ROUTES AFTER ALL~~~~~~");
     await shutdown();
-    app.close(() => {
-        logger.debug("CLOSED SERVER");
-    });
+    if (app) {
+        app.close(() => {
+            logger.debug("CLOSED SERVER");
+        });
+    }
 });
 
 describe("Auth API endpoints", () => {

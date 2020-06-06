@@ -43,9 +43,11 @@ beforeAll(async () => {
 afterAll(async () => {
     logger.debug("~~~~~~USER ROUTES AFTER ALL~~~~~~");
     await shutdown();
-    app.close(() => {
-        logger.debug("CLOSED SERVER");
-    });
+    if (app) {
+        app.close(() => {
+            logger.debug("CLOSED SERVER");
+        });
+    }
 });
 
 describe("User API endpoints", () => {

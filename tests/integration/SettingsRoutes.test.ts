@@ -65,9 +65,11 @@ beforeAll(async () => {
 afterAll(async () => {
     logger.debug("~~~~~~SETTINGS ROUTES AFTER ALL~~~~~~");
     await shutdown();
-    app.close(() => {
-        logger.debug("CLOSED SERVER");
-    });
+    if (app) {
+        app.close(() => {
+            logger.debug("CLOSED SERVER");
+        });
+    }
 });
 
 describe("Settings API endpoints for general settings", () => {
