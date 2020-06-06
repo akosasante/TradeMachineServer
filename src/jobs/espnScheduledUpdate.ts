@@ -3,6 +3,7 @@ import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";
 import EspnAPI from "../espn/espnApi";
 import logger from "../bootstrap/logger";
+import { inspect } from "util";
 
 export function setupScheduledEspnUpdates() {
     const cron = "22 6 * * *"; // daily at 2:22AM ET
@@ -13,6 +14,22 @@ export function setupScheduledEspnUpdates() {
         return await updateEspnData({});
     });
     espnQueue.add({}, {repeat: { cron }});
+
+    espnQueue.on("error", error => {
+        logger.debug(`Bull error during setupScheduledEspnUpdates: ${inspect(error)}`);
+    });
+
+    espnQueue.on("active", job => {
+        logger.debug(`setupScheduledEspnUpdates Worker job started: ${inspect(job)}`);
+    });
+
+    espnQueue.on("completed", (job, result) => {
+        logger.debug(`setupScheduledEspnUpdates Worker completed: ${inspect(job)}`);
+    });
+
+    espnQueue.on("failed", (job, err) => {
+        logger.debug(`"setupScheduledEspnUpdates Worker failed: ${inspect(job)}, ${inspect(err)}`);
+    });
 }
 
 export interface EspnUpdateDaos {
