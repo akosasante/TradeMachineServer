@@ -1,10 +1,8 @@
 import Bull from "bull";
 import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";
-import EspnAPI, { EspnFantasyTeam } from "../espn/espnApi";
-import Player from "../models/player";
+import EspnAPI from "../espn/espnApi";
 import logger from "../bootstrap/logger";
-import { uniqWith } from "lodash";
 
 export function setupScheduledEspnUpdates() {
     const cron = "22 6 * * *"; // daily at 2:22AM ET
@@ -12,7 +10,7 @@ export function setupScheduledEspnUpdates() {
     const espnQueue = new Bull("espn_queue");
 
     espnQueue.process(1, async () => {
-        return updateEspnData({});
+        return await updateEspnData({});
     });
     espnQueue.add({}, {repeat: { cron }});
 }
@@ -29,36 +27,9 @@ export async function updateEspnData(deps: EspnUpdateDaos) {
     const espnApi = deps.espnApi || new EspnAPI(545);
     const currentYear = new Date().getFullYear();
 
-    await updateTeamInfo(currentYear, teamDao, espnApi);
+    await espnApi.updateEspnTeamInfo(currentYear, teamDao);
     logger.debug("team reload complete");
-    await updateMajorLeaguePlayers(currentYear, playerDao, espnApi);
+    await espnApi.updateMajorLeaguePlayers(currentYear, playerDao);
     logger.debug("player reload complete");
     return `updated @ ${new Date().toLocaleString()}`;
-}
-
-async function updateMajorLeaguePlayers(year: number, playerDao: PlayerDAO, espnApi: EspnAPI) {
-    logger.debug("reloading ESPN major league players");
-    const allEspnPlayers = await espnApi.getAllMajorLeaguePlayers(year);
-    logger.debug("got all espn players");
-    const allPlayers = allEspnPlayers.map(player => Player.convertEspnMajorLeaguerToPlayer(player));
-    logger.debug("deduping list of players");
-    const dedupedPlayers = uniqWith(allPlayers, (player1, player2) => (player1.name === player2.name) && (player1.playerDataId === player2.playerDataId));
-    logger.debug("batch save to db");
-    return await playerDao.batchUpsertPlayers(dedupedPlayers);
-}
-
-async function updateTeamInfo(year: number, teamDao: TeamDAO, espnApi: EspnAPI) {
-    logger.debug("reloading ESPN league team objects");
-    const allEspnTeams = await espnApi.getAllLeagueTeams(year);
-    logger.debug("got all espn fantasy teams");
-    const allLeagueTeams = await teamDao.getAllTeams();
-    for (const team of allLeagueTeams) {
-        const associatedEspnTeam = allEspnTeams.find((foundEspnTeam: EspnFantasyTeam) =>
-            foundEspnTeam.id === team.espnId
-        );
-
-        if (associatedEspnTeam) {
-            await teamDao.updateTeam(team.id!, {espnTeam: associatedEspnTeam});
-        }
-    }
 }

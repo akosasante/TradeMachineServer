@@ -12,6 +12,7 @@ import { TeamFactory } from "../../factories/TeamFactory";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import TeamDAO from "../../../src/DAO/TeamDAO";
 import Team from "../../../src/models/team";
+import logger from "../../../src/bootstrap/logger";
 
 const mockedGet = jest.fn();
 
@@ -31,6 +32,13 @@ const mockPlayerDao = {
     batchUpsertPlayers: jest.fn(),
 };
 
+beforeAll(() => {
+    logger.debug("~~~~~ESPN API TESTS BEGIN~~~~~~");
+});
+
+afterAll(() => {
+    logger.debug("~~~~~~~ESPN API TESTS COMPLETE~~~~~");
+});
 describe("EspnApi Class", () => {
     const testLeagueId = 545;
     const Api = new EspnAPI(testLeagueId);
