@@ -1,7 +1,7 @@
 import { IncomingWebhook } from "@slack/webhook";
 import Trade from "../models/trade";
 import TradeItem from "../models/tradeItem";
-import Player from "../models/player";
+import Player, { PlayerLeagueType } from "../models/player";
 import User from "../models/user";
 import TradeDAO from "../DAO/TradeDAO";
 import initializeDb from "../bootstrap/db";
@@ -11,6 +11,8 @@ import ordinal from "ordinal";
 import DraftPick from "../models/draftPick";
 import TradeParticipant from "../models/tradeParticipant";
 import { flatten } from "lodash";
+import logger from "../bootstrap/logger";
+import { inspect } from "util";
 
 const EspnBlocks = {
     divider: { type: "divider" },
@@ -44,8 +46,12 @@ export class SlackTradeAnnouncer {
             return await playerDao.getPlayerById(tradedPlayer.tradeItemId);
         }));
         return players.map((player: Player) => {
+            const position = player.league === PlayerLeagueType.MINOR ? player.meta.minorLeaguePlayer.primary_position : player.getEspnEligiblePositions();
+            const league = player.league === PlayerLeagueType.MINOR ? player.meta.minorLeaguePlayer.sport : "Majors";
+            const team = player.league === PlayerLeagueType.MINOR ? player.meta.minorLeaguePlayer.team : player.mlbTeam;
+            const playerMetaInfo = `(${position} - ${league} - ${team})`;
             return `
-• ${player.name}${twoPlayerTrade ? "" : " from _" + tradedPlayers[0].sender + "_"}`;
+• *${player.name}* ${playerMetaInfo}${twoPlayerTrade ? "" : " from _" + tradedPlayers[0].sender.name + "_"}`;
         }).join("");
     }
 
@@ -56,7 +62,7 @@ export class SlackTradeAnnouncer {
         }));
         return picks.map((pick: DraftPick) => {
             return `
-• ${pick.originalOwner}'s ${pick.season} ${ordinal(pick.round)} round pick`;
+• *${pick.originalOwner?.name}'s* ${pick.season} ${ordinal(pick.round)} round pick`;
         }).join("");
     }
 
@@ -64,11 +70,11 @@ export class SlackTradeAnnouncer {
     private static async getTradeTextForParticipant(twoPlayerTrade: boolean, trade: Trade, participant: TradeParticipant) {
         const header = `*${participant.team.name} receives:*`;
         const receivedItems = TradeItem.itemsReceivedBy(trade.tradeItems!, participant.team);
-        console.dir(receivedItems);
+        logger.debug(inspect(receivedItems));
         const playerText = await SlackTradeAnnouncer.prepPlayerText(twoPlayerTrade, TradeItem.filterPlayers(receivedItems));
-        console.log(playerText);
+        logger.debug(playerText);
         const pickText = await SlackTradeAnnouncer.prepPickText(TradeItem.filterPicks(receivedItems));
-        console.log(pickText);
+        logger.debug(pickText);
         return header + playerText + pickText;
     }
 
@@ -82,7 +88,7 @@ export class SlackTradeAnnouncer {
             text: `Trade submitted between ${trade.creator!.name} & ${trade.recipients.map(r => r.name).join(" &")}`,
             blocks: [
                 EspnBlocks.mrkdwnSection(":loud_sound:  *A Trade Has Been Submitted*  :loud_sound:"),
-                EspnBlocks.context([`*${new Date().toDateString()}* | Initiated by ${trade.creator!.owners!.map((user: User) => "<@" + user.slackUsername + ">")}`]),
+                EspnBlocks.context([`*${new Date().toDateString()}* | Trade requested by ${trade.creator!.owners!.map((user: User) => "<@" + user.slackUsername + ">")} - Trading with: ${trade.recipients.flatMap(r => r.owners!.map((user: User) => "<@" + user.slackUsername + ">")).join(", ")}`]),
                 EspnBlocks.divider,
                 ...flatten(tradeText.map((text: string) => [
                     EspnBlocks.mrkdwnSection(text),
@@ -94,22 +100,22 @@ export class SlackTradeAnnouncer {
     }
 
     public static async sendTradeAnnouncement(trade: Trade) {
-        console.log("building trade");
+        logger.debug("building trade");
         const res = await SlackTradeAnnouncer.buildTradeAnnouncementMsg(trade);
-        console.log(res);
+        logger.debug(inspect(res));
         return await SlackTradeAnnouncer.webhook.send(res);
     }
 
     // tslint:disable-next-line:no-empty
     constructor() {}
 }
-
-async function run() {
-    await initializeDb(true);
-    const tradeDao = new TradeDAO();
-    const trade = await tradeDao.getTradeById("256cd0ed-35e9-47e3-9464-5087a80082af");
-    console.dir(trade);
-    return SlackTradeAnnouncer.sendTradeAnnouncement(trade);
-}
-
-run();
+//
+// async function run() {
+//     await initializeDb(true);
+//     const tradeDao = new TradeDAO();
+//     const trade = await tradeDao.getTradeById("f65cfb6c-0610-46bc-87a1-12ccef0c27e3");
+//     console.dir(trade);
+//     return SlackTradeAnnouncer.sendTradeAnnouncement(trade);
+// }
+//
+// run().then(() => process.exit(0));
