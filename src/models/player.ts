@@ -2,7 +2,12 @@ import { Column, Entity, Index, ManyToOne, Unique } from "typeorm";
 import { BaseModel } from "./base";
 import Team from "./team";
 import { EspnMajorLeaguePlayer } from "../espn/espnApi";
-import { espnMajorLeagueTeamFromId, EspnPositionMapping } from "../espn/espnConstants";
+import {
+    EspnEligiblePositionMapping,
+    espnMajorLeagueTeamFromId,
+    EspnNonPositionalNonValidSlots,
+    EspnPositionMapping
+} from "../espn/espnConstants";
 
 export enum PlayerLeagueType {
     MAJOR = "Majors",
@@ -45,5 +50,15 @@ export default class Player extends BaseModel {
             playerDataId: espnPlayer.id,
             meta: { espnPlayer, position },
         });
+    }
+
+    public getEspnEligiblePositions(): string|undefined {
+        const slots = this.meta?.espnPlayer?.player?.eligibleSlots;
+        if (slots && slots.length) {
+            return slots
+                .filter((slot: number) => !EspnNonPositionalNonValidSlots.includes(slot))
+                .map((slot: number) => EspnEligiblePositionMapping[slot])
+                .join(", ");
+        }
     }
 }
