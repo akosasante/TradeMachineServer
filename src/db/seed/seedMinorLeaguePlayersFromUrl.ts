@@ -1,8 +1,8 @@
 import initializeDb from "../../bootstrap/db";
 import PlayerDAO from "../../DAO/PlayerDAO";
 import { doUpdate } from "../../scheduled_jobs/mlbMinorsScheduledUpdate";
+import logger from "../../bootstrap/logger";
 
-// tslint:disable:no-console
 
 async function run() {
     await initializeDb(false);
@@ -11,5 +11,5 @@ async function run() {
 }
 
 run()
-    .then(inserted => { console.log(inserted.length); process.exit(0); })
-    .catch(err => { console.error(err); process.exit(99); });
+    .then(inserted => { logger.info(`${inserted.length}`); process.exit(0); })
+    .catch(err => { logger.error(err); process.exit(99); });

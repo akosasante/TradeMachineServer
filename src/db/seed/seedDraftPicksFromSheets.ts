@@ -5,9 +5,9 @@ import initializeDb from "../../bootstrap/db";
 import { processDraftPickCsv } from "../../csv/DraftPickParser";
 import TeamDAO from "../../DAO/TeamDAO";
 import DraftPickDAO from "../../DAO/DraftPickDAO";
+import logger from "../../bootstrap/logger";
 dotenvConfig({path: resolvePath(__dirname, "../../../.env")});
 
-// tslint:disable:no-console
 
 async function run() {
     const args = process.argv.slice(2);
@@ -19,12 +19,12 @@ async function run() {
     const allTeams = await (new TeamDAO()).getAllTeams();
     const mode: string = args[0] ?? "append";
 
-    console.log("passing to csv processor");
+    logger.info("passing to csv processor");
     // @ts-ignore
     return await processDraftPickCsv(DraftPickCsv, allTeams, new DraftPickDAO(), mode);
 }
 
 run()
-.then(inserted => { console.log(inserted.length); process.exit(0);
+.then(inserted => { logger.info(inserted.length); process.exit(0);
 })
-.catch(err => { console.error(err); process.exit(99); });
+.catch(err => { logger.error(err); process.exit(99); });
