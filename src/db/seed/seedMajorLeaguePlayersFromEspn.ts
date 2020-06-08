@@ -3,10 +3,10 @@ import { resolve as resolvePath } from "path";
 import initializeDb from "../../bootstrap/db";
 import PlayerDAO from "../../DAO/PlayerDAO";
 import EspnAPI from "../../espn/espnApi";
+import logger from "../../bootstrap/logger";
 
 dotenvConfig({path: resolvePath(__dirname, "../../../tests/.env")});
 
-// tslint:disable:no-console
 
 async function run() {
     const args = process.argv.slice(2);
@@ -22,5 +22,5 @@ async function run() {
 }
 
 run()
-    .then(inserted => { console.log(inserted.length); process.exit(0); })
-    .catch(err => { console.error(err); process.exit(99); });
+    .then(inserted => { logger.info(`${inserted.length}`); process.exit(0); })
+    .catch(err => { logger.error(err); process.exit(99); });

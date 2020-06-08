@@ -86,7 +86,7 @@ describe("Player Class", () => {
         });
         it("convertEspnMajorLeaguerToPlayer/1 - should pass along the espn player id and other info", () => {
             expect(convertedPlayer.meta).toMatchObject({espnPlayer});
-            expect(convertedPlayer.meta).toMatchObject({position: "1B"});
+            expect(convertedPlayer.meta).toMatchObject({position: "SP"});
         });
     });
 });

@@ -12,8 +12,8 @@ describe("Trade Participant Class", () => {
     afterAll(() => {
         logger.debug("~~~~~~TRADE PARTICIPANT TESTS COMPLETE~~~~~~");
     });
-    const team = TeamFactory.getTeam(undefined, undefined, {id: 1});
-    const trade = TradeFactory.getTrade(undefined, undefined, {id: 1});
+    const team = TeamFactory.getTeam(undefined, undefined);
+    const trade = TradeFactory.getTrade(undefined, undefined);
     const participant = TradeFactory.getTradeRecipient(team, trade);
 
     describe("constructor", () => {
