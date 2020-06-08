@@ -112,6 +112,11 @@ ${ordinal(pick!.round)} round pick from _${tradedPick!.sender.name}_`;
         logger.info("Rendering title text");
         return ":loud_sound:  *A Trade Has Been Submitted*  :loud_sound:";
     },
+
+    getLinkText: () => {
+        logger.info("Rendering link text");
+        return ":link: Submit trades on the <https://trades.flexfoxfantasy.com|FlexFoxFantasy TradeMachine> by 11:00PM ET";
+    },
 };
 
 export default TradeFormatter;
