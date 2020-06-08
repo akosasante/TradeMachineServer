@@ -10,7 +10,7 @@ import logger from "../bootstrap/logger";
 import Team from "../models/team";
 import User from "../models/user";
 import { partition, zip } from "lodash";
-import {inspect} from "util";
+import { inspect } from "util";
 
 interface TradeFormatterDeps {
     playerDao: PlayerDAO;
