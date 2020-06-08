@@ -65,7 +65,7 @@ export const Emailer = {
                 url: resetPassPage,
             },
         })
-        .then((res: any) => {
+        .then((res: SendInBlueSendResponse) => {
             logger.info(`Successfully sent password reset email: ${inspect(res.messageId)}`);
             return res;
         })
@@ -87,7 +87,7 @@ export const Emailer = {
                 name: user.displayName || user.email,
             },
         })
-        .then((res: any) => {
+        .then((res: SendInBlueSendResponse) => {
             logger.info(`Successfully sent test email: ${inspect(res.messageId)}`);
             return res;
         })
@@ -110,7 +110,7 @@ export const Emailer = {
                 url: registrationLink,
             },
         })
-        .then((res: any) => {
+        .then((res: SendInBlueSendResponse) => {
             logger.info(`Successfully sent registration email: ${inspect(res.messageId)}`);
             return res;
         })
@@ -118,6 +118,24 @@ export const Emailer = {
             logger.error(`Ran into an error while sending registration email: ${inspect(err)}`);
             return undefined;
         });
+    },
+
+    async sendTradeRequestEmail(user: User): Promise<SendInBlueSendResponse> {
+        return Emailer.emailer.send({
+            template: "trade_request",
+            message: {
+                to: user.email,
+            },
+            locals: {},
+        })
+            .then((res: SendInBlueSendResponse) => {
+                logger.info(`Successfully sent trade request email: ${inspect(res.messageId)}`);
+                return res;
+            })
+            .catch((err: Error) => {
+                logger.error(`Ran into an error while sending trade request email: ${inspect(err)}`);
+                return undefined;
+            });
     },
 };
 
