@@ -6,6 +6,7 @@ import path from "path";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import User from "../models/user";
+import Trade from "../models/trade";
 
 export interface SendInBlueSendResponse {
     envelope: {
@@ -120,13 +121,15 @@ export const Emailer = {
         });
     },
 
-    async sendTradeRequestEmail(user: User): Promise<SendInBlueSendResponse> {
+    async sendTradeRequestEmail(user: User, trade: Trade): Promise<SendInBlueSendResponse> {
         return Emailer.emailer.send({
             template: "trade_request",
             message: {
                 to: user.email,
             },
-            locals: {},
+            locals: {
+                tradeSender: trade.creator,
+            },
         })
             .then((res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade request email: ${inspect(res.messageId)}`);
