@@ -251,26 +251,43 @@ const EspnTeamMapping: EspnProTeam[] = [
     },
 ];
 
-export const EspnPositionMapping = [
-    "C",
-    "1B",
-    "2B",
-    "3B",
-    "SS",
-    "2B/SS",
-    "1B/3B",
-    "IF",
-    "LF",
-    "RF",
-    "OF",
-    "DH",
-    "UTIL",
-    "P",
-    "SP",
-    "RP",
-    "BE",
-    "IL",
-];
+export const EspnPositionMapping: {[key: number]: string} = {
+    1: "SP",
+    2: "C",
+    3: "1B",
+    4: "2B",
+    5: "3B",
+    6: "SS",
+    7: "LF",
+    8: "CF",
+    9: "RF",
+    10: "DH",
+    11: "RP",
+};
+
+export const EspnEligiblePositionMapping: {[key: number]: string} = {
+    0: "C",
+    1: "1B",
+    2: "2B",
+    3: "3B",
+    4: "SS",
+    5: "OF", // ?
+    6: "2B/SS", // ?
+    7: "1B/3B", // ?
+    8: "LF",
+    9: "CF",
+    10: "RF",
+    11: "DH", // ?
+    12: "UTIL",
+    13: "P", // ?
+    14: "SP",
+    15: "RP",
+    16: "BE",
+    17: "IL",
+    18: "IF", // ?
+};
+
+export const EspnNonPositionalNonValidSlots = [5, 6, 7, 11, 13, 16, 17, 18, 19];
 
 export function espnMajorLeagueTeamFromId(id?: number) {
     return EspnTeamMapping.find(team => team.id === id);

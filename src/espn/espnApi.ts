@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import Player from "../models/player";
-import {uniqWith} from "lodash";
+import { uniqWith } from "lodash";
 import logger from "../bootstrap/logger";
 import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";

@@ -5,10 +5,10 @@ import { processMinorLeagueCsv } from "../../csv/PlayerParser";
 import PlayerDAO from "../../DAO/PlayerDAO";
 import TeamDAO from "../../DAO/TeamDAO";
 import { getCsvFromUrl } from "./helpers/csvHelper";
+import logger from "../../bootstrap/logger";
 
 dotenvConfig({path: resolvePath(__dirname, "../../../.env")});
 
-// tslint:disable:no-console
 
 async function run() {
     const args = process.argv.slice(2);
@@ -26,11 +26,11 @@ async function run() {
         mode = args[0];
     }
 
-    console.log("passing to csv processor");
+    logger.info("passing to csv processor");
     // @ts-ignore
     return await processMinorLeagueCsv(MinorLeagueCsv, allTeams, playerDAO, mode);
 }
 
 run()
-    .then(inserted => { console.log(inserted.length); process.exit(0); })
-    .catch(err => { console.error(err); process.exit(99); });
+    .then(inserted => { logger.info(`${inserted.length}`); process.exit(0); })
+    .catch(err => { logger.error(err); process.exit(99); });

@@ -1,11 +1,11 @@
-import { PlayerLeagueType } from "../../src/models/player";
+import {PlayerLeagueType} from "../../src/models/player";
 import Trade from "../../src/models/trade";
-import TradeItem, { TradeItemType } from "../../src/models/tradeItem";
-import TradeParticipant, { TradeParticipantType } from "../../src/models/tradeParticipant";
-import { DraftPickFactory } from "./DraftPickFactory";
-import { PlayerFactory } from "./PlayerFactory";
-import { TeamFactory } from "./TeamFactory";
-import { v4 as uuid } from "uuid";
+import TradeItem, {TradeItemType} from "../../src/models/tradeItem";
+import TradeParticipant, {TradeParticipantType} from "../../src/models/tradeParticipant";
+import {DraftPickFactory} from "./DraftPickFactory";
+import {PlayerFactory} from "./PlayerFactory";
+import {TeamFactory} from "./TeamFactory";
+import {v4 as uuid} from "uuid";
 import Team from "../../src/models/team";
 
 export class TradeFactory {
@@ -24,7 +24,7 @@ export class TradeFactory {
     }
 
     public static getTradeItems(sender?: Team, recipient?: Team) {
-        const majorPlayer = TradeFactory.getTradedMajorPlayer(PlayerFactory.getPlayer("Pete Buttjudge"), sender, recipient);
+        const majorPlayer = TradeFactory.getTradedMajorPlayer(PlayerFactory.getPlayer("Pete Buttjudge", PlayerLeagueType.MAJOR), sender, recipient);
         const minorPlayer = TradeFactory.getTradedMinorPlayer(PlayerFactory.getPlayer(), recipient, sender);
         const pick = TradeFactory.getTradedPick(DraftPickFactory.getPick(), sender, recipient);
         return [majorPlayer, minorPlayer, pick];
