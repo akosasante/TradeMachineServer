@@ -8,7 +8,8 @@ import TradeParticipant, { TradeParticipantType } from "./tradeParticipant";
 import logger from "../bootstrap/logger";
 
 export enum TradeStatus {
-    SUBMITTED,
+    DRAFT,
+    REQUESTED,
     PENDING, // only a thing for more than two-person trades
     ACCEPTED,
     REJECTED,
@@ -66,7 +67,7 @@ export default class Trade extends BaseModel {
         return this.picks.filter(pick => pick.type === LeagueLevel.LOW);
     }
 
-    @Column({type: "enum", enum: TradeStatus, default: TradeStatus.SUBMITTED})
+    @Column({type: "enum", enum: TradeStatus, default: TradeStatus.DRAFT})
     public status?: TradeStatus;
 
     @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade,
