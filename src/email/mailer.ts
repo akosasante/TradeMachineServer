@@ -7,6 +7,11 @@ import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import User from "../models/user";
 import Trade from "../models/trade";
+import TradeItem from "../models/tradeItem";
+import Player, { PlayerLeagueType } from "../models/player";
+import { partition } from "lodash";
+import DraftPick from "../models/draftPick";
+import ordinal from "ordinal";
 
 export interface SendInBlueSendResponse {
     envelope: {
@@ -34,6 +39,28 @@ const SendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SendI
 
 const baseDomain = process.env.BASE_URL;
 
+function getTitleText(trade: Trade) {
+    if (trade.tradeParticipants?.length === 2) {
+        return `${trade.creator?.name} requested a trade with you:`;
+    } else {
+        return `${trade.creator?.name} requested a trade with you and others`;
+    }
+}
+
+function getTradeTextForRequest(trade: Trade) {
+    return trade.tradeParticipants?.map(participant => {
+        const sentPlayers = TradeItem.itemsSentBy(TradeItem.filterPlayers(trade.tradeItems), participant.team).map(item => item.entity as Player);
+        const [sentMajors, sentMinors] = partition(sentPlayers, player => player.league === PlayerLeagueType.MAJOR);
+        const sentPicks = TradeItem.itemsSentBy(TradeItem.filterPicks(trade.tradeItems), participant.team).map(item => item.entity as DraftPick);
+        return {
+            sender: participant.team.name,
+            majors: sentMajors.map(player => `${player.name} - ${player.mlbTeam} - ${player.getEspnEligiblePositions()}`),
+            minors: sentMinors.map(player => `${player.name} - ${player.meta?.minorLeaguePlayer?.team} - ${player.meta?.minorLeaguePlayer?.primary_position}`),
+            picks: sentPicks.map(pick => `${pick!.originalOwner?.name}'s ${pick!.season} ${ordinal(pick!.round)} round pick`),
+        };
+    });
+}
+
 export const Emailer = {
     emailer: new Email({
         juice: true,
@@ -51,6 +78,7 @@ export const Emailer = {
         views: {
             root: path.resolve("./src/email/templates"),
         },
+        send: true,
     }),
 
     async sendPasswordResetEmail(user: User): Promise<SendInBlueSendResponse> {
@@ -121,14 +149,19 @@ export const Emailer = {
         });
     },
 
-    async sendTradeRequestEmail(user: User, trade: Trade): Promise<SendInBlueSendResponse> {
+    async sendTradeRequestEmail(user?: User, trade?: Trade): Promise<SendInBlueSendResponse> {
+        logger.debug(inspect(getTradeTextForRequest(trade!)));
         return Emailer.emailer.send({
             template: "trade_request",
             message: {
-                to: user.email,
+                to: "tripleabatt@gmail.com",
             },
             locals: {
-                tradeSender: trade.creator,
+                tradeSender: trade!.creator!.name,
+                titleText: getTitleText(trade!),
+                tradesBySender: getTradeTextForRequest(trade!),
+                acceptUrl: `${baseDomain}/trade/${trade!.id}/acccept`,
+                rejectUrl: `${baseDomain}/trade/${trade!.id}/reject`,
             },
         })
             .then((res: SendInBlueSendResponse) => {

@@ -22,6 +22,7 @@ export interface EmailStatusEvent {
 
 @Controller("/email")
 export default class EmailController {
+    // TODO: Emails for trades
     private userDao: UserDAO;
     private emailPublisher: EmailPublisher;
 

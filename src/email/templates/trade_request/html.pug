@@ -1,0 +1,27 @@
+extends ../includes/layout.pug
+
+block head
+    //link(href="./trade_request/request.css", rel=stylesheet)
+    title= subject
+
+block content
+    h2= titleText
+    .divider
+    each trade in tradesBySender
+        h3 #{trade.sender} would send:
+        each player in trade.majors
+            ul
+                li= player
+        hr
+        each player in trade.minors
+            ul
+                li= player
+        hr
+        each pick in trade.picks
+            ul
+                li= pick
+        hr
+    a.button-link(href=`${acceptUrl}`)
+        span Accept Trade
+    a.button-link(href=`${rejectUrl}`)
+        span Reject Trade

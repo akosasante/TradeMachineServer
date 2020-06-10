@@ -10,6 +10,7 @@ import TradeParticipant from "../../models/tradeParticipant";
 
 @JsonController("/trades")
 export default class TradeController {
+    // TODO: Endpoints for "accepted"/"rejected" trade, for "submitTrade/sendToSlack"
     private dao: TradeDAO;
 
     constructor(DAO?: TradeDAO) {
@@ -38,6 +39,7 @@ export default class TradeController {
     public async createTrade(@Body() tradeObj: Partial<Trade>): Promise<Trade> {
         logger.debug("create trade endpoint");
         const trade = await this.dao.createTrade(tradeObj);
+        // TODO: Send an email to the trade recipients (controller)
         logger.debug(`created trade: ${inspect(trade)}`);
         return trade;
     }
@@ -45,6 +47,7 @@ export default class TradeController {
     @Authorized(Role.ADMIN)
     @Put(UUIDPattern)
     public async updateTrade(@Param("id") id: string, @Body() tradeObj: Partial<Trade>): Promise<Trade> {
+        // TODO update trade status? or should we have a separate table ?
         logger.debug("update trade endpoint");
         const existingTrade = await this.dao.getTradeById(id);
         logger.debug(`EXISTING PART: ${inspect(existingTrade.tradeParticipants)}`);
