@@ -160,7 +160,7 @@ export const Emailer = {
                 tradeSender: trade!.creator!.name,
                 titleText: getTitleText(trade!),
                 tradesBySender: getTradeTextForRequest(trade!),
-                acceptUrl: `${baseDomain}/trade/${trade!.id}/acccept`,
+                acceptUrl: `${baseDomain}/trade/${trade!.id}/accept`,
                 rejectUrl: `${baseDomain}/trade/${trade!.id}/reject`,
             },
         })
