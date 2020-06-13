@@ -4,7 +4,7 @@ import { Repository } from "typeorm";
 import TradeDAO from "../../../src/DAO/TradeDAO";
 import { TradeFactory } from "../../factories/TradeFactory";
 import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
-import Trade from "../../../src/models/trade";
+import Trade, { TradeStatus } from "../../../src/models/trade";
 import logger from "../../../src/bootstrap/logger";
 import { v4 as uuid } from "uuid";
 import TradeItem from "../../../src/models/tradeItem";
@@ -17,6 +17,7 @@ describe("TradeDAO", () => {
         findOneOrFail: jest.fn(),
         save: jest.fn(),
         createQueryBuilder: jest.fn(),
+        update: jest.fn(),
     };
 
     const testTrade = TradeFactory.getTrade();
@@ -70,16 +71,17 @@ describe("TradeDAO", () => {
         expect(res).toEqual(testTrade);
     });
 
-    // it("updateTrade - should call the db update and findOneOrFail once with id and tradeObj", async () => {
-    //     mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
-    //     const res = await tradeDAO.updateTrade(1, testTrade);
-    //
-    //     expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
-    //     expect(mockTradeDb.update).toHaveBeenCalledWith({id: 1}, testTrade);
-    //     expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
-    //     expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(1);
-    //     expect(res).toEqual(testTrade);
-    // });
+    it("updateStatus - should call the db update and findOneOrFail once with id and tradeObj", async () => {
+        mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
+        const status = TradeStatus.PENDING;
+        const res = await tradeDAO.updateStatus(testTrade.id!, status);
+
+        expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
+        expect(mockTradeDb.update).toHaveBeenCalledWith({id: testTrade.id!}, { status });
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
+        expect(res).toEqual(testTrade);
+    });
 
     it("updateParticipants - should call createQueryBuilder and findOneOrFail with id and participants", async () => {
         const addAndRemove = jest.fn();

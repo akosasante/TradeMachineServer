@@ -1,5 +1,5 @@
 import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
-import Trade from "../models/trade";
+import Trade, {TradeStatus} from "../models/trade";
 import TradeItem from "../models/tradeItem";
 import TradeParticipant from "../models/tradeParticipant";
 import { BadRequestError } from "routing-controllers";
@@ -31,11 +31,6 @@ public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
         return this.tradeDb.findOneOrFail(saved.id);
     }
 
-    // public async updateTrade(id: string, tradeObj: Partial<Trade>): Promise<Trade> {
-    //
-    //     return await this.getTradeById(id);
-    // }
-
     public async deleteTrade(id: string): Promise<DeleteResult> {
         await this.tradeDb.findOneOrFail(id);
         return await this.tradeDb.createQueryBuilder()
@@ -64,5 +59,10 @@ public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
             .of(id)
             .addAndRemove(itemsToAdd, itemsToRemove);
         return await this.tradeDb.findOneOrFail(id);
+    }
+
+    public async updateStatus(id: string, status: TradeStatus): Promise<Trade> {
+        await this.tradeDb.update({ id }, { status });
+        return await this.getTradeById(id);
     }
 }
