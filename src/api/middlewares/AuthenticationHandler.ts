@@ -24,7 +24,7 @@ export class LoginHandler implements ExpressMiddlewareInterface {
                 });
                 return next(new UnauthorizedError(message));
             } else {
-                request.session!.user = await serializeUser(user);
+                request.session!.user = serializeUser(user);
                 request.session!.save((sessionErr: any) => {
                     logger.debug(inspect(request.session));
                     if (sessionErr) {
@@ -54,7 +54,7 @@ export class RegisterHandler implements ExpressMiddlewareInterface {
                 return next(new Error("For some reason could not register user"));
             } else {
                 logger.debug(`registered user: ${user}`);
-                request.session!.user = await serializeUser(user);
+                request.session!.user = serializeUser(user);
                 return next();
             }
         });
