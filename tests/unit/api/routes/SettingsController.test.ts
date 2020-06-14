@@ -23,9 +23,7 @@ describe("SettingsController", () => {
         logger.debug("~~~~~~SETTINGS CONTROLLER TESTS COMPLETE~~~~~~");
     });
     afterEach(() => {
-        Object.entries(mockSettingsDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockReset();
-        });
+        Object.values(mockSettingsDAO).forEach(mockFn => mockFn.mockReset());
     });
 
    describe("getAllSettings method", () => {

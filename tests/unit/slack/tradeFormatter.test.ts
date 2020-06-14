@@ -35,6 +35,11 @@ const mockPlayerDao = {
     getPlayerById: mockGetPlayerById,
 } as unknown as PlayerDAO;
 
+afterEach(() => {
+    mockGetPlayerById.mockClear();
+    [mockPickDao, mockPlayerDao].forEach(mockedThing => Object.values(mockedThing).forEach(mockFn => mockFn.mockClear()));
+});
+
 
 describe("Trade Formatter methods", () => {
     it("getTitleText/0 should return the expected title text", () => {

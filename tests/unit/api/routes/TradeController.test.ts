@@ -38,9 +38,7 @@ describe("TradeController", () => {
         logger.debug("~~~~~~TRADE CONTROLLER TESTS COMPLETE~~~~~~");
     });
     afterEach(() => {
-        Object.entries(mockTradeDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockReset();
-        });
+        Object.values(mockTradeDAO).forEach(mockFn => mockFn.mockReset());
     });
 
     describe("getAllTrades method", () => {

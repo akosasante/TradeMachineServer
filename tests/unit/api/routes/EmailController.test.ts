@@ -21,14 +21,8 @@ describe("EmailController", () => {
     };
 
     const mockRes = {
-        status: jest.fn(function() {
-            // @ts-ignore
-            return this;
-        }),
-        json: jest.fn(function() {
-            // @ts-ignore
-            return this;
-        }),
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
     };
     const testUser = UserFactory.getUser();
     const emailController = new EmailController(mockUserDAO as unknown as UserDAO, mockMailPublisher as unknown as EmailPublisher);
@@ -40,10 +34,9 @@ describe("EmailController", () => {
         logger.debug("~~~~~~EMAIL CONTROLLER TESTS COMPLETE~~~~~~");
     });
     afterEach(() => {
-        [mockUserDAO, mockMailPublisher, mockRes].forEach(mockedThing =>
-            Object.entries(mockedThing).forEach((kvp: [string, jest.Mock<any, any>]) => {
-                kvp[1].mockReset();
-            }));
+        [mockUserDAO, mockMailPublisher].forEach(mockedThing =>
+            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
+        Object.values(mockRes).forEach(mockFn => mockFn.mockClear());
     });
 
     describe("sendResetEmail method", () => {

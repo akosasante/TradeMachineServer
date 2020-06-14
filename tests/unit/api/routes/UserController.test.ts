@@ -28,9 +28,7 @@ describe("UserController", () => {
         logger.debug("~~~~~~USER CONTROLLER TESTS COMPLETE~~~~~~");
     });
     afterEach(() => {
-        Object.entries(mockUserDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockReset();
-        });
+        Object.values(mockUserDAO).forEach(mockFn => mockFn.mockReset());
     });
 
     describe("getAll method", () => {

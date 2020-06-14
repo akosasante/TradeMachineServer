@@ -24,9 +24,7 @@ describe("TradeDAO", () => {
     const tradeDAO = new TradeDAO(mockTradeDb as unknown as Repository<Trade>);
 
     afterEach(() => {
-        Object.keys(mockTradeDb).forEach((action: string) => {
-            (mockTradeDb[action as keyof MockObj] as jest.Mock).mockReset();
-        });
+        Object.values(mockTradeDb).forEach(mockFn => mockFn.mockReset());
         mockWhereInIds.mockClear();
         mockExecute.mockClear();
     });

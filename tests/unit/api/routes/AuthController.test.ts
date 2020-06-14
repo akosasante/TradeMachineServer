@@ -22,23 +22,16 @@ describe("AuthController", () => {
     const mockReq = { session: {destroy: jest.fn()} };
     // @ts-ignore
     const mockRes: Response = {
-        status: jest.fn(function() {
-            // @ts-ignore
-            return this;
-        }),
-        json: jest.fn(function() {
-            // @ts-ignore
-            return this;
-        }),
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
     };
     const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {passwordResetToken: "xyz-uuid"});
     let mockSess = { user: testUser.id };
 
     afterEach(() => {
-        Object.entries(mockUserDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockReset();
-        });
+        Object.values(mockUserDAO).forEach(mockFn => mockFn.mockReset());
         mockReq.session.destroy.mockReset();
+        Object.values(mockRes).forEach(mockFn => mockFn.mockClear());
     });
 
     describe("login method", () => {
@@ -113,14 +106,14 @@ describe("AuthController", () => {
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
             expect(mockRes.status).toHaveBeenCalledWith(404);
         });
-        it("should return a 404 Not Found status if the user doesn't have a passwordResetToken", async () => {
+        it("should return a 404 Not Found status if the user passwordResetToken doesn't doesn't match", async () => {
             mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
-            await authController.resetPassword(testUser.id!, "lol2", "xyz-uuid", mockRes);
+            await authController.resetPassword(testUser.id!, "lol2", "abc-uuid", mockRes);
 
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
             expect(mockRes.status).toHaveBeenCalledWith(404);
         });
-        it("should return a 404 Not Found status if the user passwordResetToken doesn't match", async () => {
+        it("should return a 404 Not Found status if the user doesn't have a passwordResetToken", async () => {
             mockUserDAO.getUserById.mockResolvedValueOnce({...testUser, passwordResetToken: undefined});
             await authController.resetPassword(testUser.id!, "lol2", "xyz-uuid", mockRes);
 

@@ -50,9 +50,7 @@ describe("PlayerParser", () => {
             Promise.resolve(arr.map(player => new Player(player as Player))));
     });
     afterEach(() => {
-        Object.entries(mockDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockReset();
-        });
+        Object.values(mockDAO).forEach(mockFn => mockFn.mockReset());
     });
 
     it("should not call deleteAllPlayers if mode is undefined", async () => {

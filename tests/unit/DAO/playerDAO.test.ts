@@ -22,9 +22,7 @@ describe("PlayerDAO", () => {
     const playerDAO: PlayerDAO = new PlayerDAO(mockPlayerDb as unknown as Repository<Player>);
 
     afterEach(() => {
-        Object.keys(mockPlayerDb).forEach((action: string) => {
-            (mockPlayerDb[action as keyof MockObj] as jest.Mock).mockReset();
-        });
+        Object.values(mockPlayerDb).forEach(mockFn => mockFn.mockReset());
 
         mockExecute.mockClear();
         mockWhereInIds.mockClear();

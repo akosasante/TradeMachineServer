@@ -29,9 +29,7 @@ beforeEach(() => {
     mockUserDAO.getUserById.mockResolvedValue(testUser);
 });
 afterEach(() => {
-    Object.keys(mockUserDAO).forEach((action: string) => {
-        (mockUserDAO[action as keyof MockObj] as jest.Mock).mockReset();
-    });
+    Object.values(mockUserDAO).forEach(mockFn => mockFn.mockReset());
 });
 
 describe("Authorization helper methods", () => {

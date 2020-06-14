@@ -20,9 +20,7 @@ describe("SettingsDAO", () => {
     const settingsDAO = new SettingsDAO(mockSettingsDb as unknown as Repository<Settings>);
 
     afterEach(() => {
-        Object.keys(mockSettingsDb).forEach((action: string) => {
-            (mockSettingsDb[action as keyof MockObj] as jest.Mock).mockReset();
-        });
+        Object.values(mockSettingsDb).forEach(mockFn => mockFn.mockReset());
     });
 
     beforeAll(() => {

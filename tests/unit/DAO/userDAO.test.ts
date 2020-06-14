@@ -21,9 +21,7 @@ describe("UserDAO", () => {
     const userDAO: UserDAO = new UserDAO(mockUserDb as unknown as Repository<User>);
 
     afterEach(async () => {
-        Object.keys(mockUserDb).forEach((action: string) => {
-            (mockUserDb[action as keyof MockObj] as jest.Mock).mockReset();
-        });
+        Object.values(mockUserDb).forEach(mockFn => mockFn.mockReset());
 
         mockExecute.mockClear();
         mockWhereInIds.mockClear();

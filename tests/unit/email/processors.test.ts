@@ -29,9 +29,7 @@ afterAll(() => {
 });
 afterEach(() => {
     [Emailer, mockEmailDAO].forEach(mockedThing =>
-        Object.values(mockedThing).forEach((mockFn: jest.Mock<any, any>) => {
-            mockFn.mockReset();
-        }));
+        Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
 });
 
 describe("Queue processors", () => {
