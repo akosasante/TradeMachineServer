@@ -27,8 +27,8 @@ describe("DraftPickDAO", () => {
             (mockPickDb[action as keyof MockObj] as jest.Mock).mockReset();
         });
 
-        mockExecute.mockReset();
-        mockWhereInIds.mockReset();
+        mockExecute.mockClear();
+        mockWhereInIds.mockClear();
     });
 
     beforeAll(() => {

@@ -25,8 +25,8 @@ describe("UserDAO", () => {
             (mockUserDb[action as keyof MockObj] as jest.Mock).mockReset();
         });
 
-        mockExecute.mockReset();
-        mockWhereInIds.mockReset();
+        mockExecute.mockClear();
+        mockWhereInIds.mockClear();
     });
     beforeAll(() => {
         logger.debug("~~~~~~USER DAO TESTS BEGIN~~~~~~");
