@@ -13,7 +13,7 @@ import { MockObj } from "../DAO/daoHelpers";
 const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, Role.OWNER);
 
 const mockUserDAO: MockObj = {
-    getUserById: jest.fn().mockResolvedValue(testUser),
+    getUserById: jest.fn(),
     findUserWithPassword: jest.fn(),
     createUsers: jest.fn(),
     updateUser: jest.fn(),
@@ -24,6 +24,9 @@ beforeAll(() => {
 });
 afterAll(() => {
     logger.debug("~~~~~~AUTH TESTS COMPLETE~~~~~~");
+});
+beforeEach(() => {
+    mockUserDAO.getUserById.mockResolvedValue(testUser);
 });
 afterEach(() => {
     Object.keys(mockUserDAO).forEach((action: string) => {
