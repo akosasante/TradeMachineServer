@@ -7,7 +7,7 @@ import { TradeParticipantType } from "../../../../src/models/tradeParticipant";
 import { TradeFactory } from "../../../factories/TradeFactory";
 import logger from "../../../../src/bootstrap/logger";
 import { UserFactory } from "../../../factories/UserFactory";
-import { UnauthorizedError } from "routing-controllers";
+import { BadRequestError, UnauthorizedError } from "routing-controllers";
 import { TeamFactory } from "../../../factories/TeamFactory";
 import { TradeItemType } from "../../../../src/models/tradeItem";
 
@@ -75,11 +75,15 @@ describe("TradeController", () => {
     describe("createTrade method", () => {
         it("should create a trade", async () => {
             mockTradeDAO.createTrade.mockResolvedValueOnce(testTrade);
-            const res = await tradeController.createTrade(testTrade.parse());
+            const res = await tradeController.createTrade(tradeOwner, testTrade.parse());
 
             expect(mockTradeDAO.createTrade).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.createTrade).toHaveBeenCalledWith(testTrade.parse());
             expect(res).toEqual(testTrade);
+        });
+        it("should throw a BadRequestError if a non-admin tries to create a trade with an invalid status", async () => {
+            const invalidTrade = new Trade({...testTrade, status: TradeStatus.ACCEPTED});
+            await expect(tradeController.createTrade(tradeOwner, invalidTrade.parse())).rejects.toThrow(BadRequestError);
         });
     });
 
@@ -141,10 +145,10 @@ describe("TradeController", () => {
             const newCreator = TradeFactory.getTradeCreator(TeamFactory.getTeam());
             const updatedTrade = new Trade({...testTrade.parse(), tradeParticipants: [newCreator, recipient!]});
             mockTradeDAO.updateParticipants.mockResolvedValueOnce(updatedTrade);
+            mockTradeDAO.updateItems.mockResolvedValueOnce(updatedTrade);
 
             const res = await tradeController.updateTrade(tradeOwner, testTrade.id!, updatedTrade.parse());
 
-            expect(mockTradeDAO.updateItems).toHaveBeenCalledTimes(0);
             expect(mockTradeDAO.updateParticipants).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.updateParticipants).toHaveBeenCalledWith(testTrade.id, [newCreator], [creator]);
             expect(res).toMatchObject({
@@ -153,7 +157,7 @@ describe("TradeController", () => {
                 tradeParticipants: expect.toIncludeSameMembers([newCreator, recipient]),
             });
         });
-        it("should call the updateItems method", async () => {
+        it("should call the updateItems method with correct args", async () => {
             const newPick = TradeFactory.getTradedPick(undefined,
                 testTrade.tradeParticipants![0].team,
                 testTrade.tradeParticipants![1].team);
@@ -161,10 +165,10 @@ describe("TradeController", () => {
             const existingPick  = testTrade.tradeItems!.find(item => item.tradeItemType === TradeItemType.PICK);
             const updatedTrade = new Trade({...testTrade.parse(), tradeItems: [newPick, ...existingPlayers]});
             mockTradeDAO.updateItems.mockResolvedValueOnce(updatedTrade);
+            mockTradeDAO.updateParticipants.mockResolvedValueOnce(updatedTrade);
 
             const res = await tradeController.updateTrade(tradeOwner, testTrade.id!, updatedTrade.parse());
 
-            expect(mockTradeDAO.updateParticipants).toHaveBeenCalledTimes(0);
             expect(mockTradeDAO.updateItems).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.updateItems).toHaveBeenCalledWith(testTrade.id,
                 [newPick], [existingPick]);

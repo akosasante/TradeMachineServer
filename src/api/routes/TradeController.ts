@@ -1,6 +1,6 @@
 import { differenceBy } from "lodash";
 import {
-    Authorized, Body, CurrentUser, Delete, Get,
+    Authorized, BadRequestError, Body, CurrentUser, Delete, Get,
     JsonController, Param, Post, Put, UnauthorizedError
 } from "routing-controllers";
 import { inspect } from "util";
@@ -84,8 +84,12 @@ export default class TradeController {
     }
 
     @Post("/")
-    public async createTrade(@Body() tradeObj: Partial<Trade>): Promise<Trade> {
+    public async createTrade(@CurrentUser({ required: true }) user: User, @Body() tradeObj: Partial<Trade>): Promise<Trade> {
         logger.debug("create trade endpoint");
+        if (tradeObj.status && ![TradeStatus.DRAFT, TradeStatus.REQUESTED].includes(tradeObj.status) && !user.isAdmin()) {
+            // if a non-admin tries to create a new trade with a non-initial status, throw an error.
+            throw new BadRequestError("You cannot create a trade that is not a draft or trade request");
+        }
         const trade = await this.dao.createTrade(tradeObj);
         logger.debug(`created trade: ${inspect(trade)}`);
         return trade;
