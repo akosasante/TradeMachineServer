@@ -36,9 +36,9 @@ describe("AuthController", () => {
 
     afterEach(() => {
         Object.entries(mockUserDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockClear();
+            kvp[1].mockReset();
         });
-        mockReq.session.destroy.mockClear();
+        mockReq.session.destroy.mockReset();
     });
 
     describe("login method", () => {

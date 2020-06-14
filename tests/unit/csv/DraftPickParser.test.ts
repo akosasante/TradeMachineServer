@@ -46,7 +46,7 @@ describe("DraftPickParser", () => {
 
     afterEach(() => {
         Object.entries(mockDAO).forEach((kvp: [string, jest.Mock]) => {
-            kvp[1].mockClear();
+            kvp[1].mockReset();
         });
     });
 

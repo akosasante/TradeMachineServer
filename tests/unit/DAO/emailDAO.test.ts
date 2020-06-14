@@ -14,7 +14,7 @@ describe("EmailDAO", () => {
 
     afterEach(() => {
         Object.keys(mockEmailDb).forEach((action: string) => {
-            (mockEmailDb[action as keyof MockObj] as jest.Mock).mockClear();
+            (mockEmailDb[action as keyof MockObj] as jest.Mock).mockReset();
         });
     });
     beforeAll(() => {

@@ -25,11 +25,11 @@ describe("TradeDAO", () => {
 
     afterEach(() => {
         Object.keys(mockTradeDb).forEach((action: string) => {
-            (mockTradeDb[action as keyof MockObj] as jest.Mock).mockClear();
+            (mockTradeDb[action as keyof MockObj] as jest.Mock).mockReset();
         });
 
-        mockExecute.mockClear();
-        mockWhereInIds.mockClear();
+        mockExecute.mockReset();
+        mockWhereInIds.mockReset();
     });
 
     beforeAll(() => {

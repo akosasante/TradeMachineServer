@@ -24,7 +24,7 @@ describe("SettingsController", () => {
     });
     afterEach(() => {
         Object.entries(mockSettingsDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockClear();
+            kvp[1].mockReset();
         });
     });
 

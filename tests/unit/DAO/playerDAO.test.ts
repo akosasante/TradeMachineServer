@@ -23,11 +23,11 @@ describe("PlayerDAO", () => {
 
     afterEach(() => {
         Object.keys(mockPlayerDb).forEach((action: string) => {
-            (mockPlayerDb[action as keyof MockObj] as jest.Mock).mockClear();
+            (mockPlayerDb[action as keyof MockObj] as jest.Mock).mockReset();
         });
 
-        mockExecute.mockClear();
-        mockWhereInIds.mockClear();
+        mockExecute.mockReset();
+        mockWhereInIds.mockReset();
     });
 
     beforeAll(() => {

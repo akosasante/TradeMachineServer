@@ -24,11 +24,11 @@ describe("DraftPickDAO", () => {
 
     afterEach(() => {
         Object.keys(mockPickDb).forEach((action: string) => {
-            (mockPickDb[action as keyof MockObj] as jest.Mock).mockClear();
+            (mockPickDb[action as keyof MockObj] as jest.Mock).mockReset();
         });
 
-        mockExecute.mockClear();
-        mockWhereInIds.mockClear();
+        mockExecute.mockReset();
+        mockWhereInIds.mockReset();
     });
 
     beforeAll(() => {

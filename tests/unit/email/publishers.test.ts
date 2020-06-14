@@ -16,7 +16,7 @@ afterAll(() => {
     logger.debug("~~~~~~EMAIL PUBLISHER COMPLETE~~~~~~");
 });
 afterEach(() => {
-    mockQueue.add.mockClear();
+    mockQueue.add.mockReset();
 });
 
 describe("EmailPublisher", () => {

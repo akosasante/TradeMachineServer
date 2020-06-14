@@ -21,7 +21,7 @@ describe("SettingsDAO", () => {
 
     afterEach(() => {
         Object.keys(mockSettingsDb).forEach((action: string) => {
-            (mockSettingsDb[action as keyof MockObj] as jest.Mock).mockClear();
+            (mockSettingsDb[action as keyof MockObj] as jest.Mock).mockReset();
         });
     });
 

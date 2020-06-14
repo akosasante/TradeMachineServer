@@ -22,11 +22,11 @@ describe("UserDAO", () => {
 
     afterEach(async () => {
         Object.keys(mockUserDb).forEach((action: string) => {
-            (mockUserDb[action as keyof MockObj] as jest.Mock).mockClear();
+            (mockUserDb[action as keyof MockObj] as jest.Mock).mockReset();
         });
 
-        mockExecute.mockClear();
-        mockWhereInIds.mockClear();
+        mockExecute.mockReset();
+        mockWhereInIds.mockReset();
     });
     beforeAll(() => {
         logger.debug("~~~~~~USER DAO TESTS BEGIN~~~~~~");

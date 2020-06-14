@@ -21,11 +21,11 @@ describe("TeamDAO", () => {
 
     afterEach(async () => {
         Object.keys(mockTeamDb).forEach((action: string) => {
-            (mockTeamDb[action as keyof MockObj] as jest.Mock).mockClear();
+            (mockTeamDb[action as keyof MockObj] as jest.Mock).mockReset();
         });
 
-        mockExecute.mockClear();
-        mockWhereInIds.mockClear();
+        mockExecute.mockReset();
+        mockWhereInIds.mockReset();
     });
 
     beforeAll(() => {

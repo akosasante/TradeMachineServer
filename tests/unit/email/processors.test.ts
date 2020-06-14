@@ -30,7 +30,7 @@ afterAll(() => {
 afterEach(() => {
     [Emailer, mockEmailDAO].forEach(mockedThing =>
         Object.values(mockedThing).forEach((mockFn: jest.Mock<any, any>) => {
-            mockFn.mockClear();
+            mockFn.mockReset();
         }));
 });
 

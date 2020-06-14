@@ -42,7 +42,7 @@ describe("EmailController", () => {
     afterEach(() => {
         [mockUserDAO, mockMailPublisher, mockRes].forEach(mockedThing =>
             Object.entries(mockedThing).forEach((kvp: [string, jest.Mock<any, any>]) => {
-                kvp[1].mockClear();
+                kvp[1].mockReset();
             }));
     });
 

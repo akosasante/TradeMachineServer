@@ -27,7 +27,7 @@ afterAll(() => {
 });
 afterEach(() => {
     Object.keys(mockUserDAO).forEach((action: string) => {
-        (mockUserDAO[action as keyof MockObj] as jest.Mock).mockClear();
+        (mockUserDAO[action as keyof MockObj] as jest.Mock).mockReset();
     });
 });
 
@@ -57,7 +57,7 @@ describe("Authorization helper methods", () => {
     describe("signUpAuthentication", () => {
         const cb = jest.fn();
         afterEach(() => {
-            cb.mockClear();
+            cb.mockReset();
         });
 
         it("should create and return a new user if none existed before", async () => {
@@ -107,7 +107,7 @@ describe("Authorization helper methods", () => {
     describe("signInAuthentication", () => {
         const cb = jest.fn();
         afterEach(() => {
-            cb.mockClear();
+            cb.mockReset();
         });
 
         it("should return an updated user if the password is matching", async () => {

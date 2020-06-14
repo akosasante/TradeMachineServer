@@ -47,7 +47,7 @@ describe("PlayerParser", () => {
 
     afterEach(() => {
         Object.entries(mockDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockClear();
+            kvp[1].mockReset();
         });
     });
 
