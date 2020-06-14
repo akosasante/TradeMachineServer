@@ -39,12 +39,16 @@ describe("PlayerParser", () => {
     const dupedPlayersCsv = `${process.env.BASE_DIR}/tests/resources/three-teams-three-owners-minor-players-with-dupes.csv`;
 
     const mockDAO = {
-        getAllPlayers: jest.fn().mockResolvedValue([]),
+        getAllPlayers: jest.fn(),
         deleteAllPlayers: jest.fn(),
-        batchUpsertPlayers: jest.fn().mockImplementation((arr: Partial<Player>[]) =>
-            Promise.resolve(arr.map(player => new Player(player as Player)))),
+        batchUpsertPlayers: jest.fn(),
     };
 
+    beforeEach(() => {
+        mockDAO.getAllPlayers.mockResolvedValueOnce([]);
+        mockDAO.batchUpsertPlayers.mockImplementationOnce((arr: Partial<Player>[]) =>
+            Promise.resolve(arr.map(player => new Player(player as Player))));
+    });
     afterEach(() => {
         Object.entries(mockDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
             kvp[1].mockReset();
@@ -117,6 +121,7 @@ describe("PlayerParser", () => {
     it("should add the playerDataId to players that we've previously added to the database so that we can dedupe at the db level", async () => {
         const existingPlayer = PlayerFactory.getPlayer("Josh Naylor");
         existingPlayer.playerDataId = 1234;
+        mockDAO.getAllPlayers.mockReset();
         mockDAO.getAllPlayers.mockResolvedValueOnce([existingPlayer]);
 
         const res = await processMinorLeagueCsv(dupedPlayersCsv,
