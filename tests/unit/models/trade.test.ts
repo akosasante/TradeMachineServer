@@ -1,14 +1,14 @@
 import "jest";
 import "jest-extended";
-import {clone} from "lodash";
-import {PlayerLeagueType} from "../../../src/models/player";
-import Trade from "../../../src/models/trade";
-import {DraftPickFactory} from "../../factories/DraftPickFactory";
-import {PlayerFactory} from "../../factories/PlayerFactory";
-import {TeamFactory} from "../../factories/TeamFactory";
-import {TradeFactory} from "../../factories/TradeFactory";
+import { clone } from "lodash";
+import { PlayerLeagueType } from "../../../src/models/player";
+import Trade, { TradeStatus } from "../../../src/models/trade";
+import { DraftPickFactory } from "../../factories/DraftPickFactory";
+import { PlayerFactory } from "../../factories/PlayerFactory";
+import { TeamFactory } from "../../factories/TeamFactory";
+import { TradeFactory } from "../../factories/TradeFactory";
 import logger from "../../../src/bootstrap/logger";
-import {LeagueLevel} from "../../../src/models/draftPick";
+import { LeagueLevel } from "../../../src/models/draftPick";
 
 describe("Trade Class", () => {
     beforeAll(() => {
@@ -48,7 +48,7 @@ describe("Trade Class", () => {
         TradeFactory.getTradeRecipient(recipientTeam, testTrade),
         ];
     testTrade.tradeParticipants = [sender, recipient];
-    const testTradeObj = { id: testTrade.id, tradeItems, tradeParticipants: [sender, recipient] };
+    const testTradeObj = { id: testTrade.id, status: TradeStatus.DRAFT, tradeItems, tradeParticipants: [sender, recipient] };
 
     describe("constructor", () => {
         it("should construct the obj as expected", () => {
