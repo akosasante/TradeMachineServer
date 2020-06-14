@@ -1,26 +1,27 @@
-import {PlayerLeagueType} from "../../src/models/player";
-import Trade from "../../src/models/trade";
-import TradeItem, {TradeItemType} from "../../src/models/tradeItem";
-import TradeParticipant, {TradeParticipantType} from "../../src/models/tradeParticipant";
-import {DraftPickFactory} from "./DraftPickFactory";
-import {PlayerFactory} from "./PlayerFactory";
-import {TeamFactory} from "./TeamFactory";
-import {v4 as uuid} from "uuid";
+import { PlayerLeagueType } from "../../src/models/player";
+import Trade, { TradeStatus } from "../../src/models/trade";
+import TradeItem, { TradeItemType } from "../../src/models/tradeItem";
+import TradeParticipant, { TradeParticipantType } from "../../src/models/tradeParticipant";
+import { DraftPickFactory } from "./DraftPickFactory";
+import { PlayerFactory } from "./PlayerFactory";
+import { TeamFactory } from "./TeamFactory";
+import { v4 as uuid } from "uuid";
 import Team from "../../src/models/team";
 
 export class TradeFactory {
     public static getTradeObject(tradeItems = TradeFactory.getTradeItems(),
-                                 tradeParticipants: TradeParticipant[] = TradeFactory.getTradeParticipants(),
+                                 tradeParticipants: TradeParticipant[] = TradeFactory.getTradeParticipants(), status = TradeStatus.DRAFT,
                                  rest = {}) {
-        return {tradeItems, tradeParticipants, id: uuid(), ...rest};
+        return {tradeItems, tradeParticipants, status, id: uuid(), ...rest};
     }
 
     public static getTrade(items?: TradeItem[],
                            participants?: TradeParticipant[],
+                           status = TradeStatus.DRAFT,
                            rest = {}) {
         const tradeParticipants = participants || TradeFactory.getTradeParticipants();
         const tradeItems = items || TradeFactory.getTradeItems(tradeParticipants[0].team, tradeParticipants[1].team);
-        return new Trade(TradeFactory.getTradeObject(tradeItems, tradeParticipants, rest));
+        return new Trade(TradeFactory.getTradeObject(tradeItems, tradeParticipants, status, rest));
     }
 
     public static getTradeItems(sender?: Team, recipient?: Team) {
