@@ -38,23 +38,6 @@ export default class EmailController {
         return response.status(200).json({});
     }
 
-    @Post("/resetEmail")
-    public async sendResetEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
-        logger.debug(`Preparing to send reset password email to: ${email}`);
-        const user = await this.userDao.findUser({email});
-
-        if (!user) {
-            throw new NotFoundError("No user found with the given email.");
-        } else {
-            // Update current user with reset request time
-            await this.userDao.setPasswordExpires(user.id!);
-
-            // Queue send email with current user
-            await this.emailPublisher.queueResetEmail(user);
-            return response.status(202).json({status: "email queued"});
-        }
-    }
-
     @Post("/testEmail")
     public async sendTestEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
         logger.debug(`Preparing to send test email to: ${email}`);
@@ -65,21 +48,6 @@ export default class EmailController {
         } else {
             // Queue send email with current user
             await this.emailPublisher.queueTestEmail(user);
-            return response.status(202).json({status: "email queued"});
-        }
-    }
-
-    @Post("/registrationEmail")
-    public async sendRegistrationEmail(@BodyParam("email") email: string, @Res() response: Response):
-        Promise<Response> {
-        logger.debug(`Preparing to send registration email to: ${email}`);
-        const user = await this.userDao.findUser({email});
-
-        if (!user) {
-            throw new NotFoundError("No user found with the given email.");
-        } else {
-            // Queue send email with current user
-            await this.emailPublisher.queueRegistrationEmail(user);
             return response.status(202).json({status: "email queued"});
         }
     }

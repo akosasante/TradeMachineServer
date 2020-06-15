@@ -14,9 +14,7 @@ describe("EmailController", () => {
         setPasswordExpires: jest.fn(),
     };
     const mockMailPublisher = {
-        queueResetEmail: jest.fn(),
         queueTestEmail: jest.fn(),
-        queueRegistrationEmail: jest.fn(),
         queueWebhookResponse: jest.fn(),
     };
 
@@ -39,32 +37,6 @@ describe("EmailController", () => {
         Object.values(mockRes).forEach(mockFn => mockFn.mockClear());
     });
 
-    describe("sendResetEmail method", () => {
-        it("should find a user, set a new password expiry date, and call mailQueue", async () => {
-            mockUserDAO.findUser.mockResolvedValueOnce(testUser);
-
-            await emailController.sendResetEmail(testUser.email!, mockRes as unknown as Response);
-
-            expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.findUser).toHaveBeenCalledWith({email: testUser.email});
-            expect(mockUserDAO.setPasswordExpires).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.setPasswordExpires).toHaveBeenCalledWith(testUser.id);
-            expect(mockMailPublisher.queueResetEmail).toHaveBeenCalledTimes(1);
-            expect(mockMailPublisher.queueResetEmail).toHaveBeenCalledWith(testUser);
-            expect(mockRes.status).toHaveBeenCalledTimes(1);
-            expect(mockRes.status).toHaveBeenCalledWith(202);
-            expect(mockRes.json).toHaveBeenCalledTimes(1);
-            expect(mockRes.json).toHaveBeenCalledWith({status: "email queued"});
-        });
-
-        it("should throw an error if no user found", async () => {
-            await expect(emailController.sendResetEmail(testUser.email!, mockRes as unknown as Response))
-                .rejects.toThrow(NotFoundError);
-            expect(mockRes.status).toHaveBeenCalledTimes(0);
-            expect(mockRes.json).toHaveBeenCalledTimes(0);
-        });
-    });
-
     describe("sendTestEmail method", () => {
         it("should find a user and call mailQueue", async () => {
             mockUserDAO.findUser.mockResolvedValueOnce(testUser);
@@ -84,31 +56,6 @@ describe("EmailController", () => {
 
         it("should throw an error if there's something wrong inside", async () => {
             await expect(emailController.sendTestEmail(testUser.email!, mockRes as unknown as Response))
-                .rejects.toThrow(NotFoundError);
-            expect(mockRes.status).toHaveBeenCalledTimes(0);
-            expect(mockRes.json).toHaveBeenCalledTimes(0);
-        });
-    });
-
-    describe("sendRegistrationEmail method", () => {
-        it("should find a user and call mailQueue", async () => {
-            mockUserDAO.findUser.mockResolvedValueOnce(testUser);
-
-            await emailController.sendRegistrationEmail(testUser.email!, mockRes as unknown as Response);
-
-            expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.findUser).toHaveBeenCalledWith({email: testUser.email});
-            expect(mockUserDAO.setPasswordExpires).toHaveBeenCalledTimes(0);
-            expect(mockMailPublisher.queueRegistrationEmail).toHaveBeenCalledTimes(1);
-            expect(mockMailPublisher.queueRegistrationEmail).toHaveBeenCalledWith(testUser);
-            expect(mockRes.status).toHaveBeenCalledTimes(1);
-            expect(mockRes.status).toHaveBeenCalledWith(202);
-            expect(mockRes.json).toHaveBeenCalledTimes(1);
-            expect(mockRes.json).toHaveBeenCalledWith({status: "email queued"});
-        });
-
-        it("should throw an error if there's something wrong inside", async () => {
-            await expect(emailController.sendRegistrationEmail(testUser.email!, mockRes as unknown as Response))
                 .rejects.toThrow(NotFoundError);
             expect(mockRes.status).toHaveBeenCalledTimes(0);
             expect(mockRes.json).toHaveBeenCalledTimes(0);
