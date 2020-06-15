@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import { get } from "lodash";
 import { ExpressMiddlewareInterface, UnauthorizedError } from "routing-controllers";
 import { inspect } from "util";
 import { serializeUser, signInAuthentication, signUpAuthentication } from "../../authentication/auth";
@@ -14,8 +13,8 @@ export class LoginHandler implements ExpressMiddlewareInterface {
 
     public async use(request: Request, response: Response, next: NextFunction) {
         logger.debug("IN LOGIN HANDLER");
-        const email = get(request, "body.email");
-        const password = get(request, "body.password");
+        const email = request?.body?.email;
+        const password = request?.body?.password;
         return signInAuthentication(email, password, this.userDAO, async (err?: Error, user?: UserDO) => {
             if (err || !user) {
                 const message = `User could not be authenticated. ${err ? err.message : ""}`;
@@ -42,8 +41,8 @@ export class RegisterHandler implements ExpressMiddlewareInterface {
 
     public async use(request: Request, response: Response, next: NextFunction) {
         logger.debug("IN REGISTER HANDLER");
-        const email = get(request, "body.email");
-        const password = get(request, "body.password");
+        const email = request?.body?.email;
+        const password = request?.body?.password;
         if (!email || !password) {
             return next(new Error("Some details are missing. Cannot register user."));
         }

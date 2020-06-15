@@ -1,6 +1,5 @@
 import { compare, hash } from "bcryptjs";
 import { isAfter } from "date-fns";
-import { get } from "lodash";
 import { Action, BadRequestError, NotFoundError } from "routing-controllers";
 import { inspect } from "util";
 import { ConflictError } from "../api/middlewares/ErrorHandler";
@@ -103,7 +102,7 @@ export async function generateHashedPassword(plainPassword: string): Promise<str
 }
 
 async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO()): Promise<User | undefined> {
-    const userId = get(action, "request.session.user");
+    const userId = action.request?.session?.user;
     logger.debug(inspect(action.request.session));
     logger.debug(inspect(action.request.sessionID));
     logger.debug(`Current userId: ${userId}`);

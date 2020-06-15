@@ -3,8 +3,8 @@ import { ExpressErrorMiddlewareInterface, HttpError, Middleware } from "routing-
 import { QueryFailedError } from "typeorm";
 import { EntityColumnNotFound } from "typeorm/error/EntityColumnNotFound";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
-import util from "util";
 import logger from "../../bootstrap/logger";
+import { AuthorizationRequiredError } from "routing-controllers/error/AuthorizationRequiredError";
 // tslint:disable:max-classes-per-file
 
 @Middleware({type: "after"})
@@ -17,6 +17,9 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
         if (response.headersSent) {
             logger.error("headers already sent, passing to next");
             return next(error);
+        } else if (error instanceof AuthorizationRequiredError) {
+            logger.error("User not logged in, converting AuthorizationRequiredError to 403 Forbidden");
+            response.status(403).json(CustomErrorHandler.cleanErrorObject(error));
         } else if (error instanceof HttpError) {
             logger.error(`HTTP Error: ${error.message}`);
             response.status(error.httpCode).json(CustomErrorHandler.cleanErrorObject(error));
@@ -27,8 +30,7 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
             logger.error(`Database/Entity Error: ${error.message}`);
             response.status(400).json(CustomErrorHandler.cleanErrorObject(error));
         } else {
-            const errorKind = util.inspect(Object.getPrototypeOf(error));
-            logger.error(`Unknown Error: ${errorKind}`);
+            logger.error(`Unknown Error: ${JSON.stringify(Object.getPrototypeOf(error))}`);
             response.status(500).json(error);
         }
     }
