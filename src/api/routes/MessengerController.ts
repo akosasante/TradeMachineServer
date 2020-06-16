@@ -1,14 +1,27 @@
-import {Controller, Post} from "routing-controllers";
+import { Controller, Param, Post, Res } from "routing-controllers";
+import { EmailPublisher } from "../../email/publishers";
+import { UUIDPattern } from "../helpers/ApiHelpers";
+import logger from "../../bootstrap/logger";
+import TradeDAO from "../../DAO/TradeDAO";
+import { Response } from "express";
 
 @Controller("/messenger")
 export default class MessengerController {
-    constructor() {
-        //
+    private emailPublisher: EmailPublisher;
+    private tradeDao: TradeDAO;
+
+    constructor(publisher?: EmailPublisher, tradeDao?: TradeDAO) {
+        this.emailPublisher = publisher || EmailPublisher.getInstance();
+        this.tradeDao = tradeDao || new TradeDAO();
     }
 
-    @Post("/requestTrade")
-    public async sendRequestTradeMessage() {
-        //
+    @Post(`/requestTrade${UUIDPattern}`)
+    public async sendRequestTradeMessage(@Param("id") id: string, @Res() response: Response) {
+        logger.debug(`queuing trade request email for tradeId: ${id}`);
+        let trade = await this.tradeDao.getTradeById(id);
+        trade = await this.tradeDao.hydrateTrade(trade);
+        await this.emailPublisher.queueTradeRequestMail(trade);
+        return response.status(202).json({status: "trade request queued"});
     }
 
     @Post("/acceptTrade")
