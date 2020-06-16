@@ -1,15 +1,21 @@
 import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
-import Trade, {TradeStatus} from "../models/trade";
-import TradeItem from "../models/tradeItem";
+import Trade, { TradeStatus } from "../models/trade";
+import TradeItem, { TradeItemType } from "../models/tradeItem";
 import TradeParticipant from "../models/tradeParticipant";
 import { BadRequestError } from "routing-controllers";
+import PlayerDAO from "./PlayerDAO";
+import DraftPickDAO from "./DraftPickDAO";
 
 
 export default class TradeDAO {
     private tradeDb: Repository<Trade>;
+    private playerDao: PlayerDAO;
+    private pickDao: DraftPickDAO;
 
-    constructor(repo?: Repository<Trade>) {
+    constructor(repo?: Repository<Trade>, playerDao?: PlayerDAO, pickDao?: DraftPickDAO) {
         this.tradeDb = repo || getConnection(process.env.NODE_ENV).getRepository("Trade");
+        this.playerDao = playerDao || new PlayerDAO();
+        this.pickDao = pickDao || new DraftPickDAO();
     }
 
     public async getAllTrades(): Promise<Trade[]> {
@@ -19,6 +25,18 @@ export default class TradeDAO {
 
     public async getTradeById(id: string): Promise<Trade> {
         return await this.tradeDb.findOneOrFail(id);
+    }
+
+    public async hydrateTrade(trade: Trade): Promise<Trade> {
+        for (const item of (trade.tradeItems || [])) {
+            if (item.tradeItemType === TradeItemType.PICK) {
+                item.entity = await this.pickDao.getPickById(item.tradeItemId);
+            }
+            if (item.tradeItemType === TradeItemType.PLAYER) {
+                item.entity = await this.playerDao.getPlayerById(item.tradeItemId);
+            }
+        }
+        return trade;
     }
 
 public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {

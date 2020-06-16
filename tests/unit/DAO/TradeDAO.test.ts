@@ -9,6 +9,8 @@ import logger from "../../../src/bootstrap/logger";
 import { v4 as uuid } from "uuid";
 import TradeItem from "../../../src/models/tradeItem";
 import TradeParticipant from "../../../src/models/tradeParticipant";
+import PlayerDAO from "../../../src/DAO/PlayerDAO";
+import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 
 
 describe("TradeDAO", () => {
@@ -19,12 +21,20 @@ describe("TradeDAO", () => {
         createQueryBuilder: jest.fn(),
         update: jest.fn(),
     };
+    const mockPlayerDao: MockObj = {
+        getPlayerById: jest.fn(),
+    };
+    const mockPickDao: MockObj = {
+        getPickById: jest.fn(),
+    };
 
     const testTrade = TradeFactory.getTrade();
-    const tradeDAO = new TradeDAO(mockTradeDb as unknown as Repository<Trade>);
+    const tradeDAO = new TradeDAO(mockTradeDb as unknown as Repository<Trade>, mockPlayerDao as unknown as PlayerDAO, mockPickDao as unknown as DraftPickDAO);
 
     afterEach(() => {
-        Object.values(mockTradeDb).forEach(mockFn => mockFn.mockReset());
+        [mockTradeDb, mockPlayerDao, mockPickDao]
+            .forEach(mockedThing => Object.values(mockedThing)
+                .forEach(mockFn => mockFn.mockReset()));
         mockWhereInIds.mockClear();
         mockExecute.mockClear();
     });
@@ -128,5 +138,11 @@ describe("TradeDAO", () => {
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockWhereInIds).toHaveBeenCalledWith(testTrade.id!);
         expect(res).toEqual(deleteResult);
+    });
+
+    it("hydrateTrade - shouldl call the correct dao methods", async () => {
+        await tradeDAO.hydrateTrade(testTrade);
+        expect(mockPlayerDao.getPlayerById).toHaveBeenCalledTimes(2);
+        expect(mockPickDao.getPickById).toHaveBeenCalledTimes(1);
     });
 });
