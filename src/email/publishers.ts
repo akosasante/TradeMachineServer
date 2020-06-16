@@ -4,6 +4,7 @@ import logger from "../bootstrap/logger";
 import { EmailJob, EmailJobName } from "./processors";
 import User from "../models/user";
 import { EmailStatusEvent } from "../api/routes/EmailController";
+import Trade from "../models/trade";
 
 export class EmailPublisher {
     private static instance: EmailPublisher;
@@ -20,13 +21,12 @@ export class EmailPublisher {
         return EmailPublisher.instance;
     }
 
-    private static async queueEmail(user: User, jobName: EmailJobName) {
+    private static async queueEmail(entity: User|Trade, jobName: EmailJobName) {
         const job: EmailJob = {
-            user: JSON.stringify(user),
-            mailType: jobName,
+            entity: JSON.stringify(entity),
         };
         const opts: JobOptions = { attempts: 3, backoff: {type: "exponential", delay: 30000}};
-        logger.debug(`queuing email: ${inspect(job)}`);
+        logger.debug(`queuing email job ${jobName}, for entity ${entity.id}`);
         return await EmailPublisher.emailQueue.add(jobName, job, opts);
     }
 
@@ -45,11 +45,15 @@ export class EmailPublisher {
     public async queueWebhookResponse(event: EmailStatusEvent) {
         const jobName = "handle_webhook";
         const job: EmailJob = {
-            event: JSON.stringify(event),
-            mailType: jobName,
+            entity: JSON.stringify(event),
         };
         const opts: JobOptions = { attempts: 3, backoff: 10000 };
         logger.debug(`queuing webhook response: ${inspect(event)}`);
         return await EmailPublisher.emailQueue.add(jobName, job, opts);
+    }
+
+    public async queueTradeRequestMail(trade: Trade): Promise<Job<EmailJob>> {
+        logger.debug("queuing trade request email");
+        return await EmailPublisher.queueEmail(trade, "request_trade");
     }
 }

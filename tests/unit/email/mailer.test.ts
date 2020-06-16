@@ -3,6 +3,7 @@ import "jest-extended";
 import { Emailer } from "../../../src/email/mailer";
 import { UserFactory } from "../../factories/UserFactory";
 import logger from "../../../src/bootstrap/logger";
+import { TradeFactory } from "../../factories/TradeFactory";
 
 describe("Emailer Class", () => {
     beforeAll(() => {
@@ -12,6 +13,7 @@ describe("Emailer Class", () => {
         logger.debug("~~~~~~EMAILER TESTS COMPLETE~~~~~~");
     });
     const testUser = UserFactory.getUser("test@example.com", "Jatheesh", undefined, undefined, {id: "test-uuid"});
+    const testTrade = TradeFactory.getTrade( undefined, undefined, undefined, {id: "test-uuid"});
 
     describe("email snapshots", () => {
         it("sendTestEmail", async () => {
@@ -31,6 +33,13 @@ describe("Emailer Class", () => {
         it("sendPasswordResetEmail", async () => {
             const res = await Emailer.sendPasswordResetEmail(testUser);
             delete res.message; // value varies due to include a dynamic messageId so keep it out of the snapshot
+            delete res.messageId;
+            expect(res).toMatchSnapshot();
+        });
+
+        it("sendTradeRequestEmail", async () => {
+            const res = await Emailer.sendTradeRequestEmail(testTrade);
+            delete res.message;
             delete res.messageId;
             expect(res).toMatchSnapshot();
         });

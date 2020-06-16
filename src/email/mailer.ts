@@ -148,8 +148,8 @@ export const Emailer = {
         });
     },
 
-    async sendTradeRequestEmail(user?: User, trade?: Trade): Promise<SendInBlueSendResponse> {
-        logger.debug(inspect(getTradeTextForRequest(trade!)));
+    async sendTradeRequestEmail(trade: Trade): Promise<SendInBlueSendResponse> {
+        logger.debug(`got a req: ${trade}`);
         return Emailer.emailer.send({
             template: "trade_request",
             message: {
