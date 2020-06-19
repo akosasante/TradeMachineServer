@@ -1,9 +1,10 @@
-import { Controller, Param, Post, Res } from "routing-controllers";
+import { Authorized, Controller, Param, Post, Res } from "routing-controllers";
 import { EmailPublisher } from "../../email/publishers";
 import { UUIDPattern } from "../helpers/ApiHelpers";
 import logger from "../../bootstrap/logger";
 import TradeDAO from "../../DAO/TradeDAO";
 import { Response } from "express";
+import { Role } from "../../models/user";
 
 @Controller("/messenger")
 export default class MessengerController {
@@ -14,7 +15,7 @@ export default class MessengerController {
         this.emailPublisher = publisher || EmailPublisher.getInstance();
         this.tradeDao = tradeDao || new TradeDAO();
     }
-
+    @Authorized(Role.OWNER)
     @Post(`/requestTrade${UUIDPattern}`)
     public async sendRequestTradeMessage(@Param("id") id: string, @Res() response: Response) {
         logger.debug(`queuing trade request email for tradeId: ${id}`);

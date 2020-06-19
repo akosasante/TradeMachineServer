@@ -14,7 +14,8 @@ export class EmailPublisher {
 
     public static getInstance(queue?: Bull.Queue): EmailPublisher {
         if (!EmailPublisher.instance) {
-            EmailPublisher.emailQueue = queue || new Bull("email_queue");
+            const queueName = process.env.NODE_ENV === "test" ? "test_email_queue" : "email_queue";
+            EmailPublisher.emailQueue = queue || new Bull(queueName);
             EmailPublisher.instance = new EmailPublisher();
         }
 
@@ -55,5 +56,14 @@ export class EmailPublisher {
     public async queueTradeRequestMail(trade: Trade): Promise<Job<EmailJob>> {
         logger.debug("queuing trade request email");
         return await EmailPublisher.queueEmail(trade, "request_trade");
+    }
+
+    public async getJobTotal(): Promise<number> {
+        return Object.values(await EmailPublisher.emailQueue.getJobCounts())
+            .reduce((val1: number, val2: number) => val1 + val2);
+    }
+
+    public async cleanWaitQueue() {
+        return EmailPublisher.emailQueue.clean(100, "wait");
     }
 }
