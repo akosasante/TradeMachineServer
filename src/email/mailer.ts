@@ -61,6 +61,16 @@ function getTradeTextForRequest(trade: Trade) {
     });
 }
 
+function emailIsCreatorOfTrade(email: string, trade: Trade) {
+    const ownerEmails = trade.creator?.owners?.map(o => o.email);
+    return (ownerEmails || []).includes(email);
+}
+
+function getParticipantByEmail(email: string, trade: Trade) {
+    logger.debug(inspect(trade.creator?.owners));
+    return trade.tradeParticipants?.find(tp => tp.team.owners?.find(u => u.email === email));
+}
+
 export const Emailer = {
     emailer: new Email({
         juice: true,
@@ -169,6 +179,30 @@ export const Emailer = {
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade request email: ${inspect(err)}`);
+                return undefined;
+            });
+    },
+
+    async sendTradeDeclinedEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+        logger.debug(`got a trade decline email request for tradeId: ${trade.id}`);
+        return Emailer.emailer.send({
+            template: "trade_declined",
+            message: {
+                to: recipient,
+            },
+            locals: {
+                isCreator: emailIsCreatorOfTrade(recipient, trade),
+                reason: trade.declinedReason,
+                decliningTeam: getParticipantByEmail(recipient, trade)?.team.name,
+                tradesBySender: getTradeTextForRequest(trade!),
+            },
+        })
+            .then((res: SendInBlueSendResponse) => {
+                logger.info(`Successfully sent trade declined email: ${inspect(res.messageId)}`);
+                return res;
+            })
+            .catch((err: Error) => {
+                logger.error(`Ran into an error while sending trade declined email: ${inspect(err)}`);
                 return undefined;
             });
     },
