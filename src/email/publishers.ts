@@ -1,7 +1,7 @@
 import Bull, { Job, JobOptions, Queue } from "bull";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
-import { EmailJob, EmailJobName } from "./processors";
+import { EmailJob, EmailJobName, TradeEmail } from "./processors";
 import User from "../models/user";
 import { EmailStatusEvent } from "../api/routes/EmailController";
 import Trade from "../models/trade";
@@ -24,12 +24,22 @@ export class EmailPublisher extends Publisher {
         return EmailPublisher.instance;
     }
 
-    private async queueEmail(entity: User|Trade, jobName: EmailJobName) {
+    private async queueEmail(user: User, jobName: EmailJobName) {
         const job: EmailJob = {
-            entity: JSON.stringify(entity),
+            user: JSON.stringify(user),
         };
         const opts: JobOptions = { attempts: 3, backoff: {type: "exponential", delay: 30000}};
-        logger.debug(`queuing email job ${jobName}, for entity ${entity.id}`);
+        logger.debug(`queuing email job ${jobName}, for entity ${user.id}`);
+        return await this.queue!.add(jobName, job, opts);
+    }
+
+    private async queueTradeEmail(trade: Trade, email: string, jobName: EmailJobName): Promise<Job<TradeEmail>> {
+        const job: TradeEmail = {
+            trade: JSON.stringify(trade),
+            recipient: email,
+        };
+        const opts: JobOptions = { attempts: 3, backoff: {type: "exponential", delay: 30000}};
+        logger.debug(`queuing email job ${jobName}, for trade ${trade.id} to ${email}`);
         return await this.queue!.add(jobName, job, opts);
     }
 
@@ -48,15 +58,14 @@ export class EmailPublisher extends Publisher {
     public async queueWebhookResponse(event: EmailStatusEvent) {
         const jobName = "handle_webhook";
         const job: EmailJob = {
-            entity: JSON.stringify(event),
+            event: JSON.stringify(event),
         };
         const opts: JobOptions = { attempts: 3, backoff: 10000 };
         logger.debug(`queuing webhook response: ${inspect(event)}`);
         return await this.queue!.add(jobName, job, opts);
     }
 
-    public async queueTradeRequestMail(trade: Trade): Promise<Job<EmailJob>> {
-        logger.debug("queuing trade request email");
-        return await this.queueEmail(trade, "request_trade");
+    public async queueTradeRequestMail(trade: Trade, email: string): Promise<Job<TradeEmail>> {
+        return await this.queueTradeEmail(trade, email, "request_trade");
     }
 }

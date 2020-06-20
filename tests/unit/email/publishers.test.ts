@@ -42,30 +42,30 @@ describe("EmailPublisher", () => {
     it("queueResetEmail/1 - should add email job with correct parameters to the emailQueue", async () => {
         await publisher.queueResetEmail(user);
         expect(mockQueue.add).toBeCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith("reset_pass", {entity: userJson}, exponentialBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("reset_pass", {user: userJson}, exponentialBackoff);
     });
 
     it("queueRegistrationEmail/1 - should add email job with correct parameters to the emailQueue", async () => {
         await publisher.queueRegistrationEmail(user);
         expect(mockQueue.add).toBeCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith("registration_email", {entity: userJson}, exponentialBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("registration_email", {user: userJson}, exponentialBackoff);
     });
 
     it("queueTestEmail/1 - should add email job with correct parameters to the emailQueue", async () => {
         await publisher.queueTestEmail(user);
         expect(mockQueue.add).toBeCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith("test_email", {entity: userJson}, exponentialBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("test_email", {user: userJson}, exponentialBackoff);
     });
 
     it("queueWebhookResponse/1 - should add job to handle the webhook response", async () => {
         await publisher.queueWebhookResponse(event);
         expect(mockQueue.add).toBeCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith("handle_webhook", {entity: eventJson}, linearBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("handle_webhook", {event: eventJson}, linearBackoff);
     });
 
     it("queueTradeRequestMail/1 - should add email job with correct parameters to emailQueue", async () => {
-        await publisher.queueTradeRequestMail(trade);
+        await publisher.queueTradeRequestMail(trade, "test_email@exmple.com");
         expect(mockQueue.add).toHaveBeenCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith("request_trade", {entity: tradeJson}, exponentialBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("request_trade", {trade: tradeJson, recipient: "test_email@exmple.com"}, exponentialBackoff);
     });
 });
