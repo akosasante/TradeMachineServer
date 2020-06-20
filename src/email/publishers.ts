@@ -1,46 +1,48 @@
-import Bull, { Job, JobOptions } from "bull";
+import Bull, { Job, JobOptions, Queue } from "bull";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import { EmailJob, EmailJobName } from "./processors";
 import User from "../models/user";
 import { EmailStatusEvent } from "../api/routes/EmailController";
 import Trade from "../models/trade";
+import { Publisher } from "../scheduled_jobs/publisher";
 
-export class EmailPublisher {
+export class EmailPublisher extends Publisher {
     private static instance: EmailPublisher;
-    private static emailQueue: Bull.Queue;
 
-    private constructor() { }
+    private constructor(queue: Queue) {
+        super();
+        this.queue = queue;
+    }
 
     public static getInstance(queue?: Bull.Queue): EmailPublisher {
         if (!EmailPublisher.instance) {
             const queueName = process.env.NODE_ENV === "test" ? "test_email_queue" : "email_queue";
-            EmailPublisher.emailQueue = queue || new Bull(queueName);
-            EmailPublisher.instance = new EmailPublisher();
+            EmailPublisher.instance = new EmailPublisher(queue || new Bull(queueName));
         }
 
         return EmailPublisher.instance;
     }
 
-    private static async queueEmail(entity: User|Trade, jobName: EmailJobName) {
+    private async queueEmail(entity: User|Trade, jobName: EmailJobName) {
         const job: EmailJob = {
             entity: JSON.stringify(entity),
         };
         const opts: JobOptions = { attempts: 3, backoff: {type: "exponential", delay: 30000}};
         logger.debug(`queuing email job ${jobName}, for entity ${entity.id}`);
-        return await EmailPublisher.emailQueue.add(jobName, job, opts);
+        return await this.queue!.add(jobName, job, opts);
     }
 
     public async queueResetEmail(user: User): Promise<Job<EmailJob>> {
-        return await EmailPublisher.queueEmail(user, "reset_pass");
+        return await this.queueEmail(user, "reset_pass");
     }
 
     public async queueRegistrationEmail(user: User): Promise<Job<EmailJob>> {
-        return await EmailPublisher.queueEmail(user, "registration_email");
+        return await this.queueEmail(user, "registration_email");
     }
 
     public async queueTestEmail(user: User): Promise<Job<EmailJob>> {
-        return await EmailPublisher.queueEmail(user, "test_email");
+        return await this.queueEmail(user, "test_email");
     }
 
     public async queueWebhookResponse(event: EmailStatusEvent) {
@@ -50,20 +52,11 @@ export class EmailPublisher {
         };
         const opts: JobOptions = { attempts: 3, backoff: 10000 };
         logger.debug(`queuing webhook response: ${inspect(event)}`);
-        return await EmailPublisher.emailQueue.add(jobName, job, opts);
+        return await this.queue!.add(jobName, job, opts);
     }
 
     public async queueTradeRequestMail(trade: Trade): Promise<Job<EmailJob>> {
         logger.debug("queuing trade request email");
-        return await EmailPublisher.queueEmail(trade, "request_trade");
-    }
-
-    public async getJobTotal(): Promise<number> {
-        return Object.values(await EmailPublisher.emailQueue.getJobCounts())
-            .reduce((val1: number, val2: number) => val1 + val2);
-    }
-
-    public async cleanWaitQueue() {
-        return EmailPublisher.emailQueue.clean(100, "wait");
+        return await this.queueEmail(trade, "request_trade");
     }
 }

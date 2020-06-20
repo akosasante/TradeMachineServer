@@ -6,7 +6,7 @@ import Trade from "../models/trade";
 import { cleanJobForLogging } from "../scheduled_jobs/job_utils";
 
 export function setupEmailConsumers() {
-    logger.info("registering consumers");
+    logger.info("registering email consumers");
     const emailQueue = new Bull("email_queue");
     const cleanLoggedData = (data: any) => {
         const trade: Trade = JSON.parse(data.entity || "{}");
@@ -28,8 +28,6 @@ export function setupEmailConsumers() {
         };
     };
 
-    /* TODO: if we're going this way, we could probably also update the processors? maybe it's not even worth it to
- have named jobs idk */
     emailQueue.process("reset_pass", processEmailJob);
     emailQueue.process("registration_email", processEmailJob);
     emailQueue.process("request_trade", processEmailJob);
