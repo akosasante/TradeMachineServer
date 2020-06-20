@@ -26,7 +26,10 @@ export default class MessengerController {
         let trade = await this.tradeDao.getTradeById(id);
         if (trade.status === TradeStatus.PENDING) {
             trade = await this.tradeDao.hydrateTrade(trade);
-            await this.emailPublisher.queueTradeRequestMail(trade);
+            const recipientEmails = trade.recipients.flatMap(recipTeam => recipTeam.owners?.map(owner => owner.email));
+            for (const email of recipientEmails) {
+                await this.emailPublisher.queueTradeRequestMail(trade, email!);
+            }
             return response.status(202).json({status: "trade request queued"});
         } else {
             throw new BadRequestError("Cannot send trade request for this trade based on its status");

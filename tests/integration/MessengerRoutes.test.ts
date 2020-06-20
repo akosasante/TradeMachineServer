@@ -51,17 +51,21 @@ beforeAll(async () => {
     const tradeDao = new TradeDAO();
     const teamDAO = new TeamDAO();
     const [player] = await playerDao.createPlayers([PlayerFactory.getPlayer()]);
-    const [team1, team2] = await teamDAO.createTeams([
+    let [team1, team2] = await teamDAO.createTeams([
         TeamFactory.getTeamObject( "team1", 1),
         TeamFactory.getTeamObject( "team2", 2),
     ]);
-    await teamDAO.updateTeamOwners(team1.id!, [adminUser], []);
-    await teamDAO.updateTeamOwners(team2.id!, [ownerUser], []);
-    const tradeParticipants = TradeFactory.getTradeParticipants(team1, team2);
-    const tradeItem = TradeFactory.getTradedMajorPlayer(player, team1, team2);
-    pendingTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem], tradeParticipants, TradeStatus.PENDING));
-    acceptedTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem], tradeParticipants, TradeStatus.ACCEPTED));
-    draftTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem], tradeParticipants));
+    team1 = await teamDAO.updateTeamOwners(team1.id!, [adminUser], []);
+    team2 = await teamDAO.updateTeamOwners(team2.id!, [ownerUser], []);
+    const tradeParticipants1 = TradeFactory.getTradeParticipants(team1, team2);
+    const tradeParticipants2 = TradeFactory.getTradeParticipants(team1, team2);
+    const tradeParticipants3 = TradeFactory.getTradeParticipants(team1, team2);
+    const tradeItem1 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
+    const tradeItem2 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
+    const tradeItem3 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
+    pendingTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem1], tradeParticipants1, TradeStatus.PENDING));
+    acceptedTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem2], tradeParticipants2, TradeStatus.ACCEPTED));
+    draftTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem3], tradeParticipants3));
 });
 afterAll(async () => {
     logger.debug("~~~~~~MESSENGER ROUTES AFTER ALL~~~~~~");

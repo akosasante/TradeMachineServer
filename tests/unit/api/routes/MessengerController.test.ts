@@ -9,7 +9,8 @@ import { TradeFactory } from "../../../factories/TradeFactory";
 import { Response } from "express";
 import { TradeStatus } from "../../../../src/models/trade";
 import { BadRequestError } from "routing-controllers";
-import {SlackPublisher} from "../../../../src/slack/publishers";
+import { SlackPublisher } from "../../../../src/slack/publishers";
+import { UserFactory } from "../../../factories/UserFactory";
 
 describe("MessengerController", () => {
     const mockEmailPublisher: MockObj = {
@@ -27,8 +28,17 @@ describe("MessengerController", () => {
         json: jest.fn().mockReturnThis(),
     };
     const pendingTrade = TradeFactory.getTrade(undefined, undefined, TradeStatus.PENDING);
+    pendingTrade.tradeParticipants?.forEach(tp => {
+        tp.team.owners = [UserFactory.getUser("owner1@example.com"), UserFactory.getUser("owner2@example.com")];
+    });
     const acceptedTrade = TradeFactory.getTrade(undefined, undefined, TradeStatus.ACCEPTED);
+    acceptedTrade.tradeParticipants?.forEach(tp => {
+        tp.team.owners = [UserFactory.getUser()];
+    });
     const draftTrade = TradeFactory.getTrade();
+    draftTrade.tradeParticipants?.forEach(tp => {
+        tp.team.owners = [UserFactory.getUser("owner1@example.com"), UserFactory.getUser("owner2@example.com")];
+    });
 
     const messengerController = new MessengerController(
         mockEmailPublisher as unknown as EmailPublisher,
@@ -48,7 +58,7 @@ describe("MessengerController", () => {
     });
 
     describe("sendRequestTradeMessage/2", () => {
-        it("should get a trade, hydrate it and queue an email", async () => {
+        it("should get a trade, hydrate it and queue emails for each recipient owner", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(pendingTrade);
             mockTradeDao.hydrateTrade.mockResolvedValueOnce(pendingTrade);
             await messengerController.sendRequestTradeMessage(pendingTrade.id!, mockRes as unknown as Response);
@@ -57,8 +67,8 @@ describe("MessengerController", () => {
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(pendingTrade.id);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledWith(pendingTrade);
-            expect(mockEmailPublisher.queueTradeRequestMail).toHaveBeenCalledTimes(1);
-            expect(mockEmailPublisher.queueTradeRequestMail).toHaveBeenCalledWith(pendingTrade);
+            expect(mockEmailPublisher.queueTradeRequestMail).toHaveBeenCalledTimes(2);
+            expect(mockEmailPublisher.queueTradeRequestMail).toHaveBeenCalledWith(pendingTrade, expect.stringMatching(/owner\d@example.com/));
             expect(mockRes.status).toHaveBeenCalledTimes(1);
             expect(mockRes.status).toHaveBeenCalledWith(202);
             expect(mockRes.json).toHaveBeenCalledTimes(1);
