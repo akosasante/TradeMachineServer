@@ -5,7 +5,7 @@ import { processEmailJob, handleWebhookResponse } from "../../../src/email/proce
 import { Emailer } from "../../../src/email/mailer";
 import logger from "../../../src/bootstrap/logger";
 import EmailDAO from "../../../src/DAO/EmailDAO";
-import {TradeFactory} from "../../factories/TradeFactory";
+import { TradeFactory } from "../../factories/TradeFactory";
 
 jest.mock( "../../../src/email/mailer", () => ({
     Emailer: {
@@ -26,17 +26,17 @@ const userJson = JSON.stringify(user);
 const tradeJson = JSON.stringify(trade);
 
 beforeAll(() => {
-    logger.debug("~~~~~~QUEUE PROCESSORS TESTS BEGIN~~~~~~");
+    logger.debug("~~~~~~EMAIL QUEUE PROCESSORS TESTS BEGIN~~~~~~");
 });
 afterAll(() => {
-    logger.debug("~~~~~~QUEUE PROCESSORS TESTS COMPLETE~~~~~~");
+    logger.debug("~~~~~~EMAIL QUEUE PROCESSORS TESTS COMPLETE~~~~~~");
 });
 afterEach(() => {
     [Emailer, mockEmailDAO].forEach(mockedThing =>
         Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
 });
 
-describe("Queue processors", () => {
+describe("Email queue processors", () => {
     describe("processEmailJob/1 - it should call the appropriate Emailer methods with the right arguments", () => {
         it("calls sendPasswordResetEmail", async () => {
             // @ts-ignore
