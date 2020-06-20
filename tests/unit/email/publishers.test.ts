@@ -68,4 +68,10 @@ describe("EmailPublisher", () => {
         expect(mockQueue.add).toHaveBeenCalledTimes(1);
         expect(mockQueue.add).toHaveBeenCalledWith("request_trade", {trade: tradeJson, recipient: "test_email@exmple.com"}, exponentialBackoff);
     });
+
+    it("queueTradeDeclinedMail/1 - should add email job with correct parameters to emailQueue", async () => {
+        await publisher.queueTradeDeclinedMail(trade, "test_email@exmple.com");
+        expect(mockQueue.add).toHaveBeenCalledTimes(1);
+        expect(mockQueue.add).toHaveBeenCalledWith("trade_declined", {trade: tradeJson, recipient: "test_email@exmple.com"}, exponentialBackoff);
+    });
 });
