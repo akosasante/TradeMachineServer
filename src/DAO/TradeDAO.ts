@@ -83,4 +83,9 @@ public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
         await this.tradeDb.update({ id }, { status });
         return await this.getTradeById(id);
     }
+
+    public async updateDeclinedBy(id: string, declinedBy: TradeParticipant, declinedReason?: string): Promise<Trade> {
+        await this.tradeDb.update({ id }, { declinedBy, declinedReason });
+        return await this.getTradeById(id);
+    }
 }

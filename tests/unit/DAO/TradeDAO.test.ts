@@ -78,13 +78,25 @@ describe("TradeDAO", () => {
         expect(res).toEqual(testTrade);
     });
 
-    it("updateStatus - should call the db update and findOneOrFail once with id and tradeObj", async () => {
+    it("updateStatus - should call the db update and findOneOrFail once with id and status field", async () => {
         mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
         const status = TradeStatus.PENDING;
         const res = await tradeDAO.updateStatus(testTrade.id!, status);
 
         expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.update).toHaveBeenCalledWith({id: testTrade.id!}, { status });
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
+        expect(res).toEqual(testTrade);
+    });
+
+    it("updateDeclinedBy - should call the db update and findOneOrFail once with id and declined by field", async () => {
+        mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
+        const participant = testTrade.tradeParticipants?.[0];
+        const res = await tradeDAO.updateDeclinedBy(testTrade.id!, participant!, "reason");
+
+        expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
+        expect(mockTradeDb.update).toHaveBeenCalledWith({id: testTrade.id!}, { declinedBy: participant, declinedReason: "reason" });
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
         expect(res).toEqual(testTrade);

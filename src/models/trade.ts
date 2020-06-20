@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany } from "typeorm";
+import { Column, Entity, JoinColumn, OneToMany, OneToOne } from "typeorm";
 import { BaseModel } from "./base";
 import DraftPick, { LeagueLevel, MinorLeagueLevels } from "./draftPick";
 import Player, { PlayerLeagueType } from "./player";
@@ -79,6 +79,10 @@ export default class Trade extends BaseModel {
 
     @OneToMany(type => TradeItem, tradeItem => tradeItem.trade, {cascade: true, eager: true})
     public tradeItems?: TradeItem[];
+
+    @OneToOne(type => TradeParticipant, {onDelete: "SET NULL"})
+    @JoinColumn({name: "declinedBy"})
+    public declinedBy?: TradeParticipant;
 
     constructor(props: Partial<Trade>) {
         super();
