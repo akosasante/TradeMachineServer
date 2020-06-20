@@ -38,7 +38,7 @@ describe("Emailer Class", () => {
         });
 
         it("sendTradeRequestEmail", async () => {
-            const res = await Emailer.sendTradeRequestEmail(testTrade);
+            const res = await Emailer.sendTradeRequestEmail("test@example.com", testTrade);
             delete res.message;
             delete res.messageId;
             expect(res).toMatchSnapshot();

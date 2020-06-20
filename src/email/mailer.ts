@@ -148,12 +148,12 @@ export const Emailer = {
         });
     },
 
-    async sendTradeRequestEmail(trade: Trade): Promise<SendInBlueSendResponse> {
-        logger.debug(`got a req: ${trade}`);
+    async sendTradeRequestEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+        logger.debug(`preparing trade req email for tradeId: ${trade.id}`);
         return Emailer.emailer.send({
             template: "trade_request",
             message: {
-                to: "tripleabatt@gmail.com",
+                to: recipient,
             },
             locals: {
                 tradeSender: trade!.creator!.name,

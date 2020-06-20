@@ -278,7 +278,7 @@ Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
     "to": Array [
-      "tripleabatt@gmail.com",
+      "test@example.com",
     ],
   },
   "originalMessage": Object {
@@ -381,7 +381,7 @@ Honus Wiener - undefined - undefined
 
 Accept Trade [http://localhost:8080/trade/test-uuid/accept]Reject Trade
 [http://localhost:8080/trade/test-uuid/reject]",
-    "to": "tripleabatt@gmail.com",
+    "to": "test@example.com",
   },
 }
 `;
