@@ -9,7 +9,7 @@ export function setupSlackConsumers() {
     logger.info("registering slack consumers");
     const slackQueue = new Bull("slack_queue");
     const cleanLoggedData = (data: any) => {
-        const trade: Trade = JSON.parse(data.entity || "{}");
+        const trade: Trade = JSON.parse(data.trade || "{}");
         return {
             tradeId: trade.id,
             status: trade.status,
@@ -19,7 +19,7 @@ export function setupSlackConsumers() {
     };
     const cleanLoggedReturn = (returnValue: any) => returnValue;
 
-    slackQueue.process("trade_announce", processTradeAnnounceJob);
+    slackQueue.process("trade_announce", x => processTradeAnnounceJob(x));
 
     slackQueue.on("error", error => {
         logger.error(`Bull error during slack queue cron job: ${inspect(error)}`);

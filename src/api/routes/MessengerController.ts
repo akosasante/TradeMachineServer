@@ -6,15 +6,18 @@ import TradeDAO from "../../DAO/TradeDAO";
 import { Response } from "express";
 import { Role } from "../../models/user";
 import { TradeStatus } from "../../models/trade";
+import { SlackPublisher } from "../../slack/publishers";
 
 @Controller("/messenger")
 export default class MessengerController {
     private emailPublisher: EmailPublisher;
+    private slackPublisher: SlackPublisher;
     private tradeDao: TradeDAO;
 
-    constructor(publisher?: EmailPublisher, tradeDao?: TradeDAO) {
+    constructor(publisher?: EmailPublisher, tradeDao?: TradeDAO, slackPublisher?: SlackPublisher) {
         this.emailPublisher = publisher || EmailPublisher.getInstance();
         this.tradeDao = tradeDao || new TradeDAO();
+        this.slackPublisher = slackPublisher || SlackPublisher.getInstance();
     }
     @Authorized(Role.OWNER)
     @Post(`/requestTrade${UUIDPattern}`)
@@ -40,8 +43,16 @@ export default class MessengerController {
         //
     }
 
-    @Post("/submitTrade")
-    public async sendTradeAnnouncementMessage() {
-        //
+    @Post(`/submitTrade${UUIDPattern}`)
+    public async sendTradeAnnouncementMessage(@Param("id") id: string, @Res() response: Response) {
+        logger.debug(`queuing trade announcement slack message for tradeId: ${id}`);
+        let trade = await this.tradeDao.getTradeById(id);
+        if (trade.status === TradeStatus.ACCEPTED) {
+            trade = await this.tradeDao.hydrateTrade(trade);
+            await this.slackPublisher.queueTradeAnnouncement(trade);
+            return response.status(202).json({status: "accepted trade announcement queued"});
+        } else {
+            throw new BadRequestError("Cannot send trade announcement for this trade based on its status");
+        }
     }
 }
