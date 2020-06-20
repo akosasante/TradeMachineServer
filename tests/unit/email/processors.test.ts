@@ -1,7 +1,7 @@
 import "jest";
 import "jest-extended";
 import { UserFactory } from "../../factories/UserFactory";
-import { processEmailJob, handleWebhookResponse } from "../../../src/email/processors";
+import {handleEmailJob, handleTradeEmailJob, handleWebhookResponse} from "../../../src/email/processors";
 import { Emailer } from "../../../src/email/mailer";
 import logger from "../../../src/bootstrap/logger";
 import EmailDAO from "../../../src/DAO/EmailDAO";
@@ -37,30 +37,33 @@ afterEach(() => {
 });
 
 describe("Email queue processors", () => {
-    describe("processEmailJob/1 - it should call the appropriate Emailer methods with the right arguments", () => {
+    describe("handleEmailJob/1 - it should call the appropriate Emailer methods with the right arguments", () => {
         it("calls sendPasswordResetEmail", async () => {
             // @ts-ignore
-            await processEmailJob({name: "reset_pass", data: { entity: userJson }});
+            await handleEmailJob({name: "reset_pass", data: { user: userJson }});
             expect(Emailer.sendPasswordResetEmail).toBeCalledTimes(1);
             expect(Emailer.sendPasswordResetEmail).toBeCalledWith(user);
         });
         it("calls sendTestEmail", async () => {
             // @ts-ignore
-            await processEmailJob({ name: "test_email", data: { entity: userJson } });
+            await handleEmailJob({ name: "test_email", data: { user: userJson } });
             expect(Emailer.sendTestEmail).toBeCalledTimes(1);
             expect(Emailer.sendTestEmail).toBeCalledWith(user);
         });
         it("calls sendRegistrationEmail", async () => {
             // @ts-ignore
-            await processEmailJob({ name: "registration_email", data: { entity: userJson } });
+            await handleEmailJob({ name: "registration_email", data: { user: userJson } });
             expect(Emailer.sendRegistrationEmail).toBeCalledTimes(1);
             expect(Emailer.sendRegistrationEmail).toBeCalledWith(user);
         });
+    });
+
+    describe("handleTradeEmailJob/1 - it should call the appropriate Emailer methods with the right arguments", () => {
         it("calls sendTradeRequestEmail", async () => {
             // @ts-ignore
-            await processEmailJob({ name: "request_trade", data: { entity: tradeJson } });
+            await handleTradeEmailJob({ name: "request_trade", data: { trade: tradeJson, recipient: "me@example.com" } });
             expect(Emailer.sendTradeRequestEmail).toBeCalledTimes(1);
-            expect(Emailer.sendTradeRequestEmail).toBeCalledWith(trade);
+            expect(Emailer.sendTradeRequestEmail).toBeCalledWith(trade, "me@example.com");
         });
     });
 

@@ -1,21 +1,32 @@
 import Bull from "bull";
-import { processEmailJob } from "./processors";
+import { handleEmailJob, handleTradeEmailJob } from "./processors";
 import logger from "../bootstrap/logger";
 import { inspect } from "util";
 import Trade from "../models/trade";
 import { cleanJobForLogging } from "../scheduled_jobs/job_utils";
+import User from "../models/user";
 
 export function setupEmailConsumers() {
     logger.info("registering email consumers");
     const emailQueue = new Bull("email_queue");
     const cleanLoggedData = (data: any) => {
-        const trade: Trade = JSON.parse(data.entity || "{}");
-        return {
-            tradeId: trade.id,
-            status: trade.status,
-            participantIds: trade.tradeParticipants?.map(tp => tp.team.id),
-            itemIds: trade.tradeItems?.map(ti => ti.tradeItemId),
-        };
+        if (data.user) {
+            const user: User = JSON.parse(data.parse || "{}");
+            return {
+                userId: user.id,
+                userName: user.displayName,
+            };
+        } else if (data.trade) {
+            const trade: Trade = JSON.parse(data.entity || "{}");
+            return {
+                tradeId: trade.id,
+                status: trade.status,
+                participantIds: trade.tradeParticipants?.map(tp => tp.team.id),
+                itemIds: trade.tradeItems?.map(ti => ti.tradeItemId),
+            };
+        } else {
+            return JSON.stringify(data);
+        }
     };
     const cleanLoggedReturn = (returnValue: any) => {
         return {
@@ -28,11 +39,12 @@ export function setupEmailConsumers() {
         };
     };
 
-    emailQueue.process("reset_pass", processEmailJob);
-    emailQueue.process("registration_email", processEmailJob);
-    emailQueue.process("request_trade", processEmailJob);
-    emailQueue.process("test_email", processEmailJob);
-    emailQueue.process("handle_webhook", processEmailJob);
+    emailQueue.process("reset_pass", handleEmailJob);
+    emailQueue.process("registration_email", handleEmailJob);
+    emailQueue.process("test_email", handleEmailJob);
+    emailQueue.process("handle_webhook", handleEmailJob);
+    emailQueue.process("request_trade", handleTradeEmailJob);
+    emailQueue.process("trade_declined", handleTradeEmailJob);
 
     emailQueue.on("error", error => {
         logger.error(`Bull error during email queue cron job: ${inspect(error)}`);

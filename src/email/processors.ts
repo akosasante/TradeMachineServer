@@ -1,5 +1,4 @@
 import { Job } from "bull";
-import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import { Emailer, SendInBlueSendResponse } from "./mailer";
 import User from "../models/user";
@@ -10,14 +9,20 @@ import { TradeItemType } from "../models/tradeItem";
 import DraftPick from "../models/draftPick";
 import Player from "../models/player";
 
-export type EmailJobName = "reset_pass" | "registration_email" | "test_email" | "handle_webhook" | "request_trade";
+export type EmailJobName = "reset_pass" | "registration_email" | "test_email" | "handle_webhook" | "request_trade" | "trade_declined";
 
 type AuthEmailFunction = (u: User) => Promise<SendInBlueSendResponse>;
-type TradeEmailFunction = (t: Trade) => Promise<SendInBlueSendResponse>;
+type TradeEmailFunction = (r: string, t: Trade) => Promise<SendInBlueSendResponse>;
 type WebhookEmailFunction = (event: any, dao?: any) => Promise<void>;
 
 export interface EmailJob {
-    entity?: string; // JSON representation of user/trade/email_event
+    user?: string; // JSON representation of user
+    event?: string; // JSON representation of email_event
+}
+
+export interface TradeEmail {
+    trade: string; // JSON representation of trade
+    recipient: string;
 }
 
 interface EmailCallbacks {
@@ -26,6 +31,7 @@ interface EmailCallbacks {
     registration_email: AuthEmailFunction;
     handle_webhook: WebhookEmailFunction;
     request_trade: TradeEmailFunction;
+    trade_declined: TradeEmailFunction;
 }
 
 export const emailCallbacks: EmailCallbacks = {
@@ -34,19 +40,30 @@ export const emailCallbacks: EmailCallbacks = {
     registration_email: Emailer.sendRegistrationEmail,
     handle_webhook: handleWebhookResponse,
     request_trade: Emailer.sendTradeRequestEmail,
+    trade_declined: Emailer.sendTradeDeclinedEmail,
 };
 
 const authEmailTasks = ["reset_pass", "test_email", "registration_email"];
 
-export async function processEmailJob(emailJob: Job<EmailJob>) {
+export async function handleEmailJob(emailJob: Job<EmailJob>) {
     logger.debug(`processing ${emailJob.name} email job#${emailJob.id}`);
     const emailTask = emailCallbacks[emailJob.name as EmailJobName];
 
-    if (emailJob.name === "handle_webhook" && emailJob.data.entity) {
-        const event = JSON.parse(emailJob.data.entity);
-        return await emailTask(event);
-    } else if (emailJob.name === "request_trade" && emailJob.data.entity) {
-        const trade = new Trade(JSON.parse(emailJob.data.entity));
+    if (emailJob.name === "handle_webhook" && emailJob.data.user) {
+        const event = JSON.parse(emailJob.data.user);
+        return await (emailTask as WebhookEmailFunction)(event);
+    } else if (authEmailTasks.includes(emailJob.name) && emailJob.data.user) {
+        const user = new User(JSON.parse(emailJob.data.user));
+        return await (emailTask as AuthEmailFunction)(user);
+    }
+}
+
+export async function handleTradeEmailJob(emailJob: Job<TradeEmail>) {
+    logger.debug(`processing ${emailJob.name} email job#${emailJob.id}`);
+    const emailTask = emailCallbacks[emailJob.name as EmailJobName];
+
+    if (emailJob.data.trade && emailJob.data.recipient) {
+        const trade = new Trade(JSON.parse(emailJob.data.trade));
         for (const item of (trade.tradeItems || [])) {
             if (item.tradeItemType === TradeItemType.PLAYER) {
                 item.entity = new Player(item.entity as Partial<Player> & Required<Pick<Player, "name">>);
@@ -55,10 +72,7 @@ export async function processEmailJob(emailJob: Job<EmailJob>) {
                 item.entity = new DraftPick(item.entity as Partial<DraftPick> & Required<Pick<DraftPick, "season" | "round" | "type">>);
             }
         }
-        return await emailTask(trade);
-    } else if (authEmailTasks.includes(emailJob.name) && emailJob.data.entity) {
-        const user = new User(JSON.parse(emailJob.data.entity));
-        return await emailTask(user);
+        return await emailTask(trade, emailJob.data.recipient);
     }
 }
 
