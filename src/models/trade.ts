@@ -70,6 +70,9 @@ export default class Trade extends BaseModel {
     @Column({type: "enum", enum: TradeStatus, default: TradeStatus.DRAFT})
     public status?: TradeStatus;
 
+    @Column({nullable: true})
+    public declinedReason?: string;
+
     @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade,
         {cascade: true, eager: true})
     public tradeParticipants?: TradeParticipant[];
