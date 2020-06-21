@@ -15,6 +15,7 @@ import { UserFactory } from "../../../factories/UserFactory";
 describe("MessengerController", () => {
     const mockEmailPublisher: MockObj = {
         queueTradeRequestMail: jest.fn(),
+        queueTradeDeclinedMail: jest.fn(),
     };
     const mockSlackPublisher: MockObj = {
         queueTradeAnnouncement: jest.fn(),
@@ -35,6 +36,11 @@ describe("MessengerController", () => {
     acceptedTrade.tradeParticipants?.forEach(tp => {
         tp.team.owners = [UserFactory.getUser()];
     });
+    const declinedTrade = TradeFactory.getTrade(undefined, undefined, TradeStatus.REJECTED, {declinedReason: "reason"});
+    declinedTrade.tradeParticipants?.forEach(tp => {
+        tp.team.owners = [UserFactory.getUser("owner1@example.com"), UserFactory.getUser("owner2@example.com")];
+    });
+    declinedTrade.declinedById = declinedTrade.tradeParticipants?.[1].id;
     const draftTrade = TradeFactory.getTrade();
     draftTrade.tradeParticipants?.forEach(tp => {
         tp.team.owners = [UserFactory.getUser("owner1@example.com"), UserFactory.getUser("owner2@example.com")];
@@ -82,6 +88,33 @@ describe("MessengerController", () => {
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(draftTrade.id);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(0);
             expect(mockEmailPublisher.queueTradeRequestMail).toHaveBeenCalledTimes(0);
+        });
+    });
+    describe("sendTradeDeclineMessage/2", () => {
+        it("should get a trade, hydrate it, and queue emails for each non-declining user", async () => {
+            mockTradeDao.getTradeById.mockResolvedValueOnce(declinedTrade);
+            mockTradeDao.hydrateTrade.mockResolvedValueOnce(declinedTrade);
+            await messengerController.sendTradeDeclineMessage(declinedTrade.id!, mockRes as unknown as Response);
+
+            expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
+            expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(declinedTrade.id);
+            expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(1);
+            expect(mockTradeDao.hydrateTrade).toHaveBeenCalledWith(declinedTrade);
+            expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledTimes(2);
+            expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledWith(declinedTrade, expect.stringMatching(/owner\d@example.com/));
+            expect(mockRes.status).toHaveBeenCalledTimes(1);
+            expect(mockRes.status).toHaveBeenCalledWith(202);
+            expect(mockRes.json).toHaveBeenCalledTimes(1);
+            expect(mockRes.json).toHaveBeenCalledWith({status: "trade decline email queued"});
+        });
+        it("should return a BadRequest if trade is not rejected", async () => {
+            mockTradeDao.getTradeById.mockResolvedValueOnce(draftTrade);
+            await expect(messengerController.sendTradeDeclineMessage(draftTrade.id!, mockRes as unknown as Response)).rejects.toThrow(BadRequestError);
+
+            expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
+            expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(draftTrade.id);
+            expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(0);
+            expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledTimes(0);
         });
     });
     describe("sendTradeAnnouncementMessage/2", () => {

@@ -1,5 +1,4 @@
 import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-// import uuid from "uuid/v4";
 
 export class BaseModel {
 

@@ -58,8 +58,8 @@ function validateStatusChange(user: User, trade: Trade, newStatus: TradeStatus):
     return checkForValidity[trade.status!].includes(newStatus);
 }
 
-function validateTradeDecliner(trade: Trade, declinedBy: TradeParticipant) {
-    return trade.tradeParticipants?.map(tp => tp.id).includes(declinedBy.id);
+function validateTradeDecliner(trade: Trade, declinedById: string) {
+    return trade.tradeParticipants?.map(tp => tp.id).includes(declinedById);
 }
 
 @JsonController("/trades")
@@ -113,9 +113,9 @@ export default class TradeController {
                 trade = await this.dao.updateStatus(id, tradeObj.status);
             }
 
-            if (tradeObj.declinedBy && validateTradeDecliner(existingTrade, tradeObj.declinedBy)) {
+            if (tradeObj.declinedById && validateTradeDecliner(existingTrade, tradeObj.declinedById)) {
                 logger.debug("updating trade participants");
-                trade = await this.dao.updateDeclinedBy(id, tradeObj.declinedBy, tradeObj.declinedReason);
+                trade = await this.dao.updateDeclinedBy(id, tradeObj.declinedById, tradeObj.declinedReason);
             }
 
             // only owner can actually edit the contents of the trade for now

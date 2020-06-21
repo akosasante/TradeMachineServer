@@ -11,14 +11,14 @@ import Team from "../../src/models/team";
 export class TradeFactory {
     public static getTradeObject(tradeItems = TradeFactory.getTradeItems(),
                                  tradeParticipants: TradeParticipant[] = TradeFactory.getTradeParticipants(), status = TradeStatus.DRAFT,
-                                 rest = {}) {
+                                 rest: Partial<Trade> = {}) {
         return {tradeItems, tradeParticipants, status, id: uuid(), ...rest};
     }
 
     public static getTrade(items?: TradeItem[],
                            participants?: TradeParticipant[],
                            status = TradeStatus.DRAFT,
-                           rest = {}) {
+                           rest: Partial<Trade> = {}) {
         const tradeParticipants = participants || TradeFactory.getTradeParticipants();
         const tradeItems = items || TradeFactory.getTradeItems(tradeParticipants[0].team, tradeParticipants[1].team);
         return new Trade(TradeFactory.getTradeObject(tradeItems, tradeParticipants, status, rest));

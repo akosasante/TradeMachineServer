@@ -26,6 +26,7 @@ let app: Server;
 let adminUser: User;
 let ownerUser: User;
 let pendingTrade: Trade;
+let declinedTrade: Trade;
 let acceptedTrade: Trade;
 let draftTrade: Trade;
 const emailPublisher = EmailPublisher.getInstance();
@@ -60,12 +61,15 @@ beforeAll(async () => {
     const tradeParticipants1 = TradeFactory.getTradeParticipants(team1, team2);
     const tradeParticipants2 = TradeFactory.getTradeParticipants(team1, team2);
     const tradeParticipants3 = TradeFactory.getTradeParticipants(team1, team2);
+    const tradeParticipants4 = TradeFactory.getTradeParticipants(team1, team2);
     const tradeItem1 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
     const tradeItem2 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
     const tradeItem3 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
+    const tradeItem4 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
     pendingTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem1], tradeParticipants1, TradeStatus.PENDING));
     acceptedTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem2], tradeParticipants2, TradeStatus.ACCEPTED));
     draftTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem3], tradeParticipants3));
+    declinedTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem4], tradeParticipants4, TradeStatus.REJECTED, {declinedById: tradeParticipants4[1].id, declinedReason: "because I say so"}));
 });
 afterAll(async () => {
     logger.debug("~~~~~~MESSENGER ROUTES AFTER ALL~~~~~~");
@@ -121,6 +125,51 @@ describe("Messenger API endpoints", () => {
         it("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const queueLengthBefore = await emailPublisher.getJobTotal();
             await req(pendingTrade.id!, 403);
+            const queueLengthAfter = await emailPublisher.getJobTotal();
+
+            expect(queueLengthAfter).toEqual(queueLengthBefore);
+        });
+    });
+
+    describe("POST /declineTrade/:id (send trade declined email)", () => {
+        const req = (id: string, status: number = 202) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<undefined>(agent, `/messenger/declineTrade/${id}`, undefined, status);
+
+        it("should queue a trade decline email job and return 202", async () => {
+            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const {body} = await adminLoggedIn(req(declinedTrade.id!), app);
+            const queueLengthAfter = await emailPublisher.getJobTotal();
+
+            expect(body.status).toEqual("trade decline email queued");
+            expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
+        });
+        it("should queue a trade declined email job successfully if logged in as san owner", async () => {
+            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const {body} = await ownerLoggedIn(req(declinedTrade.id!), app);
+            const queueLengthAfter = await emailPublisher.getJobTotal();
+
+            expect(body.status).toEqual("trade decline email queued");
+            expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
+        });
+        it("should return a 400 Bad Request if the trade is not declined", async () => {
+            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const {body} = await adminLoggedIn(req(draftTrade.id!, 400), app);
+            const queueLengthAfter = await emailPublisher.getJobTotal();
+
+            expect(body.stack).toMatch("BadRequest");
+            expect(queueLengthAfter).toEqual(queueLengthBefore);
+        });
+        it("should return a 404 if no trade found with that id", async () => {
+            const queueLengthBefore = await emailPublisher.getJobTotal();
+            await adminLoggedIn(req(uuid(), 404), app);
+            const queueLengthAfter = await emailPublisher.getJobTotal();
+
+            expect(queueLengthAfter).toEqual(queueLengthBefore);
+        });
+        it("should return a 403 Forbidden Error if a non-logge-in request is uesd", async () => {
+            const queueLengthBefore = await emailPublisher.getJobTotal();
+            await req(declinedTrade.id!, 403);
             const queueLengthAfter = await emailPublisher.getJobTotal();
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);

@@ -73,16 +73,15 @@ export default class Trade extends BaseModel {
     @Column({nullable: true})
     public declinedReason?: string;
 
+    @Column({nullable: true, type: "uuid"})
+    public declinedById?: string;
+
     @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade,
         {cascade: true, eager: true})
     public tradeParticipants?: TradeParticipant[];
 
     @OneToMany(type => TradeItem, tradeItem => tradeItem.trade, {cascade: true, eager: true})
     public tradeItems?: TradeItem[];
-
-    @OneToOne(type => TradeParticipant, {onDelete: "SET NULL"})
-    @JoinColumn({name: "declinedBy"})
-    public declinedBy?: TradeParticipant;
 
     constructor(props: Partial<Trade>) {
         super();
