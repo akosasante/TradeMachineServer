@@ -220,4 +220,49 @@ describe("Messenger API endpoints", () => {
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
     });
+
+    describe("POST /acceptTrade/;id (send trade acceptance email)", () => {
+        const req = (id: string, status: number = 202) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<undefined>(agent, `/messenger/acceptTrade/${id}`, undefined, status);
+
+        it("should queue a trade acceptance email job and return 202", async () => {
+            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const {body} = await adminLoggedIn(req(acceptedTrade.id!), app);
+            const queueLengthAfter = await emailPublisher.getJobTotal();
+
+            expect(body.status).toEqual("trade acceptance email queued");
+            expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
+        });
+        it("should queue a trade acceptance job successfully if logged in as an owner", async () => {
+            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const {body} = await ownerLoggedIn(req(acceptedTrade.id!), app);
+            const queueLengthAfter = await emailPublisher.getJobTotal();
+
+            expect(body.status).toEqual("trade acceptance email queued");
+            expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
+        });
+        it("should return a 400 Bad Request if the trade is not accepted", async () => {
+            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const {body} = await adminLoggedIn(req(draftTrade.id!, 400), app);
+            const queueLengthAfter = await emailPublisher.getJobTotal();
+
+            expect(body.stack).toMatch("BadRequest");
+            expect(queueLengthAfter).toEqual(queueLengthBefore);
+        });
+        it("should return a 404 if no trade found with that id", async () => {
+            const queueLengthBefore = await emailPublisher.getJobTotal();
+            await adminLoggedIn(req(uuid(), 404), app);
+            const queueLengthAfter = await emailPublisher.getJobTotal();
+
+            expect(queueLengthAfter).toEqual(queueLengthBefore);
+        });
+        it("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
+            const queueLengthBefore = await emailPublisher.getJobTotal();
+            await req(acceptedTrade.id!, 403);
+            const queueLengthAfter = await emailPublisher.getJobTotal();
+
+            expect(queueLengthAfter).toEqual(queueLengthBefore);
+        });
+    });
 });

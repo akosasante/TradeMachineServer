@@ -50,8 +50,6 @@ export default class MessengerController {
         let trade = await this.tradeDao.getTradeById(id);
         if (trade.status === TradeStatus.REJECTED && trade.declinedById) {
             trade = await this.tradeDao.hydrateTrade(trade);
-            logger.debug(inspect(trade.tradeParticipants));
-            logger.debug(inspect(trade.declinedById));
             const emails = trade.tradeParticipants
                 ?.filter(tp => tp.id !== trade.declinedById)
                 .map(tp => tp.team)
@@ -64,6 +62,25 @@ export default class MessengerController {
             return response.status(202).json({status: "trade decline email queued"});
         } else {
             throw new BadRequestError("Cannot send trade decline email for this trade based on its status");
+        }
+    }
+
+    @Post(`/acceptTrade${UUIDPattern}`)
+    public async sendTradeAcceptanceMessage(@Param("id") id: string, @Res() response: Response) {
+        logger.debug(`queueing trade acceptance email for tradeId: ${id}`);
+        let trade = await this.tradeDao.getTradeById(id);
+        if (trade.status === TradeStatus.ACCEPTED) {
+            // TODO: Maybe we want to have a state between accepted and submitted?
+            trade = await this.tradeDao.hydrateTrade(trade);
+            const creatorEmails = trade.creator?.owners?.map(o => o.email);
+            if (creatorEmails) {
+                for (const email of creatorEmails) {
+                    await this.emailPublisher.queueTradeAcceptedMail(trade, email);
+                }
+            }
+            return response.status(202).json({status: "trade acceptance email queued"});
+        } else {
+            throw new BadRequestError("Cannot send trade acceptance email for this trade based on its status");
         }
     }
 

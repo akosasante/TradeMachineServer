@@ -16,6 +16,7 @@ describe("MessengerController", () => {
     const mockEmailPublisher: MockObj = {
         queueTradeRequestMail: jest.fn(),
         queueTradeDeclinedMail: jest.fn(),
+        queueTradeAcceptedMail: jest.fn(),
     };
     const mockSlackPublisher: MockObj = {
         queueTradeAnnouncement: jest.fn(),
@@ -34,7 +35,7 @@ describe("MessengerController", () => {
     });
     const acceptedTrade = TradeFactory.getTrade(undefined, undefined, TradeStatus.ACCEPTED);
     acceptedTrade.tradeParticipants?.forEach(tp => {
-        tp.team.owners = [UserFactory.getUser()];
+        tp.team.owners = [UserFactory.getUser("owner1@example.com"), UserFactory.getUser("owner2@example.com")];
     });
     const declinedTrade = TradeFactory.getTrade(undefined, undefined, TradeStatus.REJECTED, {declinedReason: "reason"});
     declinedTrade.tradeParticipants?.forEach(tp => {
@@ -142,6 +143,34 @@ describe("MessengerController", () => {
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(draftTrade.id);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(0);
             expect(mockSlackPublisher.queueTradeAnnouncement).toHaveBeenCalledTimes(0);
+        });
+    });
+
+    describe("sendTradeAcceptanceMessage/2", () => {
+        it("should get a trade, hydrate it and queue emails for each creator owner", async () => {
+            mockTradeDao.getTradeById.mockResolvedValueOnce(acceptedTrade);
+            mockTradeDao.hydrateTrade.mockResolvedValueOnce(acceptedTrade);
+            await messengerController.sendTradeAcceptanceMessage(acceptedTrade.id!, mockRes as unknown as Response);
+
+            expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
+            expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(acceptedTrade.id);
+            expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(1);
+            expect(mockTradeDao.hydrateTrade).toHaveBeenCalledWith(acceptedTrade);
+            expect(mockEmailPublisher.queueTradeAcceptedMail).toHaveBeenCalledTimes(2);
+            expect(mockEmailPublisher.queueTradeAcceptedMail).toHaveBeenCalledWith(acceptedTrade, expect.stringMatching(/owner\d@example.com/));
+            expect(mockRes.status).toHaveBeenCalledTimes(1);
+            expect(mockRes.status).toHaveBeenCalledWith(202);
+            expect(mockRes.json).toHaveBeenCalledTimes(1);
+            expect(mockRes.json).toHaveBeenCalledWith({status: "trade acceptance email queued"});
+        });
+        it("should return a BadRequest if trade is not rejected", async () => {
+            mockTradeDao.getTradeById.mockResolvedValueOnce(draftTrade);
+            await expect(messengerController.sendTradeAcceptanceMessage(draftTrade.id!, mockRes as unknown as Response)).rejects.toThrow(BadRequestError);
+
+            expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
+            expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(draftTrade.id);
+            expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(0);
+            expect(mockEmailPublisher.queueTradeAcceptedMail).toHaveBeenCalledTimes(0);
         });
     });
 });
