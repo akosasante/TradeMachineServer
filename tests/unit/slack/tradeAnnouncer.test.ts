@@ -2,10 +2,10 @@ import "jest";
 import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import TradeFormatter from "../../../src/slack/tradeFormatter";
-import {mocked} from "ts-jest/utils";
-import {TradeFactory} from "../../factories/TradeFactory";
-import {SlackTradeAnnouncer} from "../../../src/slack/tradeAnnouncer";
-import {IncomingWebhook} from "@slack/webhook";
+import { mocked } from "ts-jest/utils";
+import { TradeFactory } from "../../factories/TradeFactory";
+import { SlackTradeAnnouncer } from "../../../src/slack/tradeAnnouncer";
+import { IncomingWebhook } from "@slack/webhook";
 
 jest.mock("../../../src/slack/tradeFormatter");
 jest.mock("@slack/webhook");
@@ -25,6 +25,13 @@ beforeAll(() => {
 });
 afterAll(() => {
     logger.debug("~~~~~~SLACK TRADE ANNOUNCER TESTS COMPLETE~~~~~~");
+});
+afterEach(() => {
+    mockedTradeFormatter.getTradeTextForParticipant.mockClear();
+    mockedTradeFormatter.getNotificationText.mockClear();
+    mockedTradeFormatter.getTitleText.mockClear();
+    mockedTradeFormatter.getSubtitleText.mockClear();
+    mockedTradeFormatter.getLinkText.mockClear();
 });
 
 describe("SlackTradeAnnouncer class", () => {

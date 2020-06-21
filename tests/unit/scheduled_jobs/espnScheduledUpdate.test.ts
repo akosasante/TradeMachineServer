@@ -28,9 +28,7 @@ describe("Espn Scheduled Update Jobs", () => {
     });
     afterEach(() => {
         [mockTeamDao, mockEspnApi, mockPlayerDao].forEach(mockedThing =>
-            Object.entries(mockedThing).forEach((kvp: [string, jest.Mock<any, any>]) => {
-                kvp[1].mockClear();
-            }));
+            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
     });
 
     test("updateEspnData - should call the correct DAO methods to update ESPN data", async () => {

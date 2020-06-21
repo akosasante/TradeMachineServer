@@ -2,11 +2,8 @@ import "jest";
 import "jest-extended";
 import { Emailer } from "../../../src/email/mailer";
 import { UserFactory } from "../../factories/UserFactory";
-import { config as dotenvConfig } from "dotenv";
-import { resolve as resolvePath } from "path";
 import logger from "../../../src/bootstrap/logger";
-
-dotenvConfig({path: resolvePath(__dirname, "../../.env")}); // required for api keys
+import { TradeFactory } from "../../factories/TradeFactory";
 
 describe("Emailer Class", () => {
     beforeAll(() => {
@@ -16,6 +13,7 @@ describe("Emailer Class", () => {
         logger.debug("~~~~~~EMAILER TESTS COMPLETE~~~~~~");
     });
     const testUser = UserFactory.getUser("test@example.com", "Jatheesh", undefined, undefined, {id: "test-uuid"});
+    const testTrade = TradeFactory.getTrade( undefined, undefined, undefined, {id: "test-uuid"});
 
     describe("email snapshots", () => {
         it("sendTestEmail", async () => {
@@ -35,6 +33,20 @@ describe("Emailer Class", () => {
         it("sendPasswordResetEmail", async () => {
             const res = await Emailer.sendPasswordResetEmail(testUser);
             delete res.message; // value varies due to include a dynamic messageId so keep it out of the snapshot
+            delete res.messageId;
+            expect(res).toMatchSnapshot();
+        });
+
+        it("sendTradeRequestEmail", async () => {
+            const res = await Emailer.sendTradeRequestEmail("test@example.com", testTrade);
+            delete res.message;
+            delete res.messageId;
+            expect(res).toMatchSnapshot();
+        });
+
+        it("sendTradeSubmissionEmail", async () => {
+            const res = await Emailer.sendTradeSubmissionEmail("test@exaample.com", testTrade);
+            delete res.message;
             delete res.messageId;
             expect(res).toMatchSnapshot();
         });

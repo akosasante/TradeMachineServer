@@ -1,4 +1,4 @@
-import { Entity, OneToMany } from "typeorm";
+import { Column, Entity, JoinColumn, OneToMany, OneToOne } from "typeorm";
 import { BaseModel } from "./base";
 import DraftPick, { LeagueLevel, MinorLeagueLevels } from "./draftPick";
 import Player, { PlayerLeagueType } from "./player";
@@ -6,6 +6,14 @@ import Team from "./team";
 import TradeItem from "./tradeItem";
 import TradeParticipant, { TradeParticipantType } from "./tradeParticipant";
 import logger from "../bootstrap/logger";
+
+export enum TradeStatus {
+    DRAFT,
+    REQUESTED,
+    PENDING, // only a thing for more than two-person trades
+    ACCEPTED,
+    REJECTED,
+}
 
 @Entity()
 export default class Trade extends BaseModel {
@@ -58,6 +66,15 @@ export default class Trade extends BaseModel {
     public get lowMinorPicks(): DraftPick[] {
         return this.picks.filter(pick => pick.type === LeagueLevel.LOW);
     }
+
+    @Column({type: "enum", enum: TradeStatus, default: TradeStatus.DRAFT})
+    public status?: TradeStatus;
+
+    @Column({nullable: true})
+    public declinedReason?: string;
+
+    @Column({nullable: true, type: "uuid"})
+    public declinedById?: string;
 
     @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade,
         {cascade: true, eager: true})

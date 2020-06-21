@@ -136,4 +136,22 @@ describe("Auth API endpoints", () => {
                 .expect(404);
         });
     });
+
+    describe("POST /login/sendResetEmail (send a reset password email)", () => {
+        it("should return a 202 message if the email is successfully queued", async () => {
+            await request(app)
+                .post("/auth/login/sendResetEmail")
+                .send({email: testUser.email})
+                .expect(202);
+        });
+    });
+
+    describe("POST /signup/sendEmail (send a registration email)", () => {
+        it("should return a 202 message if the email is successfully queued", async () => {
+            await request(app)
+                .post("/auth/signup/sendEmail")
+                .send({email: testUser.email})
+                .expect(202);
+        });
+    });
 });

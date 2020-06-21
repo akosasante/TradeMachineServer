@@ -1,16 +1,20 @@
 import "jest";
 import "jest-extended";
 import { UserFactory } from "../../factories/UserFactory";
-import { processEmailJob, handleWebhookResponse } from "../../../src/email/processors";
+import {handleEmailJob, handleTradeEmailJob, handleWebhookResponse} from "../../../src/email/processors";
 import { Emailer } from "../../../src/email/mailer";
 import logger from "../../../src/bootstrap/logger";
 import EmailDAO from "../../../src/DAO/EmailDAO";
+import { TradeFactory } from "../../factories/TradeFactory";
 
 jest.mock( "../../../src/email/mailer", () => ({
     Emailer: {
         sendPasswordResetEmail: jest.fn(),
         sendTestEmail: jest.fn(),
         sendRegistrationEmail: jest.fn(),
+        sendTradeRequestEmail: jest.fn(),
+        sendTradeDeclinedEmail: jest.fn(),
+        sendTradeSubmissionEmail: jest.fn(),
     },
 }));
 
@@ -19,44 +23,64 @@ const mockEmailDAO = {
 };
 
 const user = UserFactory.getUser();
+const trade = TradeFactory.getTrade();
 const userJson = JSON.stringify(user);
+const tradeJson = JSON.stringify(trade);
 
 beforeAll(() => {
-    logger.debug("~~~~~~QUEUE PROCESSORS TESTS BEGIN~~~~~~");
+    logger.debug("~~~~~~EMAIL QUEUE PROCESSORS TESTS BEGIN~~~~~~");
 });
 afterAll(() => {
-    logger.debug("~~~~~~QUEUE PROCESSORS TESTS COMPLETE~~~~~~");
+    logger.debug("~~~~~~EMAIL QUEUE PROCESSORS TESTS COMPLETE~~~~~~");
 });
 afterEach(() => {
     [Emailer, mockEmailDAO].forEach(mockedThing =>
-        Object.values(mockedThing).forEach((mockFn: jest.Mock<any, any>) => {
-            mockFn.mockClear();
-        }));
+        Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
 });
 
-describe("Queue processors", () => {
-    describe("processEmailJob/1 - it should call the appropriate Emailer methods with the right arguments", () => {
+describe("Email queue processors", () => {
+    describe("handleEmailJob/1 - it should call the appropriate Emailer methods with the right arguments", () => {
         it("calls sendPasswordResetEmail", async () => {
             // @ts-ignore
-            await processEmailJob({data: {mailType: "reset_pass", user: userJson}});
+            await handleEmailJob({name: "reset_pass", data: { user: userJson }});
             expect(Emailer.sendPasswordResetEmail).toBeCalledTimes(1);
             expect(Emailer.sendPasswordResetEmail).toBeCalledWith(user);
         });
         it("calls sendTestEmail", async () => {
             // @ts-ignore
-            await processEmailJob({ data: { mailType: "test_email", user: userJson } });
+            await handleEmailJob({ name: "test_email", data: { user: userJson } });
             expect(Emailer.sendTestEmail).toBeCalledTimes(1);
             expect(Emailer.sendTestEmail).toBeCalledWith(user);
         });
         it("calls sendRegistrationEmail", async () => {
             // @ts-ignore
-            await processEmailJob({ data: { mailType: "registration_email", user: userJson } });
+            await handleEmailJob({ name: "registration_email", data: { user: userJson } });
             expect(Emailer.sendRegistrationEmail).toBeCalledTimes(1);
             expect(Emailer.sendRegistrationEmail).toBeCalledWith(user);
         });
     });
 
-    // TODO
+    describe("handleTradeEmailJob/1 - it should call the appropriate Emailer methods with the right arguments", () => {
+        it("should call sendTradeRequestEmail for request_trade jobs", async () => {
+            // @ts-ignore
+            await handleTradeEmailJob({ name: "request_trade", data: { trade: tradeJson, recipient: "me@example.com" } });
+            expect(Emailer.sendTradeRequestEmail).toBeCalledTimes(1);
+            expect(Emailer.sendTradeRequestEmail).toBeCalledWith(trade, "me@example.com");
+        });
+        it("should call sendTradeDeclinedEmail for trade_declined jobs", async () => {
+            // @ts-ignore
+            await handleTradeEmailJob({ name: "trade_declined", data: { trade: tradeJson, recipient: "me@example.com" } });
+            expect(Emailer.sendTradeDeclinedEmail).toBeCalledTimes(1);
+            expect(Emailer.sendTradeDeclinedEmail).toBeCalledWith(trade, "me@example.com");
+        });
+        it("should call sendTradeSubmissionEmail for trade_accepted jobs", async () => {
+            // @ts-ignore
+            await handleTradeEmailJob({ name: "trade_accepted", data: { trade: tradeJson, recipient: "me@example.com" } });
+            expect(Emailer.sendTradeSubmissionEmail).toBeCalledTimes(1);
+            expect(Emailer.sendTradeSubmissionEmail).toBeCalledWith(trade, "me@example.com");
+        });
+    });
+
     it("handleWebhookResponse - it should get the email by id and that's it for now", async () => {
         const webhookEvent = {
             event: "request",
@@ -69,6 +93,6 @@ describe("Queue processors", () => {
         };
         await handleWebhookResponse(webhookEvent, mockEmailDAO as unknown as EmailDAO);
         expect(mockEmailDAO.getEmailByMessageId).toHaveBeenCalledTimes(1);
-        expect(mockEmailDAO.getEmailByMessageId).toHaveBeenCalledWith("<5d0e2800bbddbd4ed05cc56a@domain.com>")
+        expect(mockEmailDAO.getEmailByMessageId).toHaveBeenCalledWith("<5d0e2800bbddbd4ed05cc56a@domain.com>");
     });
 });

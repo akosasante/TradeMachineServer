@@ -4,31 +4,36 @@ import TeamDAO from "../DAO/TeamDAO";
 import EspnAPI from "../espn/espnApi";
 import logger from "../bootstrap/logger";
 import { inspect } from "util";
+import { cleanJobForLogging } from "./job_utils";
+import { v4 as uuid } from "uuid";
 
 export function setupScheduledEspnUpdates() {
     const cron = "22 6 * * *"; // daily at 2:22AM ET
     logger.info(`Setting up espn updates to run on schedule: ${cron}`);
-    const espnQueue = new Bull("espn_queue");
+    const espnQueue = new Bull("espn_queue", {settings: {maxStalledCount: 0}});
+    const JobName = "espn_updates";
+    const cleanLoggedData = (_data: any) => "";
+    const cleanLoggedReturn = (returnValue: any) => returnValue;
 
-    espnQueue.process(1, async () => {
+    espnQueue.process(JobName, async () => {
         return await updateEspnData({});
     });
-    espnQueue.add({}, {repeat: { cron }});
+    espnQueue.add(JobName, uuid(), { repeat: { cron } });
 
     espnQueue.on("error", error => {
-        logger.debug(`Bull error during setupScheduledEspnUpdates: ${inspect(error)}`);
+        logger.error(`Bull error during setupScheduledEspnUpdates: ${inspect(error)}`);
     });
 
     espnQueue.on("active", job => {
-        logger.debug(`setupScheduledEspnUpdates Worker job started: ${inspect(job)}`);
+        logger.info(`setupScheduledEspnUpdates Worker job started: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
     });
 
-    espnQueue.on("completed", (job, result) => {
-        logger.debug(`setupScheduledEspnUpdates Worker completed: ${inspect(job)}`);
+    espnQueue.on("completed", (job, _result) => {
+        logger.info(`setupScheduledEspnUpdates Worker completed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
     });
 
     espnQueue.on("failed", (job, err) => {
-        logger.debug(`"setupScheduledEspnUpdates Worker failed: ${inspect(job)}, ${inspect(err)}`);
+        logger.error(`"setupScheduledEspnUpdates Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
     });
 }
 

@@ -23,9 +23,7 @@ describe("DraftPickDAO", () => {
     const draftPickDAO = new DraftPickDAO(mockPickDb as unknown as Repository<DraftPick>);
 
     afterEach(() => {
-        Object.keys(mockPickDb).forEach((action: string) => {
-            (mockPickDb[action as keyof MockObj] as jest.Mock).mockClear();
-        });
+        Object.values(mockPickDb).forEach(mockFn => mockFn.mockReset());
 
         mockExecute.mockClear();
         mockWhereInIds.mockClear();

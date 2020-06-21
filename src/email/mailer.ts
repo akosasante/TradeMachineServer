@@ -6,8 +6,12 @@ import path from "path";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import User from "../models/user";
-// import { config as dotenvConfig } from "dotenv";
-// dotenvConfig({path: path.resolve(__dirname, "../../.env")});
+import Trade from "../models/trade";
+import TradeItem from "../models/tradeItem";
+import Player, { PlayerLeagueType } from "../models/player";
+import { partition } from "lodash";
+import DraftPick from "../models/draftPick";
+import ordinal from "ordinal";
 
 export interface SendInBlueSendResponse {
     envelope: {
@@ -34,6 +38,38 @@ const SendInBlueOpts = {
 const SendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SendInBlueOpts));
 
 const baseDomain = process.env.BASE_URL;
+
+function getTitleText(trade: Trade) {
+    if (trade.tradeParticipants?.length === 2) {
+        return `${trade.creator?.name} requested a trade with you:`;
+    } else {
+        return `${trade.creator?.name} requested a trade with you and others`;
+    }
+}
+
+function getTradeTextForRequest(trade: Trade) {
+    return trade.tradeParticipants?.map(participant => {
+        const sentPlayers = TradeItem.itemsSentBy(TradeItem.filterPlayers(trade.tradeItems), participant.team).map(item => item.entity as Player);
+        const [sentMajors, sentMinors] = partition(sentPlayers, player => player.league === PlayerLeagueType.MAJOR);
+        const sentPicks = TradeItem.itemsSentBy(TradeItem.filterPicks(trade.tradeItems), participant.team).map(item => item.entity as DraftPick);
+        return {
+            sender: participant.team.name,
+            majors: sentMajors.map(player => `${player.name} - ${player.mlbTeam} - ${player.getEspnEligiblePositions()}`),
+            minors: sentMinors.map(player => `${player.name} - ${player.meta?.minorLeaguePlayer?.team} - ${player.meta?.minorLeaguePlayer?.primary_position}`),
+            picks: sentPicks.map(pick => `${pick!.originalOwner?.name}'s ${pick!.season} ${ordinal(pick!.round)} round pick`),
+        };
+    });
+}
+
+function emailIsCreatorOfTrade(email: string, trade: Trade) {
+    const ownerEmails = trade.creator?.owners?.map(o => o.email);
+    return (ownerEmails || []).includes(email);
+}
+
+function getParticipantByEmail(email: string, trade: Trade) {
+    logger.debug(inspect(trade.creator?.owners));
+    return trade.tradeParticipants?.find(tp => tp.team.owners?.find(u => u.email === email));
+}
 
 export const Emailer = {
     emailer: new Email({
@@ -67,7 +103,7 @@ export const Emailer = {
                 url: resetPassPage,
             },
         })
-        .then((res: any) => {
+        .then((res: SendInBlueSendResponse) => {
             logger.info(`Successfully sent password reset email: ${inspect(res.messageId)}`);
             return res;
         })
@@ -89,7 +125,7 @@ export const Emailer = {
                 name: user.displayName || user.email,
             },
         })
-        .then((res: any) => {
+        .then((res: SendInBlueSendResponse) => {
             logger.info(`Successfully sent test email: ${inspect(res.messageId)}`);
             return res;
         })
@@ -112,7 +148,7 @@ export const Emailer = {
                 url: registrationLink,
             },
         })
-        .then((res: any) => {
+        .then((res: SendInBlueSendResponse) => {
             logger.info(`Successfully sent registration email: ${inspect(res.messageId)}`);
             return res;
         })
@@ -121,15 +157,78 @@ export const Emailer = {
             return undefined;
         });
     },
+
+    async sendTradeRequestEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+        logger.debug(`preparing trade req email for tradeId: ${trade.id}`);
+        return Emailer.emailer.send({
+            template: "trade_request",
+            message: {
+                to: recipient,
+            },
+            locals: {
+                tradeSender: trade!.creator!.name,
+                titleText: getTitleText(trade!),
+                tradesBySender: getTradeTextForRequest(trade!),
+                acceptUrl: `${baseDomain}/trade/${trade!.id}/accept`,
+                rejectUrl: `${baseDomain}/trade/${trade!.id}/reject`,
+            },
+        })
+            .then((res: SendInBlueSendResponse) => {
+                logger.info(`Successfully sent trade request email: ${inspect(res.messageId)}`);
+                return res;
+            })
+            .catch((err: Error) => {
+                logger.error(`Ran into an error while sending trade request email: ${inspect(err)}`);
+                return undefined;
+            });
+    },
+
+    async sendTradeDeclinedEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+        logger.debug(`got a trade decline email request for tradeId: ${trade.id}`);
+        return Emailer.emailer.send({
+            template: "trade_declined",
+            message: {
+                to: recipient,
+            },
+            locals: {
+                isCreator: emailIsCreatorOfTrade(recipient, trade),
+                reason: trade.declinedReason,
+                decliningTeam: getParticipantByEmail(recipient, trade)?.team.name,
+                tradesBySender: getTradeTextForRequest(trade!),
+            },
+        })
+            .then((res: SendInBlueSendResponse) => {
+                logger.info(`Successfully sent trade declined email: ${inspect(res.messageId)}`);
+                return res;
+            })
+            .catch((err: Error) => {
+                logger.error(`Ran into an error while sending trade declined email: ${inspect(err)}`);
+                return undefined;
+            });
+    },
+
+    async sendTradeSubmissionEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+        logger.debug(`got a trade submission email request for tradeId: ${trade.id}`);
+        return Emailer.emailer.send({
+            template: "trade_accepted",
+            message: {
+                to: recipient,
+            },
+            locals: {
+                acceptUrl: `${baseDomain}/trade/${trade!.id}/submit`,
+                rejectUrl: `${baseDomain}/trade/${trade!.id}/discard`,
+                tradesBySender: getTradeTextForRequest(trade!),
+            },
+        })
+            .then((res: SendInBlueSendResponse) => {
+                logger.info(`Successfully sent trade submission email: ${inspect(res.messageId)}`);
+                return res;
+            })
+            .catch((err: Error) => {
+                logger.error(`Ran into an error while sending trade submission email: ${inspect(err)}`);
+                return undefined;
+            });
+    },
 };
 
 Object.freeze(Emailer);
-
-async function test() {
-    const mailer = Emailer;
-    const user = new User({displayName: "Akosua", email: "tripleabatt@gmail.com"});
-    logger.info("BEFORE");
-    const res = await mailer.sendTestEmail(user);
-    logger.info(`RESULT: ${inspect(res)}`);
-}
-test();

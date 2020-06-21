@@ -1,6 +1,5 @@
 import { compare, hash } from "bcryptjs";
 import { isAfter } from "date-fns";
-import { get } from "lodash";
 import { Action, BadRequestError, NotFoundError } from "routing-controllers";
 import { inspect } from "util";
 import { ConflictError } from "../api/middlewares/ErrorHandler";
@@ -10,9 +9,9 @@ import User, { Role } from "../models/user";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 
 
-export async function serializeUser(user: User): Promise<string | undefined> {
+export function serializeUser(user: User): string | undefined {
     logger.debug("serializing user");
-    return user ? user.id : undefined;
+    return user?.id;
 }
 
 export async function deserializeUser(id: string, userDAO: UserDAO = new UserDAO()): Promise<User> {
@@ -28,8 +27,8 @@ export async function signUpAuthentication(email: string, password: string, user
         if (!user) {
             logger.debug("no existing user with that email");
             const hashedPass = await generateHashedPassword(password);
-            const newUser = await userDAO.createUsers([{email, password: hashedPass, lastLoggedIn: new Date()}]);
-            return done(undefined, newUser[0]);
+            const [newUser] = await userDAO.createUsers([{email, password: hashedPass, lastLoggedIn: new Date()}]);
+            return done(undefined, newUser);
         } else if (user && !user.password) {
             logger.debug("user found with unset password");
             const hashedPass = await generateHashedPassword(password);
@@ -86,14 +85,9 @@ export async function authorizationChecker(action: Action, allowedRoles: Role[],
     }
 }
 
-export async function currentUserChecker(action: Action, userDAO: UserDAO = new UserDAO()) {
+export async function currentUserChecker(action: Action, userDAO: UserDAO = new UserDAO()): Promise<User | undefined> {
     logger.debug("checking current user");
-    try {
-        return !!(await getUserFromAction(action, userDAO));
-    } catch (error) {
-        // Assuming error was due to not being able to find user with this ID
-        return false;
-    }
+    return await getUserFromAction(action, userDAO);
 }
 
 export function passwordResetDateIsValid(passwordExpiry?: Date): boolean {
@@ -108,7 +102,7 @@ export async function generateHashedPassword(plainPassword: string): Promise<str
 }
 
 async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO()): Promise<User | undefined> {
-    const userId = get(action, "request.session.user");
+    const userId = action.request?.session?.user;
     logger.debug(inspect(action.request.session));
     logger.debug(inspect(action.request.sessionID));
     logger.debug(`Current userId: ${userId}`);

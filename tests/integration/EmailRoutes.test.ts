@@ -4,7 +4,6 @@ import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
-import UserDAO from "../../src/DAO/UserDAO";
 import User from "../../src/models/user";
 import startServer from "../../src/bootstrap/app";
 import { makePostRequest, setupOwnerAndAdminUsers } from "./helpers";
@@ -31,9 +30,6 @@ async function shutdown() {
 beforeAll(async () => {
     logger.debug("~~~~~~EMAIL ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
-
-    // Create admin and owner users in db for rest of this suite's use
-    const userDAO = new UserDAO();
     [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
 });
 
@@ -55,21 +51,9 @@ describe("Email API endpoints", () => {
         (agent: request.SuperTest<request.Test>) =>
             makePostRequest<object>(agent, "/email/sendInMailWebhook", event, status);
 
-    describe("POST /resetEmail (send a reset password email)", () => {
-        it("should return a 202 message if the email is successfully queued", async () => {
-            await emailPostRequest(ownerUser.email, "resetEmail")(request(app));
-        });
-    });
-
-    describe("POST /ownerUser.email (send a test notification email)", () => {
+    describe("POST /testEmail (send a test notification email)", () => {
         it("should return a 202 message if the email is successfully queued", async () => {
             await emailPostRequest(ownerUser.email, "testEmail")(request(app));
-        });
-    });
-
-    describe("POST /registrationEmail (send a registration email)", () => {
-        it("should return a 202 message if the email is successfully queued", async () => {
-            await emailPostRequest(ownerUser.email, "registrationEmail")(request(app));
         });
     });
 

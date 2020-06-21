@@ -13,9 +13,7 @@ describe("EmailDAO", () => {
     const emailDAO: EmailDAO = new EmailDAO(mockEmailDb as unknown as Repository<Email>);
 
     afterEach(() => {
-        Object.keys(mockEmailDb).forEach((action: string) => {
-            (mockEmailDb[action as keyof MockObj] as jest.Mock).mockClear();
-        });
+        Object.values(mockEmailDb).forEach(mockFn => mockFn.mockReset());
     });
     beforeAll(() => {
         logger.debug("~~~~~~EMAIL DAO TESTS BEGIN~~~~~~");

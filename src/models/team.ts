@@ -23,7 +23,7 @@ export default class Team extends BaseModel {
     public espnId?: number;
     // TODO: Consider enforcing uniqueness on this column? Or name column? Maybe not necessary for now.
 
-    @Column({type: "enum", enum: TeamStatus, default: [TeamStatus.DISABLED]})
+    @Column({type: "enum", enum: TeamStatus, default: TeamStatus.DISABLED})
     public status?: TeamStatus;
 
     @Column({type: "jsonb", nullable: true})
