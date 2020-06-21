@@ -92,7 +92,7 @@ describe("TradeDAO", () => {
 
     it("updateDeclinedBy - should call the db update and findOneOrFail once with id and declined by field", async () => {
         mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
-        const participant = testTrade.tradeParticipants?.[0];
+        const participant = testTrade.tradeParticipants?.[0].id;
         const res = await tradeDAO.updateDeclinedBy(testTrade.id!, participant!, "reason");
 
         expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
