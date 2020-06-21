@@ -96,7 +96,7 @@ describe("TradeDAO", () => {
         const res = await tradeDAO.updateDeclinedBy(testTrade.id!, participant!, "reason");
 
         expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.update).toHaveBeenCalledWith({id: testTrade.id!}, { declinedBy: participant, declinedReason: "reason" });
+        expect(mockTradeDb.update).toHaveBeenCalledWith({id: testTrade.id!}, { declinedById: participant, declinedReason: "reason" });
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
         expect(res).toEqual(testTrade);
