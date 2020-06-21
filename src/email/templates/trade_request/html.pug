@@ -1,14 +1,15 @@
 extends ../includes/layout.pug
 
 block head
-    link(href="./trade_request/request.css", rel="stylesheet" data-inline="data-inline")
+    link(href="./trade_request/styles.css", rel="stylesheet" data-inline="data-inline")
     title= subject
 
 block content
     h2= titleText
     .divider
     each trade, index in tradesBySender
-        h3 #{trade.sender} would send:
+        if ([...trade.majors, ...trade.minors, ...trade.picks].length)
+            h3 #{trade.sender} would send:
         if trade.majors.length
             ul.majors
             each player in trade.majors
