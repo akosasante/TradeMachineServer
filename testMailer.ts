@@ -30,7 +30,7 @@ async function testTrade() {
             item.entity = await playerDao.getPlayerById(item.tradeItemId!);
         }
     }
-    return await mailer.sendTradeDeclinedEmail(args[1] || "tripleabatt@gmail.com", trade);
+    return await mailer.sendTradeSubmissionEmail(args[1] || "tripleabatt@gmail.com", trade);
 }
 testTrade()
     .then(res => {

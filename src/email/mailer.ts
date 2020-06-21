@@ -206,6 +206,29 @@ export const Emailer = {
                 return undefined;
             });
     },
+
+    async sendTradeSubmissionEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+        logger.debug(`got a trade submission email request for tradeId: ${trade.id}`);
+        return Emailer.emailer.send({
+            template: "trade_accepted",
+            message: {
+                to: recipient,
+            },
+            locals: {
+                acceptUrl: `${baseDomain}/trade/${trade!.id}/submit`,
+                rejectUrl: `${baseDomain}/trade/${trade!.id}/discard`,
+                tradesBySender: getTradeTextForRequest(trade!),
+            },
+        })
+            .then((res: SendInBlueSendResponse) => {
+                logger.info(`Successfully sent trade submission email: ${inspect(res.messageId)}`);
+                return res;
+            })
+            .catch((err: Error) => {
+                logger.error(`Ran into an error while sending trade submission email: ${inspect(err)}`);
+                return undefined;
+            });
+    },
 };
 
 Object.freeze(Emailer);

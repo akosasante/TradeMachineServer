@@ -43,5 +43,12 @@ describe("Emailer Class", () => {
             delete res.messageId;
             expect(res).toMatchSnapshot();
         });
+
+        it("sendTradeSubmissionEmail", async () => {
+            const res = await Emailer.sendTradeSubmissionEmail("test@exaample.com", testTrade);
+            delete res.message;
+            delete res.messageId;
+            expect(res).toMatchSnapshot();
+        });
     });
 });
