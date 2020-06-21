@@ -178,20 +178,20 @@ describe("TradeController", () => {
             });
         });
         it("should call the updateDeclinedBy DAO method if valid", async () => {
-            const declinedBy = testTrade.tradeParticipants?.[1];
+            const declinedById = testTrade.tradeParticipants?.[1].id;
             const declinedReason = "reason";
-            await tradeController.updateTrade(tradeOwner, testTrade.id!, {declinedBy, declinedReason});
+            await tradeController.updateTrade(tradeOwner, testTrade.id!, {declinedById, declinedReason});
 
             expect(mockTradeDAO.updateDeclinedBy).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.updateDeclinedBy).toHaveBeenCalledWith(testTrade.id, declinedBy, declinedReason);
+            expect(mockTradeDAO.updateDeclinedBy).toHaveBeenCalledWith(testTrade.id, declinedById, declinedReason);
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(0);
             expect(mockTradeDAO.updateItems).toHaveBeenCalledTimes(0);
             expect(mockTradeDAO.updateParticipants).toHaveBeenCalledTimes(0);
         });
         it("should not call updateDeclinedBy DAO method if declined by user is not one of the trade's own participants", async () => {
-            const declinedBy = TradeFactory.getTrade().tradeParticipants?.[1];
+            const declinedById = TradeFactory.getTrade().tradeParticipants?.[1].id;
             const declinedReason = "reason";
-            await tradeController.updateTrade(tradeOwner, testTrade.id!, {declinedBy, declinedReason});
+            await tradeController.updateTrade(tradeOwner, testTrade.id!, {declinedById, declinedReason});
 
             expect(mockTradeDAO.updateDeclinedBy).toHaveBeenCalledTimes(0);
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(0);
