@@ -72,4 +72,8 @@ export class EmailPublisher extends Publisher {
     public async queueTradeDeclinedMail(trade: Trade, email: string): Promise<Job<TradeEmail>> {
         return await this.queueTradeEmail(trade, email, "trade_declined");
     }
+
+    public async queueTradeAcceptedMail(trade: Trade, email: string): Promise<Job<TradeEmail>> {
+        return await this.queueTradeEmail(trade, email, "trade_accepted");
+    }
 }

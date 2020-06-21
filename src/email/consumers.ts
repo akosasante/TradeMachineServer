@@ -45,6 +45,7 @@ export function setupEmailConsumers() {
     emailQueue.process("handle_webhook", handleEmailJob);
     emailQueue.process("request_trade", handleTradeEmailJob);
     emailQueue.process("trade_declined", handleTradeEmailJob);
+    emailQueue.process("trade_accepted", handleTradeEmailJob);
 
     emailQueue.on("error", error => {
         logger.error(`Bull error during email queue cron job: ${inspect(error)}`);

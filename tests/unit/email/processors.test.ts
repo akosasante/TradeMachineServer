@@ -13,6 +13,8 @@ jest.mock( "../../../src/email/mailer", () => ({
         sendTestEmail: jest.fn(),
         sendRegistrationEmail: jest.fn(),
         sendTradeRequestEmail: jest.fn(),
+        sendTradeDeclinedEmail: jest.fn(),
+        sendTradeSubmissionEmail: jest.fn(),
     },
 }));
 
@@ -59,11 +61,23 @@ describe("Email queue processors", () => {
     });
 
     describe("handleTradeEmailJob/1 - it should call the appropriate Emailer methods with the right arguments", () => {
-        it("calls sendTradeRequestEmail", async () => {
+        it("should call sendTradeRequestEmail for request_trade jobs", async () => {
             // @ts-ignore
             await handleTradeEmailJob({ name: "request_trade", data: { trade: tradeJson, recipient: "me@example.com" } });
             expect(Emailer.sendTradeRequestEmail).toBeCalledTimes(1);
             expect(Emailer.sendTradeRequestEmail).toBeCalledWith(trade, "me@example.com");
+        });
+        it("should call sendTradeDeclinedEmail for trade_declined jobs", async () => {
+            // @ts-ignore
+            await handleTradeEmailJob({ name: "trade_declined", data: { trade: tradeJson, recipient: "me@example.com" } });
+            expect(Emailer.sendTradeDeclinedEmail).toBeCalledTimes(1);
+            expect(Emailer.sendTradeDeclinedEmail).toBeCalledWith(trade, "me@example.com");
+        });
+        it("should call sendTradeSubmissionEmail for trade_accepted jobs", async () => {
+            // @ts-ignore
+            await handleTradeEmailJob({ name: "trade_accepted", data: { trade: tradeJson, recipient: "me@example.com" } });
+            expect(Emailer.sendTradeSubmissionEmail).toBeCalledTimes(1);
+            expect(Emailer.sendTradeSubmissionEmail).toBeCalledWith(trade, "me@example.com");
         });
     });
 

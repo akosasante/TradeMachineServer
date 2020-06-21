@@ -9,7 +9,7 @@ import { TradeItemType } from "../models/tradeItem";
 import DraftPick from "../models/draftPick";
 import Player from "../models/player";
 
-export type EmailJobName = "reset_pass" | "registration_email" | "test_email" | "handle_webhook" | "request_trade" | "trade_declined";
+export type EmailJobName = "reset_pass" | "registration_email" | "test_email" | "handle_webhook" | "request_trade" | "trade_declined" | "trade_accepted";
 
 type AuthEmailFunction = (u: User) => Promise<SendInBlueSendResponse>;
 type TradeEmailFunction = (r: string, t: Trade) => Promise<SendInBlueSendResponse>;
@@ -32,6 +32,7 @@ interface EmailCallbacks {
     handle_webhook: WebhookEmailFunction;
     request_trade: TradeEmailFunction;
     trade_declined: TradeEmailFunction;
+    trade_accepted: TradeEmailFunction;
 }
 
 export const emailCallbacks: EmailCallbacks = {
@@ -41,6 +42,7 @@ export const emailCallbacks: EmailCallbacks = {
     handle_webhook: handleWebhookResponse,
     request_trade: Emailer.sendTradeRequestEmail,
     trade_declined: Emailer.sendTradeDeclinedEmail,
+    trade_accepted: Emailer.sendTradeSubmissionEmail,
 };
 
 const authEmailTasks = ["reset_pass", "test_email", "registration_email"];
