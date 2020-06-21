@@ -58,6 +58,10 @@ function validateStatusChange(user: User, trade: Trade, newStatus: TradeStatus):
     return checkForValidity[trade.status!].includes(newStatus);
 }
 
+function validateTradeDecliner(trade: Trade, declinedBy: TradeParticipant) {
+    return trade.tradeParticipants?.map(tp => tp.id).includes(declinedBy.id);
+}
+
 @JsonController("/trades")
 export default class TradeController {
     // TODO: Endpoints for "accepted"/"rejected" trade, for "submitTrade/sendToSlack"
@@ -107,6 +111,11 @@ export default class TradeController {
             if (tradeObj.status && validateStatusChange(user, existingTrade, tradeObj.status)) {
                 logger.debug("updating trade status");
                 trade = await this.dao.updateStatus(id, tradeObj.status);
+            }
+
+            if (tradeObj.declinedBy && validateTradeDecliner(existingTrade, tradeObj.declinedBy)) {
+                logger.debug("updating trade participants");
+                trade = await this.dao.updateDeclinedBy(id, tradeObj.declinedBy, tradeObj.declinedReason);
             }
 
             // only owner can actually edit the contents of the trade for now
