@@ -20,9 +20,7 @@ describe("TeamDAO", () => {
     const teamDAO = new TeamDAO(mockTeamDb as unknown as Repository<Team>);
 
     afterEach(async () => {
-        Object.keys(mockTeamDb).forEach((action: string) => {
-            (mockTeamDb[action as keyof MockObj] as jest.Mock).mockClear();
-        });
+        Object.values(mockTeamDb).forEach(mockFn => mockFn.mockReset());
 
         mockExecute.mockClear();
         mockWhereInIds.mockClear();

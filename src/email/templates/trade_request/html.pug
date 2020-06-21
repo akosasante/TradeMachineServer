@@ -1,0 +1,30 @@
+extends ../includes/layout.pug
+
+block head
+    link(href="./trade_request/styles.css", rel="stylesheet" data-inline="data-inline")
+    title= subject
+
+block content
+    h2= titleText
+    .divider
+    each trade, index in tradesBySender
+        if ([...trade.majors, ...trade.minors, ...trade.picks].length)
+            h3 #{trade.sender} would send:
+        if trade.majors.length
+            ul.majors
+            each player in trade.majors
+                li= player
+        if trade.minors.length
+            ul.minors
+            each player in trade.minors
+                li= player
+        if trade.picks.length
+            ul.picks
+            each pick in trade.picks
+                li= pick
+        hr
+    .button-container
+        a.button-link(href=`${acceptUrl}`)
+            span Accept Trade
+        a.button-link(href=`${rejectUrl}`)
+            span Reject Trade

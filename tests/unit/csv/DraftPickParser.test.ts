@@ -35,19 +35,17 @@ describe("DraftPickParser", () => {
     const invalidHeadersCsv = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks-invalid-headers.csv`;
     const threePlayersWithDupeCsv = `${process.env.BASE_DIR}/tests/resources/three-player-10-picks-with-dupe.csv`;
 
-
-
-
     const mockDAO = {
         deleteAllPicks: jest.fn(),
-        batchUpsertPicks: jest.fn().mockImplementation((arr: Partial<DraftPick>[]) =>
-            Promise.resolve(arr.map(draftPickObj => new DraftPick(draftPickObj as DraftPick)))),
+        batchUpsertPicks: jest.fn(),
     };
 
+    beforeEach(() => {
+        mockDAO.batchUpsertPicks.mockImplementation((arr: Partial<DraftPick>[]) =>
+            Promise.resolve(arr.map(draftPickObj => new DraftPick(draftPickObj as DraftPick))));
+    });
     afterEach(() => {
-        Object.entries(mockDAO).forEach((kvp: [string, jest.Mock]) => {
-            kvp[1].mockClear();
-        });
+        Object.values(mockDAO).forEach(mockFn => mockFn.mockReset());
     });
 
     const draftPickObjKeys = ["currentOwner", "originalOwner", "round", "type", "season"];

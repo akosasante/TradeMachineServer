@@ -33,9 +33,7 @@ describe("DraftPickController", () => {
 
     afterEach(() => {
         [mockDraftPickDAO, mockTeamDAO].map(mockedThing =>
-            Object.entries(mockedThing).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockClear();
-        }));
+            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
         mockedCsvParser.mockClear();
     });
 

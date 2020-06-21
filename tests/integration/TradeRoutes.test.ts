@@ -136,10 +136,7 @@ describe("Trade API endpoints", () => {
             const {body} = await adminLoggedIn(postRequest({tradeParticipants: testTrade.tradeParticipants}, 400), app);
             expect(body.message).toEqual(expectErrorString);
         });
-        it("should return a 403 Forbidden error if a non-admin tries to create a trade", async () => {
-            await ownerLoggedIn(postRequest(testTrade.parse(), 403), app);
-        });
-        it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
+        it("should return a 401 Unauthorized error if a non-logged in request is used", async () => {
             await postRequest(testTrade.parse(), 403)(request(app));
         });
     });
@@ -209,11 +206,11 @@ describe("Trade API endpoints", () => {
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
             await adminLoggedIn(putTradeRequest(uuid(), updatedTrade.parse(), 404), app);
         });
-        it("should throw a 403 Forbidden error if a non-admin tries to update a trade", async () => {
-            await ownerLoggedIn(putTradeRequest(uuid(), updatedTrade.parse(), 403), app);
+        it("should throw a 401 Unauthorized error if a non-admin non-participant tries to update a trade", async () => {
+            await ownerLoggedIn(putTradeRequest(updatedTrade.id!, updatedTrade.parse(), 401), app);
         });
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
-            await putTradeRequest(uuid(), updatedTrade.parse(), 403)(request(app));
+            await putTradeRequest(updatedTrade.id!, updatedTrade.parse(), 403)(request(app));
         });
     });
 

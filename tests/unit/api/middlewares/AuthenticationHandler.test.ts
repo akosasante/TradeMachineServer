@@ -6,7 +6,6 @@ import { UnauthorizedError } from "routing-controllers";
 import { LoginHandler, RegisterHandler } from "../../../../src/api/middlewares/AuthenticationHandler";
 import { ConflictError } from "../../../../src/api/middlewares/ErrorHandler";
 import UserDAO from "../../../../src/DAO/UserDAO";
-import User from "../../../../src/models/user";
 import { UserFactory } from "../../../factories/UserFactory";
 import logger from "../../../../src/bootstrap/logger";
 

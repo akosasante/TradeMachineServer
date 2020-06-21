@@ -29,9 +29,7 @@ describe("TeamController", () => {
         logger.debug("~~~~~~TEAM CONTROLLER TESTS COMPLETE~~~~~~");
     });
     afterEach(() => {
-        Object.entries(mockTeamDAO).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockClear();
-        });
+        Object.values(mockTeamDAO).forEach(mockFn => mockFn.mockReset());
     });
 
     describe("getAllTeams method", () => {

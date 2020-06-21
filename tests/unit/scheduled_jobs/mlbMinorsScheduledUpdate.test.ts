@@ -28,6 +28,10 @@ beforeAll(() => {
 afterAll(() => {
     logger.debug("~~~~~~~MINOR LEAGUE PLAYER UPDATE JOB SCHEDULER TESTS COMPLETE~~~~~");
 });
+afterEach(() => {
+    mockedGet.mockClear();
+    Object.values(mockPlayerDao).forEach(mockFn => mockFn.mockReset());
+})
 
 describe("Minor League Scheduled Jobs", () => {
     test("doUpdate/1 - should make an axios call and then insert into the db", async () => {

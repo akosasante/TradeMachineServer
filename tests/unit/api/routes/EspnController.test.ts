@@ -22,9 +22,7 @@ describe("EspnController", () => {
         logger.debug("~~~~~~ESPN CONTROLLER TESTS COMPLETE~~~~~~");
     });
     afterEach(() => {
-        Object.entries(mockEspnApi).forEach((kvp: [string, jest.Mock<any, any>]) => {
-            kvp[1].mockClear();
-        });
+        Object.values(mockEspnApi).forEach(mockFn =>  mockFn.mockReset());
     });
 
     describe("getAllEspnMembers method", () => {

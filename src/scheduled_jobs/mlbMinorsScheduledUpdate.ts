@@ -5,31 +5,36 @@ import axios, { AxiosResponse } from "axios";
 import Player, { PlayerLeagueType } from "../models/player";
 import { merge, partition, uniqWith } from "lodash";
 import { inspect } from "util";
+import { v4 as uuid } from "uuid";
+import { cleanJobForLogging } from "./job_utils";
 
 export function setupScheduledMlbMinorLeagueUpdates() {
     const cron = "22 7 * * *"; // daily at 3:22AM ET
     logger.info(`Setting up minor league updates from mlb api to run on schedule ${cron}`);
-    const mlbQueue = new Bull("mlb_api_queue");
+    const mlbQueue = new Bull("mlb_api_queue", {settings: {maxStalledCount: 0}});
+    const JobName = "minor_league_updates";
+    const cleanLoggedData = (_data: any) => "";
+    const cleanLoggedReturn = (returnValue: any) => returnValue;
 
-    mlbQueue.process(1, async () => {
+    mlbQueue.process(JobName, async () => {
         return await updateMinorLeaguePlayers({});
     });
-    mlbQueue.add({}, {repeat: { cron}});
+    mlbQueue.add(JobName, uuid(), { repeat: { cron } });
 
     mlbQueue.on("error", error => {
         logger.error(`Bull error during mlbMinorsScheduledUpdate: ${inspect(error)}`);
     });
 
     mlbQueue.on("active", job => {
-        logger.info(`mlbMinorsScheduledUpdate Worker job started: ${inspect(job)}`);
+        logger.info(`mlbMinorsScheduledUpdate Worker job started: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
     });
 
-    mlbQueue.on("completed", (job, result) => {
-         logger.info(`mlbMinorsScheduledUpdate Worker completed: ${inspect(job)}`);
+    mlbQueue.on("completed", (job, _result) => {
+         logger.info(`mlbMinorsScheduledUpdate Worker completed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
     });
 
     mlbQueue.on("failed", (job, err) => {
-        logger.error(`"mlbMinorsScheduledUpdate Worker failed: ${inspect(job)}, ${inspect(err)}`);
+        logger.error(`"mlbMinorsScheduledUpdate Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
     });
 }
 
