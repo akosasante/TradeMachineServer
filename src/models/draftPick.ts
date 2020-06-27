@@ -3,7 +3,7 @@ import { BaseModel } from "./base";
 import Team from "./team";
 
 export enum LeagueLevel {
-    MAJORS,
+    MAJORS = 1,
     HIGH,
     LOW,
 }

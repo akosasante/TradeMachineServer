@@ -10,7 +10,7 @@ import {
 } from "../espn/espnConstants";
 
 export enum PlayerLeagueType {
-    MAJOR,
+    MAJOR = 1,
     MINOR,
 }
 

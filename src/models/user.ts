@@ -5,12 +5,12 @@ import Team from "./team";
 import { EspnLeagueMember } from "../espn/espnApi";
 
 export enum Role {
-    ADMIN,
+    ADMIN = 1,
     OWNER,
 }
 
 export enum UserStatus {
-    ACTIVE,
+    ACTIVE = 1,
     INACTIVE,
 }
 

@@ -6,7 +6,7 @@ import Trade from "./trade";
 import { BaseModel } from "./base";
 
 export enum TradeItemType {
-    PLAYER,
+    PLAYER = 1,
     PICK,
 }
 

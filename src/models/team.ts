@@ -8,7 +8,7 @@ import User from "./user";
 import { EspnFantasyTeam } from "../espn/espnApi";
 
 export enum TeamStatus {
-    ACTIVE,
+    ACTIVE = 1,
     DISABLED,
 }
 
