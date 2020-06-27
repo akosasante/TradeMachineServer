@@ -20,7 +20,7 @@ export interface DowntimeSetting {
 @Entity()
 @Index(["tradeWindowStart", "tradeWindowEnd", "modifiedBy"])
 @Index(["downtime", "modifiedBy"])
-@Index("modifiedBy")
+@Index(["modifiedBy"])
 export default class Settings extends BaseModel {
     @Column({type: "time", nullable: true})
     public tradeWindowStart?: Date;
