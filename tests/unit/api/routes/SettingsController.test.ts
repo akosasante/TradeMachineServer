@@ -69,10 +69,11 @@ describe("SettingsController", () => {
    describe("appendNewSettingsLine method", () => {
        it("should create a new settings line", async () => {
            mockSettingsDAO.insertNewSettings.mockResolvedValueOnce(testSettings);
-           const res = await settingsController.appendNewSettingsLine({downtimeReason: "hello"});
+           const downtimeObj = {downtime: {scheduled: [{downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START, downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END, downtimeReason: "hello"}]}};
+           const res = await settingsController.appendNewSettingsLine(downtimeObj);
 
            expect(mockSettingsDAO.insertNewSettings).toHaveBeenCalledTimes(1);
-           expect(mockSettingsDAO.insertNewSettings).toHaveBeenCalledWith({downtimeReason: "hello"});
+           expect(mockSettingsDAO.insertNewSettings).toHaveBeenCalledWith(downtimeObj);
            expect(res).toEqual(testSettings);
        });
    });

@@ -12,19 +12,18 @@ export class SettingsFactory {
 
     public static getSettingsObject(modifiedBy: User = UserFactory.getUser(),
                                     tradeWindow?: TradeWindowSettings,
-                                    downtimeWindow?: DowntimeSettings) {
+                                    downtimeWindows?: DowntimeSettings) {
         return { id: uuid(),
             modifiedBy,
             tradeWindowStart: tradeWindow?.tradeWindowStart,
             tradeWindowEnd: tradeWindow?.tradeWindowEnd,
-            downtimeStartDate: downtimeWindow?.downtimeStartDate,
-            downtimeEndDate: downtimeWindow?.downtimeEndDate,
-            downtimeReason: downtimeWindow?.downtimeReason };
+            downtime: downtimeWindows,
+            };
     }
 
     public static getSettings(modifiedBy: User = UserFactory.getUser(),
                               tradeWindow?: TradeWindowSettings,
-                              downtimeWindow?: DowntimeSettings): Settings {
-        return new Settings(SettingsFactory.getSettingsObject(modifiedBy, tradeWindow, downtimeWindow));
+                              downtimeWindows?: DowntimeSettings): Settings {
+        return new Settings(SettingsFactory.getSettingsObject(modifiedBy, tradeWindow, downtimeWindows));
     }
 }
