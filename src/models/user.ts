@@ -5,13 +5,13 @@ import Team from "./team";
 import { EspnLeagueMember } from "../espn/espnApi";
 
 export enum Role {
-    ADMIN = "admin",
-    OWNER = "owner",
+    ADMIN,
+    OWNER,
 }
 
 export enum UserStatus {
-    ACTIVE = "active",
-    INACTIVE = "inactive",
+    ACTIVE,
+    INACTIVE,
 }
 
 @Entity()
