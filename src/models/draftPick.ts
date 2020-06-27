@@ -3,9 +3,9 @@ import { BaseModel } from "./base";
 import Team from "./team";
 
 export enum LeagueLevel {
-    MAJORS = "Majors",
-    HIGH = "High Minors",
-    LOW = "Low Minors",
+    MAJORS,
+    HIGH,
+    LOW,
 }
 
 export const MinorLeagueLevels = [LeagueLevel.HIGH, LeagueLevel.LOW];
@@ -25,10 +25,10 @@ export default class DraftPick extends BaseModel {
     @Column({type: "enum", enum: LeagueLevel})
     public type!: LeagueLevel;
 
-    @ManyToOne(type => Team, team => team.draftPicks, {eager: true, onDelete: "SET NULL"})
+    @ManyToOne(_type => Team, team => team.draftPicks, {eager: true, onDelete: "SET NULL"})
     public currentOwner?: Team;
 
-    @ManyToOne(type => Team, team => team.originalDraftPicks, {eager: true, onDelete: "SET NULL"})
+    @ManyToOne(_type => Team, team => team.originalDraftPicks, {eager: true, onDelete: "SET NULL"})
     public originalOwner?: Team;
 
     constructor(props: Partial<DraftPick> & Required<Pick<DraftPick, "season" | "round" | "type">>) {
