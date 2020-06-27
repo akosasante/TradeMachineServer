@@ -1,6 +1,8 @@
 import { FindManyOptions, FindOneOptions, getConnection, InsertResult, Repository } from "typeorm";
 import Settings from "../models/settings";
 import { BadRequestError } from "routing-controllers";
+import logger from "../bootstrap/logger";
+import {inspect} from "util";
 
 export default class SettingsDAO {
     private settingsDb: Repository<Settings>;
@@ -29,7 +31,9 @@ export default class SettingsDAO {
         if (!settings.modifiedBy) {
             throw new BadRequestError("Modifying user must be provided");
         }
+        logger.debug(`new settings: ${inspect(settings)}`);
         const mostRecentSettings = await this.getMostRecentSettings();
+        logger.debug(`old settings: ${inspect(mostRecentSettings)}`);
         const newLine = {...(mostRecentSettings || {}),
             ...settings, id: (settings.id || undefined), dateModified: undefined, dateCreated: undefined,
         };

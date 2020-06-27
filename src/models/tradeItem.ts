@@ -6,8 +6,8 @@ import Trade from "./trade";
 import { BaseModel } from "./base";
 
 export enum TradeItemType {
-    PLAYER = "Player",
-    PICK = "Pick",
+    PLAYER = 1,
+    PICK,
 }
 
 export type TradedItem = Player | DraftPick;
@@ -40,13 +40,13 @@ export default class TradeItem extends BaseModel {
     @Column({type: "enum", enum: TradeItemType, default: TradeItemType.PLAYER})
     public readonly tradeItemType!: TradeItemType;
 
-    @ManyToOne(type => Trade, trade => trade.tradeParticipants, {onDelete: "CASCADE"})
+    @ManyToOne(_type => Trade, trade => trade.tradeParticipants, {onDelete: "CASCADE"})
     public trade!: Trade;
 
-    @ManyToOne(type => Team, team => team.tradeItemsSent, {cascade: true, eager: true})
+    @ManyToOne(_type => Team, team => team.tradeItemsSent, {cascade: true, eager: true})
     public sender!: Team;
 
-    @ManyToOne(type => Team, team => team.tradeItemsReceived, {cascade: true, eager: true})
+    @ManyToOne(_type => Team, team => team.tradeItemsReceived, {cascade: true, eager: true})
     public recipient!: Team;
 
     constructor(props: Partial<TradeItem>) {

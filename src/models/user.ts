@@ -5,13 +5,13 @@ import Team from "./team";
 import { EspnLeagueMember } from "../espn/espnApi";
 
 export enum Role {
-    ADMIN = "admin",
-    OWNER = "owner",
+    ADMIN = 1,
+    OWNER,
 }
 
 export enum UserStatus {
-    ACTIVE = "active",
-    INACTIVE = "inactive",
+    ACTIVE = 1,
+    INACTIVE,
 }
 
 @Entity()
@@ -56,10 +56,10 @@ export default class User extends BaseModel {
     @Column({type: "jsonb", nullable: true})
     public espnMember?: EspnLeagueMember;
 
-    @ManyToOne(type => Team, team => team.owners, {onDelete: "SET NULL"})
+    @ManyToOne(_type => Team, team => team.owners, {onDelete: "SET NULL"})
     public team?: Team;
 
-    @OneToMany(type => Settings, setting => setting.modifiedBy)
+    @OneToMany(_type => Settings, setting => setting.modifiedBy)
     public updatedSettings?: Settings[];
 
     constructor(props: Partial<User> & Required<Pick<User, "email">>) {

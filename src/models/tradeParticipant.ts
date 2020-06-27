@@ -4,7 +4,7 @@ import Trade from "./trade";
 import { BaseModel } from "./base";
 
 export enum TradeParticipantType {
-    CREATOR,
+    CREATOR = 1,
     RECIPIENT,
 }
 
