@@ -20,9 +20,7 @@ describe("GeneralSettings Class", () => {
             expect(settings.modifiedBy).toBeDefined();
             expect(settings.tradeWindowStart).toBeDefined();
             expect(settings.tradeWindowEnd).toBeDefined();
-            expect(settings.downtimeStartDate).toBeUndefined();
-            expect(settings.downtimeEndDate).toBeUndefined();
-            expect(settings.downtimeReason).toBeUndefined();
+            expect(settings.downtime).toBeUndefined();
             expect(settings).toBeInstanceOf(Settings);
             expect(settingsObj).not.toBeInstanceOf(Settings);
         });

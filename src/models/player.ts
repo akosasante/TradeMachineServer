@@ -10,8 +10,8 @@ import {
 } from "../espn/espnConstants";
 
 export enum PlayerLeagueType {
-    MAJOR = "Majors",
-    MINOR = "Minors",
+    MAJOR = 1,
+    MINOR,
 }
 
 @Entity()
@@ -33,7 +33,7 @@ export default class Player extends BaseModel {
     @Column({nullable: true, type: "jsonb"})
     public meta?: any;
 
-    @ManyToOne(type => Team, team => team.players, {onDelete: "SET NULL"})
+    @ManyToOne(_type => Team, team => team.players, {onDelete: "SET NULL"})
     public leagueTeam?: Team;
 
     constructor(props: Partial<Player> & Required<Pick<Player, "name">>) {

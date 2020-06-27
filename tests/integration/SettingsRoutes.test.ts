@@ -13,6 +13,7 @@ import startServer from "../../src/bootstrap/app";
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
 import { inspect } from "util";
+import { v4 as uuid } from "uuid";
 
 dotenvConfig({path: resolvePath(__dirname, "../.env")});
 
@@ -40,23 +41,29 @@ beforeAll(async () => {
     app = await startServer();
     [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
     testSettings = SettingsFactory.getSettings(ownerUser, {tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START, tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END});
-    testSettings2 = SettingsFactory.getSettings(adminUser, undefined, {downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START, downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END, downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON});
+    testSettings2 = SettingsFactory.getSettings(adminUser, undefined, {scheduled: [{downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START, downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END, downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON}]});
 
     expectedTestSettings = {
-        id: testSettings.id,
+        id: expect.toBeString(),
         modifiedBy: expect.toBeObject(),
         tradeWindowStart: testSettings.tradeWindowStart,
         tradeWindowEnd: testSettings.tradeWindowEnd,
         // tslint:disable-next-line:no-null-keyword
-        downtimeReason: null,
+        downtime: null,
+    };
+
+    const expectedDowntimeObj = {
+        scheduled: [ {
+            downtimeStartDate: testSettings2.downtime?.scheduled[0].downtimeStartDate?.toISOString(),
+            downtimeEndDate: testSettings2.downtime?.scheduled[0].downtimeEndDate?.toISOString(),
+            downtimeReason: testSettings2.downtime?.scheduled[0].downtimeReason,
+        }],
     };
 
     expectedTestSettings2 = {
-        id: testSettings2.id,
+        id: expect.toBeString(),
         modifiedBy: expect.toBeObject(),
-        downtimeStartDate: testSettings2.downtimeStartDate?.toISOString(),
-        downtimeEndDate: testSettings2.downtimeEndDate?.toISOString(),
-        downtimeReason: testSettings2.downtimeReason,
+        downtime: expect.objectContaining(expectedDowntimeObj),
         tradeWindowStart: testSettings.tradeWindowStart,
         tradeWindowEnd: testSettings.tradeWindowEnd,
     };
@@ -103,7 +110,7 @@ describe("Settings API endpoints for general settings", () => {
             expect(body.message).toEqual(expectErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {
-            await ownerLoggedIn(postRequest(testSettings.parse(), 403), app);
+            await ownerLoggedIn(postRequest({...testSettings.parse(), id: uuid()}, 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await postRequest(testSettings.parse(), 403)(request(app));
