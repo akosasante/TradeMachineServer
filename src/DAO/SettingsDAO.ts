@@ -2,7 +2,7 @@ import { FindManyOptions, FindOneOptions, getConnection, InsertResult, Repositor
 import Settings from "../models/settings";
 import { BadRequestError } from "routing-controllers";
 import logger from "../bootstrap/logger";
-import {inspect} from "util";
+import { inspect } from "util";
 
 export default class SettingsDAO {
     private settingsDb: Repository<Settings>;
