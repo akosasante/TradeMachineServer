@@ -74,7 +74,7 @@ export async function handleTradeEmailJob(emailJob: Job<TradeEmail>) {
                 item.entity = new DraftPick(item.entity as Partial<DraftPick> & Required<Pick<DraftPick, "season" | "round" | "type">>);
             }
         }
-        return await emailTask(trade, emailJob.data.recipient);
+        return await emailTask(emailJob.data.recipient, trade);
     }
 }
 
