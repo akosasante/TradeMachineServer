@@ -14,19 +14,19 @@ export interface DowntimeSettings {
 export interface DowntimeSetting {
     downtimeStartDate: Date;
     downtimeEndDate: Date;
-    downtimeReason: string;
+    downtimeReason?: string;
 }
 
 @Entity()
 @Index(["tradeWindowStart", "tradeWindowEnd", "modifiedBy"])
 @Index(["downtime", "modifiedBy"])
-@Index("modifiedBy")
+@Index(["modifiedBy"])
 export default class Settings extends BaseModel {
     @Column({type: "time", nullable: true})
-    public tradeWindowStart?: Date;
+    public tradeWindowStart?: string;
 
     @Column({type: "time", nullable: true})
-    public tradeWindowEnd?: Date;
+    public tradeWindowEnd?: string;
 
     @Column({nullable: true, type: "jsonb"})
     public downtime?: DowntimeSettings;
