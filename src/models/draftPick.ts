@@ -17,7 +17,7 @@ export default class DraftPick extends BaseModel {
     public round!: number;
 
     @Column({nullable: true})
-    public pickNumber!: number;
+    public pickNumber?: number;
 
     @Column()
     public season!: number;
