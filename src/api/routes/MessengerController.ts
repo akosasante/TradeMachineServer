@@ -7,7 +7,6 @@ import { Response } from "express";
 import { Role } from "../../models/user";
 import { TradeStatus } from "../../models/trade";
 import { SlackPublisher } from "../../slack/publishers";
-import { inspect } from "util";
 
 @Controller("/messenger")
 export default class MessengerController {
@@ -25,7 +24,7 @@ export default class MessengerController {
     public async sendRequestTradeMessage(@Param("id") id: string, @Res() response: Response) {
         logger.debug(`queuing trade request email for tradeId: ${id}`);
         let trade = await this.tradeDao.getTradeById(id);
-        if (trade.status === TradeStatus.PENDING) {
+        if (trade.status === TradeStatus.REQUESTED) {
             trade = await this.tradeDao.hydrateTrade(trade);
             const recipientEmails = trade.recipients.flatMap(recipTeam => recipTeam.owners?.map(owner => owner.email));
             for (const email of recipientEmails) {
