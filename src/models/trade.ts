@@ -8,7 +8,7 @@ import TradeParticipant, { TradeParticipantType } from "./tradeParticipant";
 import logger from "../bootstrap/logger";
 
 export enum TradeStatus {
-    DRAFT,
+    DRAFT = 1,
     REQUESTED,
     PENDING, // only a thing for more than two-person trades
     ACCEPTED,
