@@ -1,7 +1,7 @@
 import { differenceBy } from "lodash";
 import {
     Authorized, BadRequestError, Body, CurrentUser, Delete, Get,
-    JsonController, Param, Post, Put, UnauthorizedError
+    JsonController, Param, Post, Put, QueryParam, UnauthorizedError
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -80,9 +80,12 @@ export default class TradeController {
     }
 
     @Get(UUIDPattern)
-    public async getOneTrade(@Param("id") id: string): Promise<Trade> {
-        logger.debug("get one trade endpoint");
-        const trade = await this.dao.getTradeById(id);
+    public async getOneTrade(@Param("id") id: string, @QueryParam("hydrated") hydrated?: boolean): Promise<Trade> {
+        logger.debug(`get one trade endpoint. hydrated? ${hydrated}`);
+        let trade = await this.dao.getTradeById(id);
+        if (hydrated) {
+            trade = await this.dao.hydrateTrade(trade);
+        }
         logger.debug(`got trade: ${trade}`);
         return trade;
     }
