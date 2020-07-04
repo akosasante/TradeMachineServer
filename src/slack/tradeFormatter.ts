@@ -46,7 +46,7 @@ const TradeFormatter = {
         const players = await Promise.all(tradedPlayers.map(async (tradedPlayer: TradeItem) => {
             return await playerDao.getPlayerById(tradedPlayer.tradeItemId);
         }));
-logger.debug(inspect(players));
+
         const [minorLeaguePlayers, majorLeaguePlayers] = partition(players, player => player.league === PlayerLeagueType.MINOR);
         const minorLeaguePlayersString = minorLeaguePlayers.map(getMinorLeaguePlayerText).join("\n");
         const majorLeaguePlayersString = majorLeaguePlayers.map(getMajorLeaguePlayerText).join("\n");

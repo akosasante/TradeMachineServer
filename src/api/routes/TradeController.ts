@@ -160,6 +160,31 @@ export default class TradeController {
         }
     }
 
+    @Put(`${UUIDPattern}/accept`)
+    public async acceptTrade(@CurrentUser({ required: true }) user: User, @Param("id") id: string) {
+        logger.debug("accept trade endpoint");
+        let trade = await this.dao.getTradeById(id);
+
+        if (!validateParticipantInTrade(user, trade)) {
+            throw new UnauthorizedError("Trade can only be modified by participants or admins");
+        }
+
+        if (!validateStatusChange(user, trade, TradeStatus.ACCEPTED)) {
+            throw new BadRequestError("Trade with this status cannot be accepted");
+        }
+
+        const acceptedBy = [...(trade.acceptedBy || []), user.id!];
+        await this.dao.updateAcceptedBy(id, acceptedBy);
+
+        if (acceptedBy.length === trade.recipients.length) {
+            trade = await this.dao.updateStatus(id, TradeStatus.ACCEPTED);
+        } else if (trade.status !== TradeStatus.PENDING) {
+            trade = await this.dao.updateStatus(id, TradeStatus.PENDING);
+        }
+
+        return trade;
+    }
+
     @Authorized(Role.ADMIN)
     @Delete(UUIDPattern)
     public async deleteTrade(@Param("id") id: string) {
