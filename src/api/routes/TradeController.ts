@@ -116,8 +116,6 @@ export default class TradeController {
                 trade = await this.dao.updateStatus(id, tradeObj.status);
             }
 
-            logger.debug(inspect(tradeObj));
-            logger.debug(inspect(existingTrade.tradeParticipants));
             if (tradeObj.declinedById && validateTradeDecliner(existingTrade, tradeObj.declinedById)) {
                 logger.debug("updating trade participants");
                 trade = await this.dao.updateDeclinedBy(id, tradeObj.declinedById, tradeObj.declinedReason);
