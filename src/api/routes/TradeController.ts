@@ -59,7 +59,7 @@ function validateStatusChange(user: User, trade: Trade, newStatus: TradeStatus):
 }
 
 function validateTradeDecliner(trade: Trade, declinedById: string) {
-    return trade.tradeParticipants?.map(tp => tp.id).includes(declinedById);
+    return trade.tradeParticipants?.flatMap(tp => tp.team.owners?.map(u => u.id) || []).includes(declinedById);
 }
 
 @JsonController("/trades")
@@ -116,6 +116,8 @@ export default class TradeController {
                 trade = await this.dao.updateStatus(id, tradeObj.status);
             }
 
+            logger.debug(inspect(tradeObj));
+            logger.debug(inspect(existingTrade.tradeParticipants));
             if (tradeObj.declinedById && validateTradeDecliner(existingTrade, tradeObj.declinedById)) {
                 logger.debug("updating trade participants");
                 trade = await this.dao.updateDeclinedBy(id, tradeObj.declinedById, tradeObj.declinedReason);
