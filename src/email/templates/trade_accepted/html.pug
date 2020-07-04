@@ -22,9 +22,7 @@ block content
                 ul.picks
                 each pick in trade.picks
                     li= pick
-    p Upon submission of this trade, it will be announced in the #[a(href="https://flexfoxfantasy.slack.com/archives/C84UJAX5Y") trade_announcements] channel. If you no longer want to accept this trade, please click the "Discard Trade" button.
+    p Upon submission of this trade, it will be announced in the #[a(href="https://flexfoxfantasy.slack.com/archives/C84UJAX5Y") trade_announcements] channel.
     .button-container
         a.button-link(href=`${acceptUrl}`)
             span Submit Trade
-        a.button-link(href=`${rejectUrl}`)
-            span Discard Trade
