@@ -124,6 +124,7 @@ export default class TradeController {
             // only owner can actually edit the contents of the trade for now
             // trade contents can only be edited in draft mode
             if (existingTrade.status === TradeStatus.DRAFT && validateOwnerOfTrade(user, existingTrade) && (tradeObj.tradeItems || tradeObj.tradeParticipants)) {
+                logger.debug("update trade contents");
                 if (tradeObj.tradeItems ?? tradeObj.tradeItems!.length) {
                     logger.debug(`EXISTING ITEMS: ${inspect(existingTrade.tradeItems)}`);
                     logger.debug(`NEW ITEMS: ${inspect(tradeObj.tradeItems)}`);
@@ -154,6 +155,7 @@ export default class TradeController {
             }
             return trade;
         } else {
+            logger.debug("Trade was invalid");
             throw new UnauthorizedError("Trade can only be modified by participants or admins");
         }
     }
