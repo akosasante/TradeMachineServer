@@ -38,11 +38,6 @@ export default class MessengerController {
         }
     }
 
-    @Post("/acceptTrade")
-    public async sendTradeAcceptMessage() {
-        //
-    }
-
     @Post(`/declineTrade${UUIDPattern}`)
     public async sendTradeDeclineMessage(@Param("id") id: string, @Res() response: Response) {
         logger.debug(`queueing trade declined email for tradeId: ${id}`);
@@ -50,7 +45,7 @@ export default class MessengerController {
         if (trade.status === TradeStatus.REJECTED && trade.declinedById) {
             trade = await this.tradeDao.hydrateTrade(trade);
             const emails = trade.tradeParticipants
-                ?.filter(tp => tp.id !== trade.declinedById)
+                ?.filter(tp => !(tp.team.owners?.map(o => o.id).includes(trade.declinedById)))
                 .map(tp => tp.team)
                 .flatMap(team => team.owners?.map(owner => owner.email));
             for (const email of (emails || [])) {

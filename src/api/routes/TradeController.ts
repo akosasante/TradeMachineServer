@@ -117,14 +117,14 @@ export default class TradeController {
             }
 
             if (tradeObj.declinedById && validateTradeDecliner(existingTrade, tradeObj.declinedById)) {
-                logger.debug("updating trade participants");
+                logger.debug("updating trade declined");
                 trade = await this.dao.updateDeclinedBy(id, tradeObj.declinedById, tradeObj.declinedReason);
             }
 
             // only owner can actually edit the contents of the trade for now
             // trade contents can only be edited in draft mode
             if (existingTrade.status === TradeStatus.DRAFT && validateOwnerOfTrade(user, existingTrade) && (tradeObj.tradeItems || tradeObj.tradeParticipants)) {
-                logger.debug("update trade contents");
+                logger.debug("update trade participants");
                 if (tradeObj.tradeItems ?? tradeObj.tradeItems!.length) {
                     logger.debug(`EXISTING ITEMS: ${inspect(existingTrade.tradeItems)}`);
                     logger.debug(`NEW ITEMS: ${inspect(tradeObj.tradeItems)}`);
