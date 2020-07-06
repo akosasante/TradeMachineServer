@@ -65,19 +65,19 @@ describe("Email queue processors", () => {
             // @ts-ignore
             await handleTradeEmailJob({ name: "request_trade", data: { trade: tradeJson, recipient: "me@example.com" } });
             expect(Emailer.sendTradeRequestEmail).toBeCalledTimes(1);
-            expect(Emailer.sendTradeRequestEmail).toBeCalledWith(trade, "me@example.com");
+            expect(Emailer.sendTradeRequestEmail).toBeCalledWith("me@example.com", trade);
         });
         it("should call sendTradeDeclinedEmail for trade_declined jobs", async () => {
             // @ts-ignore
             await handleTradeEmailJob({ name: "trade_declined", data: { trade: tradeJson, recipient: "me@example.com" } });
             expect(Emailer.sendTradeDeclinedEmail).toBeCalledTimes(1);
-            expect(Emailer.sendTradeDeclinedEmail).toBeCalledWith(trade, "me@example.com");
+            expect(Emailer.sendTradeDeclinedEmail).toBeCalledWith("me@example.com", trade);
         });
         it("should call sendTradeSubmissionEmail for trade_accepted jobs", async () => {
             // @ts-ignore
             await handleTradeEmailJob({ name: "trade_accepted", data: { trade: tradeJson, recipient: "me@example.com" } });
             expect(Emailer.sendTradeSubmissionEmail).toBeCalledTimes(1);
-            expect(Emailer.sendTradeSubmissionEmail).toBeCalledWith(trade, "me@example.com");
+            expect(Emailer.sendTradeSubmissionEmail).toBeCalledWith("me@example.com", trade);
         });
     });
 

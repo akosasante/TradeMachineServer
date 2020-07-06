@@ -88,8 +88,6 @@ export const Emailer = {
         views: {
             root: path.resolve("./src/email/templates"),
         },
-        preview: false,
-        send: true
     }),
 
     async sendPasswordResetEmail(user: User): Promise<SendInBlueSendResponse> {
