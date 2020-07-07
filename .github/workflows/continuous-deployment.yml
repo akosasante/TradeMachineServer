@@ -24,6 +24,7 @@ jobs:
           status: 'started'
         env:
           ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: ${{ github.actor }}
       - name: Check out repository code
         uses: actions/checkout@v2
 
@@ -100,7 +101,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /opt/Apps/TradeMachine
-            npm run gen-migrate-prod -- autogen
+            /home/dev_deployer/.asdf/shims/npm run gen-migrate-prod -- autogen
             sh check_migrations.sh
 
       - name: Run migrations if needed
