@@ -16,6 +16,7 @@
     "watch-node": "NODE_ENV=development DEBUG=connect:redis nodemon -- -r dotenv/config ./dist/server.js",
     "build-ts": "tsc",
     "watch-ts": "tsc -w",
+    "typecheck": "tsc --noEmit --incremental false",
     "tslint": "tslint -c tslint.json -p tsconfig.json -t stylish",
     "ts-fix": "tslint -c tslint.json -p tsconfig.json -t stylish --fix",
     "debug": "npm run build && npm run watch-debug",
