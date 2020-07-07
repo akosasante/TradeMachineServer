@@ -15,6 +15,15 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '12.x'
+      - name: Notify Rollbar of deploy start
+        uses: rollbar/github-deploy-action@2.0.0
+        id: rollbar_pre_deploy
+        with:
+          environment: 'production'
+          version: ${{ github.sha }}
+          status: 'started'
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
       - name: Check out repository code
         uses: actions/checkout@v2
 
@@ -81,4 +90,14 @@ jobs:
             /home/dev_deployer/.asdf/shims/npx pm2 restart trademachine
             rm out.tar.gz
 
-
+      - name: Notify Rollbar of deploy finish
+        uses: rollbar/github-deploy-action@1.1.0
+        id: rollbar_post_deploy
+        with:
+          environment: 'production'
+          version: ${{ github.sha }}
+          status: 'succeeded'
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: ${{ github.actor }}
+          DEPLOY_ID: ${{ steps.rollbar_pre_deploy.outputs.deploy_id }}
