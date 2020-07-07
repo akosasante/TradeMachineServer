@@ -2,6 +2,7 @@
   "name": "trade-machine-server",
   "version": "2.0.0",
   "description": "Serves the API for FFF TradeMachine 2.0",
+  "repository": "https://github.com/akosasante/TradeMachineServer.git",
   "main": "server.js",
   "scripts": {
     "watch-test": "npm run test -- --watchAll",
