@@ -79,5 +79,6 @@ jobs:
             tar -xzf out.tar.gz --overwrite
             /home/dev_deployer/.asdf/shims/npm install --production
             /home/dev_deployer/.asdf/shims/npx pm2 restart trademachine
+            rm out.tar.gz
 
 
