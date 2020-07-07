@@ -46,6 +46,7 @@ jobs:
             ./tsconfig.json
             ./package.json
             ./package-lock.json
+            ./check_migrations.sh
           outPath: out.tar.gz
 
       - name: Upload built folders to artifacts
@@ -89,6 +90,29 @@ jobs:
             /home/dev_deployer/.asdf/shims/npm install --production
             /home/dev_deployer/.asdf/shims/npx pm2 restart trademachine
             rm out.tar.gz
+
+      - name: Check if we need to do migrations
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /opt/Apps/TradeMachine
+            npm run gen-migrate-prod -- autogen
+            sh check_migrations.sh
+
+      - name: Run migrations if needed
+        if: ${{ failure() }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            npm run run-migrate-prod
 
       - name: Notify Rollbar of deploy finish
         uses: rollbar/github-deploy-action@1.1.0
