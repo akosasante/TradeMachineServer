@@ -5,6 +5,13 @@ import { inspect } from "util";
 import Trade from "../models/trade";
 import { cleanJobForLogging } from "../scheduled_jobs/job_utils";
 import User from "../models/user";
+import Rollbar from "rollbar";
+
+const rollbar = new Rollbar({
+    accessToken: process.env.ROLLBAR_TOKEN,
+    environment: process.env.NODE_ENV,
+    verbose: true,
+});
 
 export function setupEmailConsumers() {
     logger.info("registering email consumers");
@@ -49,6 +56,7 @@ export function setupEmailConsumers() {
 
     emailQueue.on("error", error => {
         logger.error(`Bull error during email queue cron job: ${inspect(error)}`);
+        rollbar.error(error);
     });
 
     emailQueue.on("active", job => {
@@ -61,5 +69,6 @@ export function setupEmailConsumers() {
 
     emailQueue.on("failed", (job, err) => {
         logger.error(`"Email Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
+        rollbar.error(err);
     });
 }

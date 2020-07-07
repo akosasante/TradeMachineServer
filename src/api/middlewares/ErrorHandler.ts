@@ -5,7 +5,14 @@ import { EntityColumnNotFound } from "typeorm/error/EntityColumnNotFound";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import logger from "../../bootstrap/logger";
 import { AuthorizationRequiredError } from "routing-controllers/error/AuthorizationRequiredError";
+import Rollbar from "rollbar";
 // tslint:disable:max-classes-per-file
+
+const rollbar = new Rollbar({
+    accessToken: process.env.ROLLBAR_TOKEN,
+    environment: process.env.NODE_ENV,
+    verbose: true,
+});
 
 @Middleware({type: "after"})
 export default class CustomErrorHandler implements ExpressErrorMiddlewareInterface {
@@ -14,6 +21,7 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
     }
     public error(error: Error, request: Request, response: Response, next: NextFunction) {
         logger.error(`Handling error: ${error.stack}`);
+        rollbar.error(error);
         if (response.headersSent) {
             logger.error("headers already sent, passing to next");
             return next(error);
