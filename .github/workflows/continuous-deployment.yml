@@ -7,21 +7,121 @@ on:
 
 jobs:
   build:
+    name: Transpile typescript code and upload artifacts
     runs-on: ubuntu-18.04
 
     steps:
-      - name: Pull the repo and restart the service
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - name: Notify Rollbar of deploy start
+        uses: rollbar/github-deploy-action@2.0.0
+        id: rollbar_pre_deploy
+        with:
+          environment: 'production'
+          version: ${{ github.sha }}
+          status: 'started'
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: ${{ github.actor }}
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Install all packages
+        run: npm install
+
+      - name: Transpile typescript code
+        run: npm run build
+
+      - name: Compress built folders
+        uses:  master-atul/tar-action@v1.0.2
+        id: compress
+        with:
+          command: c
+          files: |
+            ./declarations
+            ./dist
+            ./.tool-versions
+            ./ormconfig.js
+            ./tsconfig.json
+            ./package.json
+            ./package-lock.json
+            ./check_migrations.sh
+          outPath: out.tar.gz
+
+      - name: Upload built folders to artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: transpiled_app_folder
+          path: ./out.tar.gz
+
+
+  deploy:
+    name: Deploy to digital ocean server
+    needs: build
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Download dist folder
+        uses: actions/download-artifact@v2
+        with:
+          name: transpiled_app_folder
+
+      - name: Upload to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "out.tar.gz"
+          target: "/opt/Apps/TradeMachine"
+
+      - name: Unzip and restart the server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
             cd /opt/Apps/TradeMachine
-            git checkout master
-            git pull
-            /home/dev_deployer/.asdf/shims/npm install
-            /home/dev_deployer/.asdf/shims/npm run build
+            tar -xzf out.tar.gz --overwrite
+            /home/dev_deployer/.asdf/shims/npm install --production
             /home/dev_deployer/.asdf/shims/npx pm2 restart trademachine
+            rm out.tar.gz
 
+      - name: Check if we need to do migrations
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /opt/Apps/TradeMachine
+            /home/dev_deployer/.asdf/shims/npm run gen-migrate-prod -- autogen
+            sh check_migrations.sh
 
+      - name: Run migrations if needed
+        if: ${{ failure() }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            npm run run-migrate-prod
+
+      - name: Notify Rollbar of deploy finish
+        uses: rollbar/github-deploy-action@1.1.0
+        id: rollbar_post_deploy
+        with:
+          environment: 'production'
+          version: ${{ github.sha }}
+          status: 'succeeded'
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: ${{ github.actor }}
+          DEPLOY_ID: ${{ steps.rollbar_pre_deploy.outputs.deploy_id }}
