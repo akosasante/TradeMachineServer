@@ -15,6 +15,7 @@ describe("TradeController", () => {
     const mockTradeDAO = {
         getAllTrades: jest.fn(),
         getTradeById: jest.fn(),
+        hydrateTrade: jest.fn(),
         createTrade: jest.fn(),
         updateStatus: jest.fn(),
         updateParticipants: jest.fn(),
@@ -67,6 +68,17 @@ describe("TradeController", () => {
 
             expect(mockTradeDAO.getTradeById).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id);
+            expect(res).toEqual(testTrade);
+        });
+        it("should hydrate the trade if the boolean is set to true", async () => {
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(testTrade);
+            mockTradeDAO.hydrateTrade.mockResolvedValueOnce(testTrade);
+            const res = await tradeController.getOneTrade(testTrade.id!, true);
+
+            expect(mockTradeDAO.getTradeById).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id);
+            expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledWith(testTrade);
             expect(res).toEqual(testTrade);
         });
     });
@@ -178,7 +190,7 @@ describe("TradeController", () => {
             });
         });
         it("should call the updateDeclinedBy DAO method if valid", async () => {
-            const declinedById = testTrade.tradeParticipants?.[1].id;
+            const declinedById = testTrade.tradeParticipants?.[1].team.owners?.[0].id;
             const declinedReason = "reason";
             await tradeController.updateTrade(tradeOwner, testTrade.id!, {declinedById, declinedReason});
 
@@ -189,7 +201,7 @@ describe("TradeController", () => {
             expect(mockTradeDAO.updateParticipants).toHaveBeenCalledTimes(0);
         });
         it("should not call updateDeclinedBy DAO method if declined by user is not one of the trade's own participants", async () => {
-            const declinedById = TradeFactory.getTrade().tradeParticipants?.[1].id;
+            const declinedById = TradeFactory.getTrade().tradeParticipants?.[1].team.owners?.[0].id;
             const declinedReason = "reason";
             await tradeController.updateTrade(tradeOwner, testTrade.id!, {declinedById, declinedReason});
 
