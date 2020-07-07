@@ -471,8 +471,8 @@ a.button-link {
           <ul class=\\"minors\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
           <li>Honus Wiener - undefined - undefined</li>
         </div>
-        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Upon submission of this trade, it will be announced in the <a href=\\"https://flexfoxfantasy.slack.com/archives/C84UJAX5Y\\" style=\\"text-decoration: none; border-bottom: #d3d6f0 1px solid; color: #2837b8 !important;\\">trade_announcements</a> channel. If you no longer want to accept this trade, please click the \\"Discard Trade\\" button.</p>
-        <div class=\\"button-container\\"><a class=\\"button-link\\" href=\\"http://localhost:8080/trade/test-uuid/submit\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;\\"><span>Submit Trade</span></a><a class=\\"button-link\\" href=\\"http://localhost:8080/trade/test-uuid/discard\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;\\"><span>Discard Trade</span></a></div>
+        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Upon submission of this trade, it will be announced in the <a href=\\"https://flexfoxfantasy.slack.com/archives/C84UJAX5Y\\" style=\\"text-decoration: none; border-bottom: #d3d6f0 1px solid; color: #2837b8 !important;\\">trade_announcements</a> channel.</p>
+        <div class=\\"button-container\\"><a class=\\"button-link\\" href=\\"http://localhost:8080/trade/test-uuid/submit\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;\\"><span>Submit Trade</span></a></div>
       </div>
     </div>
     <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
@@ -488,11 +488,9 @@ undefined's 2020 1st round pick DITTO DUO WOULD SEND:
 
 Honus Wiener - undefined - undefined Upon submission of this trade, it will be
 announced in the trade_announcements
-[https://flexfoxfantasy.slack.com/archives/C84UJAX5Y] channel. If you no longer
-want to accept this trade, please click the \\"Discard Trade\\" button.
+[https://flexfoxfantasy.slack.com/archives/C84UJAX5Y] channel.
 
-Submit Trade [http://localhost:8080/trade/test-uuid/submit]Discard Trade
-[http://localhost:8080/trade/test-uuid/discard]",
+Submit Trade [http://localhost:8080/trade/test-uuid/submit]",
     "to": "test@exaample.com",
   },
 }
