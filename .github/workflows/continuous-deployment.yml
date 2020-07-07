@@ -61,8 +61,8 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT }}
-          source: "transpiled_app_folder/out.tar.gz"
+          port: ${{ secrets.SSH_PORT }}
+          source: "transpiled_app_folder"
           target: "/opt/Apps/TradeMachine"
 
       - name: Unzip and restart the server
@@ -71,10 +71,10 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
             cd /opt/Apps/TradeMachine
-            tar -xzf --overwrite out.tar.gz
+            tar -xzf --overwrite transpiled_app_folder
             /home/dev_deployer/.asdf/shims/npm install --production
             /home/dev_deployer/.asdf/shims/npx pm2 restart trademachine
 
