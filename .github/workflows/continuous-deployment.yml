@@ -18,11 +18,8 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v2
 
-      - name: Install typescript globally
-        run: npm i -g typescript
-
-      - name: Install production packages only
-        run: npm i --production
+      - name: Install all packages
+        run: npm install
 
       - name: Transpile typescript code
         run: npm run build
