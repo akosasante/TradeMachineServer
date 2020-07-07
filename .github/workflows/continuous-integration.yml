@@ -45,7 +45,7 @@ jobs:
         run: npm ci
 
       - name: Build js files
-        run: npm run build-ts
+        run: npm run build
 
       - name: Setup db
         run: node db_setup.js
