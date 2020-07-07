@@ -6,6 +6,13 @@ import DraftPick, { LeagueLevel } from "../models/draftPick";
 import Team from "../models/team";
 import { validateRow, WriteMode } from "./CsvUtils";
 import { uniqWith } from "lodash";
+import Rollbar from "rollbar";
+
+const rollbar = new Rollbar({
+    accessToken: process.env.ROLLBAR_TOKEN,
+    environment: process.env.NODE_ENV,
+    verbose: true,
+});
 
 interface DraftPickCSVRow {
     Owner: string;
@@ -44,6 +51,7 @@ async function maybeDeleteExistingPicks(dao: DraftPickDAO, mode?: WriteMode) {
             await dao.deleteAllPicks();
         } catch (e) {
             logger.error(inspect(e));
+            rollbar.error(e);
             throw e;
         }
     }
