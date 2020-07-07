@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v1
         with:
-          node-verrsion: '12.x'
+          node-version: '12.x'
       - name: Check out repository code
         uses: actions/checkout@v2
 
@@ -35,6 +35,8 @@ jobs:
             ./.tool-versions
             ./ormconfig.js
             ./tsconfig.json
+            ./package.json
+            ./package-lock.json
           outPath: out.tar.gz
 
       - name: Upload built folders to artifacts
@@ -74,7 +76,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /opt/Apps/TradeMachine
-            tar -xzf --overwrite out.tar.gz
+            tar -xzf out.tar.gz --overwrite
             /home/dev_deployer/.asdf/shims/npm install --production
             /home/dev_deployer/.asdf/shims/npx pm2 restart trademachine
 
