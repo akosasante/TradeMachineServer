@@ -3,7 +3,6 @@ import path from "path";
 import winston from "winston";
 
 const { combine, timestamp, printf, uncolorize } = winston.format;
-const logDir = path.resolve(`${process.env.BASE_DIR}/logs`);
 const fileLogFormat = printf(info => {
     return `[ ${info.timestamp} ]\t${info.level}: ${info.message}`;
 });
@@ -21,8 +20,12 @@ const consoleLogger = new winston.transports.Console({
 // tslint:disable-next-line
 let errorLogger, combinedLogger, exceptionHandler;
 
-if ((process.env.NODE_ENV !== "test" || process.env.SEED === "true") && !fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir);
+if (process.env.NODE_ENV !== "test") {
+    const logDir = path.resolve(`${process.env.BASE_DIR}/logs`);
+
+    if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir);
+    }
 
     errorLogger = new winston.transports.File({
         filename: `${logDir}/server-error.log`,
