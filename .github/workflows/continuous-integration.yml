@@ -65,3 +65,6 @@ jobs:
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
           BASE_URL: http://localhost:8080
 
+      - name: Run typechecking and linting
+        run: npm run typecheck && npm run lint-fix
+
