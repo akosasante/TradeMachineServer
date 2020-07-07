@@ -7,21 +7,77 @@ on:
 
 jobs:
   build:
+    name: Transpile typescript code and upload artifacts
     runs-on: ubuntu-18.04
 
     steps:
-      - name: Pull the repo and restart the service
+      - uses: actions/setup-node@v1
+        with:
+          node-verrsion: '12.x'
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Install typescript globally
+        run: npm i -g typescript
+
+      - name: Install production packages only
+        run: npm i --production
+
+      - name: Transpile typescript code
+        run: npm run build
+
+      - name: Compress built folders
+        uses:  master-atul/tar-action@v1.0.2
+        id: compress
+        with:
+          command: c
+          files: |
+            ./declarations
+            ./dist
+            ./.tool-versions
+            ./ormconfig.js
+            ./tsconfig.json
+          outPath: out.tar.gz
+
+      - name: Upload built folders to artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: transpiled_app_folder
+          path: ./out.tar.gz
+
+
+  deploy:
+    name: Deploy to digital ocean server
+    needs: build
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Download dist folder
+        uses: actions/download-artifact@v2
+        with:
+          name: transpiled_app_folder
+
+      - name: Upload to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          source: "transpiled_app_folder/out.tar.gz"
+          target: "/opt/Apps/TradeMachine"
+
+      - name: Unzip and restart the server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
           script: |
             cd /opt/Apps/TradeMachine
-            git checkout master
-            git pull
-            /home/dev_deployer/.asdf/shims/npm install
-            /home/dev_deployer/.asdf/shims/npm run build
+            tar -xzf --overwrite out.tar.gz
+            /home/dev_deployer/.asdf/shims/npm install --production
             /home/dev_deployer/.asdf/shims/npx pm2 restart trademachine
 
 
