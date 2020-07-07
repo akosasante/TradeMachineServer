@@ -101,7 +101,7 @@
     "ts-jest": "^25.3.1",
     "ts-node": "^8.4",
     "tslint": "^6.0.0",
-    "typescript": "^3.8.3",
+    "typescript": "^3.9.6",
     "winston": "^3.2.1"
   }
 }
