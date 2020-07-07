@@ -55,6 +55,11 @@ jobs:
         with:
           name: transpiled_app_folder
 
+      - name: testing
+        run: |
+          ls -la
+          echo $pwd
+
       - name: Upload to server
         uses: appleboy/scp-action@master
         with:
