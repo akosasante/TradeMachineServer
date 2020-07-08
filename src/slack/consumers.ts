@@ -4,6 +4,13 @@ import logger from "../bootstrap/logger";
 import { processTradeAnnounceJob } from "./processors";
 import { inspect } from "util";
 import { cleanJobForLogging } from "../scheduled_jobs/job_utils";
+import Rollbar from "rollbar";
+
+const rollbar = new Rollbar({
+    accessToken: process.env.ROLLBAR_TOKEN,
+    environment: process.env.NODE_ENV,
+    verbose: true,
+});
 
 export function setupSlackConsumers() {
     logger.info("registering slack consumers");
@@ -23,6 +30,7 @@ export function setupSlackConsumers() {
 
     slackQueue.on("error", error => {
         logger.error(`Bull error during slack queue cron job: ${inspect(error)}`);
+        rollbar.error(error);
     });
 
     slackQueue.on("active", job => {
@@ -35,5 +43,6 @@ export function setupSlackConsumers() {
 
     slackQueue.on("failed", (job, err) => {
         logger.error(`"Slack Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
+        rollbar.error(err);
     });
 }

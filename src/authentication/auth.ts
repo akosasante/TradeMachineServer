@@ -7,6 +7,13 @@ import logger from "../bootstrap/logger";
 import UserDAO from "../DAO/UserDAO";
 import User, { Role } from "../models/user";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
+import Rollbar from "rollbar";
+
+const rollbar = new Rollbar({
+    accessToken: process.env.ROLLBAR_TOKEN,
+    environment: process.env.NODE_ENV,
+    verbose: true,
+});
 
 
 export function serializeUser(user: User): string | undefined {
@@ -40,6 +47,7 @@ export async function signUpAuthentication(email: string, password: string, user
     } catch (error) {
         logger.error("Error in sign-up strategy");
         logger.error(error);
+        rollbar.error(error);
         return done(error);
     }
 }
@@ -69,6 +77,7 @@ export async function signInAuthentication(email: string, password: string, user
             "Could not find user with this email when trying to sign in" :
             "Error with sign-in strategy"}`);
         logger.error(error);
+        rollbar.error(error);
         return done(error);
     }
 }

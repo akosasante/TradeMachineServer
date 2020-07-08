@@ -6,6 +6,13 @@ import logger from "../bootstrap/logger";
 import { inspect } from "util";
 import { cleanJobForLogging } from "./job_utils";
 import { v4 as uuid } from "uuid";
+import Rollbar from "rollbar";
+
+const rollbar = new Rollbar({
+    accessToken: process.env.ROLLBAR_TOKEN,
+    environment: process.env.NODE_ENV,
+    verbose: true,
+});
 
 export function setupScheduledEspnUpdates() {
     const cron = "22 6 * * *"; // daily at 2:22AM ET
@@ -22,6 +29,7 @@ export function setupScheduledEspnUpdates() {
 
     espnQueue.on("error", error => {
         logger.error(`Bull error during setupScheduledEspnUpdates: ${inspect(error)}`);
+        rollbar.error(error);
     });
 
     espnQueue.on("active", job => {
@@ -34,6 +42,7 @@ export function setupScheduledEspnUpdates() {
 
     espnQueue.on("failed", (job, err) => {
         logger.error(`"setupScheduledEspnUpdates Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
+        rollbar.error(err);
     });
 }
 

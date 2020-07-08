@@ -6,7 +6,13 @@ import Player, { PlayerLeagueType } from "../models/player";
 import Team from "../models/team";
 import { validateRow, WriteMode } from "./CsvUtils";
 import { uniqWith } from "lodash";
+import Rollbar from "rollbar";
 
+const rollbar = new Rollbar({
+    accessToken: process.env.ROLLBAR_TOKEN,
+    environment: process.env.NODE_ENV,
+    verbose: true,
+});
 
 interface PlayerCSVRow {
     Owner: string;
@@ -39,6 +45,7 @@ async function maybeDropMinorPlayers(dao: PlayerDAO, mode?: WriteMode) {
             await dao.deleteAllPlayers({league: PlayerLeagueType.MINOR});
         } catch (e) {
             logger.error(inspect(e));
+            rollbar.error(e);
             throw e;
         }
     }
