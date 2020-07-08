@@ -2,6 +2,13 @@ import { Connection, createConnection, getConnectionOptions } from "typeorm";
 import util, { inspect } from "util";
 import CustomQueryLogger from "../db/QueryLogger";
 import logger from "./logger";
+import Rollbar from "rollbar";
+
+const rollbar = new Rollbar({
+    accessToken: process.env.ROLLBAR_TOKEN,
+    environment: process.env.NODE_ENV,
+    verbose: true,
+});
 
 export default async function initializeDb(logQueries: boolean = false) {
     let connection: Connection|undefined;
@@ -25,6 +32,7 @@ export default async function initializeDb(logQueries: boolean = false) {
                 } catch (reconnectError) {
                     logger.error("Reconnection error");
                     logger.error(reconnectError);
+                    rollbar.error(reconnectError);
                 }
             }, 5000);
         });
@@ -38,6 +46,7 @@ export default async function initializeDb(logQueries: boolean = false) {
         logger.error("Error while initializing db connection.");
         logger.error(util.inspect(error));
         logger.error(util.inspect(connection));
+        rollbar.error(error);
         throw error;
     }
 }
