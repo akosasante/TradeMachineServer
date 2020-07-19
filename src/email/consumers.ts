@@ -55,7 +55,7 @@ export function setupEmailConsumers() {
     emailQueue.process("trade_accepted", handleTradeEmailJob);
 
     emailQueue.on("error", error => {
-        logger.error(`Bull error during email queue cron job: ${inspect(error)}`);
+        logger.error(`Bull error during email queue job: ${inspect(error)}`);
         rollbar.error(error);
     });
 
