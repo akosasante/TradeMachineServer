@@ -31,3 +31,4 @@ node_modules
 src/db/migrations-old
 src/db/migrations
 tests/coverage
+sheet_creds.json
