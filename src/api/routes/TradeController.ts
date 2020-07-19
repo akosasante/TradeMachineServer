@@ -10,6 +10,7 @@ import Trade, { TradeStatus } from "../../models/trade";
 import User, { Role } from "../../models/user";
 import { UUIDPattern } from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
+import { appendNewTrade } from "../../csv/TradeTracker";
 
 function validateOwnerOfTrade(user: User, trade: Trade): boolean {
     if (user.role === Role.ADMIN) {
@@ -99,6 +100,8 @@ export default class TradeController {
         }
         const trade = await this.dao.createTrade(tradeObj);
         logger.debug(`created trade: ${inspect(trade)}`);
+        const hydratedTrade = await this.dao.hydrateTrade(trade);
+        await appendNewTrade(hydratedTrade);
         return trade;
     }
 
