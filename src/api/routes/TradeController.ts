@@ -102,7 +102,7 @@ export default class TradeController {
         logger.debug(`created trade: ${inspect(trade)}`);
         const hydratedTrade = await this.dao.hydrateTrade(trade);
         await appendNewTrade(hydratedTrade);
-        return hydratedTrade;
+        return trade;
     }
 
     @Put(UUIDPattern)

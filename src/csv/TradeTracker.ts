@@ -115,7 +115,7 @@ export async function appendNewTrade(trade: Trade) {
     // logger.debug(`generated: ${inspect(generateTradeRow(trade))}`);
     const auth = await google.auth.getClient({
         scopes: "https://www.googleapis.com/auth/spreadsheets",
-        keyFile: "/Users/aasante/h-dev/TradeMachine/trade-machine-server/sheet_creds.json",
+        keyFile: `${process.env.BASE_DIR}/${process.env.SHEETS_CREDENTIAL_FILE}`,
     });
     const sheets = google.sheets({
         version: "v4",
