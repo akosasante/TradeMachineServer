@@ -22,6 +22,7 @@ import { adminLoggedIn, doLogout, makeDeleteRequest, makeGetRequest,
 import { v4 as uuid } from "uuid";
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
+import * as TradeTracker from "../../src/csv/TradeTracker";
 
 dotenvConfig({path: resolvePath(__dirname, "../.env")});
 
@@ -34,6 +35,9 @@ let majorPlayer = PlayerFactory.getPlayer("Pete Buttjudge", PlayerLeagueType.MAJ
 let majorPlayer2 = PlayerFactory.getPlayer("Feelda Bern", PlayerLeagueType.MAJOR);
 let pick = DraftPickFactory.getPick();
 let [creatorTeam, recipientTeam, recipientTeam2] = TeamFactory.getTeams(3);
+// @ts-ignore
+TradeTracker.appendNewTrade = jest.fn();
+
 
 async function shutdown() {
     await new Promise(resolve => {
