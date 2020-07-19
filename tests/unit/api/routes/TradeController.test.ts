@@ -10,6 +10,8 @@ import { UserFactory } from "../../../factories/UserFactory";
 import { BadRequestError, UnauthorizedError } from "routing-controllers";
 import { TeamFactory } from "../../../factories/TeamFactory";
 import { TradeItemType } from "../../../../src/models/tradeItem";
+import * as TradeTracker from "../../../../src/csv/TradeTracker";
+
 
 describe("TradeController", () => {
     const mockTradeDAO = {
@@ -23,6 +25,9 @@ describe("TradeController", () => {
         updateDeclinedBy: jest.fn(),
         deleteTrade: jest.fn(),
     };
+
+    // @ts-ignore
+    TradeTracker.appendNewTrade = jest.fn();
 
     const testTrade = TradeFactory.getTrade();
     const creator = testTrade.tradeParticipants?.find(part => part.participantType === TradeParticipantType.CREATOR);
