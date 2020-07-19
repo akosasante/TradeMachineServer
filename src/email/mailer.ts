@@ -76,7 +76,7 @@ export const Emailer = {
         juice: true,
         juiceResources: {
             webResources: {
-                relativeTo: path.resolve("./src/email/templates"),
+                relativeTo: path.resolve(__dirname, "templates"),
                 images: false,
             },
         },
@@ -86,7 +86,7 @@ export const Emailer = {
         subjectPrefix: "FlexFoxFantasy TradeMachine - ",
         transport: SendInBlueTransport,
         views: {
-            root: path.resolve("./src/email/templates"),
+            root: path.resolve(__dirname, "templates"),
         },
     }),
 
