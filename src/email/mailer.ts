@@ -91,7 +91,7 @@ export const Emailer = {
     }),
 
     async sendPasswordResetEmail(user: User): Promise<SendInBlueSendResponse> {
-        const resetPassPage = `${baseDomain}/reset_password?u=${encodeURI(user.id!)}`;
+        const resetPassPage = `${baseDomain}/reset_password?u=${encodeURI(user.passwordResetToken!)}`;
         logger.debug("sending password reset email");
         return Emailer.emailer.send({
             template: "reset_password",
