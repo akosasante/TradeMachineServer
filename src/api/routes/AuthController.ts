@@ -32,10 +32,10 @@ export default class AuthController {
             throw new NotFoundError("No user found with the given email.");
         } else {
             // Update current user with reset request time
-            await this.userDao.setPasswordExpires(user.id!);
+            const updatedUser = await this.userDao.setPasswordExpires(user.id!);
 
             // Queue send email with current user
-            await this.emailPublisher.queueResetEmail(user);
+            await this.emailPublisher.queueResetEmail(updatedUser);
             return response.status(202).json({status: "email queued"});
         }
     }
