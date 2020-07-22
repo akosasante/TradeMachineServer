@@ -61,13 +61,13 @@ export default class UserDAO {
             .execute();
     }
 
-    public async setPasswordExpires(id: string): Promise<void> {
+    public async setPasswordExpires(id: string): Promise<User> {
         await this.getUserById(id); // This should throw error if the id does not exist
         await this.userDb.update(
             {id},
             {
                 passwordResetExpiresOn: User.generateTimeToPasswordExpires(),
                 passwordResetToken: uuid() });
-        return;
+        return await this.getUserById(id);
     }
 }
