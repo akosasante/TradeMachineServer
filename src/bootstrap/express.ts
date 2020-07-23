@@ -29,6 +29,7 @@ app.use(responseTime());
 app.use(rollbar.errorHandler());
 
 // Session tracking
+const COOKIE_MAX_AGE_SECONDS = 60 * 60; // 1 hr
 const RedisSessionStore = connectRedis(expressSession);
 export const redisClient = redis.createClient(
     Number(process.env.REDIS_PORT || 6379),
@@ -36,7 +37,7 @@ export const redisClient = redis.createClient(
 
 const REDIS_OPTS = {
     logErrors: true,
-    ttl: 7200000,
+    ttl: COOKIE_MAX_AGE_SECONDS,
     client: redisClient,
 };
 
@@ -48,9 +49,10 @@ app.use(expressSession({
     unset: "destroy",
     name: "trades.sid",
     cookie: {
-        secure: process.env.NODE_ENV === "production",
+        secure: true,
         httpOnly: false,
-        maxAge: 7200000,
+        maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
+        sameSite: "none",
     },
 }));
 
