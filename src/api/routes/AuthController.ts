@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { BodyParam, Controller, NotFoundError, Post, Req, Res, Session, UseBefore } from "routing-controllers";
+import {  BodyParam, Controller, CurrentUser, Get, NotFoundError, Post, Req,
+    Res, Session, UseBefore } from "routing-controllers";
 import { deserializeUser, generateHashedPassword, passwordResetDateIsValid } from "../../authentication/auth";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
@@ -110,5 +111,11 @@ export default class AuthController {
             passwordResetToken: undefined,
         });
         return response.status(200).json("success");
+    }
+
+    @Get("/session_check")
+    public async sessionCheck(@CurrentUser({ required: true }) user: User): Promise<User> {
+        logger.debug("session check worked " + user);
+        return user;
     }
 }
