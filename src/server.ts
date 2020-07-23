@@ -6,8 +6,8 @@ import { setupEmailConsumers } from "./email/consumers";
 import { setupSlackConsumers } from "./slack/consumers";
 
 const server: Promise<Server> = startServer();
-setupScheduledEspnUpdates();
-setupScheduledMlbMinorLeagueUpdates();
+// setupScheduledEspnUpdates();
+// setupScheduledMlbMinorLeagueUpdates();
 setupEmailConsumers();
 setupSlackConsumers();
 
