@@ -49,8 +49,8 @@ app.use(expressSession({
     unset: "destroy",
     name: "trades.sid",
     cookie: {
-        secure: true,
-        httpOnly: false,
+        secure: process.env.NODE_ENV !== "test",
+        httpOnly: true,
         maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
         sameSite: "none",
     },

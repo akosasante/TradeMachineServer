@@ -72,7 +72,7 @@ a.button-link {
         <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
         <h2>Forgot Your Password?</h2>
         <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Hi Jatheesh, you are receiving this email because you have requested a password reset for your account. <br><br></p>
-        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Please click on the following link to complete the process:</p><a class=\\"button-link\\" href=\\"http://localhost:8080/reset_password?u=test-uuid\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5;\\"><span>Reset Password</span></a>
+        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Please click on the following link to complete the process:</p><a class=\\"button-link\\" href=\\"http://localhost:8080/reset_password?u=undefined\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5;\\"><span>Reset Password</span></a>
         <div class=\\"divider\\"></div>
       </div>
     </div>
@@ -89,7 +89,7 @@ reset for your account.
 
 Please click on the following link to complete the process:
 
-Reset Password [http://localhost:8080/reset_password?u=test-uuid]",
+Reset Password [http://localhost:8080/reset_password?u=undefined]",
     "to": "test@example.com",
   },
 }
