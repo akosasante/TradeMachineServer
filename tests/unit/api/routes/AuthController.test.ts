@@ -144,6 +144,7 @@ describe("AuthController", () => {
     describe("sendResetEmail method", () => {
         it("should find a user, set a new password expiry date, and call mailQueue", async () => {
             mockUserDAO.findUser.mockResolvedValueOnce(testUser);
+            mockUserDAO.setPasswordExpires.mockResolvedValueOnce(testUser);
 
             await authController.sendResetEmail(testUser.email!, mockRes as unknown as Response);
 
