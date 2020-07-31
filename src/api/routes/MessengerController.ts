@@ -82,7 +82,7 @@ export default class MessengerController {
     public async sendTradeAnnouncementMessage(@Param("id") id: string, @Res() response: Response) {
         logger.debug(`queuing trade announcement slack message for tradeId: ${id}`);
         let trade = await this.tradeDao.getTradeById(id);
-        if (trade.status === TradeStatus.ACCEPTED) {
+        if (trade.status === TradeStatus.SUBMITTED) {
             trade = await this.tradeDao.hydrateTrade(trade);
             await this.slackPublisher.queueTradeAnnouncement(trade);
             return response.status(202).json({status: "accepted trade announcement queued"});
