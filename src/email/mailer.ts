@@ -67,8 +67,11 @@ function emailIsCreatorOfTrade(email: string, trade: Trade) {
 }
 
 function getParticipantByEmail(email: string, trade: Trade) {
-    logger.debug(inspect(trade.creator?.owners));
     return trade.tradeParticipants?.find(tp => tp.team.owners?.find(u => u.email === email));
+}
+
+function getParticipantById(id: string, trade: Trade) {
+    return trade.tradeParticipants?.find(tp => tp.team.owners?.find(u => u.id === id));
 }
 
 export const Emailer = {
@@ -194,7 +197,7 @@ export const Emailer = {
             locals: {
                 isCreator: emailIsCreatorOfTrade(recipient, trade),
                 reason: trade.declinedReason,
-                decliningTeam: getParticipantByEmail(recipient, trade)?.team.name,
+                decliningTeam: getParticipantById(trade.declinedById || "", trade)?.team.name,
                 tradesBySender: getTradeTextForRequest(trade!),
             },
         })
