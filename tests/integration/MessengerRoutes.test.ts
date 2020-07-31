@@ -1,24 +1,24 @@
-import { Server } from "http";
+import {Server} from "http";
 import "jest";
 import "jest-extended";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
+import {redisClient} from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
-import { config as dotenvConfig } from "dotenv";
+import {config as dotenvConfig} from "dotenv";
 import path from "path";
-import { EmailPublisher } from "../../src/email/publishers";
-import { adminLoggedIn, makePostRequest, ownerLoggedIn, setupOwnerAndAdminUsers } from "./helpers";
-import { TradeFactory } from "../factories/TradeFactory";
+import {EmailPublisher} from "../../src/email/publishers";
+import {adminLoggedIn, makePostRequest, ownerLoggedIn, setupOwnerAndAdminUsers} from "./helpers";
+import {TradeFactory} from "../factories/TradeFactory";
 import User from "../../src/models/user";
 import TradeDAO from "../../src/DAO/TradeDAO";
-import Trade, { TradeStatus } from "../../src/models/trade";
+import Trade, {TradeStatus} from "../../src/models/trade";
 import PlayerDAO from "../../src/DAO/PlayerDAO";
-import { PlayerFactory } from "../factories/PlayerFactory";
-import { TeamFactory } from "../factories/TeamFactory";
+import {PlayerFactory} from "../factories/PlayerFactory";
+import {TeamFactory} from "../factories/TeamFactory";
 import TeamDAO from "../../src/DAO/TeamDAO";
-import { v4 as uuid } from "uuid";
-import { SlackPublisher } from "../../src/slack/publishers";
+import {v4 as uuid} from "uuid";
+import {SlackPublisher} from "../../src/slack/publishers";
 
 dotenvConfig({path: path.resolve(__dirname, "../.env")});
 
@@ -28,6 +28,7 @@ let ownerUser: User;
 let requestedTrade: Trade;
 let declinedTrade: Trade;
 let acceptedTrade: Trade;
+let submittedTrade: Trade;
 let draftTrade: Trade;
 const emailPublisher = EmailPublisher.getInstance();
 const slackPublisher = SlackPublisher.getInstance();
@@ -62,14 +63,17 @@ beforeAll(async () => {
     const tradeParticipants2 = TradeFactory.getTradeParticipants(team1, team2);
     const tradeParticipants3 = TradeFactory.getTradeParticipants(team1, team2);
     const tradeParticipants4 = TradeFactory.getTradeParticipants(team1, team2);
+    const tradeParticipants5 = TradeFactory.getTradeParticipants(team1, team2);
     const tradeItem1 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
     const tradeItem2 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
     const tradeItem3 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
     const tradeItem4 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
+    const tradeItem5 = TradeFactory.getTradedMajorPlayer(player, team1, team2);
     requestedTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem1], tradeParticipants1, TradeStatus.REQUESTED));
     acceptedTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem2], tradeParticipants2, TradeStatus.ACCEPTED));
     draftTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem3], tradeParticipants3));
     declinedTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem4], tradeParticipants4, TradeStatus.REJECTED, {declinedById: ownerUser.id, declinedReason: "because I say so"}));
+    submittedTrade = await tradeDao.createTrade(TradeFactory.getTrade([tradeItem5], tradeParticipants5, TradeStatus.SUBMITTED));
 });
 afterAll(async () => {
     logger.debug("~~~~~~MESSENGER ROUTES AFTER ALL~~~~~~");
@@ -183,7 +187,7 @@ describe("Messenger API endpoints", () => {
 
         it("should queue a trade announcement job and return 202", async () => {
             const queueLengthBefore = await slackPublisher.getJobTotal();
-            const {body} = await adminLoggedIn(req(acceptedTrade.id!), app);
+            const {body} = await adminLoggedIn(req(submittedTrade.id!), app);
             const queueLengthAfter = await slackPublisher.getJobTotal();
 
             expect(body.status).toEqual("accepted trade announcement queued");
@@ -191,13 +195,13 @@ describe("Messenger API endpoints", () => {
         });
         it("should queue a trade announcement job successfully if logged in as an owner", async () => {
             const queueLengthBefore = await slackPublisher.getJobTotal();
-            const {body} = await ownerLoggedIn(req(acceptedTrade.id!), app);
+            const {body} = await ownerLoggedIn(req(submittedTrade.id!), app);
             const queueLengthAfter = await slackPublisher.getJobTotal();
 
             expect(body.status).toEqual("accepted trade announcement queued");
             expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
         });
-        it("should return a 400 Bad Request if the trade is not accepted", async () => {
+        it("should return a 400 Bad Request if the trade is not submitted", async () => {
             const queueLengthBefore = await slackPublisher.getJobTotal();
             const {body} = await adminLoggedIn(req(draftTrade.id!, 400), app);
             const queueLengthAfter = await slackPublisher.getJobTotal();
