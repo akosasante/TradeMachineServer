@@ -13,6 +13,7 @@ export enum TradeStatus {
     PENDING, // only a thing for more than two-person trades
     ACCEPTED,
     REJECTED,
+    SUBMITTED,
 }
 
 @Entity()
