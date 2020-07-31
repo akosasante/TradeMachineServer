@@ -1,7 +1,7 @@
 import "jest";
 import "jest-extended";
 import { UserFactory } from "../../factories/UserFactory";
-import {handleEmailJob, handleTradeEmailJob, handleWebhookResponse} from "../../../src/email/processors";
+import { handleEmailJob, handleTradeEmailJob, handleWebhookResponse } from "../../../src/email/processors";
 import { Emailer } from "../../../src/email/mailer";
 import logger from "../../../src/bootstrap/logger";
 import EmailDAO from "../../../src/DAO/EmailDAO";
@@ -20,6 +20,7 @@ jest.mock( "../../../src/email/mailer", () => ({
 
 const mockEmailDAO = {
     getEmailByMessageId: jest.fn(),
+    updateEmail: jest.fn(),
 };
 
 const user = UserFactory.getUser();
