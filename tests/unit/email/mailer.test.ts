@@ -1,12 +1,13 @@
 import "jest";
 import "jest-extended";
-import { Emailer } from "../../../src/email/mailer";
-import { UserFactory } from "../../factories/UserFactory";
+import {Emailer} from "../../../src/email/mailer";
+import {UserFactory} from "../../factories/UserFactory";
 import logger from "../../../src/bootstrap/logger";
-import { TradeFactory } from "../../factories/TradeFactory";
-import { DraftPickFactory } from "../../factories/DraftPickFactory";
-import { TeamFactory } from "../../factories/TeamFactory";
-import { PlayerFactory } from "../../factories/PlayerFactory";
+import {TradeFactory} from "../../factories/TradeFactory";
+import {DraftPickFactory} from "../../factories/DraftPickFactory";
+import {TeamFactory} from "../../factories/TeamFactory";
+import {PlayerFactory} from "../../factories/PlayerFactory";
+import {PlayerLeagueType} from "../../../src/models/player";
 
 describe("Emailer Class", () => {
     beforeAll(() => {
@@ -17,8 +18,8 @@ describe("Emailer Class", () => {
     });
     const testUser = UserFactory.getUser("test@example.com", "Jatheesh", undefined, undefined, {id: "test-uuid", passwordResetToken: "random-token"});
     const testItems = [
-        TradeFactory.getTradedMajorPlayer(),
-        TradeFactory.getTradedMinorPlayer(PlayerFactory.getPlayer(undefined, undefined, {meta: {minorLeaguePlayerFromSheet: {mlbTeam: "Jays", position: "P"}}})),
+        TradeFactory.getTradedMajorPlayer(PlayerFactory.getPlayer(undefined, PlayerLeagueType.MAJOR, {mlbTeam: "Pirates", meta: {espnPlayer: {player: {eligibleSlots: [0, 1, 7]}}}})),
+        TradeFactory.getTradedMinorPlayer(PlayerFactory.getPlayer("MiniMe", undefined, {meta: {minorLeaguePlayerFromSheet: {mlbTeam: "Jays", position: "P"}}})),
         TradeFactory.getTradedPick(DraftPickFactory.getPick(undefined, undefined, undefined, undefined, { originalOwner: TeamFactory.getTeam() })),
     ];
     const testTrade = TradeFactory.getTrade( testItems, undefined, undefined, {id: "test-uuid"});
