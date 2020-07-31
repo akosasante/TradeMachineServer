@@ -4,6 +4,9 @@ import { Emailer } from "../../../src/email/mailer";
 import { UserFactory } from "../../factories/UserFactory";
 import logger from "../../../src/bootstrap/logger";
 import { TradeFactory } from "../../factories/TradeFactory";
+import { DraftPickFactory } from "../../factories/DraftPickFactory";
+import { TeamFactory } from "../../factories/TeamFactory";
+import { PlayerFactory } from "../../factories/PlayerFactory";
 
 describe("Emailer Class", () => {
     beforeAll(() => {
@@ -12,8 +15,13 @@ describe("Emailer Class", () => {
     afterAll(() => {
         logger.debug("~~~~~~EMAILER TESTS COMPLETE~~~~~~");
     });
-    const testUser = UserFactory.getUser("test@example.com", "Jatheesh", undefined, undefined, {id: "test-uuid"});
-    const testTrade = TradeFactory.getTrade( undefined, undefined, undefined, {id: "test-uuid"});
+    const testUser = UserFactory.getUser("test@example.com", "Jatheesh", undefined, undefined, {id: "test-uuid", passwordResetToken: "random-token"});
+    const testItems = [
+        TradeFactory.getTradedMajorPlayer(),
+        TradeFactory.getTradedMinorPlayer(PlayerFactory.getPlayer(undefined, undefined, {meta: {minorLeaguePlayerFromSheet: {mlbTeam: "Jays", position: "P"}}})),
+        TradeFactory.getTradedPick(DraftPickFactory.getPick(undefined, undefined, undefined, undefined, { originalOwner: TeamFactory.getTeam() })),
+    ];
+    const testTrade = TradeFactory.getTrade( testItems, undefined, undefined, {id: "test-uuid"});
 
     describe("email snapshots", () => {
         it("sendTestEmail", async () => {
