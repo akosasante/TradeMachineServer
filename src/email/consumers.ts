@@ -15,7 +15,7 @@ const rollbar = new Rollbar({
 
 export function setupEmailConsumers() {
     logger.info("registering email consumers");
-    const emailQueue = new Bull("email_queue");
+    const emailQueue = new Bull("email_queue", {settings: {maxStalledCount: 0, lockDuration: 60000}});
     const cleanLoggedData = (data: any) => {
         if (data.user) {
             const user: User = JSON.parse(data.parse || "{}");

@@ -8,6 +8,7 @@ import Trade from "../models/trade";
 import { TradeItemType } from "../models/tradeItem";
 import DraftPick from "../models/draftPick";
 import Player from "../models/player";
+import Email from "../models/email";
 
 export type EmailJobName = "reset_pass" | "registration_email" | "test_email" | "handle_webhook" | "request_trade" | "trade_declined" | "trade_accepted";
 
@@ -51,8 +52,8 @@ export async function handleEmailJob(emailJob: Job<EmailJob>) {
     logger.debug(`processing ${emailJob.name} email job#${emailJob.id}`);
     const emailTask = emailCallbacks[emailJob.name as EmailJobName];
 
-    if (emailJob.name === "handle_webhook" && emailJob.data.user) {
-        const event = JSON.parse(emailJob.data.user);
+    if (emailJob.name === "handle_webhook" && emailJob.data.event) {
+        const event = JSON.parse(emailJob.data.event);
         return await (emailTask as WebhookEmailFunction)(event);
     } else if (authEmailTasks.includes(emailJob.name) && emailJob.data.user) {
         const user = new User(JSON.parse(emailJob.data.user));
@@ -80,9 +81,7 @@ export async function handleTradeEmailJob(emailJob: Job<TradeEmail>) {
 
 export async function handleWebhookResponse(event: EmailStatusEvent, dao?: EmailDAO): Promise<void> {
     const emailDAO = dao || new EmailDAO();
-    const email = await emailDAO.getEmailByMessageId(event["message-id"]);
-    if (email) {
-        email.status = event.event;
-        await emailDAO.updateEmail(email);
-    }
+    const email = await emailDAO.getEmailByMessageId(event["message-id"]) || new Email({messageId: event["message-id"]});
+    email.status = event.event;
+    await emailDAO.updateEmail(email);
 }
