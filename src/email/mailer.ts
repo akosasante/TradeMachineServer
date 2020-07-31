@@ -55,7 +55,7 @@ function getTradeTextForRequest(trade: Trade) {
         return {
             sender: participant.team.name,
             majors: sentMajors.map(player => `${player.name} - ${player.mlbTeam} - ${player.getEspnEligiblePositions()}`),
-            minors: sentMinors.map(player => `${player.name} - ${player.meta?.minorLeaguePlayer?.team} - ${player.meta?.minorLeaguePlayer?.primary_position}`),
+            minors: sentMinors.map(player => `${player.name} - ${player.meta?.minorLeaguePlayerFromSheet?.mlbTeam} - ${player.meta?.minorLeaguePlayerFromSheet?.position}`),
             picks: sentPicks.map(pick => `${pick!.originalOwner?.name}'s ${pick!.season} ${ordinal(pick!.round)} round pick`),
         };
     });
