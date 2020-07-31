@@ -1,16 +1,27 @@
-import { differenceBy } from "lodash";
+import {differenceBy} from "lodash";
 import {
-    Authorized, BadRequestError, Body, CurrentUser, Delete, Get,
-    JsonController, Param, Post, Put, QueryParam, UnauthorizedError
+    Authorized,
+    BadRequestError,
+    Body,
+    CurrentUser,
+    Delete,
+    Get,
+    JsonController,
+    Param,
+    Post,
+    Put,
+    QueryParam,
+    UnauthorizedError
 } from "routing-controllers";
-import { inspect } from "util";
+import {inspect} from "util";
 import logger from "../../bootstrap/logger";
 import TradeDAO from "../../DAO/TradeDAO";
-import Trade, { TradeStatus } from "../../models/trade";
-import User, { Role } from "../../models/user";
-import { UUIDPattern } from "../helpers/ApiHelpers";
+import Trade, {TradeStatus} from "../../models/trade";
+import User, {Role} from "../../models/user";
+import {UUIDPattern} from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
-import { appendNewTrade } from "../../csv/TradeTracker";
+import {appendNewTrade} from "../../csv/TradeTracker";
+import {BodyParam} from "routing-controllers/index";
 
 function validateOwnerOfTrade(user: User, trade: Trade): boolean {
     if (user.role === Role.ADMIN) {
@@ -47,11 +58,13 @@ function validateStatusChange(user: User, trade: Trade, newStatus: TradeStatus):
         [TradeStatus.PENDING]: [TradeStatus.ACCEPTED, TradeStatus.REJECTED],
         [TradeStatus.ACCEPTED]: [],
         [TradeStatus.REJECTED]: [],
+        [TradeStatus.SUBMITTED]: [],
     };
 
     const validChangesForOwner = {
         ...validChangesForParticipants,
         [TradeStatus.DRAFT]: [TradeStatus.REQUESTED],
+        [TradeStatus.ACCEPTED]: [TradeStatus.SUBMITTED],
     };
 
     const checkForValidity: TradeStateMachine = validateOwnerOfTrade(user, trade) ? validChangesForOwner : validChangesForParticipants;
@@ -186,6 +199,42 @@ export default class TradeController {
         }
 
         return trade;
+    }
+
+    @Put(`${UUIDPattern}/reject`)
+    public async rejectTrade(@CurrentUser({ required: true }) user: User, @Param("id") id: string,
+                             @BodyParam("declinedById") declinedBy: string, @BodyParam("declinedReason") reason: string) {
+        logger.debug("reject trade endpoint");
+        const trade = await this.dao.getTradeById(id);
+
+        if (!validateParticipantInTrade(user, trade)) {
+            throw new UnauthorizedError("Trade can only be modified by participants or admins");
+        }
+
+        if (!validateStatusChange(user, trade, TradeStatus.REJECTED)) {
+            throw new BadRequestError("Trade with this status cannot be rejected");
+        }
+
+        logger.debug("updating trade declined");
+        await this.dao.updateDeclinedBy(id, declinedBy, reason);
+
+        return await this.dao.updateStatus(id, TradeStatus.REJECTED);
+    }
+
+    @Put(`${UUIDPattern}/submit`)
+    public async submitTrade(@CurrentUser({ required: true }) user: User, @Param("id") id: string) {
+        logger.debug("submit trade endpoint");
+        const trade = await this.dao.getTradeById(id);
+
+        if (!validateParticipantInTrade(user, trade)) {
+            throw new UnauthorizedError("Trade can only be modified by participants or admins");
+        }
+
+        if (!validateStatusChange(user, trade, TradeStatus.SUBMITTED)) {
+            throw new BadRequestError("Trade with this status cannot be submitted");
+        }
+
+        return await this.dao.updateStatus(id, TradeStatus.SUBMITTED);
     }
 
     @Authorized(Role.ADMIN)
