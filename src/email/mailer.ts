@@ -137,7 +137,8 @@ export const Emailer = {
 
     async sendRegistrationEmail(user: User): Promise<SendInBlueSendResponse> {
         logger.debug("sending registration email");
-        const registrationLink = `${baseDomain}/register`;
+        const userEmailEncoded = Buffer.from(user.email).toString("base64");
+        const registrationLink = `${baseDomain}/register?e=${userEmailEncoded}`;
         return Emailer.emailer.send({
             template: "registration_email",
             message: {
