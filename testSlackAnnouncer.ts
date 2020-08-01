@@ -11,4 +11,5 @@ async function run() {
     return SlackTradeAnnouncer.sendTradeAnnouncement(trade);
 }
 
-run().then(() => process.exit(0));
+// tslint:disable-next-line:no-console
+run().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(99)});
