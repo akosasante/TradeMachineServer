@@ -10,7 +10,6 @@ import logger from "../bootstrap/logger";
 import Team from "../models/team";
 import User from "../models/user";
 import { partition, zip } from "lodash";
-import { inspect } from "util";
 
 interface TradeFormatterDeps {
     playerDao: PlayerDAO;
@@ -21,7 +20,7 @@ const TradeFormatter = {
     async prepPlayerText(twoPlayerTrade: boolean, tradedPlayers: TradeItem[], dao?: PlayerDAO): Promise<string> {
         logger.info(`Rendering text for ${tradedPlayers.length} players`);
         function getMinorLeaguePlayerText(player: Player) {
-            const playerMetaInfo = player.meta ? `(${player.meta?.minorLeaguePlayer?.primary_position} - ${player.meta?.minorLeaguePlayer?.sport} - ${player.meta?.minorLeaguePlayer?.team})` : "(Minors)";
+            const playerMetaInfo = player.meta ? `(${player.meta?.minorLeaguePlayerFromSheet?.position} - ${player.meta?.minorLeaguePlayerFromSheet?.leagueLevel} Minors - ${player.meta?.minorLeaguePlayerFromSheet?.mlbTeam})` : "(Minors)";
             const text = `• *${player.name}* ${playerMetaInfo}`;
             if (!twoPlayerTrade) {
                 const tradedPlayer = tradedPlayers.find(pl => pl.tradeItemId === player.id);
