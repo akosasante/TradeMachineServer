@@ -31,29 +31,29 @@ export class TradeFactory {
         return [majorPlayer, minorPlayer, pick];
     }
 
-    public static getTradeParticipants(teamA = TeamFactory.getTeam(), teamB = TeamFactory.getTeam("Ditto Duo", 2)) {
+    public static getTradeParticipants(teamA = TeamFactory.getTeam("CREATOR_TEAM"), teamB = TeamFactory.getTeam("RECIPIENT_TEAM", 2)) {
         const creator = TradeFactory.getTradeCreator(teamA);
         const recipient = TradeFactory.getTradeRecipient(teamB);
         return [creator, recipient];
     }
 
     public static getTradedMinorPlayer(player = PlayerFactory.getPlayer(),
-                                       sender = TeamFactory.getTeam(),
-                                       recipient = TeamFactory.getTeam(),
+                                       sender = TeamFactory.getTeam("CREATOR_TEAM"),
+                                       recipient = TeamFactory.getTeam("RECIPIENT_TEAM"),
                                        rest = {}) {
         return new TradeItem({id: uuid(), tradeItemType: TradeItemType.PLAYER, tradeItemId: player.id!, entity: player, sender, recipient, ...rest});
     }
 
     public static getTradedMajorPlayer(player = PlayerFactory.getPlayer(undefined, PlayerLeagueType.MAJOR),
-                                       sender = TeamFactory.getTeam(),
-                                       recipient = TeamFactory.getTeam(),
+                                       sender = TeamFactory.getTeam("CREATOR_TEAM"),
+                                       recipient = TeamFactory.getTeam("RECIPIENT_TEAM"),
                                        rest = {}) {
         return new TradeItem({id: uuid(), tradeItemType: TradeItemType.PLAYER, tradeItemId: player.id!, entity: player, sender, recipient, ...rest});
     }
 
     public static getTradedPick(pick = DraftPickFactory.getPick(),
-                                sender = TeamFactory.getTeam(),
-                                recipient = TeamFactory.getTeam(),
+                                sender = TeamFactory.getTeam("RECIPIENT_TEAM"),
+                                recipient = TeamFactory.getTeam("CREATOR_TEAM"),
                                 rest = {}) {
         return new TradeItem({id: uuid(), tradeItemType: TradeItemType.PICK, tradeItemId: pick.id!, entity: pick, sender, recipient, ...rest});
     }

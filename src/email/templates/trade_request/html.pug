@@ -7,9 +7,9 @@ block head
 block content
     h2= titleText
     .divider
-    each trade, index in tradesBySender
+    each trade, index in tradesByRecipient
         if ([...trade.majors, ...trade.minors, ...trade.picks].length)
-            h3 #{trade.sender} would send:
+            h3 #{trade.sender} would receive:
         if trade.majors.length
             ul.majors
             each player in trade.majors
