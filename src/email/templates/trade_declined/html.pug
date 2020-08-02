@@ -14,9 +14,9 @@ block content
         p #[strong Reason:] #{reason}
     div
         h2 Declined trade was:
-        each trade, index in tradesBySender
+        each trade, index in tradesByRecipient
             if ([...trade.majors, ...trade.minors, ...trade.picks].length)
-                h3 #{trade.sender} would send:
+                h3 #{trade.sender} would have received:
             if trade.majors.length
                 ul.majors
                 each player in trade.majors

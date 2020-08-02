@@ -7,9 +7,9 @@ block head
 block content
     h2 Your trade offer has been accepted by all recipients:
     div
-        each trade, index in tradesBySender
+        each trade, index in tradesByRecipient
             if ([...trade.majors, ...trade.minors, ...trade.picks].length)
-                h3 #{trade.sender} would send:
+                h3 #{trade.sender} will receive:
             if trade.majors.length
                 ul.majors
                 each player in trade.majors
@@ -22,7 +22,7 @@ block content
                 ul.picks
                 each pick in trade.picks
                     li= pick
-    p Upon submission of this trade, it will be announced in the #[a(href="https://flexfoxfantasy.slack.com/archives/C84UJAX5Y") trade_announcements] channel.
+    p Upon submission of this trade, it will be announced in the #[a(href="https://flexfoxfantasy.slack.com/archives/C84UJAX5Y") #trade_announcements] channel.
     .button-container
         a.button-link(href=`${acceptUrl}`)
             span Submit Trade

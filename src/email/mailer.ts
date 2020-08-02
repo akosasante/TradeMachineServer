@@ -49,14 +49,14 @@ function getTitleText(trade: Trade) {
 
 function getTradeTextForRequest(trade: Trade) {
     return trade.tradeParticipants?.map(participant => {
-        const sentPlayers = TradeItem.itemsSentBy(TradeItem.filterPlayers(trade.tradeItems), participant.team).map(item => item.entity as Player);
-        const [sentMajors, sentMinors] = partition(sentPlayers, player => player.league === PlayerLeagueType.MAJOR);
-        const sentPicks = TradeItem.itemsSentBy(TradeItem.filterPicks(trade.tradeItems), participant.team).map(item => item.entity as DraftPick);
+        const receivedPlayers = TradeItem.itemsReceivedBy(TradeItem.filterPlayers(trade.tradeItems), participant.team).map(item => [item.entity as Player, item.sender.name]);
+        const [receivedMajors, receivedMinors] = partition(receivedPlayers, ([player, _sender]) => (player as Player).league === PlayerLeagueType.MAJOR);
+        const receivedPicks = TradeItem.itemsReceivedBy(TradeItem.filterPicks(trade.tradeItems), participant.team).map(item => [item.entity as DraftPick, item.sender.name]);
         return {
             sender: participant.team.name,
-            majors: sentMajors.map(player => `${player.name} - ${player.mlbTeam} - ${player.getEspnEligiblePositions()}`),
-            minors: sentMinors.map(player => `${player.name} - ${player.meta?.minorLeaguePlayerFromSheet?.mlbTeam} - ${player.meta?.minorLeaguePlayerFromSheet?.position}`),
-            picks: sentPicks.map(pick => `${pick!.originalOwner?.name}'s ${pick!.season} ${ordinal(pick!.round)} round pick`),
+            majors: receivedMajors.map(([player, sender]) => `${(player as Player).name} (${(player as Player).mlbTeam} - ${(player as Player).getEspnEligiblePositions()}) from ${sender}`),
+            minors: receivedMinors.map(([player, sender]) => `${(player as Player).name} (${(player as Player).meta?.minorLeaguePlayerFromSheet?.mlbTeam} - ${(player as Player).meta?.minorLeaguePlayerFromSheet?.position} - ${(player as Player).meta?.minorLeaguePlayerFromSheet?.leagueLevel} Minors) from ${sender}`),
+            picks: receivedPicks.map(([pick, sender]) => `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal((pick as DraftPick).round)} round pick from ${sender}`),
         };
     });
 }
@@ -172,7 +172,7 @@ export const Emailer = {
             locals: {
                 tradeSender: trade!.creator!.name,
                 titleText: getTitleText(trade!),
-                tradesBySender: getTradeTextForRequest(trade!),
+                tradesByRecipient: getTradeTextForRequest(trade!),
                 acceptUrl: `${baseDomain}/trade/${trade!.id}/accept`,
                 rejectUrl: `${baseDomain}/trade/${trade!.id}/reject`,
             },
@@ -198,7 +198,7 @@ export const Emailer = {
                 isCreator: emailIsCreatorOfTrade(recipient, trade),
                 reason: trade.declinedReason,
                 decliningTeam: getParticipantById(trade.declinedById || "", trade)?.team.name,
-                tradesBySender: getTradeTextForRequest(trade!),
+                tradesByRecipient: getTradeTextForRequest(trade!),
             },
         })
             .then((res: SendInBlueSendResponse) => {
@@ -221,7 +221,7 @@ export const Emailer = {
             locals: {
                 acceptUrl: `${baseDomain}/trade/${trade!.id}/submit`,
                 rejectUrl: `${baseDomain}/trade/${trade!.id}/discard`,
-                tradesBySender: getTradeTextForRequest(trade!),
+                tradesByRecipient: getTradeTextForRequest(trade!),
             },
         })
             .then((res: SendInBlueSendResponse) => {

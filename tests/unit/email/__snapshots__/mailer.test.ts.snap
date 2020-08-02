@@ -347,16 +347,17 @@ a.button-link {
     <div class=\\"main\\" style=\\"height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;\\">
       <div class=\\"container\\" style=\\"width: 70%; margin-left: 10%; padding: 5% 0;\\">
         <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
-        <h2>Squirtle Squad requested a trade with you:</h2>
+        <h2>CREATOR_TEAM requested a trade with you:</h2>
         <div class=\\"divider\\"></div>
-        <h3>Squirtle Squad would send:</h3>
-        <ul class=\\"majors\\" style=\\"margin-top: initial !important; margin-bottom: initial !important;\\"></ul>
-        <li>Honus Wiener - Pirates - C, 1B</li>
-        <ul class=\\"minors\\" style=\\"margin-top: initial !important; margin-bottom: initial !important;\\"></ul>
-        <li>MiniMe - Jays - P</li>
+        <h3>CREATOR_TEAM would receive:</h3>
         <ul class=\\"picks\\" style=\\"margin-top: initial !important; margin-bottom: initial !important;\\"></ul>
-        <li>Squirtle Squad's 2020 1st round pick</li>
+        <li>Squirtle Squad's 2020 1st round pick from RECIPIENT_TEAM</li>
         <hr>
+        <h3>RECIPIENT_TEAM would receive:</h3>
+        <ul class=\\"majors\\" style=\\"margin-top: initial !important; margin-bottom: initial !important;\\"></ul>
+        <li>Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM</li>
+        <ul class=\\"minors\\" style=\\"margin-top: initial !important; margin-bottom: initial !important;\\"></ul>
+        <li>MiniMe (Jays - P - Low Minors) from CREATOR_TEAM</li>
         <hr>
         <div class=\\"button-container\\"><a class=\\"button-link\\" href=\\"http://localhost:8080/trade/test-uuid/accept\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;\\"><span>Accept Trade</span></a><a class=\\"button-link\\" href=\\"http://localhost:8080/trade/test-uuid/reject\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;\\"><span>Reject Trade</span></a></div>
       </div>
@@ -364,17 +365,18 @@ a.button-link {
     <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
   </body>
 </html>",
-    "subject": "FlexFoxFantasy TradeMachine - Fantasy Baseball Trade Proposal from Squirtle Squad",
+    "subject": "FlexFoxFantasy TradeMachine - Fantasy Baseball Trade Proposal from CREATOR_TEAM",
     "text": " TRADEMACHINE
-SQUIRTLE SQUAD REQUESTED A TRADE WITH YOU:
-SQUIRTLE SQUAD WOULD SEND:
+CREATOR_TEAM REQUESTED A TRADE WITH YOU:
+CREATOR_TEAM WOULD RECEIVE:
 
-Honus Wiener - Pirates - C, 1B 
-MiniMe - Jays - P 
-Squirtle Squad's 2020 1st round pick 
+Squirtle Squad's 2020 1st round pick from RECIPIENT_TEAM 
 --------------------------------------------------------------------------------
 
+RECIPIENT_TEAM WOULD RECEIVE:
 
+Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM 
+MiniMe (Jays - P - Low Minors) from CREATOR_TEAM 
 --------------------------------------------------------------------------------
 
 Accept Trade [http://localhost:8080/trade/test-uuid/accept]Reject Trade
@@ -460,15 +462,16 @@ a.button-link {
         <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
         <h2>Your trade offer has been accepted by all recipients:</h2>
         <div>
-          <h3>Squirtle Squad would send:</h3>
-          <ul class=\\"majors\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
-          <li>Honus Wiener - Pirates - C, 1B</li>
-          <ul class=\\"minors\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
-          <li>MiniMe - Jays - P</li>
+          <h3>CREATOR_TEAM will receive:</h3>
           <ul class=\\"picks\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
-          <li>Squirtle Squad's 2020 1st round pick</li>
+          <li>Squirtle Squad's 2020 1st round pick from RECIPIENT_TEAM</li>
+          <h3>RECIPIENT_TEAM will receive:</h3>
+          <ul class=\\"majors\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
+          <li>Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM</li>
+          <ul class=\\"minors\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
+          <li>MiniMe (Jays - P - Low Minors) from CREATOR_TEAM</li>
         </div>
-        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Upon submission of this trade, it will be announced in the <a href=\\"https://flexfoxfantasy.slack.com/archives/C84UJAX5Y\\" style=\\"text-decoration: none; border-bottom: #d3d6f0 1px solid; color: #2837b8 !important;\\">trade_announcements</a> channel.</p>
+        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Upon submission of this trade, it will be announced in the <a href=\\"https://flexfoxfantasy.slack.com/archives/C84UJAX5Y\\" style=\\"text-decoration: none; border-bottom: #d3d6f0 1px solid; color: #2837b8 !important;\\">#trade_announcements</a> channel.</p>
         <div class=\\"button-container\\"><a class=\\"button-link\\" href=\\"http://localhost:8080/trade/test-uuid/submit\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;\\"><span>Submit Trade</span></a></div>
       </div>
     </div>
@@ -478,12 +481,14 @@ a.button-link {
     "subject": "FlexFoxFantasy TradeMachine - Your Fantasy Baseball Trade Has Been Accepted!",
     "text": " TRADEMACHINE
 YOUR TRADE OFFER HAS BEEN ACCEPTED BY ALL RECIPIENTS:
-SQUIRTLE SQUAD WOULD SEND:
+CREATOR_TEAM WILL RECEIVE:
 
-Honus Wiener - Pirates - C, 1B 
-MiniMe - Jays - P 
-Squirtle Squad's 2020 1st round pick Upon submission of this trade, it will be
-announced in the trade_announcements
+Squirtle Squad's 2020 1st round pick from RECIPIENT_TEAM RECIPIENT_TEAM WILL
+RECEIVE:
+
+Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM 
+MiniMe (Jays - P - Low Minors) from CREATOR_TEAM Upon submission of this trade,
+it will be announced in the #trade_announcements
 [https://flexfoxfantasy.slack.com/archives/C84UJAX5Y] channel.
 
 Submit Trade [http://localhost:8080/trade/test-uuid/submit]",
