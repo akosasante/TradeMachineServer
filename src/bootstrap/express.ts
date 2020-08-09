@@ -7,13 +7,9 @@ import morgan from "morgan";
 import redis from "redis";
 import responseTime from "response-time";
 import logger from "./logger";
-import Rollbar from "rollbar";
+import { rollbar } from "./rollbar";
 
 const app = express();
-const rollbar = new Rollbar({
-    accessToken: process.env.ROLLBAR_TOKEN,
-    environment: process.env.NODE_ENV,
-});
 
 // Express configuration
 app.set("port", process.env.PORT || "3000");

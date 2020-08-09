@@ -6,13 +6,7 @@ import Player, { PlayerLeagueType } from "../models/player";
 import Team from "../models/team";
 import { validateRow, WriteMode } from "./CsvUtils";
 import { uniqWith } from "lodash";
-import Rollbar from "rollbar";
-
-const rollbar = new Rollbar({
-    accessToken: process.env.ROLLBAR_TOKEN,
-    environment: process.env.NODE_ENV,
-    verbose: true,
-});
+import { rollbar } from "../bootstrap/rollbar";
 
 interface PlayerCSVRow {
     Owner: string;
@@ -77,6 +71,7 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
     const validRow = validateRow(row, MINOR_LEAGUE_PLAYER_PROPS);
     if (!validRow) {
         logger.error(`Invalid row while parsing player csv row: ${inspect(row)}`);
+        rollbar.error(`Invalid row while parsing player csv row: ${inspect(row)}`);
         return undefined;
     }
 
@@ -86,6 +81,7 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
 
     if (!leagueTeam) {
         logger.error(`No matching owners found while parsing player csv row: ${inspect(row)}`);
+        rollbar.error(`No matching owners found while parsing player csv row: ${inspect(row)}`);
         return undefined;
     }
 

@@ -5,13 +5,7 @@ import { inspect } from "util";
 import Trade from "../models/trade";
 import { cleanJobForLogging } from "../scheduled_jobs/job_utils";
 import User from "../models/user";
-import Rollbar from "rollbar";
-
-const rollbar = new Rollbar({
-    accessToken: process.env.ROLLBAR_TOKEN,
-    environment: process.env.NODE_ENV,
-    verbose: true,
-});
+import { rollbar } from "../bootstrap/rollbar";
 
 export function setupEmailConsumers() {
     logger.info("registering email consumers");
