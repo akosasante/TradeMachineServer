@@ -2,13 +2,7 @@ import { Connection, createConnection, getConnectionOptions } from "typeorm";
 import util, { inspect } from "util";
 import CustomQueryLogger from "../db/QueryLogger";
 import logger from "./logger";
-import Rollbar from "rollbar";
-
-const rollbar = new Rollbar({
-    accessToken: process.env.ROLLBAR_TOKEN,
-    environment: process.env.NODE_ENV,
-    verbose: true,
-});
+import { rollbar } from "./rollbar";
 
 export default async function initializeDb(logQueries: boolean = false) {
     let connection: Connection|undefined;
@@ -23,9 +17,11 @@ export default async function initializeDb(logQueries: boolean = false) {
 
         pgClient.on("error", (dbErr: any) => {
             logger.error(`DBERROR: ${inspect(dbErr)}`);
+            rollbar.error(`DBERROR: ${inspect(dbErr)}`);
             setTimeout(async () => {
                 try {
                     logger.error("Reconnecting to database...");
+                    rollbar.error("Reconnecting to database...");
                     await connection!.close();
                     await connection!.connect();
                     logger.debug("Reconnected");

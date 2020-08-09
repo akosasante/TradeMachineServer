@@ -12,6 +12,7 @@ import Player, { PlayerLeagueType } from "../models/player";
 import { partition } from "lodash";
 import DraftPick from "../models/draftPick";
 import ordinal from "ordinal";
+import { rollbar } from "../bootstrap/rollbar";
 
 export interface SendInBlueSendResponse {
     envelope: {
@@ -112,6 +113,7 @@ export const Emailer = {
         })
         .catch((err: Error) => {
             logger.error(`Ran into an error while sending password reset email: ${inspect(err)}`);
+            rollbar.error(err);
             return undefined;
         });
     },
@@ -134,6 +136,7 @@ export const Emailer = {
         })
         .catch((err: Error) => {
             logger.error(`Ran into an error while sending test email: ${inspect(err)}`);
+            rollbar.error(err);
             return undefined;
         });
     },
@@ -158,6 +161,7 @@ export const Emailer = {
         })
         .catch((err: Error) => {
             logger.error(`Ran into an error while sending registration email: ${inspect(err)}`);
+            rollbar.error(err);
             return undefined;
         });
     },
@@ -183,6 +187,7 @@ export const Emailer = {
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade request email: ${inspect(err)}`);
+                rollbar.error(err);
                 return undefined;
             });
     },
@@ -207,6 +212,7 @@ export const Emailer = {
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade declined email: ${inspect(err)}`);
+                rollbar.error(err);
                 return undefined;
             });
     },
@@ -230,6 +236,7 @@ export const Emailer = {
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade submission email: ${inspect(err)}`);
+                rollbar.error(err);
                 return undefined;
             });
     },
