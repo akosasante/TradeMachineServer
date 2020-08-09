@@ -17,9 +17,11 @@ export default async function initializeDb(logQueries: boolean = false) {
 
         pgClient.on("error", (dbErr: any) => {
             logger.error(`DBERROR: ${inspect(dbErr)}`);
+            rollbar.error(`DBERROR: ${inspect(dbErr)}`);
             setTimeout(async () => {
                 try {
                     logger.error("Reconnecting to database...");
+                    rollbar.error("Reconnecting to database...");
                     await connection!.close();
                     await connection!.connect();
                     logger.debug("Reconnected");

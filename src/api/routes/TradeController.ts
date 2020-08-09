@@ -1,4 +1,4 @@
-import {differenceBy} from "lodash";
+import { differenceBy } from "lodash";
 import {
     Authorized,
     BadRequestError,
@@ -13,15 +13,15 @@ import {
     QueryParam,
     UnauthorizedError
 } from "routing-controllers";
-import {inspect} from "util";
+import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import TradeDAO from "../../DAO/TradeDAO";
-import Trade, {TradeStatus} from "../../models/trade";
-import User, {Role} from "../../models/user";
-import {UUIDPattern} from "../helpers/ApiHelpers";
+import Trade, { TradeStatus } from "../../models/trade";
+import User, { Role } from "../../models/user";
+import { UUIDPattern } from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
-import {appendNewTrade} from "../../csv/TradeTracker";
-import {BodyParam} from "routing-controllers/index";
+import { appendNewTrade } from "../../csv/TradeTracker";
+import { BodyParam } from "routing-controllers/index";
 
 function validateOwnerOfTrade(user: User, trade: Trade): boolean {
     if (user.role === Role.ADMIN) {

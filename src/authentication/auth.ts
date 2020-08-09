@@ -63,6 +63,7 @@ export async function signInAuthentication(email: string, password: string, user
             }
         } else {
             logger.error("Could not find user with this email when trying to sign in");
+            rollbar.error("Could not find user with this email when trying to sign in");
             return done(new NotFoundError("Error with sign-in strategy: no user found"));
         }
     } catch (error) {

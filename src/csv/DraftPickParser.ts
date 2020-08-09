@@ -83,6 +83,7 @@ function parseDraftPick(row: DraftPickCSVRow, teams: Team[], index: number): Par
     const validRow = validateRow(row, DRAFT_PICK_PROPS);
     if (!validRow) {
         logger.error(`Invalid row while parsing draft pick csv row: ${inspect(row)}`);
+        rollbar.error(`Invalid row while parsing draft pick csv row: ${inspect(row)}`);
         return undefined;
     }
     const teamsWithOwners = teams.filter(team => team.owners && team.owners.length);
@@ -92,6 +93,7 @@ function parseDraftPick(row: DraftPickCSVRow, teams: Team[], index: number): Par
 
     if (!currentOwner || !originalOwner) {
         logger.error(`No matching owners found while parsing draft pick csv row: ${inspect(row)}`);
+        rollbar.error(`No matching owners found while parsing draft pick csv row: ${inspect(row)}`);
         return undefined;
     }
     i += 1;

@@ -6,6 +6,7 @@ import initializeDb from "./db";
 import expressApp, { redisClient } from "./express";
 import logger from "./logger";
 import { inspect } from "util";
+import { rollbar } from "./rollbar";
 
 export async function setupExpressApp(): Promise<Express> {
     // Set up db
@@ -53,6 +54,7 @@ export default async function startServer() {
         return srv;
     } catch (err) {
         logger.error(`fatal error when starting server: ${inspect(err)}`);
+        rollbar.error(err);
         throw err;
     }
 }

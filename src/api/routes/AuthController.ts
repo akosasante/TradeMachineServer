@@ -7,6 +7,7 @@ import UserDAO from "../../DAO/UserDAO";
 import { LoginHandler, RegisterHandler } from "../middlewares/AuthenticationHandler";
 import User from "../../models/user";
 import { EmailPublisher } from "../../email/publishers";
+import { rollbar } from "../../bootstrap/rollbar";
 
 @Controller("/auth")
 export default class AuthController {
@@ -69,6 +70,7 @@ export default class AuthController {
                 request.session.destroy(async err => {
                     if (err) {
                         logger.error("Error destroying session");
+                        rollbar.error(err);
                         reject(err);
                     } else {
                         logger.debug(`Destroying user session for userId#${session.user}`);

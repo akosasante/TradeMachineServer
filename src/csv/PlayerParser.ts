@@ -71,6 +71,7 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
     const validRow = validateRow(row, MINOR_LEAGUE_PLAYER_PROPS);
     if (!validRow) {
         logger.error(`Invalid row while parsing player csv row: ${inspect(row)}`);
+        rollbar.error(`Invalid row while parsing player csv row: ${inspect(row)}`);
         return undefined;
     }
 
@@ -80,6 +81,7 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
 
     if (!leagueTeam) {
         logger.error(`No matching owners found while parsing player csv row: ${inspect(row)}`);
+        rollbar.error(`No matching owners found while parsing player csv row: ${inspect(row)}`);
         return undefined;
     }
 
