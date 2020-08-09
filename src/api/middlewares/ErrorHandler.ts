@@ -5,14 +5,8 @@ import { EntityColumnNotFound } from "typeorm/error/EntityColumnNotFound";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import logger from "../../bootstrap/logger";
 import { AuthorizationRequiredError } from "routing-controllers/error/AuthorizationRequiredError";
-import Rollbar from "rollbar";
+import { rollbar } from "../../bootstrap/rollbar";
 // tslint:disable:max-classes-per-file
-
-const rollbar = new Rollbar({
-    accessToken: process.env.ROLLBAR_TOKEN,
-    environment: process.env.NODE_ENV,
-    verbose: true,
-});
 
 @Middleware({type: "after"})
 export default class CustomErrorHandler implements ExpressErrorMiddlewareInterface {

@@ -6,13 +6,7 @@ import logger from "../bootstrap/logger";
 import { inspect } from "util";
 import { cleanJobForLogging } from "./job_utils";
 import { v4 as uuid } from "uuid";
-import Rollbar from "rollbar";
-
-const rollbar = new Rollbar({
-    accessToken: process.env.ROLLBAR_TOKEN,
-    environment: process.env.NODE_ENV,
-    verbose: true,
-});
+import { rollbar } from "../bootstrap/rollbar";
 
 export function setupScheduledEspnUpdates() {
     const cron = "22 6 * * *"; // daily at 2:22AM ET

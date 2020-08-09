@@ -10,14 +10,8 @@ import logger from "../bootstrap/logger";
 // import initializeDb from "../bootstrap/db";
 // import TradeDAO from "../DAO/TradeDAO";
 import Params$Resource$Spreadsheets$Batchupdate = sheets_v4.Params$Resource$Spreadsheets$Batchupdate;
+import { rollbar } from "../bootstrap/rollbar";
 // import { GoogleSpreadsheet } from "google-spreadsheet";
-import Rollbar from "rollbar";
-
-const rollbar = new Rollbar({
-    accessToken: process.env.ROLLBAR_TOKEN,
-    environment: process.env.NODE_ENV,
-    verbose: true,
-});
 
 function generateTradeRow(trade: Trade) {
     const tradeRowValues: {[key: string]: any} = {

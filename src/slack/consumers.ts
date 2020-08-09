@@ -4,13 +4,7 @@ import logger from "../bootstrap/logger";
 import { processTradeAnnounceJob } from "./processors";
 import { inspect } from "util";
 import { cleanJobForLogging } from "../scheduled_jobs/job_utils";
-import Rollbar from "rollbar";
-
-const rollbar = new Rollbar({
-    accessToken: process.env.ROLLBAR_TOKEN,
-    environment: process.env.NODE_ENV,
-    verbose: true,
-});
+import { rollbar } from "../bootstrap/rollbar";
 
 export function setupSlackConsumers() {
     logger.info("registering slack consumers");

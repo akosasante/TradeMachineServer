@@ -7,13 +7,7 @@ import { merge, partition, uniqWith } from "lodash";
 import { inspect } from "util";
 import { v4 as uuid } from "uuid";
 import { cleanJobForLogging } from "./job_utils";
-import Rollbar from "rollbar";
-
-const rollbar = new Rollbar({
-    accessToken: process.env.ROLLBAR_TOKEN,
-    environment: process.env.NODE_ENV,
-    verbose: true,
-});
+import { rollbar } from "../bootstrap/rollbar";
 
 export function setupScheduledMlbMinorLeagueUpdates() {
     const cron = "22 7 * * *"; // daily at 3:22AM ET

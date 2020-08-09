@@ -7,14 +7,7 @@ import logger from "../bootstrap/logger";
 import UserDAO from "../DAO/UserDAO";
 import User, { Role } from "../models/user";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
-import Rollbar from "rollbar";
-
-const rollbar = new Rollbar({
-    accessToken: process.env.ROLLBAR_TOKEN,
-    environment: process.env.NODE_ENV,
-    verbose: true,
-});
-
+import { rollbar } from "../bootstrap/rollbar";
 
 export function serializeUser(user: User): string | undefined {
     logger.debug("serializing user");
