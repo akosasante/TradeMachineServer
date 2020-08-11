@@ -15,6 +15,7 @@
     "test": "ENABLE_LOGS=false NODE_ENV=test jest --config ./jest.ci-config.js --detectOpenHandles --runInBand --silent --bail --forceExit --ci",
     "test-local-integration": "ENABLE_LOGS=false NODE_ENV=test jest --config ./jest.ci-config.js --detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=integration/",
     "test-local-unit": "ENABLE_LOGS=false NODE_ENV=test jest --config ./jest.ci-config.js --detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=unit/ --setupFiles dotenv/config",
+    "test-update-snapshots": "ENABLE_LOGS=false NODE_ENV=test jest --config ./jest.ci-config.js --detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=mailer --update-snapshot --setupFiles dotenv/config",
     "test-local": "npm run test-local-unit && npm run test-local-integration",
     "watch-node": "NODE_ENV=development DEBUG=connect:redis nodemon -- -r dotenv/config ./dist/server.js",
     "build": "tsc && mkdir -p dist/email/templates && cp -r src/email/templates dist/email/",

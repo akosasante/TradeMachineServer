@@ -48,6 +48,35 @@ function getTitleText(trade: Trade) {
     }
 }
 
+function getPlayerDetails(player: Player) {
+    if (player.league === PlayerLeagueType.MAJOR) {
+        const team = player.mlbTeam;
+        const positions = player.getEspnEligiblePositions();
+        if (team && positions) {
+            return ` (${team} - ${positions})`;
+        } else if (team || positions) {
+            return ` (${team || positions})`;
+        } else {
+            return " ";
+        }
+    } else if (player.league === PlayerLeagueType.MINOR) {
+        const team = player.meta?.minorLeaguePlayerFromSheet?.mlbTeam;
+        const position = player.meta?.minorLeaguePlayerFromSheet?.position;
+        const league = player.meta?.minorLeaguePlayerFromSheet?.leagueLevel;
+        if (team && position) {
+            return ` (${team} - ${position} - ${league || ""} Minors)`;
+        } else if (team && league) {
+            return ` (${team} - ${league} Minors)`;
+        } else if (position && league) {
+            return ` (${position} - ${league} Minors)`;
+        } else if (team || position || league) {
+            return ` (${team || position || league} - ${league ? (league + " Minors") : "Minors"})`;
+        } else {
+            return "(Minors)";
+        }
+    }
+}
+
 function getTradeTextForRequest(trade: Trade) {
     return trade.tradeParticipants?.map(participant => {
         const receivedPlayers = TradeItem.itemsReceivedBy(TradeItem.filterPlayers(trade.tradeItems), participant.team).map(item => [item.entity as Player, item.sender.name]);
@@ -55,8 +84,8 @@ function getTradeTextForRequest(trade: Trade) {
         const receivedPicks = TradeItem.itemsReceivedBy(TradeItem.filterPicks(trade.tradeItems), participant.team).map(item => [item.entity as DraftPick, item.sender.name]);
         return {
             sender: participant.team.name,
-            majors: receivedMajors.map(([player, sender]) => `${(player as Player).name} (${(player as Player).mlbTeam} - ${(player as Player).getEspnEligiblePositions()}) from ${sender}`),
-            minors: receivedMinors.map(([player, sender]) => `${(player as Player).name} (${(player as Player).meta?.minorLeaguePlayerFromSheet?.mlbTeam} - ${(player as Player).meta?.minorLeaguePlayerFromSheet?.position} - ${(player as Player).meta?.minorLeaguePlayerFromSheet?.leagueLevel} Minors) from ${sender}`),
+            majors: receivedMajors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
+            minors: receivedMinors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
             picks: receivedPicks.map(([pick, sender]) => `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal((pick as DraftPick).round)} round pick from ${sender}`),
         };
     });
