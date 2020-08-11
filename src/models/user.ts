@@ -7,6 +7,7 @@ import { EspnLeagueMember } from "../espn/espnApi";
 export enum Role {
     ADMIN = 1,
     OWNER,
+    COMMISSIONER,
 }
 
 export enum UserStatus {
