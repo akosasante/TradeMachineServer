@@ -100,11 +100,11 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /opt/Apps/TradeMachine
-            /home/dev_deployer/.asdf/shims/npm run gen-migrate-prod -- autogen
-            sh check_migrations.sh
+            npx typeorm migration:generate -f ormconfig -c production -n "autogen"
+#            sh check_migrations.sh
 
       - name: Run migrations if needed
-        if: ${{ failure() }}
+#        if: ${{ failure() }}
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -112,7 +112,9 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            npm run run-migrate-prod
+            echo $?
+            cd /opt/Apps/TradeMachine
+            npx typeorm migration:run -f ormconfig -c production
 
       - name: Notify Rollbar of deploy finish
         uses: rollbar/github-deploy-action@1.1.0
