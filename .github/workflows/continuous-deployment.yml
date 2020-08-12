@@ -100,7 +100,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /opt/Apps/TradeMachine
-            npx typeorm migration:generate -f ormconfig -c production -n "autogen"
+            /home/dev_deployer/.asdf/shims/npx typeorm migration:generate -f ormconfig -c production -n "autogen"
 #            sh check_migrations.sh
 
       - name: Run migrations if needed
@@ -114,7 +114,7 @@ jobs:
           script: |
             echo $?
             cd /opt/Apps/TradeMachine
-            npx typeorm migration:run -f ormconfig -c production
+            /home/dev_deployer/.asdf/shims/npx typeorm migration:run -f ormconfig -c production
 
       - name: Notify Rollbar of deploy finish
         uses: rollbar/github-deploy-action@1.1.0
