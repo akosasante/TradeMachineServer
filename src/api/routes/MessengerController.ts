@@ -45,9 +45,9 @@ export default class MessengerController {
         if (trade.status === TradeStatus.REJECTED && trade.declinedById) {
             trade = await this.tradeDao.hydrateTrade(trade);
             const emails = trade.tradeParticipants
-                ?.filter(tp => !(tp.team.owners?.map(o => o.id).includes(trade.declinedById)))
-                .map(tp => tp.team)
-                .flatMap(team => team.owners?.map(owner => owner.email));
+                ?.flatMap(tp => tp.team.owners)
+                .filter(owner => owner && owner.id !== trade.declinedById)
+                .map(owner => owner?.email);
             for (const email of (emails || [])) {
                 if (email) {
                     await this.emailPublisher.queueTradeDeclinedMail(trade, email);
@@ -64,7 +64,6 @@ export default class MessengerController {
         logger.debug(`queueing trade acceptance email for tradeId: ${id}`);
         let trade = await this.tradeDao.getTradeById(id);
         if (trade.status === TradeStatus.ACCEPTED) {
-            // TODO: Maybe we want to have a state between accepted and submitted?
             trade = await this.tradeDao.hydrateTrade(trade);
             const creatorEmails = trade.creator?.owners?.map(o => o.email);
             if (creatorEmails) {
