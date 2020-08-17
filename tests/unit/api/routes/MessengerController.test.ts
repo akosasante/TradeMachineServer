@@ -11,6 +11,7 @@ import { TradeStatus } from "../../../../src/models/trade";
 import { BadRequestError } from "routing-controllers";
 import { SlackPublisher } from "../../../../src/slack/publishers";
 import { UserFactory } from "../../../factories/UserFactory";
+import { TeamFactory } from "../../../factories/TeamFactory";
 
 describe("MessengerController", () => {
     const mockEmailPublisher: MockObj = {
@@ -29,23 +30,32 @@ describe("MessengerController", () => {
         status: jest.fn().mockReturnThis(),
         json: jest.fn().mockReturnThis(),
     };
+
     const requestedTrade = TradeFactory.getTrade(undefined, undefined, TradeStatus.REQUESTED);
     requestedTrade.tradeParticipants?.forEach(tp => {
-        tp.team.owners = [UserFactory.getUser("owner1@example.com"), UserFactory.getUser("owner2@example.com")];
+        tp.team.owners = [UserFactory.getUser(`owner1_${tp.participantType}@example.com`), UserFactory.getUser(`owner2_${tp.participantType}@example.com`)];
     });
+
     const acceptedTrade = TradeFactory.getTrade(undefined, undefined, TradeStatus.ACCEPTED);
     acceptedTrade.tradeParticipants?.forEach(tp => {
-        tp.team.owners = [UserFactory.getUser("owner1@example.com"), UserFactory.getUser("owner2@example.com")];
+        tp.team.owners = [UserFactory.getUser(`owner1_${tp.participantType}@example.com`), UserFactory.getUser(`owner2_${tp.participantType}@example.com`)];
     });
+
     const submittedTrade = TradeFactory.getTrade(undefined, undefined, TradeStatus.SUBMITTED);
     submittedTrade.tradeParticipants?.forEach(tp => {
         tp.team.owners = [UserFactory.getUser("owner1_s@example.com"), UserFactory.getUser("owner2_s@example.com")];
     });
+
     const declinedTrade = TradeFactory.getTrade(undefined, undefined, TradeStatus.REJECTED, {declinedReason: "reason"});
     declinedTrade.tradeParticipants?.forEach((tp, index) => {
-        tp.team.owners = [UserFactory.getUser(`owner1_tp${index}@example.com`), UserFactory.getUser(`owner2_tp${index}@example.com`)];
+        tp.team.owners = [UserFactory.getUser(`owner1_tp${index + 1}@example.com`), UserFactory.getUser(`owner2_tp${index + 1}@example.com`)];
     });
+    const thirdParticipant = TradeFactory.getTradeRecipient(TeamFactory.getTeam(), declinedTrade);
+    thirdParticipant.team.owners = [UserFactory.getUser("owner1_tp3@example.com"), UserFactory.getUser("owner2_tp3@example.com")];
+    declinedTrade.tradeParticipants?.push(thirdParticipant);
     declinedTrade.declinedById = declinedTrade.tradeParticipants?.[1].team?.owners?.[0].id;
+    const decliningEmail = declinedTrade.tradeParticipants?.[1].team?.owners?.[0].email;
+
     const draftTrade = TradeFactory.getTrade();
     draftTrade.tradeParticipants?.forEach(tp => {
         tp.team.owners = [UserFactory.getUser("owner1@example.com"), UserFactory.getUser("owner2@example.com")];
@@ -78,8 +88,11 @@ describe("MessengerController", () => {
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(requestedTrade.id);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledWith(requestedTrade);
+
+            // request emails are sent to all non-creator owners in the trade
             expect(mockEmailPublisher.queueTradeRequestMail).toHaveBeenCalledTimes(2);
-            expect(mockEmailPublisher.queueTradeRequestMail).toHaveBeenCalledWith(requestedTrade, expect.stringMatching(/owner\d@example.com/));
+            expect(mockEmailPublisher.queueTradeRequestMail).toHaveBeenCalledWith(requestedTrade, expect.stringMatching(/owner\d_2@example.com/));
+            expect(mockEmailPublisher.queueTradeRequestMail).not.toHaveBeenCalledWith(requestedTrade, expect.stringMatching(/owner\d_1@example.com/));
             expect(mockRes.status).toHaveBeenCalledTimes(1);
             expect(mockRes.status).toHaveBeenCalledWith(202);
             expect(mockRes.json).toHaveBeenCalledTimes(1);
@@ -95,6 +108,7 @@ describe("MessengerController", () => {
             expect(mockEmailPublisher.queueTradeRequestMail).toHaveBeenCalledTimes(0);
         });
     });
+
     describe("sendTradeDeclineMessage/2", () => {
         it("should get a trade, hydrate it, and queue emails for each non-declining user", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(declinedTrade);
@@ -105,8 +119,13 @@ describe("MessengerController", () => {
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(declinedTrade.id);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledWith(declinedTrade);
-            expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledTimes(2);
-            expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledWith(declinedTrade, expect.stringMatching(/owner\d_tp0@example.com/));
+
+            // Trade has a creator and 2 recipients. Each with two owners.
+            // We're gonna send an email to everyone except the decliner
+            expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledTimes(5);
+            expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledWith(declinedTrade, expect.stringMatching(/owner\d_tp\d@example.com/));
+            expect(mockEmailPublisher.queueTradeDeclinedMail).not.toHaveBeenCalledWith(declinedTrade, decliningEmail);
+
             expect(mockRes.status).toHaveBeenCalledTimes(1);
             expect(mockRes.status).toHaveBeenCalledWith(202);
             expect(mockRes.json).toHaveBeenCalledTimes(1);
@@ -122,6 +141,7 @@ describe("MessengerController", () => {
             expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledTimes(0);
         });
     });
+
     describe("sendTradeAnnouncementMessage/2", () => {
         it("should get a trade, hydrate it and then queue for slack announcement", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(submittedTrade);
@@ -132,6 +152,8 @@ describe("MessengerController", () => {
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(submittedTrade.id);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledWith(submittedTrade);
+
+            // No matter the number of trade participants, we only make a single call to slack
             expect(mockSlackPublisher.queueTradeAnnouncement).toHaveBeenCalledTimes(1);
             expect(mockSlackPublisher.queueTradeAnnouncement).toHaveBeenCalledWith(submittedTrade);
             expect(mockRes.status).toHaveBeenCalledTimes(1);
@@ -160,8 +182,11 @@ describe("MessengerController", () => {
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(acceptedTrade.id);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledWith(acceptedTrade);
+
+            // Trade creator has two owners; each should get an email. We added the `_1` only to the creator emails for this test.
             expect(mockEmailPublisher.queueTradeAcceptedMail).toHaveBeenCalledTimes(2);
-            expect(mockEmailPublisher.queueTradeAcceptedMail).toHaveBeenCalledWith(acceptedTrade, expect.stringMatching(/owner\d@example.com/));
+            expect(mockEmailPublisher.queueTradeAcceptedMail).toHaveBeenCalledWith(acceptedTrade, expect.stringMatching(/owner\d_1@example.com/));
+            expect(mockEmailPublisher.queueTradeAcceptedMail).not.toHaveBeenCalledWith(acceptedTrade, expect.stringMatching(/owner\d_2@example.com/));
             expect(mockRes.status).toHaveBeenCalledTimes(1);
             expect(mockRes.status).toHaveBeenCalledWith(202);
             expect(mockRes.json).toHaveBeenCalledTimes(1);
