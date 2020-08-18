@@ -1,6 +1,6 @@
-import TradeDAO from "./src/DAO/TradeDAO";
-import { appendNewTrade } from "./src/csv/TradeTracker";
-import initializeDb from "./src/bootstrap/db";
+import TradeDAO from "../DAO/TradeDAO";
+import { appendNewTrade } from "../csv/TradeTracker";
+import initializeDb from "../bootstrap/db";
 
 async function run() {
     const args = process.argv.slice(2);

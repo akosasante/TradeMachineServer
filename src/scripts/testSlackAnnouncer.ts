@@ -1,6 +1,6 @@
-import initializeDb from "./src/bootstrap/db";
-import TradeDAO from "./src/DAO/TradeDAO";
-import { SlackTradeAnnouncer } from "./src/slack/tradeAnnouncer";
+import initializeDb from "../bootstrap/db";
+import TradeDAO from "../DAO/TradeDAO";
+import { SlackTradeAnnouncer } from "../slack/tradeAnnouncer";
 
 async function run() {
     const args = process.argv.slice(2);
