@@ -12,4 +12,4 @@ async function run() {
 }
 
 // tslint:disable-next-line:no-console
-run().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(99)});
+run().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(99); });
