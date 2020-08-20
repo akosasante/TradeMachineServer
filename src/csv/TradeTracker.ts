@@ -36,10 +36,8 @@ function generateColumnsForRecipients(tradeItems: TradeItem[], recipient: Team) 
 
 function generateTradeRow(trade: Trade) {
     return (trade.tradeParticipants || []).reduce((rowsAcc, recipient, index) => {
-        logger.debug(`conct: ${inspect(rowsAcc)}`);
         const ratingsBlankField = " ";
         const columns = generateColumnsForRecipients(trade.tradeItems || [], recipient.team);
-        logger.debug(`columns: ${inspect(columns)}`);
         return rowsAcc.concat(columns).concat([ratingsBlankField]);
     }, [(new Date()).toISOString().substring(0, 10)]
     );
@@ -64,7 +62,6 @@ export async function appendNewTrade(trade: Trade) {
             dimension: "ROWS",
         },
     };
-    logger.debug(`res: ${inspect(generateTradeRow(trade))}`);
 
     const insertTradeDataRequest: Schema$UpdateCellsRequest = {
         fields: "*", // we want to update all fields in this cell range
