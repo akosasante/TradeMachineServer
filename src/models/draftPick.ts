@@ -13,6 +13,19 @@ export const MinorLeagueLevels = [LeagueLevel.HIGH, LeagueLevel.LOW];
 @Entity()
 @Unique(["type", "season", "round", "originalOwner"])
 export default class DraftPick extends BaseModel {
+    static leagueLevelToString(level: LeagueLevel) {
+        switch (level) {
+            case LeagueLevel.MAJORS:
+                return "Majors";
+            case LeagueLevel.HIGH:
+                return "High Minors";
+            case LeagueLevel.LOW:
+                return "Low Minors";
+            default:
+                break;
+        }
+    }
+
     @Column({type: "numeric"})
     public round!: number;
 

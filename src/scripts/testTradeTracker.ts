@@ -6,7 +6,7 @@ async function run() {
     const args = process.argv.slice(2);
     await initializeDb(true);
     const tradeDao = new TradeDAO();
-    let trade = await tradeDao.getTradeById(args[0] || "ffa4381a-549e-4ab4-bfcb-45b15aeb18f8");
+    let trade = await tradeDao.getTradeById(args[0] || "056371f2-ca28-4102-bbe5-a9f4df9628dd");
     trade = await tradeDao.hydrateTrade(trade);
     // @ts-ignore
     // tslint:disable-next-line

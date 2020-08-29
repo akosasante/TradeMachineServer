@@ -16,20 +16,20 @@ function generateColumnsForRecipients(tradeItems: TradeItem[], recipient: Team) 
     const picksReceivedByOwner = TradeItem.filterPicks(itemsReceivedByOwner);
     const picksString = picksReceivedByOwner.map(pickItem => {
         const pick = pickItem.entity as DraftPick;
-        return `${pick.season} ${pick.type} - round ${pick.round} - ${pick.originalOwner?.name}'s pick FROM ${pickItem.sender.name}`;
-    }).join(", ");
+        return `${pick.season} ${DraftPick.leagueLevelToString(pick.type)} - round ${pick.round} - ${pick.originalOwner?.name}'s pick FROM ${pickItem.sender.name}`;
+    }).join(",\n");
 
     const playersReceivedByOwner = TradeItem.filterPlayers(itemsReceivedByOwner);
     const majorLeaguersReceivedByOwner = playersReceivedByOwner
         .filter(player => (player.entity as Player).league === PlayerLeagueType.MAJOR);
     const playersString = majorLeaguersReceivedByOwner.map(playerItem =>
         `${(playerItem.entity as Player).name} FROM ${playerItem.sender.name}`
-    ).join(", ");
+    ).join(",\n");
     const prospectsReceivedByOwner = playersReceivedByOwner
         .filter(player => (player.entity as Player).league === PlayerLeagueType.MINOR);
     const prospectsString = prospectsReceivedByOwner.map(playerItem =>
         `${(playerItem.entity as Player).name} FROM ${playerItem.sender.name}`
-    ).join(", ");
+    ).join(",\n");
 
     return [recipient.name, playersString, prospectsString, picksString];
 }
@@ -58,7 +58,7 @@ export async function appendNewTrade(trade: Trade) {
         range: {
             sheetId,
             startIndex: STARTING_ROW_INDEX, // (inclusive, insert new row under the header)
-            endIndex: 2, // Row 3 (exculsive range)
+            endIndex: 2, // Row 3 (exclusive range)
             dimension: "ROWS",
         },
     };

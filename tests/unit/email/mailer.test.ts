@@ -20,7 +20,7 @@ describe("Emailer Class", () => {
     const testItems = [
         TradeFactory.getTradedMajorPlayer(PlayerFactory.getPlayer(undefined, PlayerLeagueType.MAJOR, {mlbTeam: "Pirates", meta: {espnPlayer: {player: {eligibleSlots: [0, 1, 7]}}}})),
         TradeFactory.getTradedMinorPlayer(PlayerFactory.getPlayer("MiniMe", undefined, {meta: {minorLeaguePlayerFromSheet: {mlbTeam: "Jays", position: "P", leagueLevel: "Low"}}})),
-        TradeFactory.getTradedPick(DraftPickFactory.getPick(undefined, undefined, undefined, undefined, { originalOwner: TeamFactory.getTeam() })),
+        TradeFactory.getTradedPick(DraftPickFactory.getPick(undefined, undefined, undefined, undefined)),
     ];
     const testTrade = TradeFactory.getTrade( testItems, undefined, undefined, {id: "test-uuid"});
 
