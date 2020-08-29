@@ -78,7 +78,6 @@ function validateTradeDecliner(trade: Trade, declinedById: string) {
 
 @JsonController("/trades")
 export default class TradeController {
-    // TODO: Endpoints for "accepted"/"rejected" trade, for "submitTrade/sendToSlack"
     private dao: TradeDAO;
 
     constructor(DAO?: TradeDAO) {
