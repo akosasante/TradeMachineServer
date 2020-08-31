@@ -10,12 +10,8 @@ import { SettingsFactory } from "../factories/SettingsFactory";
 import { adminLoggedIn, doLogout, makeGetRequest,
     makePostRequest, ownerLoggedIn, setupOwnerAndAdminUsers } from "./helpers";
 import startServer from "../../src/bootstrap/app";
-import { config as dotenvConfig } from "dotenv";
-import { resolve as resolvePath } from "path";
 import { inspect } from "util";
 import { v4 as uuid } from "uuid";
-
-dotenvConfig({path: resolvePath(__dirname, "../.env")});
 
 let app: Server;
 let adminUser: User;

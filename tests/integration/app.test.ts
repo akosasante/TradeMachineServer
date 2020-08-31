@@ -1,13 +1,9 @@
-import { config as dotenvConfig } from "dotenv";
 import { Server } from "http";
 import "jest";
-import path from "path";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
-
-dotenvConfig({path: path.resolve(__dirname, "../.env")});
 
 async function shutdown() {
     await new Promise(resolve => {

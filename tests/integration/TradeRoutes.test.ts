@@ -20,11 +20,7 @@ import { TradeFactory } from "../factories/TradeFactory";
 import { adminLoggedIn, doLogout, makeDeleteRequest, makeGetRequest,
     makePostRequest, makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, UUIDPatternRegex } from "./helpers";
 import { v4 as uuid } from "uuid";
-import { config as dotenvConfig } from "dotenv";
-import { resolve as resolvePath } from "path";
 import * as TradeTracker from "../../src/csv/TradeTracker";
-
-dotenvConfig({path: resolvePath(__dirname, "../.env")});
 
 
 let app: Server;
@@ -34,6 +30,7 @@ let minorPlayer = PlayerFactory.getPlayer();
 let majorPlayer = PlayerFactory.getPlayer("Pete Buttjudge", PlayerLeagueType.MAJOR);
 let majorPlayer2 = PlayerFactory.getPlayer("Feelda Bern", PlayerLeagueType.MAJOR);
 let pick = DraftPickFactory.getPick();
+delete pick.originalOwner;
 let [creatorTeam, recipientTeam, recipientTeam2] = TeamFactory.getTeams(3);
 // @ts-ignore
 TradeTracker.appendNewTrade = jest.fn();

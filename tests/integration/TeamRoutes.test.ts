@@ -8,16 +8,12 @@ import UserDAO from "../../src/DAO/UserDAO";
 import Team from "../../src/models/team";
 import { TeamFactory } from "../factories/TeamFactory";
 import { UserFactory } from "../factories/UserFactory";
-import { resolve as resolvePath } from "path";
 import { v4 as uuid } from "uuid";
 import { adminLoggedIn, DatePatternRegex, doLogout, makeDeleteRequest, makeGetRequest, makePatchRequest,
     makePostRequest, makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, stringifyQuery } from "./helpers";
-import { config as dotenvConfig } from "dotenv";
 import startServer from "../../src/bootstrap/app";
 import User from "../../src/models/user";
 import TeamDAO from "../../src/DAO/TeamDAO";
-
-dotenvConfig({path: resolvePath(__dirname, "../.env")});
 
 let app: Server;
 let ownerUser: User;
