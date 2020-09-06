@@ -14,6 +14,13 @@ export async function setupExpressApp(): Promise<Express> {
     await initializeDb(process.env.DB_LOGS === "true");
     logger.debug("database setup complete");
 
+    logger.debug("setting up consumers");
+    const {setupEmailConsumers} = await import("../email/consumers");
+    const {setupSlackConsumers} = await import("../slack/consumers");
+    setupEmailConsumers();
+    setupSlackConsumers();
+    logger.debug("consumer setup complete");
+
     // Register routes and some global auth middlewares
     logger.debug("setting up route-controllers");
     const developmentOrigins = [/localhost:3000/, /localhost:8080/, /127\.0\.0\.1/, /ngrok/];
