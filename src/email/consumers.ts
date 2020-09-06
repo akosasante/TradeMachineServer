@@ -12,13 +12,13 @@ export function setupEmailConsumers() {
     const emailQueue = new Bull("email_queue", {settings: {maxStalledCount: 0, lockDuration: 60000}});
     const cleanLoggedData = (data: any) => {
         if (data.user) {
-            const user: User = JSON.parse(data.parse || "{}");
+            const user: User = JSON.parse(data.user || "{}");
             return {
                 userId: user.id,
                 userName: user.displayName,
             };
         } else if (data.trade) {
-            const trade: Trade = JSON.parse(data.entity || "{}");
+            const trade: Trade = JSON.parse(data.trade || "{}");
             return {
                 tradeId: trade.id,
                 status: trade.status,
@@ -30,14 +30,14 @@ export function setupEmailConsumers() {
         }
     };
     const cleanLoggedReturn = (returnValue: any) => {
-        return {
+        return returnValue ? {
             messageId: returnValue?.messageId,
             code: returnValue?.code,
             message: returnValue?.message,
             to: returnValue?.originalMessage.to,
             from: returnValue?.originalMessage.from,
             subject: returnValue?.originalMessage.subject,
-        };
+        } : "";
     };
 
     emailQueue.process("reset_pass", handleEmailJob);
