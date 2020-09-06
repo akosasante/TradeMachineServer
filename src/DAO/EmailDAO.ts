@@ -8,6 +8,10 @@ export default class EmailDAO {
         this.emailDb = repo || getConnection(process.env.NODE_ENV).getRepository("Email");
     }
 
+    public async createEmail(email: Email): Promise<Email> {
+        return await this.emailDb.save(email);
+    }
+
     public async getEmailByMessageId(id: string): Promise<Email | undefined> {
         return await this.emailDb.findOne(id);
     }
