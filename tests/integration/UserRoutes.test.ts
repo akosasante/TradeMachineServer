@@ -1,20 +1,15 @@
-import { config as dotenvConfig } from "dotenv";
 import { Server } from "http";
 import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
-import { resolve as resolvePath } from "path";
 import startServer from "../../src/bootstrap/app";
 import { UserFactory } from "../factories/UserFactory";
 import User from "../../src/models/user";
 import { adminLoggedIn, DatePatternRegex, doLogout, makeDeleteRequest, makeGetRequest,
     makePostRequest, makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, stringifyQuery } from "./helpers";
 import { v4 as uuid } from "uuid";
-
-
-dotenvConfig({path: resolvePath(__dirname, "../.env")});
 
 let app: Server;
 let ownerUser: User;

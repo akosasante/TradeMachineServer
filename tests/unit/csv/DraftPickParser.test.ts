@@ -5,11 +5,7 @@ import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import DraftPick from "../../../src/models/draftPick";
 import { TeamFactory } from "../../factories/TeamFactory";
 import { UserFactory } from "../../factories/UserFactory";
-import { config as dotenvConfig } from "dotenv";
-import { resolve as resolvePath } from "path";
 import logger from "../../../src/bootstrap/logger";
-
-dotenvConfig({path: resolvePath(__dirname, "../../.env")});
 
 describe("DraftPickParser", () => {
     beforeAll(() => {
