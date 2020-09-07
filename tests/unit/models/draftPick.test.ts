@@ -21,8 +21,8 @@ describe("DraftPick Class", () => {
             expect(draftPick.pickNumber).toEqual(draftPickObj.pickNumber);
             expect(draftPick.type).toEqual(draftPickObj.type);
             expect(draftPick.season).toEqual(draftPickObj.season);
+            expect(draftPick.originalOwner).toEqual(draftPickObj.originalOwner);
             expect(draftPick.currentOwner).toBeUndefined();
-            expect(draftPick.originalOwner).toBeUndefined();
             expect(draftPick).toBeInstanceOf(DraftPick);
             expect(draftPickObj).not.toBeInstanceOf(DraftPick);
         });

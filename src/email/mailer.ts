@@ -13,6 +13,8 @@ import { partition } from "lodash";
 import DraftPick from "../models/draftPick";
 import ordinal from "ordinal";
 import { rollbar } from "../bootstrap/rollbar";
+import EmailDAO from "../DAO/EmailDAO";
+import DbEmail from "../models/email";
 
 export interface SendInBlueSendResponse {
     envelope: {
@@ -123,6 +125,8 @@ export const Emailer = {
         },
     }),
 
+    dao: new EmailDAO(),
+
     async sendPasswordResetEmail(user: User): Promise<SendInBlueSendResponse> {
         const resetPassPage = `${baseDomain}/reset_password?u=${encodeURI(user.passwordResetToken!)}`;
         logger.debug("sending password reset email");
@@ -159,8 +163,13 @@ export const Emailer = {
                 name: user.displayName || user.email,
             },
         })
-        .then((res: SendInBlueSendResponse) => {
+        .then(async (res: SendInBlueSendResponse) => {
             logger.info(`Successfully sent test email: ${inspect(res.messageId)}`);
+            if (res.messageId) {
+                await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
+            } else {
+                logger.error("No message id found, not saving email to db.");
+            }
             return res;
         })
         .catch((err: Error) => {
@@ -184,8 +193,13 @@ export const Emailer = {
                 url: registrationLink,
             },
         })
-        .then((res: SendInBlueSendResponse) => {
+        .then(async (res: SendInBlueSendResponse) => {
             logger.info(`Successfully sent registration email: ${inspect(res.messageId)}`);
+            if (res.messageId) {
+                await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
+            } else {
+                logger.error("No message id found, not saving email to db.");
+            }
             return res;
         })
         .catch((err: Error) => {
@@ -210,8 +224,13 @@ export const Emailer = {
                 rejectUrl: `${baseDomain}/trade/${trade!.id}/reject`,
             },
         })
-            .then((res: SendInBlueSendResponse) => {
+            .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade request email: ${inspect(res.messageId)}`);
+                if (res.messageId) {
+                    await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
+                } else {
+                    logger.error("No message id found, not saving email to db.");
+                }
                 return res;
             })
             .catch((err: Error) => {
@@ -235,8 +254,13 @@ export const Emailer = {
                 tradesByRecipient: getTradeTextForRequest(trade!),
             },
         })
-            .then((res: SendInBlueSendResponse) => {
+            .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade declined email: ${inspect(res.messageId)}`);
+                if (res.messageId) {
+                    await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
+                } else {
+                    logger.error("No message id found, not saving email to db.");
+                }
                 return res;
             })
             .catch((err: Error) => {
@@ -259,8 +283,13 @@ export const Emailer = {
                 tradesByRecipient: getTradeTextForRequest(trade!),
             },
         })
-            .then((res: SendInBlueSendResponse) => {
+            .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade submission email: ${inspect(res.messageId)}`);
+                if (res.messageId) {
+                    await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
+                } else {
+                    logger.error("No message id found, not saving email to db.");
+                }
                 return res;
             })
             .catch((err: Error) => {

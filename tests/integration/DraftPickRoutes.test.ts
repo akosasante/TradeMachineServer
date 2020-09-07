@@ -17,12 +17,7 @@ import {
     makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, stringifyQuery
 } from "./helpers";
 import { v4 as uuid } from "uuid";
-import { config as dotenvConfig } from "dotenv";
-import { resolve as resolvePath } from "path";
 import startServer from "../../src/bootstrap/app";
-
-dotenvConfig({path: resolvePath(__dirname, "../.env")});
-
 
 let app: Server;
 let adminUser: User;
@@ -79,6 +74,8 @@ afterAll(async () => {
 describe("Pick API endpoints", () => {
     const testPick = DraftPickFactory.getPick(undefined, undefined, LeagueLevel.HIGH);
     const testPick2 =  DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS);
+    delete testPick.originalOwner;
+    delete testPick2.originalOwner;
 
     describe("POST /picks (create new pick)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);

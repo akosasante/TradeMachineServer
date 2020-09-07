@@ -6,12 +6,7 @@ import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import { adminLoggedIn, makeGetRequest, setupOwnerAndAdminUsers } from "./helpers";
 import startServer from "../../src/bootstrap/app";
-import { config as dotenvConfig } from "dotenv";
-import { resolve as resolvePath } from "path";
 import User from "../../src/models/user";
-
-dotenvConfig({path: resolvePath(__dirname, "../.env")});
-
 
 let app: Server;
 let adminUser: User;

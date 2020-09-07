@@ -1,26 +1,22 @@
-import {Server} from "http";
+import { Server } from "http";
 import "jest";
 import "jest-extended";
 import request from "supertest";
-import {redisClient} from "../../src/bootstrap/express";
+import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
-import {config as dotenvConfig} from "dotenv";
-import path from "path";
-import {EmailPublisher} from "../../src/email/publishers";
-import {adminLoggedIn, makePostRequest, ownerLoggedIn, setupOwnerAndAdminUsers} from "./helpers";
-import {TradeFactory} from "../factories/TradeFactory";
+import { EmailPublisher } from "../../src/email/publishers";
+import { adminLoggedIn, makePostRequest, ownerLoggedIn, setupOwnerAndAdminUsers } from "./helpers";
+import { TradeFactory } from "../factories/TradeFactory";
 import User from "../../src/models/user";
 import TradeDAO from "../../src/DAO/TradeDAO";
-import Trade, {TradeStatus} from "../../src/models/trade";
+import Trade, { TradeStatus } from "../../src/models/trade";
 import PlayerDAO from "../../src/DAO/PlayerDAO";
-import {PlayerFactory} from "../factories/PlayerFactory";
-import {TeamFactory} from "../factories/TeamFactory";
+import { PlayerFactory } from "../factories/PlayerFactory";
+import { TeamFactory } from "../factories/TeamFactory";
 import TeamDAO from "../../src/DAO/TeamDAO";
-import {v4 as uuid} from "uuid";
-import {SlackPublisher} from "../../src/slack/publishers";
-
-dotenvConfig({path: path.resolve(__dirname, "../.env")});
+import { v4 as uuid } from "uuid";
+import { SlackPublisher } from "../../src/slack/publishers";
 
 let app: Server;
 let adminUser: User;

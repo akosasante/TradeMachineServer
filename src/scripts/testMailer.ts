@@ -1,12 +1,12 @@
-import User from "./src/models/user";
-import logger from "./src/bootstrap/logger";
+import User from "../models/user";
+import logger from "../bootstrap/logger";
 import { inspect } from "util";
-import { Emailer } from "./src/email/mailer";
-import initializeDb from "./src/bootstrap/db";
-import TradeDAO from "./src/DAO/TradeDAO";
-import { TradeItemType } from "./src/models/tradeItem";
-import DraftPickDAO from "./src/DAO/DraftPickDAO";
-import PlayerDAO from "./src/DAO/PlayerDAO";
+import { Emailer } from "../email/mailer";
+import initializeDb from "../bootstrap/db";
+import TradeDAO from "../DAO/TradeDAO";
+import { TradeItemType } from "../models/tradeItem";
+import DraftPickDAO from "../DAO/DraftPickDAO";
+import PlayerDAO from "../DAO/PlayerDAO";
 
 async function test() {
     const mailer = Emailer;

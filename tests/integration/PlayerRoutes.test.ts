@@ -18,12 +18,7 @@ import {
     makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, stringifyQuery
 } from "./helpers";
 import { v4 as uuid } from "uuid";
-import { config as dotenvConfig } from "dotenv";
-import { resolve as resolvePath } from "path";
 import startServer from "../../src/bootstrap/app";
-
-dotenvConfig({path: resolvePath(__dirname, "../.env")});
-
 
 let app: Server;
 let adminUser: User;

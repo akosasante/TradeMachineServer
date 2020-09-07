@@ -7,12 +7,7 @@ import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import User from "../../src/models/user";
 import startServer from "../../src/bootstrap/app";
-import { config as dotenvConfig } from "dotenv";
-import path from "path";
 import { makeLoggedInRequest } from "./helpers";
-
-dotenvConfig({path: path.resolve(__dirname, "../.env")});
-
 
 let app: Server;
 let userDAO: UserDAO;

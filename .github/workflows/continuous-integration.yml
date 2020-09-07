@@ -64,6 +64,8 @@ jobs:
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
           BASE_URL: http://localhost:8080
+          TRADE_WORKSHEET_ID: 9999
+          TRADE_SPREADSHEET_ID: test_spreadsheet
 
       - name: Run typechecking and linting
         run: npm run typecheck && npm run lint-fix

@@ -7,10 +7,6 @@ import logger from "../../src/bootstrap/logger";
 import User from "../../src/models/user";
 import startServer from "../../src/bootstrap/app";
 import { makePostRequest, setupOwnerAndAdminUsers } from "./helpers";
-import { config as dotenvConfig } from "dotenv";
-import { resolve as resolvePath } from "path";
-
-dotenvConfig({path: resolvePath(__dirname, "../.env")});
 
 let app: Server;
 let ownerUser: User;

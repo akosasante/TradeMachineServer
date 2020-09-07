@@ -6,6 +6,7 @@ import Team from "./team";
 import TradeItem from "./tradeItem";
 import TradeParticipant, { TradeParticipantType } from "./tradeParticipant";
 import logger from "../bootstrap/logger";
+import Email from "./email";
 
 export enum TradeStatus {
     DRAFT = 1,
@@ -86,6 +87,9 @@ export default class Trade extends BaseModel {
 
     @OneToMany(type => TradeItem, tradeItem => tradeItem.trade, {cascade: true, eager: true})
     public tradeItems?: TradeItem[];
+
+    @OneToMany(_type => Email, email => email.trade, {eager: true})
+    public emails?: Email[];
 
     constructor(props: Partial<Trade>) {
         super();

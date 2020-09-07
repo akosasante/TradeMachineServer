@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import Trade from "./trade";
 
 @Entity()
 export default class Email {
@@ -14,6 +15,9 @@ export default class Email {
 
     @UpdateDateColumn()
     public dateModified?: Date;
+
+    @ManyToOne(_type => Trade, trade => trade.tradeParticipants, {onDelete: "SET NULL", nullable: true})
+    public trade!: Trade;
 
     public toString(): string {
         return `${this.constructor.name}#${this.messageId}`;
