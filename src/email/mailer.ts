@@ -212,6 +212,7 @@ export const Emailer = {
 
     async sendTradeRequestEmail(recipient: string, trade: Trade, sendToV2: boolean): Promise<SendInBlueSendResponse> {
         logger.debug(`preparing trade req email for tradeId: ${trade.id}`);
+        const emailPrefix = recipient.split("@")[0]
         return Emailer.emailer.send({
             template: "trade_request",
             message: {
@@ -221,7 +222,7 @@ export const Emailer = {
                 tradeSender: trade!.creator!.name,
                 titleText: getTitleText(trade!),
                 tradesByRecipient: getTradeTextForRequest(trade!),
-                acceptUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/accept` : `${v1BaseDomain}/confirm/${trade.id}`,
+                acceptUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/accept` : `${v1BaseDomain}/confirm/${trade.id}_${emailPrefix}`,
                 rejectUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/reject` : "",
             },
         })

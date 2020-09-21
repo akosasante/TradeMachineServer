@@ -261,6 +261,35 @@ export default class TradeController {
         return true;
     }
 
+    @Post(`/v1/reject${UUIDPattern}`)
+    public async rejectV1Trade(@Param("id") id: string, @BodyParam("recip") declinerEmailPrefix: string, @BodyParam("reason") declineReason: string) {
+        logger.debug("got reject trade request from old trade machine");
+        const trade = await this.dao.getTradeById(id);
+        const decliningUser = trade.tradeParticipants!.reduce((acc: User | undefined, participant) => {
+            if (acc) return acc;
+            const matchingUser = participant.team.owners!.find(o => o.email.startsWith(declinerEmailPrefix));
+            return matchingUser ? matchingUser : acc;
+        }, undefined);
+
+        if (decliningUser) {
+            logger.debug(`retrieved declining user: ${decliningUser}`);
+            if (!validateParticipantInTrade(decliningUser, trade)) {
+                throw new UnauthorizedError("Trade can only be modified by participants or admins");
+            }
+
+            if (!validateStatusChange(decliningUser, trade, TradeStatus.REJECTED)) {
+                throw new BadRequestError("Trade with this status cannot be rejected");
+            }
+
+            logger.debug("updating trade declined");
+            await this.dao.updateDeclinedBy(id, decliningUser.id!, declineReason);
+            await this.dao.updateStatus(id, TradeStatus.REJECTED);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @Get(`/v1${UUIDPattern}`)
     public async getTradeForV1(@Param("id") id: string) {
         logger.debug("v1 get trade endpoint with id: " + id);
