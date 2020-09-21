@@ -260,4 +260,15 @@ export default class TradeController {
         }
         return true;
     }
+
+    @Get(`/v1${UUIDPattern}`)
+    public async getTradeForV1(@Param("id") id: string) {
+        logger.debug("v1 get trade endpoint with id: " + id);
+        let trade = await this.dao.getTradeById(id);
+        trade = await this.dao.hydrateTrade(trade);
+        logger.debug(`got trade: ${trade}`);
+        const v1Trade = V1TradeMachineAdaptor.convertToV1Trade(trade);
+        logger.debug(`converted to v1 trade: ${inspect(v1Trade)}`);
+        return v1Trade;
+    }
 }
