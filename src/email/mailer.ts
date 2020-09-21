@@ -211,8 +211,8 @@ export const Emailer = {
     },
 
     async sendTradeRequestEmail(recipient: string, trade: Trade, sendToV2: boolean): Promise<SendInBlueSendResponse> {
-        logger.debug(`preparing trade req email for tradeId: ${trade.id}`);
-        const emailPrefix = recipient.split("@")[0]
+        logger.debug(`preparing trade req email for tradeId: ${trade.id}. sendToV2=${sendToV2}`);
+        const emailPrefix = recipient.split("@")[0];
         return Emailer.emailer.send({
             template: "trade_request",
             message: {
@@ -272,16 +272,17 @@ export const Emailer = {
             });
     },
 
-    async sendTradeSubmissionEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
-        logger.debug(`got a trade submission email request for tradeId: ${trade.id}`);
+    async sendTradeSubmissionEmail(recipient: string, trade: Trade, sendToV2: boolean): Promise<SendInBlueSendResponse> {
+        logger.debug(`got a trade submission email request for tradeId: ${trade.id}. sendToV2=${sendToV2}`);
+        const emailPrefix = recipient.split("@")[0];
         return Emailer.emailer.send({
             template: "trade_accepted",
             message: {
                 to: recipient,
             },
             locals: {
-                acceptUrl: `${baseDomain}/trade/${trade!.id}/submit`,
-                rejectUrl: `${baseDomain}/trade/${trade!.id}/discard`,
+                acceptUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/submit` : `${v1BaseDomain}/send/${trade.id}_${emailPrefix}`,
+                discardUrl: `${baseDomain}/trade/${trade!.id}/discard`, // TODO: Implement discarding trade
                 tradesByRecipient: getTradeTextForRequest(trade!),
             },
         })

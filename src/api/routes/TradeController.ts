@@ -11,6 +11,7 @@ import TradeParticipant from "../../models/tradeParticipant";
 import { appendNewTrade } from "../../csv/TradeTracker";
 import { V1TradeMachineAdaptor } from "../helpers/V1TradeMachineAdaptor";
 import { EmailPublisher } from "../../email/publishers";
+import { SlackPublisher } from "../../slack/publishers";
 
 function validateOwnerOfTrade(user: User, trade: Trade): boolean {
     if (user.role === Role.ADMIN) {
@@ -69,10 +70,12 @@ function validateTradeDecliner(trade: Trade, declinedById: string) {
 export default class TradeController {
     private dao: TradeDAO;
     private emailPublisher: EmailPublisher;
+    private slackPublisher: SlackPublisher;
 
-    constructor(DAO?: TradeDAO, publisher?: EmailPublisher) {
+    constructor(DAO?: TradeDAO, publisher?: EmailPublisher, slackPublisher?: SlackPublisher) {
         this.dao = DAO || new TradeDAO();
         this.emailPublisher = publisher || EmailPublisher.getInstance();
+        this.slackPublisher = slackPublisher || SlackPublisher.getInstance();
     }
 
     @Get("/")
@@ -337,10 +340,38 @@ export default class TradeController {
         const creatorEmails = trade.creator?.owners?.map(o => o.email);
         if (creatorEmails) {
             for (const email of creatorEmails) {
-                await this.emailPublisher.queueTradeAcceptedMail(trade, email);
+                await this.emailPublisher.queueTradeAcceptedMail(trade, email, false);
             }
         }
 
+        return true;
+    }
+
+    @Post(`/v1/send${UUIDPattern}`)
+    public async submitV1Trade(@Param("id") id: string, @BodyParam("sender") senderEmailPrefix: string) {
+        logger.debug("finalizing and submitting trade from old trade machine");
+        let trade = await this.dao.getTradeById(id);
+        const sender = trade.tradeParticipants!.reduce((acc: User | undefined, participant) => {
+            if (acc) return acc;
+            const matchingUser = participant.team.owners!.find(o => o.email.startsWith(senderEmailPrefix));
+            return matchingUser ? matchingUser : acc;
+        }, undefined);
+
+        if (!sender) return false;
+
+        if (!validateParticipantInTrade(sender, trade)) {
+            throw new UnauthorizedError("Trade can only be modified by participants or admins");
+        }
+
+        if (!validateStatusChange(sender, trade, TradeStatus.SUBMITTED)) {
+            throw new BadRequestError("Trade with this status cannot be submitted");
+        }
+
+        trade = await this.dao.updateStatus(id, TradeStatus.SUBMITTED);
+        trade = await this.dao.hydrateTrade(trade);
+
+        logger.debug("sending slack message");
+        await this.slackPublisher.queueTradeAnnouncement(trade);
         return true;
     }
 
