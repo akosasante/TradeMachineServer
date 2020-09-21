@@ -290,6 +290,38 @@ export default class TradeController {
         }
     }
 
+    @Post(`/v1/accept${UUIDPattern}`)
+    public async acceptV1Trade(@Param("id") id: string, @BodyParam("recip") acceptorEmailPrefix: string) {
+        logger.debug("got accept trade request from old trade machine");
+        let trade = await this.dao.getTradeById(id);
+        const acceptingUser = trade.tradeParticipants!.reduce((acc: User | undefined, participant) => {
+            if (acc) return acc;
+            const matchingUser = participant.team.owners!.find(o => o.email.startsWith(acceptorEmailPrefix));
+            return matchingUser ? matchingUser : acc;
+        }, undefined);
+
+        if (!acceptingUser) return false;
+
+        if (!validateParticipantInTrade(acceptingUser, trade)) {
+            throw new UnauthorizedError("Trade can only be modified by participants or admins");
+        }
+
+        if (!validateStatusChange(acceptingUser, trade, TradeStatus.ACCEPTED)) {
+            throw new BadRequestError("Trade with this status cannot be accepted");
+        }
+
+        const acceptedBy = [...(trade.acceptedBy || []), acceptingUser.id!];
+        await this.dao.updateAcceptedBy(id, acceptedBy);
+
+        if (acceptedBy.length === trade.recipients.length) {
+            trade = await this.dao.updateStatus(id, TradeStatus.ACCEPTED);
+        } else if (trade.status !== TradeStatus.PENDING) {
+            trade = await this.dao.updateStatus(id, TradeStatus.PENDING);
+        }
+
+        return true;
+    }
+
     @Get(`/v1${UUIDPattern}`)
     public async getTradeForV1(@Param("id") id: string) {
         logger.debug("v1 get trade endpoint with id: " + id);
