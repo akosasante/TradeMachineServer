@@ -242,7 +242,7 @@ export default class TradeController {
 
     /***** Old Trade Machine Endpoints *****/
     @Post("/v1/submit")
-    public async oldSubmitTrade(@Body() payload: any): Promise<boolean> {
+    public async v1RequestTrade(@Body() payload: any): Promise<boolean> {
         logger.debug(`got payload from old trade machine: ${inspect(payload)}`);
         let trade = await V1TradeMachineAdaptor.init().getTrade(payload);
         trade.status = TradeStatus.REQUESTED;
@@ -264,7 +264,7 @@ export default class TradeController {
     @Post(`/v1/reject${UUIDPattern}`)
     public async rejectV1Trade(@Param("id") id: string, @BodyParam("recip") declinerEmailPrefix: string, @BodyParam("reason") declineReason: string) {
         logger.debug("got reject trade request from old trade machine");
-        const trade = await this.dao.getTradeById(id);
+        let trade = await this.dao.getTradeById(id);
         const decliningUser = trade.tradeParticipants!.reduce((acc: User | undefined, participant) => {
             if (acc) return acc;
             const matchingUser = participant.team.owners!.find(o => o.email.startsWith(declinerEmailPrefix));
@@ -283,7 +283,19 @@ export default class TradeController {
 
             logger.debug("updating trade declined");
             await this.dao.updateDeclinedBy(id, decliningUser.id!, declineReason);
-            await this.dao.updateStatus(id, TradeStatus.REJECTED);
+            trade = await this.dao.updateStatus(id, TradeStatus.REJECTED);
+            // send email(s)
+            logger.debug("sending trade decline email(s)");
+            trade = await this.dao.hydrateTrade(trade);
+            const emails = trade.tradeParticipants
+                ?.flatMap(tp => tp.team.owners)
+                .filter(owner => owner && owner.id !== trade.declinedById)
+                .map(owner => owner?.email);
+            for (const email of (emails || [])) {
+                if (email) {
+                    await this.emailPublisher.queueTradeDeclinedMail(trade, email);
+                }
+            }
             return true;
         } else {
             return false;
@@ -317,6 +329,16 @@ export default class TradeController {
             trade = await this.dao.updateStatus(id, TradeStatus.ACCEPTED);
         } else if (trade.status !== TradeStatus.PENDING) {
             trade = await this.dao.updateStatus(id, TradeStatus.PENDING);
+        }
+
+        // send email(s)
+        logger.debug("sending trade accept email(s)");
+        trade = await this.dao.hydrateTrade(trade);
+        const creatorEmails = trade.creator?.owners?.map(o => o.email);
+        if (creatorEmails) {
+            for (const email of creatorEmails) {
+                await this.emailPublisher.queueTradeAcceptedMail(trade, email);
+            }
         }
 
         return true;
