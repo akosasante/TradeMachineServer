@@ -1,5 +1,5 @@
 import { differenceBy } from "lodash";
-import { Authorized, BadRequestError, Body, CurrentUser, Delete, Get,
+import { Authorized, BadRequestError, Body, BodyParam, CurrentUser, Delete, Get,
     JsonController, Param, Post, Put, QueryParam, UnauthorizedError } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -9,7 +9,8 @@ import User, { Role } from "../../models/user";
 import { UUIDPattern } from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
 import { appendNewTrade } from "../../csv/TradeTracker";
-import { BodyParam } from "routing-controllers/index";
+import { V1TradeMachineAdaptor } from "../helpers/V1TradeMachineAdaptor";
+import { EmailPublisher } from "../../email/publishers";
 
 function validateOwnerOfTrade(user: User, trade: Trade): boolean {
     if (user.role === Role.ADMIN) {
@@ -67,9 +68,11 @@ function validateTradeDecliner(trade: Trade, declinedById: string) {
 @JsonController("/trades")
 export default class TradeController {
     private dao: TradeDAO;
+    private emailPublisher: EmailPublisher;
 
-    constructor(DAO?: TradeDAO) {
+    constructor(DAO?: TradeDAO, publisher?: EmailPublisher) {
         this.dao = DAO || new TradeDAO();
+        this.emailPublisher = publisher || EmailPublisher.getInstance();
     }
 
     @Get("/")
@@ -235,5 +238,26 @@ export default class TradeController {
         const result = await this.dao.deleteTrade(id);
         logger.debug(`delete successful: ${inspect(result)}`);
         return {deleteCount: result.affected, id: result.raw[0].id};
+    }
+
+    /***** Old Trade Machine Endpoints *****/
+    @Post("/v1/submit")
+    public async oldSubmitTrade(@Body() payload: any): Promise<boolean> {
+        logger.debug(`got payload from old trade machine: ${inspect(payload)}`);
+        let trade = await V1TradeMachineAdaptor.init().getTrade(payload);
+        trade.status = TradeStatus.REQUESTED;
+        logger.debug(`adapted trade from payload: ${inspect(trade, false, 2)}`);
+        trade = await this.dao.createTrade(trade);
+        logger.debug(`saved trade with status: ${trade.status}`);
+        trade = await this.dao.hydrateTrade(trade);
+        logger.debug("hydrated trade");
+        // copied from MessengerController
+        const recipientEmails = trade.recipients.flatMap(recipTeam => recipTeam.owners?.map(owner => owner.email));
+        for (const email of recipientEmails) {
+            if (email) {
+                await this.emailPublisher.queueTradeRequestMail(trade, email, false);
+            }
+        }
+        return true;
     }
 }

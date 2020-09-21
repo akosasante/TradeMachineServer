@@ -41,6 +41,7 @@ const SendInBlueOpts = {
 const SendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SendInBlueOpts));
 
 const baseDomain = process.env.BASE_URL;
+const v1BaseDomain = process.env.V1_BASE_URL;
 
 function getTitleText(trade: Trade) {
     if (trade.tradeParticipants?.length === 2) {
@@ -74,7 +75,7 @@ function getPlayerDetails(player: Player) {
         } else if (team || position || league) {
             return ` (${team || position || league} - ${league ? (league + " Minors") : "Minors"})`;
         } else {
-            return "(Minors)";
+            return " (Minors)";
         }
     }
 }
@@ -209,7 +210,7 @@ export const Emailer = {
         });
     },
 
-    async sendTradeRequestEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+    async sendTradeRequestEmail(recipient: string, trade: Trade, sendToV2: boolean): Promise<SendInBlueSendResponse> {
         logger.debug(`preparing trade req email for tradeId: ${trade.id}`);
         return Emailer.emailer.send({
             template: "trade_request",
@@ -220,8 +221,8 @@ export const Emailer = {
                 tradeSender: trade!.creator!.name,
                 titleText: getTitleText(trade!),
                 tradesByRecipient: getTradeTextForRequest(trade!),
-                acceptUrl: `${baseDomain}/trade/${trade!.id}/accept`,
-                rejectUrl: `${baseDomain}/trade/${trade!.id}/reject`,
+                acceptUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/accept` : `${v1BaseDomain}/confirm/trademachine`,
+                rejectUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/reject` : "",
             },
         })
             .then(async (res: SendInBlueSendResponse) => {
