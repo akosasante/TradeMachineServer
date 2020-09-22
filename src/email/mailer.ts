@@ -10,7 +10,7 @@ import Trade from "../models/trade";
 import TradeItem from "../models/tradeItem";
 import Player, { PlayerLeagueType } from "../models/player";
 import { partition } from "lodash";
-import DraftPick from "../models/draftPick";
+import DraftPick, { LeagueLevel } from "../models/draftPick";
 import ordinal from "ordinal";
 import { rollbar } from "../bootstrap/rollbar";
 import EmailDAO from "../DAO/EmailDAO";
@@ -80,6 +80,17 @@ function getPlayerDetails(player: Player) {
     }
 }
 
+function getPickTypeString(pickType: LeagueLevel) {
+    switch (pickType) {
+        case LeagueLevel.MAJORS:
+            return "Majors";
+        case LeagueLevel.HIGH:
+            return "High Minors";
+        case LeagueLevel.LOW:
+            return "Low Minors";
+    }
+}
+
 function getTradeTextForRequest(trade: Trade) {
     return trade.tradeParticipants?.map(participant => {
         const receivedPlayers = TradeItem.itemsReceivedBy(TradeItem.filterPlayers(trade.tradeItems), participant.team).map(item => [item.entity as Player, item.sender.name]);
@@ -89,7 +100,7 @@ function getTradeTextForRequest(trade: Trade) {
             sender: participant.team.name,
             majors: receivedMajors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
             minors: receivedMinors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
-            picks: receivedPicks.map(([pick, sender]) => `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal((pick as DraftPick).round)} round pick from ${sender}`),
+            picks: receivedPicks.map(([pick, sender]) => `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal((pick as DraftPick).round)} round ${getPickTypeString((pick as DraftPick).type)} pick from ${sender}`),
         };
     });
 }

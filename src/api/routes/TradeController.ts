@@ -330,18 +330,17 @@ export default class TradeController {
 
         if (acceptedBy.length === trade.recipients.length) {
             trade = await this.dao.updateStatus(id, TradeStatus.ACCEPTED);
-        } else if (trade.status !== TradeStatus.PENDING) {
-            trade = await this.dao.updateStatus(id, TradeStatus.PENDING);
-        }
-
-        // send email(s)
-        logger.debug("sending trade accept email(s)");
-        trade = await this.dao.hydrateTrade(trade);
-        const creatorEmails = trade.creator?.owners?.map(o => o.email);
-        if (creatorEmails) {
-            for (const email of creatorEmails) {
-                await this.emailPublisher.queueTradeAcceptedMail(trade, email, false);
+            // send email(s)
+            logger.debug("sending trade accept email(s)");
+            trade = await this.dao.hydrateTrade(trade);
+            const creatorEmails = trade.creator?.owners?.map(o => o.email);
+            if (creatorEmails) {
+                for (const email of creatorEmails) {
+                    await this.emailPublisher.queueTradeAcceptedMail(trade, email, false);
+                }
             }
+        } else if (trade.status !== TradeStatus.PENDING) {
+            await this.dao.updateStatus(id, TradeStatus.PENDING);
         }
 
         return true;
