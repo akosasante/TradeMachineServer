@@ -17,6 +17,10 @@ export default class PlayerDAO {
         return await this.playerDb.findOneOrFail(id);
     }
 
+    public async getPlayerByName(name: string): Promise<Player|undefined> {
+        return await this.playerDb.findOne({name});
+    }
+
     public async findPlayers(query: Partial<Player>): Promise<Player[]> {
         return await this.playerDb.find({where: query});
     }

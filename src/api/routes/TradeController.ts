@@ -1,5 +1,5 @@
 import { differenceBy } from "lodash";
-import { Authorized, BadRequestError, Body, CurrentUser, Delete, Get,
+import { Authorized, BadRequestError, Body, BodyParam, CurrentUser, Delete, Get,
     JsonController, Param, Post, Put, QueryParam, UnauthorizedError } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -9,7 +9,10 @@ import User, { Role } from "../../models/user";
 import { UUIDPattern } from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
 import { appendNewTrade } from "../../csv/TradeTracker";
-import { BodyParam } from "routing-controllers/index";
+import { V1TradeMachineAdaptor } from "../helpers/V1TradeMachineAdaptor";
+import { EmailPublisher } from "../../email/publishers";
+import { SlackPublisher } from "../../slack/publishers";
+import { rollbar } from "../../bootstrap/rollbar";
 
 function validateOwnerOfTrade(user: User, trade: Trade): boolean {
     if (user.role === Role.ADMIN) {
@@ -64,12 +67,21 @@ function validateTradeDecliner(trade: Trade, declinedById: string) {
     return trade.tradeParticipants?.flatMap(tp => tp.team.owners?.map(u => u.id) || []).includes(declinedById);
 }
 
+function sendToV2(email: string) {
+    logger.debug(typeof(process.env.V2_EMAILS));
+    return process.env.V2_EMAILS!.split(",").includes(email);
+}
+
 @JsonController("/trades")
 export default class TradeController {
     private dao: TradeDAO;
+    private emailPublisher: EmailPublisher;
+    private slackPublisher: SlackPublisher;
 
-    constructor(DAO?: TradeDAO) {
+    constructor(DAO?: TradeDAO, publisher?: EmailPublisher, slackPublisher?: SlackPublisher) {
         this.dao = DAO || new TradeDAO();
+        this.emailPublisher = publisher || EmailPublisher.getInstance();
+        this.slackPublisher = slackPublisher || SlackPublisher.getInstance();
     }
 
     @Get("/")
@@ -235,5 +247,163 @@ export default class TradeController {
         const result = await this.dao.deleteTrade(id);
         logger.debug(`delete successful: ${inspect(result)}`);
         return {deleteCount: result.affected, id: result.raw[0].id};
+    }
+
+    /***** Old Trade Machine Endpoints *****/
+    @Post("/v1/submit")
+    public async v1RequestTrade(@Body() payload: any): Promise<boolean> {
+        logger.debug(`got payload from old trade machine: ${inspect(payload)}`);
+        rollbar.info("v1RequestTrade", payload);
+        let trade = await V1TradeMachineAdaptor.init().getTrade(payload);
+        trade.status = TradeStatus.REQUESTED;
+        logger.debug(`adapted trade from payload: ${inspect(trade, false, 2)}`);
+        trade = await this.dao.createTrade(trade);
+        logger.debug(`saved trade with status: ${trade.status}`);
+        trade = await this.dao.hydrateTrade(trade);
+        logger.debug("hydrated trade");
+        // copied from MessengerController
+        const recipientEmails = trade.recipients.flatMap(recipTeam => recipTeam.owners?.map(owner => owner.email));
+        for (const email of recipientEmails) {
+            if (email) {
+                await this.emailPublisher.queueTradeRequestMail(trade, email, sendToV2(email));
+            }
+        }
+        rollbar.info("v1RequestTrade_Success", payload);
+        return true;
+    }
+
+    @Post(`/v1/reject${UUIDPattern}`)
+    public async rejectV1Trade(@Param("id") id: string, @BodyParam("recip") declinerEmailPrefix: string, @BodyParam("reason") declineReason: string) {
+        logger.debug("got reject trade request from old trade machine");
+        rollbar.info("rejectV1TradeRoute", {id, declinerEmailPrefix , declineReason});
+        let trade = await this.dao.getTradeById(id);
+        const decliningUser = trade.tradeParticipants!.reduce((acc: User | undefined, participant) => {
+            if (acc) return acc;
+            const matchingUser = participant.team.owners!.find(o => o.email.startsWith(declinerEmailPrefix));
+            return matchingUser ? matchingUser : acc;
+        }, undefined);
+
+        if (decliningUser) {
+            logger.debug(`retrieved declining user: ${decliningUser}`);
+            if (!validateParticipantInTrade(decliningUser, trade)) {
+                throw new UnauthorizedError("Trade can only be modified by participants or admins");
+            }
+
+            if (!validateStatusChange(decliningUser, trade, TradeStatus.REJECTED)) {
+                throw new BadRequestError("Trade with this status cannot be rejected");
+            }
+
+            logger.debug("updating trade declined");
+            await this.dao.updateDeclinedBy(id, decliningUser.id!, declineReason);
+            trade = await this.dao.updateStatus(id, TradeStatus.REJECTED);
+            // send email(s)
+            logger.debug("sending trade decline email(s)");
+            trade = await this.dao.hydrateTrade(trade);
+            const emails = trade.tradeParticipants
+                ?.flatMap(tp => tp.team.owners)
+                .filter(owner => owner && owner.id !== trade.declinedById)
+                .map(owner => owner?.email);
+            for (const email of (emails || [])) {
+                if (email) {
+                    await this.emailPublisher.queueTradeDeclinedMail(trade, email);
+                }
+            }rollbar.info("rejectV1TradeRoute_success", {id, declinerEmailPrefix , declineReason});
+            return true;
+        } else {
+            rollbar.info("rejectV1TradeRoute_noDecliningUser", {id, declinerEmailPrefix , declineReason});
+            return false;
+        }
+    }
+
+    @Post(`/v1/accept${UUIDPattern}`)
+    public async acceptV1Trade(@Param("id") id: string, @BodyParam("recip") acceptorEmailPrefix: string) {
+        rollbar.info("acceptV1Trade", {id, acceptorEmailPrefix});
+        logger.debug("got accept trade request from old trade machine");
+        let trade = await this.dao.getTradeById(id);
+        const acceptingUser = trade.tradeParticipants!.reduce((acc: User | undefined, participant) => {
+            if (acc) return acc;
+            const matchingUser = participant.team.owners!.find(o => o.email.startsWith(acceptorEmailPrefix));
+            return matchingUser ? matchingUser : acc;
+        }, undefined);
+
+        if (!acceptingUser) {
+            rollbar.info("acceptV1Trade_noAcceptingUser", {id, acceptorEmailPrefix});
+            return false;
+        }
+
+        if (!validateParticipantInTrade(acceptingUser, trade)) {
+            throw new UnauthorizedError("Trade can only be modified by participants or admins");
+        }
+
+        if (!validateStatusChange(acceptingUser, trade, TradeStatus.ACCEPTED)) {
+            throw new BadRequestError("Trade with this status cannot be accepted");
+        }
+
+        const acceptedBy = [...(trade.acceptedBy || []), acceptingUser.id!];
+        await this.dao.updateAcceptedBy(id, acceptedBy);
+
+        if (acceptedBy.length === trade.recipients.length) {
+            trade = await this.dao.updateStatus(id, TradeStatus.ACCEPTED);
+            // send email(s)
+            logger.debug("sending trade accept email(s)");
+            trade = await this.dao.hydrateTrade(trade);
+            const creatorEmails = trade.creator?.owners?.map(o => o.email);
+            if (creatorEmails) {
+                for (const email of creatorEmails) {
+                    await this.emailPublisher.queueTradeAcceptedMail(trade, email, sendToV2(email));
+                }
+            }
+        } else if (trade.status !== TradeStatus.PENDING) {
+            await this.dao.updateStatus(id, TradeStatus.PENDING);
+        }
+
+        rollbar.info("acceptV1Trade_Success", {id, acceptorEmailPrefix});
+        return true;
+    }
+
+    @Post(`/v1/send${UUIDPattern}`)
+    public async submitV1Trade(@Param("id") id: string, @BodyParam("sender") senderEmailPrefix: string) {
+        rollbar.info("submitV1Trade", {id, senderEmailPrefix});
+        logger.debug("finalizing and submitting trade from old trade machine");
+        let trade = await this.dao.getTradeById(id);
+        const sender = trade.tradeParticipants!.reduce((acc: User | undefined, participant) => {
+            if (acc) return acc;
+            const matchingUser = participant.team.owners!.find(o => o.email.startsWith(senderEmailPrefix));
+            return matchingUser ? matchingUser : acc;
+        }, undefined);
+
+        if (!sender) {
+            rollbar.info("submitV1Trade_noSender", {id, senderEmailPrefix});
+            return false;
+        }
+
+        if (!validateParticipantInTrade(sender, trade)) {
+            throw new UnauthorizedError("Trade can only be modified by participants or admins");
+        }
+
+        if (!validateStatusChange(sender, trade, TradeStatus.SUBMITTED)) {
+            throw new BadRequestError("Trade with this status cannot be submitted");
+        }
+
+        trade = await this.dao.updateStatus(id, TradeStatus.SUBMITTED);
+        trade = await this.dao.hydrateTrade(trade);
+
+        logger.debug("sending slack message");
+        await this.slackPublisher.queueTradeAnnouncement(trade);
+        rollbar.info("submitV1Trade_Success", {id, senderEmailPrefix});
+        return true;
+    }
+
+    @Get(`/v1${UUIDPattern}`)
+    public async getTradeForV1(@Param("id") id: string) {
+        rollbar.info("getTradeForV1", {id});
+        logger.debug("v1 get trade endpoint with id: " + id);
+        let trade = await this.dao.getTradeById(id);
+        trade = await this.dao.hydrateTrade(trade);
+        logger.debug(`got trade: ${trade}`);
+        const v1Trade = V1TradeMachineAdaptor.convertToV1Trade(trade);
+        logger.debug(`converted to v1 trade: ${inspect(v1Trade)}`);
+        rollbar.info("getTradeForV1_Success", {id});
+        return v1Trade;
     }
 }

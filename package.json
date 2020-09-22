@@ -15,7 +15,6 @@
     "test-local-no-logs": "ENABLE_LOGS=false DB_LOGS=false npm run test-local",
     "test-local-no-db": "ENABLE_LOGS=true DB_LOGS=false npm run test-local",
     "test-update-snapshots": "ENABLE_LOGS=false NODE_ENV=test jest --config ./jest.ci-config.js --detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=mailer --update-snapshot --setupFiles dotenv/config",
-
     "@DEV_COMMENT": "|----------- LOCAL DEV SCRIPTS ---------|",
     "watch-ts": "tsc -w",
     "serve-debug": "NODE_ENV=development nodemon $NODE_DEBUG_OPTION --inspect ./dist/server.js -- -r dotenv/config",
@@ -24,12 +23,10 @@
     "lint-fix": "tslint -c tslint.json -p tsconfig.json -t stylish --fix",
     "watch-debug": "concurrently $NODE_DEBUG_OPTION -k -p \"[{name} - {time}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run serve-debug\"",
     "watch-server": "concurrently -k -p \"[{name} - {time}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
-
     "@BUILD_COMMENT": "|----------- BUILD AND SERVE SCRIPTS ---------|",
     "build": "tsc && mkdir -p dist/email/templates && cp -r src/email/templates dist/email/",
     "serve": "node -r dotenv/config ./dist/server.js",
     "typecheck": "tsc --noEmit --incremental false",
-
     "@DB_COMMENTS": "|----------- DATABASE MIGRATION SCRIPTS ---------|",
     "gen-migrate": "tsc && typeorm migration:generate -f ormconfig -c development -n",
     "gen-migrate-test-empty": "typeorm migration:create -f ormconfig -c test -n empty",
@@ -115,6 +112,6 @@
     "ts-jest": "^25.5.1",
     "ts-node": "^8.10.2",
     "tslint": "^6.1.2",
-    "typescript": "^3.9.6"
+    "typescript": "^3.9.7"
   }
 }
