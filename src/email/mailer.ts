@@ -223,6 +223,7 @@ export const Emailer = {
 
     async sendTradeRequestEmail(recipient: string, trade: Trade, sendToV2: boolean): Promise<SendInBlueSendResponse> {
         logger.debug(`preparing trade req email for tradeId: ${trade.id}. sendToV2=${sendToV2}`);
+        rollbar.info("sendTradeRequestEmail", {recipient, sendToV2, id: trade.id});
         const emailPrefix = recipient.split("@")[0];
         return Emailer.emailer.send({
             template: "trade_request",
@@ -240,21 +241,24 @@ export const Emailer = {
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade request email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
+                    rollbar.info("sendTradeRequestEmail", {recipient, sendToV2, id: trade.id, messageId: res.messageId});
                     await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
                 } else {
+                    rollbar.error("sendTradeRequestEmail_NoEmailId", {recipient, sendToV2, id: trade.id});
                     logger.error("No message id found, not saving email to db.");
                 }
                 return res;
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade request email: ${inspect(err)}`);
-                rollbar.error(err);
+                rollbar.error(err, {recipient, sendToV2, id: trade.id});
                 return undefined;
             });
     },
 
     async sendTradeDeclinedEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
         logger.debug(`got a trade decline email request for tradeId: ${trade.id}`);
+        rollbar.info("sendTradeDeclinedEmail", {recipient, id: trade.id});
         return Emailer.emailer.send({
             template: "trade_declined",
             message: {
@@ -270,21 +274,26 @@ export const Emailer = {
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade declined email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
+                    rollbar.info("sendTradeDeclinedEmail", {recipient, id: trade.id, messageId: res.messageId});
+
                     await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
                 } else {
+                    rollbar.error("sendTradeDeclinedEmail_NoEmailId", {recipient, id: trade.id});
+
                     logger.error("No message id found, not saving email to db.");
                 }
                 return res;
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade declined email: ${inspect(err)}`);
-                rollbar.error(err);
+                rollbar.error(err, {recipient, id: trade.id});
                 return undefined;
             });
     },
 
     async sendTradeSubmissionEmail(recipient: string, trade: Trade, sendToV2: boolean): Promise<SendInBlueSendResponse> {
         logger.debug(`got a trade submission email request for tradeId: ${trade.id}. sendToV2=${sendToV2}`);
+        rollbar.info("sendTradeSubmissionEmail", {recipient, sendToV2, id: trade.id});
         const emailPrefix = recipient.split("@")[0];
         return Emailer.emailer.send({
             template: "trade_accepted",
@@ -300,15 +309,17 @@ export const Emailer = {
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade submission email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
+                    rollbar.info("sendTradeSubmissionEmail", {recipient, sendToV2, id: trade.id, messageId: res.messageId});
                     await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
                 } else {
+                    rollbar.error("sendTradeSubmissionEmail_NoEmailId", {recipient, sendToV2, id: trade.id});
                     logger.error("No message id found, not saving email to db.");
                 }
                 return res;
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade submission email: ${inspect(err)}`);
-                rollbar.error(err);
+                rollbar.error(err, {recipient, sendToV2, id: trade.id});
                 return undefined;
             });
     },

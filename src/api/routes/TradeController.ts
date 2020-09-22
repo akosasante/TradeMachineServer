@@ -12,6 +12,7 @@ import { appendNewTrade } from "../../csv/TradeTracker";
 import { V1TradeMachineAdaptor } from "../helpers/V1TradeMachineAdaptor";
 import { EmailPublisher } from "../../email/publishers";
 import { SlackPublisher } from "../../slack/publishers";
+import { rollbar } from "../../bootstrap/rollbar";
 
 function validateOwnerOfTrade(user: User, trade: Trade): boolean {
     if (user.role === Role.ADMIN) {
@@ -252,6 +253,7 @@ export default class TradeController {
     @Post("/v1/submit")
     public async v1RequestTrade(@Body() payload: any): Promise<boolean> {
         logger.debug(`got payload from old trade machine: ${inspect(payload)}`);
+        rollbar.info("v1RequestTrade", payload);
         let trade = await V1TradeMachineAdaptor.init().getTrade(payload);
         trade.status = TradeStatus.REQUESTED;
         logger.debug(`adapted trade from payload: ${inspect(trade, false, 2)}`);
@@ -266,12 +268,14 @@ export default class TradeController {
                 await this.emailPublisher.queueTradeRequestMail(trade, email, sendToV2(email));
             }
         }
+        rollbar.info("v1RequestTrade_Success", payload);
         return true;
     }
 
     @Post(`/v1/reject${UUIDPattern}`)
     public async rejectV1Trade(@Param("id") id: string, @BodyParam("recip") declinerEmailPrefix: string, @BodyParam("reason") declineReason: string) {
         logger.debug("got reject trade request from old trade machine");
+        rollbar.info("rejectV1TradeRoute", {id, declinerEmailPrefix , declineReason});
         let trade = await this.dao.getTradeById(id);
         const decliningUser = trade.tradeParticipants!.reduce((acc: User | undefined, participant) => {
             if (acc) return acc;
@@ -303,15 +307,17 @@ export default class TradeController {
                 if (email) {
                     await this.emailPublisher.queueTradeDeclinedMail(trade, email);
                 }
-            }
+            }rollbar.info("rejectV1TradeRoute_success", {id, declinerEmailPrefix , declineReason});
             return true;
         } else {
+            rollbar.info("rejectV1TradeRoute_noDecliningUser", {id, declinerEmailPrefix , declineReason});
             return false;
         }
     }
 
     @Post(`/v1/accept${UUIDPattern}`)
     public async acceptV1Trade(@Param("id") id: string, @BodyParam("recip") acceptorEmailPrefix: string) {
+        rollbar.info("acceptV1Trade", {id, acceptorEmailPrefix});
         logger.debug("got accept trade request from old trade machine");
         let trade = await this.dao.getTradeById(id);
         const acceptingUser = trade.tradeParticipants!.reduce((acc: User | undefined, participant) => {
@@ -320,7 +326,10 @@ export default class TradeController {
             return matchingUser ? matchingUser : acc;
         }, undefined);
 
-        if (!acceptingUser) return false;
+        if (!acceptingUser) {
+            rollbar.info("acceptV1Trade_noAcceptingUser", {id, acceptorEmailPrefix});
+            return false;
+        }
 
         if (!validateParticipantInTrade(acceptingUser, trade)) {
             throw new UnauthorizedError("Trade can only be modified by participants or admins");
@@ -348,11 +357,13 @@ export default class TradeController {
             await this.dao.updateStatus(id, TradeStatus.PENDING);
         }
 
+        rollbar.info("acceptV1Trade_Success", {id, acceptorEmailPrefix});
         return true;
     }
 
     @Post(`/v1/send${UUIDPattern}`)
     public async submitV1Trade(@Param("id") id: string, @BodyParam("sender") senderEmailPrefix: string) {
+        rollbar.info("submitV1Trade", {id, senderEmailPrefix});
         logger.debug("finalizing and submitting trade from old trade machine");
         let trade = await this.dao.getTradeById(id);
         const sender = trade.tradeParticipants!.reduce((acc: User | undefined, participant) => {
@@ -361,7 +372,10 @@ export default class TradeController {
             return matchingUser ? matchingUser : acc;
         }, undefined);
 
-        if (!sender) return false;
+        if (!sender) {
+            rollbar.info("submitV1Trade_noSender", {id, senderEmailPrefix});
+            return false;
+        }
 
         if (!validateParticipantInTrade(sender, trade)) {
             throw new UnauthorizedError("Trade can only be modified by participants or admins");
@@ -376,17 +390,20 @@ export default class TradeController {
 
         logger.debug("sending slack message");
         await this.slackPublisher.queueTradeAnnouncement(trade);
+        rollbar.info("submitV1Trade_Success", {id, senderEmailPrefix});
         return true;
     }
 
     @Get(`/v1${UUIDPattern}`)
     public async getTradeForV1(@Param("id") id: string) {
+        rollbar.info("getTradeForV1", {id});
         logger.debug("v1 get trade endpoint with id: " + id);
         let trade = await this.dao.getTradeById(id);
         trade = await this.dao.hydrateTrade(trade);
         logger.debug(`got trade: ${trade}`);
         const v1Trade = V1TradeMachineAdaptor.convertToV1Trade(trade);
         logger.debug(`converted to v1 trade: ${inspect(v1Trade)}`);
+        rollbar.info("getTradeForV1_Success", {id});
         return v1Trade;
     }
 }
