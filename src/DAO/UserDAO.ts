@@ -19,8 +19,9 @@ export default class UserDAO {
         return await this.userDb.find(options);
     }
 
-    public async getUserById(id: string): Promise<User> {
-        return await this.userDb.findOneOrFail(id);
+    public async getUserById(id: string, withUser = false): Promise<User> {
+        const options = withUser ? {relations: ["team"]} : {};
+        return await this.userDb.findOneOrFail(id, options);
     }
 
     public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User|undefined> {

@@ -65,7 +65,7 @@ describe("UserDAO", () => {
             const res = await userDAO.getUserById(testUser.id!);
 
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id, {});
 
             expect(res).toEqual(testUser);
         });
@@ -130,7 +130,7 @@ describe("UserDAO", () => {
             expect(mockUserDb.update).toHaveBeenCalledTimes(1);
             expect(mockUserDb.update).toHaveBeenCalledWith({id: testUser.id}, testUser.parse());
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id, {});
 
             expect(res).toEqual(testUser);
         });
@@ -145,7 +145,7 @@ describe("UserDAO", () => {
             const res = await userDAO.deleteUser(testUser.id!);
 
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id!);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id!, {});
             expect(mockUserDb.createQueryBuilder).toHaveBeenCalledTimes(1);
             expect(mockWhereInIds).toHaveBeenCalledWith(testUser.id!);
 

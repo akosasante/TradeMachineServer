@@ -10,7 +10,7 @@ import Trade from "../models/trade";
 import TradeItem from "../models/tradeItem";
 import Player, { PlayerLeagueType } from "../models/player";
 import { partition } from "lodash";
-import DraftPick from "../models/draftPick";
+import DraftPick, { LeagueLevel } from "../models/draftPick";
 import ordinal from "ordinal";
 import { rollbar } from "../bootstrap/rollbar";
 import EmailDAO from "../DAO/EmailDAO";
@@ -41,6 +41,7 @@ const SendInBlueOpts = {
 const SendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SendInBlueOpts));
 
 const baseDomain = process.env.BASE_URL;
+const v1BaseDomain = process.env.V1_BASE_URL;
 
 function getTitleText(trade: Trade) {
     if (trade.tradeParticipants?.length === 2) {
@@ -74,8 +75,19 @@ function getPlayerDetails(player: Player) {
         } else if (team || position || league) {
             return ` (${team || position || league} - ${league ? (league + " Minors") : "Minors"})`;
         } else {
-            return "(Minors)";
+            return " (Minors)";
         }
+    }
+}
+
+function getPickTypeString(pickType: LeagueLevel) {
+    switch (pickType) {
+        case LeagueLevel.MAJORS:
+            return "Majors";
+        case LeagueLevel.HIGH:
+            return "High Minors";
+        case LeagueLevel.LOW:
+            return "Low Minors";
     }
 }
 
@@ -88,7 +100,7 @@ function getTradeTextForRequest(trade: Trade) {
             sender: participant.team.name,
             majors: receivedMajors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
             minors: receivedMinors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
-            picks: receivedPicks.map(([pick, sender]) => `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal((pick as DraftPick).round)} round pick from ${sender}`),
+            picks: receivedPicks.map(([pick, sender]) => `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal((pick as DraftPick).round)} round ${getPickTypeString((pick as DraftPick).type)} pick from ${sender}`),
         };
     });
 }
@@ -209,8 +221,10 @@ export const Emailer = {
         });
     },
 
-    async sendTradeRequestEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
-        logger.debug(`preparing trade req email for tradeId: ${trade.id}`);
+    async sendTradeRequestEmail(recipient: string, trade: Trade, sendToV2: boolean): Promise<SendInBlueSendResponse> {
+        logger.debug(`preparing trade req email for tradeId: ${trade.id}. sendToV2=${sendToV2}`);
+        rollbar.info("sendTradeRequestEmail", {recipient, sendToV2, id: trade.id});
+        const emailPrefix = recipient.split("@")[0];
         return Emailer.emailer.send({
             template: "trade_request",
             message: {
@@ -220,28 +234,31 @@ export const Emailer = {
                 tradeSender: trade!.creator!.name,
                 titleText: getTitleText(trade!),
                 tradesByRecipient: getTradeTextForRequest(trade!),
-                acceptUrl: `${baseDomain}/trade/${trade!.id}/accept`,
-                rejectUrl: `${baseDomain}/trade/${trade!.id}/reject`,
+                acceptUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/accept` : `${v1BaseDomain}/confirm/${trade.id}_${emailPrefix}`,
+                rejectUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/reject` : "",
             },
         })
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade request email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
+                    rollbar.info("sendTradeRequestEmail", {recipient, sendToV2, id: trade.id, messageId: res.messageId});
                     await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
                 } else {
+                    rollbar.error("sendTradeRequestEmail_NoEmailId", {recipient, sendToV2, id: trade.id});
                     logger.error("No message id found, not saving email to db.");
                 }
                 return res;
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade request email: ${inspect(err)}`);
-                rollbar.error(err);
+                rollbar.error(err, {recipient, sendToV2, id: trade.id});
                 return undefined;
             });
     },
 
     async sendTradeDeclinedEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
         logger.debug(`got a trade decline email request for tradeId: ${trade.id}`);
+        rollbar.info("sendTradeDeclinedEmail", {recipient, id: trade.id});
         return Emailer.emailer.send({
             template: "trade_declined",
             message: {
@@ -257,44 +274,52 @@ export const Emailer = {
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade declined email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
+                    rollbar.info("sendTradeDeclinedEmail", {recipient, id: trade.id, messageId: res.messageId});
+
                     await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
                 } else {
+                    rollbar.error("sendTradeDeclinedEmail_NoEmailId", {recipient, id: trade.id});
+
                     logger.error("No message id found, not saving email to db.");
                 }
                 return res;
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade declined email: ${inspect(err)}`);
-                rollbar.error(err);
+                rollbar.error(err, {recipient, id: trade.id});
                 return undefined;
             });
     },
 
-    async sendTradeSubmissionEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
-        logger.debug(`got a trade submission email request for tradeId: ${trade.id}`);
+    async sendTradeSubmissionEmail(recipient: string, trade: Trade, sendToV2: boolean): Promise<SendInBlueSendResponse> {
+        logger.debug(`got a trade submission email request for tradeId: ${trade.id}. sendToV2=${sendToV2}`);
+        rollbar.info("sendTradeSubmissionEmail", {recipient, sendToV2, id: trade.id});
+        const emailPrefix = recipient.split("@")[0];
         return Emailer.emailer.send({
             template: "trade_accepted",
             message: {
                 to: recipient,
             },
             locals: {
-                acceptUrl: `${baseDomain}/trade/${trade!.id}/submit`,
-                rejectUrl: `${baseDomain}/trade/${trade!.id}/discard`,
+                acceptUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/submit` : `${v1BaseDomain}/send/${trade.id}_${emailPrefix}`,
+                discardUrl: `${baseDomain}/trade/${trade!.id}/discard`, // TODO: Implement discarding trade
                 tradesByRecipient: getTradeTextForRequest(trade!),
             },
         })
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade submission email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
+                    rollbar.info("sendTradeSubmissionEmail", {recipient, sendToV2, id: trade.id, messageId: res.messageId});
                     await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
                 } else {
+                    rollbar.error("sendTradeSubmissionEmail_NoEmailId", {recipient, sendToV2, id: trade.id});
                     logger.error("No message id found, not saving email to db.");
                 }
                 return res;
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade submission email: ${inspect(err)}`);
-                rollbar.error(err);
+                rollbar.error(err, {recipient, sendToV2, id: trade.id});
                 return undefined;
             });
     },
