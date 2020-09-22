@@ -48,14 +48,14 @@ describe("Emailer Class", () => {
         });
 
         it("sendTradeRequestEmail", async () => {
-            const res = await Emailer.sendTradeRequestEmail("test@example.com", testTrade);
+            const res = await Emailer.sendTradeRequestEmail("test@example.com", testTrade, true);
             delete res.message;
             delete res.messageId;
             expect(res).toMatchSnapshot();
         });
 
         it("sendTradeSubmissionEmail", async () => {
-            const res = await Emailer.sendTradeSubmissionEmail("test@exaample.com", testTrade);
+            const res = await Emailer.sendTradeSubmissionEmail("test@exaample.com", testTrade, true);
             delete res.message;
             delete res.messageId;
             expect(res).toMatchSnapshot();
