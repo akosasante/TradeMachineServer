@@ -7,6 +7,7 @@ import { Response } from "express";
 import { Role } from "../../models/user";
 import { TradeStatus } from "../../models/trade";
 import { SlackPublisher } from "../../slack/publishers";
+import {rollbar} from "../../bootstrap/rollbar";
 
 @Controller("/messenger")
 export default class MessengerController {
@@ -22,6 +23,7 @@ export default class MessengerController {
 
     @Post(`/requestTrade${UUIDPattern}`)
     public async sendRequestTradeMessage(@Param("id") id: string, @Res() response: Response) {
+        rollbar.info("sendRequestTradeMessage", { id });
         logger.debug(`queuing trade request email for tradeId: ${id}`);
         let trade = await this.tradeDao.getTradeById(id);
         if (trade.status === TradeStatus.REQUESTED) {
@@ -40,6 +42,7 @@ export default class MessengerController {
 
     @Post(`/declineTrade${UUIDPattern}`)
     public async sendTradeDeclineMessage(@Param("id") id: string, @Res() response: Response) {
+        rollbar.info("sendTradeDeclineMessage", { id });
         logger.debug(`queueing trade declined email for tradeId: ${id}`);
         let trade = await this.tradeDao.getTradeById(id);
         if (trade.status === TradeStatus.REJECTED && trade.declinedById) {
@@ -61,6 +64,7 @@ export default class MessengerController {
 
     @Post(`/acceptTrade${UUIDPattern}`)
     public async sendTradeAcceptanceMessage(@Param("id") id: string, @Res() response: Response) {
+        rollbar.info("sendTradeAcceptanceMessage", { id });
         logger.debug(`queueing trade acceptance email for tradeId: ${id}`);
         let trade = await this.tradeDao.getTradeById(id);
         if (trade.status === TradeStatus.ACCEPTED) {
@@ -80,6 +84,7 @@ export default class MessengerController {
     @Post(`/submitTrade${UUIDPattern}`)
     public async sendTradeAnnouncementMessage(@Param("id") id: string, @Res() response: Response) {
         logger.debug(`queuing trade announcement slack message for tradeId: ${id}`);
+        rollbar.info("sendTradeAnnouncementMessage", { id });
         let trade = await this.tradeDao.getTradeById(id);
         if (trade.status === TradeStatus.SUBMITTED) {
             trade = await this.tradeDao.hydrateTrade(trade);
