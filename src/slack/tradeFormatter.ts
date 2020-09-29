@@ -72,7 +72,7 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick from _$
         } else {
             return picks
                 .map((pick: DraftPick) => {
-                    return `• *${pick.originalOwner?.name}'s* ${pick.season} ${ordinal(pick.round)} round pick`;
+                    return `• *${pick.originalOwner?.name}'s* ${pick.season} ${ordinal(pick.round)} round ${this.getPickTypeString(pick!.type)} pick`;
                 })
                 .join("\n")
                 .trim();
