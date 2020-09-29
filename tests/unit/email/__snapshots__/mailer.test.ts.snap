@@ -392,7 +392,7 @@ Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
     "to": Array [
-      "test@exaample.com",
+      "test@example.com",
     ],
   },
   "originalMessage": Object {
@@ -493,7 +493,7 @@ it will be announced in the #trade_announcements
 [https://flexfoxfantasy.slack.com/archives/C84UJAX5Y] channel.
 
 Submit Trade [http://localhost:8080/trade/test-uuid/submit]",
-    "to": "test@exaample.com",
+    "to": "test@example.com",
   },
 }
 `;

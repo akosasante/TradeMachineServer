@@ -67,11 +67,6 @@ function validateTradeDecliner(trade: Trade, declinedById: string) {
     return trade.tradeParticipants?.flatMap(tp => tp.team.owners?.map(u => u.id) || []).includes(declinedById);
 }
 
-function sendToV2(email: string) {
-    logger.debug(typeof(process.env.V2_EMAILS));
-    return process.env.V2_EMAILS!.split(",").includes(email);
-}
-
 @JsonController("/trades")
 export default class TradeController {
     private dao: TradeDAO;
@@ -265,7 +260,7 @@ export default class TradeController {
         const recipientEmails = trade.recipients.flatMap(recipTeam => recipTeam.owners?.map(owner => owner.email));
         for (const email of recipientEmails) {
             if (email) {
-                await this.emailPublisher.queueTradeRequestMail(trade, email, sendToV2(email));
+                await this.emailPublisher.queueTradeRequestMail(trade, email);
             }
         }
         rollbar.info("v1RequestTrade_Success", payload);
@@ -350,7 +345,7 @@ export default class TradeController {
             const creatorEmails = trade.creator?.owners?.map(o => o.email);
             if (creatorEmails) {
                 for (const email of creatorEmails) {
-                    await this.emailPublisher.queueTradeAcceptedMail(trade, email, sendToV2(email));
+                    await this.emailPublisher.queueTradeAcceptedMail(trade, email);
                 }
             }
         } else if (trade.status !== TradeStatus.PENDING) {
