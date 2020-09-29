@@ -53,7 +53,6 @@ export default class PlayerController {
         }
     }
 
-    @Authorized(Role.ADMIN)
     @Post("/")
     public async createPlayers(@Body() playerObj: Partial<Player>[]): Promise<Player[]> {
         logger.debug("create player endpoint");
