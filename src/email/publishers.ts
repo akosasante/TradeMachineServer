@@ -33,10 +33,9 @@ export class EmailPublisher extends Publisher {
         return await this.queue!.add(jobName, job, opts);
     }
 
-    private async queueTradeEmail(trade: Trade, email: string, sendToV2 = true, jobName: EmailJobName): Promise<Job<TradeEmail>> {
+    private async queueTradeEmail(trade: Trade, email: string, jobName: EmailJobName): Promise<Job<TradeEmail>> {
         const job: TradeEmail = {
             trade: JSON.stringify(trade),
-            sendToV2,
             recipient: email,
         };
         const opts: JobOptions = { attempts: 3, backoff: {type: "exponential", delay: 30000}};
@@ -66,15 +65,15 @@ export class EmailPublisher extends Publisher {
         return await this.queue!.add(jobName, job, opts);
     }
 
-    public async queueTradeRequestMail(trade: Trade, email: string, sendToV2 = true): Promise<Job<TradeEmail>> {
-        return await this.queueTradeEmail(trade, email, sendToV2, "request_trade");
+    public async queueTradeRequestMail(trade: Trade, email: string): Promise<Job<TradeEmail>> {
+        return await this.queueTradeEmail(trade, email, "request_trade");
     }
 
-    public async queueTradeDeclinedMail(trade: Trade, email: string, sendToV2 = true): Promise<Job<TradeEmail>> {
-        return await this.queueTradeEmail(trade, email, sendToV2, "trade_declined");
+    public async queueTradeDeclinedMail(trade: Trade, email: string): Promise<Job<TradeEmail>> {
+        return await this.queueTradeEmail(trade, email, "trade_declined");
     }
 
-    public async queueTradeAcceptedMail(trade: Trade, email: string, sendToV2 = true): Promise<Job<TradeEmail>> {
-        return await this.queueTradeEmail(trade, email, sendToV2, "trade_accepted");
+    public async queueTradeAcceptedMail(trade: Trade, email: string): Promise<Job<TradeEmail>> {
+        return await this.queueTradeEmail(trade, email, "trade_accepted");
     }
 }

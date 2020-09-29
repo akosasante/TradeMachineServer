@@ -13,7 +13,7 @@ import Email from "../models/email";
 export type EmailJobName = "reset_pass" | "registration_email" | "test_email" | "handle_webhook" | "request_trade" | "trade_declined" | "trade_accepted";
 
 type AuthEmailFunction = (u: User) => Promise<SendInBlueSendResponse>;
-type TradeEmailFunction = (r: string, t: Trade, s: boolean) => Promise<SendInBlueSendResponse>;
+type TradeEmailFunction = (r: string, t: Trade) => Promise<SendInBlueSendResponse>;
 type WebhookEmailFunction = (event: any, dao?: any) => Promise<void>;
 
 export interface EmailJob {
@@ -24,7 +24,6 @@ export interface EmailJob {
 export interface TradeEmail {
     trade: string; // JSON representation of trade
     recipient: string;
-    sendToV2: boolean;
 }
 
 interface EmailCallbacks {
@@ -76,7 +75,7 @@ export async function handleTradeEmailJob(emailJob: Job<TradeEmail>) {
                 item.entity = new DraftPick(item.entity as Partial<DraftPick> & Required<Pick<DraftPick, "season" | "round" | "type">>);
             }
         }
-        return await emailTask(emailJob.data.recipient, trade, emailJob.data.sendToV2);
+        return await emailTask(emailJob.data.recipient, trade);
     }
 }
 

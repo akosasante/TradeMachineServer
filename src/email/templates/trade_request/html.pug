@@ -25,7 +25,7 @@ block content
         hr
     .button-container
         a.button-link(href=`${acceptUrl}`)
-            span Accept Trade
+            span= acceptText
         if rejectUrl && rejectUrl.length
             a.button-link(href=`${rejectUrl}`)
                 span Reject Trade

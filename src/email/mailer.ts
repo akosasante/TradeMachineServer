@@ -139,6 +139,12 @@ export const Emailer = {
 
     dao: new EmailDAO(),
 
+    v2Emails: process.env.V2_EMAILS!.split(","),
+
+    sendToV2(email: string) {
+        return Emailer.v2Emails.includes(email);
+    },
+
     async sendPasswordResetEmail(user: User): Promise<SendInBlueSendResponse> {
         const resetPassPage = `${baseDomain}/reset_password?u=${encodeURI(user.passwordResetToken!)}`;
         logger.debug("sending password reset email");
@@ -221,10 +227,16 @@ export const Emailer = {
         });
     },
 
-    async sendTradeRequestEmail(recipient: string, trade: Trade, sendToV2: boolean): Promise<SendInBlueSendResponse> {
-        logger.debug(`preparing trade req email for tradeId: ${trade.id}. sendToV2=${sendToV2}`);
-        rollbar.info("sendTradeRequestEmail", {recipient, sendToV2, id: trade.id});
+    async sendTradeRequestEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+        logger.debug(`preparing trade req email for tradeId: ${trade.id}.`);
         const emailPrefix = recipient.split("@")[0];
+        const sendToV2 = Emailer.sendToV2(recipient);
+        const acceptUrl = sendToV2 ? `${baseDomain}/trade/${trade!.id}/accept` : `${v1BaseDomain}/confirm/${trade.id}_${emailPrefix}`;
+        const acceptText = sendToV2 ? "Accept Trade" : "Review Trade";
+        const rejectUrl = sendToV2 ? `${baseDomain}/trade/${trade!.id}/reject` : "";
+        logger.debug(`sending trade request email to=${recipient}, v2=${sendToV2}, acceptUrl=${acceptUrl}, rejectUrl=${rejectUrl}`);
+        rollbar.info("sendTradeRequestEmail", {recipient, sendToV2, id: trade.id});
+
         return Emailer.emailer.send({
             template: "trade_request",
             message: {
@@ -234,8 +246,9 @@ export const Emailer = {
                 tradeSender: trade!.creator!.name,
                 titleText: getTitleText(trade!),
                 tradesByRecipient: getTradeTextForRequest(trade!),
-                acceptUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/accept` : `${v1BaseDomain}/confirm/${trade.id}_${emailPrefix}`,
-                rejectUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/reject` : "",
+                acceptUrl,
+                acceptText,
+                rejectUrl,
             },
         })
             .then(async (res: SendInBlueSendResponse) => {
@@ -259,6 +272,7 @@ export const Emailer = {
     async sendTradeDeclinedEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
         logger.debug(`got a trade decline email request for tradeId: ${trade.id}`);
         rollbar.info("sendTradeDeclinedEmail", {recipient, id: trade.id});
+
         return Emailer.emailer.send({
             template: "trade_declined",
             message: {
@@ -291,18 +305,23 @@ export const Emailer = {
             });
     },
 
-    async sendTradeSubmissionEmail(recipient: string, trade: Trade, sendToV2: boolean): Promise<SendInBlueSendResponse> {
-        logger.debug(`got a trade submission email request for tradeId: ${trade.id}. sendToV2=${sendToV2}`);
-        rollbar.info("sendTradeSubmissionEmail", {recipient, sendToV2, id: trade.id});
+    async sendTradeSubmissionEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+        logger.debug(`got a trade submission email request for tradeId: ${trade.id}.`);
         const emailPrefix = recipient.split("@")[0];
+        const sendToV2 = Emailer.sendToV2(recipient);
+        const acceptUrl = sendToV2 ? `${baseDomain}/trade/${trade!.id}/submit` : `${v1BaseDomain}/send/${trade.id}_${emailPrefix}`;
+       // const discardUrl = `${baseDomain}/trade/${trade!.id}/discard`
+        logger.debug(`sending trade submission email to=${recipient}, v2=${sendToV2}, acceptUrl=${acceptUrl}, discardUrl=""`);
+        rollbar.info("sendTradeSubmissionEmail", {recipient, sendToV2, id: trade.id});
+
         return Emailer.emailer.send({
             template: "trade_accepted",
             message: {
                 to: recipient,
             },
             locals: {
-                acceptUrl: sendToV2 ? `${baseDomain}/trade/${trade!.id}/submit` : `${v1BaseDomain}/send/${trade.id}_${emailPrefix}`,
-                discardUrl: `${baseDomain}/trade/${trade!.id}/discard`, // TODO: Implement discarding trade
+                acceptUrl,
+                // discardUrl, // TODO: Implement discarding trade
                 tradesByRecipient: getTradeTextForRequest(trade!),
             },
         })
