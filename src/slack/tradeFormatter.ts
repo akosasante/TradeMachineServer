@@ -2,7 +2,7 @@ import TradeItem from "../models/tradeItem";
 import PlayerDAO from "../DAO/PlayerDAO";
 import Player, { PlayerLeagueType } from "../models/player";
 import DraftPickDAO from "../DAO/DraftPickDAO";
-import DraftPick from "../models/draftPick";
+import DraftPick, { LeagueLevel } from "../models/draftPick";
 import ordinal from "ordinal";
 import Trade from "../models/trade";
 import TradeParticipant from "../models/tradeParticipant";
@@ -65,7 +65,7 @@ const TradeFormatter = {
             return zip(tradedPicks, picks)
                 .map(([tradedPick, pick]) => {
                     return `• *${pick!.originalOwner?.name}'s* ${pick!.season} \
-${ordinal(pick!.round)} round pick from _${tradedPick!.sender.name}_`;
+${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick from _${tradedPick!.sender.name}_`;
                 })
                 .join("\n")
                 .trim();
@@ -115,6 +115,17 @@ ${ordinal(pick!.round)} round pick from _${tradedPick!.sender.name}_`;
     getLinkText: () => {
         logger.info("Rendering link text");
         return ":link: Submit trades on the <https://trades.flexfoxfantasy.com|FlexFoxFantasy TradeMachine> by 11:00PM ET";
+    },
+
+    getPickTypeString(pickType: LeagueLevel) {
+        switch (pickType) {
+            case LeagueLevel.MAJORS:
+                return "Major League";
+            case LeagueLevel.HIGH:
+                return "High Minors";
+            case LeagueLevel.LOW:
+                return "Low Minors";
+        }
     },
 };
 
