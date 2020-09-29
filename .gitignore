@@ -34,3 +34,4 @@ tests/coverage
 sheet_creds.json
 /.prod.env
 /tsconfig.old.json
+src/api/helpers/*.json
