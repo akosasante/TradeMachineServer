@@ -16,22 +16,26 @@ function generateColumnsForRecipients(tradeItems: TradeItem[], recipient: Team) 
     const picksReceivedByOwner = TradeItem.filterPicks(itemsReceivedByOwner);
     const picksString = picksReceivedByOwner.map(pickItem => {
         const pick = pickItem.entity as DraftPick;
-        return `${pick.season} ${DraftPick.leagueLevelToString(pick.type)} - round ${pick.round} - ${pick.originalOwner?.name}'s pick FROM ${pickItem.sender.name}`;
+        return `${pick.season} ${DraftPick.leagueLevelToString(pick.type)} - round ${pick.round} - ${getOwnerNameFromTeam(pick.originalOwner)}'s pick FROM ${getOwnerNameFromTeam(pickItem.sender)}`;
     }).join(",\n");
 
     const playersReceivedByOwner = TradeItem.filterPlayers(itemsReceivedByOwner);
     const majorLeaguersReceivedByOwner = playersReceivedByOwner
         .filter(player => (player.entity as Player).league === PlayerLeagueType.MAJOR);
     const playersString = majorLeaguersReceivedByOwner.map(playerItem =>
-        `${(playerItem.entity as Player).name} FROM ${playerItem.sender.name}`
+        `${(playerItem.entity as Player).name} FROM ${getOwnerNameFromTeam(playerItem.sender)}`
     ).join(",\n");
     const prospectsReceivedByOwner = playersReceivedByOwner
         .filter(player => (player.entity as Player).league === PlayerLeagueType.MINOR);
     const prospectsString = prospectsReceivedByOwner.map(playerItem =>
-        `${(playerItem.entity as Player).name} FROM ${playerItem.sender.name}`
+        `${(playerItem.entity as Player).name} FROM ${getOwnerNameFromTeam(playerItem.sender)}`
     ).join(",\n");
 
-    return [recipient.name, playersString, prospectsString, picksString];
+    return [getOwnerNameFromTeam(recipient), playersString, prospectsString, picksString];
+}
+
+function getOwnerNameFromTeam(team?: Team): string {
+    return (team?.owners && team.owners.length) ? (team.owners[0].displayName || team.owners[0].csvName || team.owners[0].email) : (team || {}).name || "";
 }
 
 function generateTradeRow(trade: Trade) {
@@ -39,7 +43,7 @@ function generateTradeRow(trade: Trade) {
         const ratingsBlankField = " ";
         const columns = generateColumnsForRecipients(trade.tradeItems || [], recipient.team);
         return rowsAcc.concat(columns).concat([ratingsBlankField]);
-    }, [(new Date()).toISOString().substring(0, 10)]
+    }, [(trade.dateModified || trade.dateCreated || new Date()).toISOString().substring(0, 10)]
     );
 }
 
