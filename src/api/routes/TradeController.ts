@@ -111,8 +111,6 @@ export default class TradeController {
         }
         const trade = await this.dao.createTrade(tradeObj);
         logger.debug(`created trade: ${inspect(trade)}`);
-        const hydratedTrade = await this.dao.hydrateTrade(trade);
-        await appendNewTrade(hydratedTrade);
         return trade;
     }
 
@@ -232,6 +230,8 @@ export default class TradeController {
             throw new BadRequestError("Trade with this status cannot be submitted");
         }
 
+        const hydratedTrade = await this.dao.hydrateTrade(trade);
+        await appendNewTrade(hydratedTrade);
         return await this.dao.updateStatus(id, TradeStatus.SUBMITTED);
     }
 
@@ -385,6 +385,7 @@ export default class TradeController {
 
         logger.debug("sending slack message");
         await this.slackPublisher.queueTradeAnnouncement(trade);
+        await appendNewTrade(trade);
         rollbar.info("submitV1Trade_Success", {id, senderEmailPrefix});
         return true;
     }
