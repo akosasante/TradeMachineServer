@@ -35,7 +35,7 @@ function generateColumnsForRecipients(tradeItems: TradeItem[], recipient: Team) 
 }
 
 function getOwnerNameFromTeam(team?: Team): string {
-    return (team?.owners && team.owners.length) ? (team.owners[0].displayName || team.owners[0].csvName || team.owners[0].email) : (team || {}).name || "";
+    return (team?.owners && team.owners.length) ? (team.owners.map(o => o.displayName || o.csvName || o.email).join("/")) : (team || {}).name || "";
 }
 
 function generateTradeRow(trade: Trade) {
