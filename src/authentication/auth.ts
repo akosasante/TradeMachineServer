@@ -78,12 +78,13 @@ export async function signInAuthentication(email: string, password: string, user
 
 export async function authorizationChecker(action: Action, allowedRoles: Role[],
                                            userDAO: UserDAO = new UserDAO()): Promise<boolean> {
-    logger.debug("checking roles");
+    logger.debug(`checking roles for: ${inspect(allowedRoles)}`);
     const user = await getUserFromAction(action, userDAO);
     if (user) {
         const userHasRole = allowedRoles.some(role => user.role === role);
         return (!allowedRoles.length || userHasRole || user.isAdmin());
     } else {
+        logger.error("could not find user in action");
         return false;
     }
 }
