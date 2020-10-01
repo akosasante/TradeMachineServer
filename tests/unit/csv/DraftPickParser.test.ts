@@ -30,6 +30,7 @@ describe("DraftPickParser", () => {
     const invalidRowCsv = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks-with-invalid.csv`;
     const invalidHeadersCsv = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks-invalid-headers.csv`;
     const threePlayersWithDupeCsv = `${process.env.BASE_DIR}/tests/resources/three-player-10-picks-with-dupe.csv`;
+    const threePlayerCsvWithPickNumbers = `${process.env.BASE_DIR}/tests/resources/three-player-50-picks-with-25-pick-nums.csv`;
 
     const mockDAO = {
         deleteAllPicks: jest.fn(),
@@ -44,7 +45,7 @@ describe("DraftPickParser", () => {
         Object.values(mockDAO).forEach(mockFn => mockFn.mockReset());
     });
 
-    const draftPickObjKeys = ["currentOwner", "originalOwner", "round", "type", "season"];
+    const draftPickObjKeys = ["currentOwner", "originalOwner", "round", "type", "season", "pickNumber"];
     const pickPredicate = (pick: DraftPick) => Object.keys(pick).every(k => draftPickObjKeys.includes(k));
 
 
@@ -105,6 +106,12 @@ describe("DraftPickParser", () => {
         const res = await processDraftPickCsv(threePlayerCsv, [testTeam1, testTeam2],
             mockDAO as unknown as DraftPickDAO);
         await expect(res).toBeArrayOfSize(32);
+    });
+    it("should include pick numbers if they're included", async () => {
+        const res = await processDraftPickCsv(threePlayerCsvWithPickNumbers, [testTeam1, testTeam2, testTeam3],
+            mockDAO as unknown as DraftPickDAO);
+        await expect(res).toBeArrayOfSize(50);
+        await expect(res.filter(pick => !!pick.pickNumber)).toBeArrayOfSize(25);
     });
     it("should skip any rows from the csv that don't have required props", async () => {
         const res1 = await processDraftPickCsv(invalidRowCsv, [testTeam1, testTeam2, testTeam3],

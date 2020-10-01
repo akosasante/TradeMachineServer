@@ -13,7 +13,7 @@ interface DraftPickCSVRow {
     Round: string;
     "Pick Owner": string;
     Type: "Major"|"High"|"Low";
-    "Pick Number": string;
+    "Pick Number": string | undefined;
 }
 
 let i = 0;
@@ -74,14 +74,14 @@ async function readAndParsePickCsv(path: string, teams: Team[]): Promise<Partial
 
 function parseDraftPick(row: DraftPickCSVRow, teams: Team[], index: number): Partial<DraftPick>|undefined {
     // logger.debug(`INDEX=${index}`);
-    const DRAFT_PICK_PROPS = ["Round", "Pick Owner", "Type", "Owner", "Pick Number"];
+    const DRAFT_PICK_REQUIRED_PROPS = ["Round", "Pick Owner", "Type", "Owner"];
     const KEYWORD_TO_LEVEL: {[key: string]: LeagueLevel} = {
         High: LeagueLevel.HIGH,
         Low: LeagueLevel.LOW,
         Major: LeagueLevel.MAJORS,
     };
 
-    const validRow = validateRow(row, DRAFT_PICK_PROPS);
+    const validRow = validateRow(row, DRAFT_PICK_REQUIRED_PROPS);
     if (!validRow) {
         logger.error(`Invalid row while parsing draft pick csv row: ${inspect(row)}`);
         rollbar.error(`Invalid row while parsing draft pick csv row: ${inspect(row)}`);
@@ -105,6 +105,6 @@ function parseDraftPick(row: DraftPickCSVRow, teams: Team[], index: number): Par
         currentOwner,
         originalOwner,
         season,
-        pickNumber: parseFloat(row["Pick Number"]),
+        pickNumber: row["Pick Number"] ? parseFloat(row["Pick Number"]) : undefined,
     };
 }
