@@ -66,6 +66,7 @@ jobs:
           BASE_URL: http://localhost:8080
           TRADE_WORKSHEET_ID: 9999
           TRADE_SPREADSHEET_ID: test_spreadsheet
+          V2_EMAILS: test@example.com
 
       - name: Run typechecking and linting
         run: npm run typecheck && npm run lint-fix
