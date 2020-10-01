@@ -4,6 +4,7 @@ import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import { EmailPublisher } from "../../email/publishers";
+import { rollbar } from "../../bootstrap/rollbar";
 
 export interface EmailStatusEvent {
     id: number;
@@ -32,6 +33,7 @@ export default class EmailController {
 
     @Post("/sendInMailWebhook")
     public async receiveSendInMailWebhook(@Body() event: EmailStatusEvent, @Res() response: Response): Promise<Response> {
+        rollbar.info("receiveSendInMailWebhook", { event });
         logger.debug(`Received email webhook: ${inspect(event)}`);
         await this.emailPublisher.queueWebhookResponse(event);
         return response.status(200).json({});
@@ -39,6 +41,7 @@ export default class EmailController {
 
     @Post("/testEmail")
     public async sendTestEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
+        rollbar.info("sendTestEmail", { email });
         logger.debug(`Preparing to send test email to: ${email}`);
         const user = await this.userDao.findUser({email});
 
