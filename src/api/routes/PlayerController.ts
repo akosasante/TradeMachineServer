@@ -11,7 +11,7 @@ import TeamDAO from "../../DAO/TeamDAO";
 import Player, { PlayerLeagueType } from "../../models/player";
 import { Role } from "../../models/user";
 import { cleanupQuery, fileUploadOptions as uploadOpts, UUIDPattern } from "../helpers/ApiHelpers";
-import {rollbar} from "../../bootstrap/rollbar";
+import { rollbar } from "../../bootstrap/rollbar";
 
 @JsonController("/players")
 export default class PlayerController {

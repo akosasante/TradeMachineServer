@@ -7,7 +7,7 @@ import { Response } from "express";
 import { Role } from "../../models/user";
 import { TradeStatus } from "../../models/trade";
 import { SlackPublisher } from "../../slack/publishers";
-import {rollbar} from "../../bootstrap/rollbar";
+import { rollbar } from "../../bootstrap/rollbar";
 
 @Controller("/messenger")
 export default class MessengerController {

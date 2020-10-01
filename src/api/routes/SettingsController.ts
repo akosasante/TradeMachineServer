@@ -5,7 +5,7 @@ import SettingsDAO from "../../DAO/SettingsDAO";
 import Settings from "../../models/settings";
 import { Role } from "../../models/user";
 import { UUIDPattern } from "../helpers/ApiHelpers";
-import {rollbar} from "../../bootstrap/rollbar";
+import { rollbar } from "../../bootstrap/rollbar";
 
 @JsonController("/settings")
 export default class SettingsController {

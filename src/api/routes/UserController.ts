@@ -19,7 +19,7 @@ export default class UserController {
     @Get("/")
     public async getAll(@QueryParam("full") full?: boolean): Promise<User[]> {
         logger.debug(`get all users endpoint${full ? " with teams" : ""}`);
-        rollbar.info("getAll", { full });
+        rollbar.info("getAllUsers", { full });
         const users = full ? await this.dao.getAllUsersWithTeams() : await this.dao.getAllUsers();
         logger.debug(`got ${users.length} users`);
         return users;
@@ -28,7 +28,7 @@ export default class UserController {
     @Get(UUIDPattern)
     public async getById(@Param("id") id: string): Promise<User> {
         logger.debug("get one user by id endpoint");
-        rollbar.info("getById", { id });
+        rollbar.info("getUserById", { id });
         const user = await this.dao.getUserById(id);
         logger.debug(`got user: ${user}`);
         return user;
