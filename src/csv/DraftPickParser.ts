@@ -13,7 +13,7 @@ interface DraftPickCSVRow {
     Round: string;
     "Pick Owner": string;
     Type: "Major"|"High"|"Low";
-    "Pick Number": number;
+    "Pick Number": string;
 }
 
 let i = 0;
@@ -105,6 +105,6 @@ function parseDraftPick(row: DraftPickCSVRow, teams: Team[], index: number): Par
         currentOwner,
         originalOwner,
         season,
-        pickNumber: row["Pick Number"],
+        pickNumber: parseFloat(row["Pick Number"]),
     };
 }
