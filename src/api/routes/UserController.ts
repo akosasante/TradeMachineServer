@@ -66,7 +66,7 @@ export default class UserController {
 
     @Authorized(Role.ADMIN)
     @Post("/")
-    public async createUsers(@Body() userObjs: Partial<User>[]): Promise<any> {
+    public async createUsers(@Body() userObjs: Partial<User>[]): Promise<User[]> {
         logger.debug(`create user endpoint: ${inspect(userObjs)}`);
         rollbar.info("createUsers", { userObjs });
         const users = await this.dao.createUsers(userObjs);
