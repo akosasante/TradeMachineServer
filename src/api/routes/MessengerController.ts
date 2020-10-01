@@ -19,7 +19,7 @@ export default class MessengerController {
         this.tradeDao = tradeDao || new TradeDAO();
         this.slackPublisher = slackPublisher || SlackPublisher.getInstance();
     }
-    @Authorized(Role.OWNER)
+
     @Post(`/requestTrade${UUIDPattern}`)
     public async sendRequestTradeMessage(@Param("id") id: string, @Res() response: Response) {
         logger.debug(`queuing trade request email for tradeId: ${id}`);
