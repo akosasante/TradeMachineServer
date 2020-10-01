@@ -25,7 +25,7 @@ app.use(responseTime());
 app.use(rollbar.errorHandler());
 
 // Session tracking
-const COOKIE_MAX_AGE_SECONDS = 60 * 60; // 1 hr
+const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 60 sec * 60 min * 24hr * 7 = 7 days
 const RedisSessionStore = connectRedis(expressSession);
 export const redisClient = redis.createClient(
     Number(process.env.REDIS_PORT || 6379),
