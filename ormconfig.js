@@ -39,6 +39,11 @@ module.exports = [
     {
         ...commonOpts,
         name: "production",
-        schema: "public"
+        schema: "public",
+        cli: {
+            entitiesDir: "dist/models",
+            migrationsDir: "dist/db/migrations",
+            subscribersDir: "dist/db/subscribers",
+        }
     },
 ];

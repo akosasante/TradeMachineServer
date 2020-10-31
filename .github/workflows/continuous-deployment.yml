@@ -115,6 +115,7 @@ jobs:
           script: |
             echo "last command returned: $?"
             cd /opt/Apps/TradeMachine
+            /home/dev_deployer/.asdf/shims/npx tsc "dist/db/migrations/$(ls -A dist/db/migrations/ | grep $MIGRATION_UUID)"
             /home/dev_deployer/.asdf/shims/npx typeorm migration:run -f ormconfig -c production
 
       - name: Notify Rollbar of deploy finish
