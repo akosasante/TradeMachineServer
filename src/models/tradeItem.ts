@@ -34,7 +34,7 @@ export default class TradeItem extends BaseModel {
 
     public entity?: TradedItem;
 
-    @Column({type: "uuid"})
+    @Column()
     public readonly tradeItemId!: string;
 
     @Column({type: "enum", enum: TradeItemType, default: TradeItemType.PLAYER})
