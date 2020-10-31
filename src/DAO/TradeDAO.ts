@@ -90,7 +90,7 @@ public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
     }
 
     public async updateAcceptedBy(id: string, acceptedBy: string[]): Promise<Trade> {
-        await this.tradeDb.update({ id }, { acceptedBy, acceptedOnDate: new Date() });
+        await this.tradeDb.update({ id }, { acceptedBy });
         return await this.getTradeById(id);
     }
 }
