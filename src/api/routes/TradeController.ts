@@ -67,23 +67,9 @@ function validateTradeDecliner(trade: Trade, declinedById: string) {
     return trade.tradeParticipants?.flatMap(tp => tp.team.owners?.map(u => u.id) || []).includes(declinedById);
 }
 
-async function acceptTradeIfValid(dao: TradeDAO, acceptingUser: User, trade: Trade): Promise<string[]> {
-    if (!validateParticipantInTrade(acceptingUser, trade)) {
-        throw new UnauthorizedError("Trade can only be modified by participants or admins");
-    }
-
-    if (!validateStatusChange(acceptingUser, trade, TradeStatus.ACCEPTED)) {
-        throw new BadRequestError("Trade with this status cannot be accepted");
-    }
-
-    const acceptedBy = [...(trade.acceptedBy || []), acceptingUser.id!];
-    await dao.updateAcceptedBy(trade.id!, acceptedBy);
-    return acceptedBy;
-}
-
 @JsonController("/trades")
 export default class TradeController {
-    private readonly dao: TradeDAO;
+    private dao: TradeDAO;
     private emailPublisher: EmailPublisher;
     private slackPublisher: SlackPublisher;
 
@@ -196,7 +182,16 @@ export default class TradeController {
         logger.debug("accept trade endpoint");
         let trade = await this.dao.getTradeById(id);
 
-        const acceptedBy = await acceptTradeIfValid(this.dao, user, trade);
+        if (!validateParticipantInTrade(user, trade)) {
+            throw new UnauthorizedError("Trade can only be modified by participants or admins");
+        }
+
+        if (!validateStatusChange(user, trade, TradeStatus.ACCEPTED)) {
+            throw new BadRequestError("Trade with this status cannot be accepted");
+        }
+
+        const acceptedBy = [...(trade.acceptedBy || []), user.id!];
+        await this.dao.updateAcceptedBy(id, acceptedBy);
 
         if (acceptedBy.length === trade.recipients.length) {
             trade = await this.dao.updateStatus(id, TradeStatus.ACCEPTED);
@@ -339,7 +334,16 @@ export default class TradeController {
             return false;
         }
 
-        const acceptedBy = await acceptTradeIfValid(this.dao, acceptingUser, trade);
+        if (!validateParticipantInTrade(acceptingUser, trade)) {
+            throw new UnauthorizedError("Trade can only be modified by participants or admins");
+        }
+
+        if (!validateStatusChange(acceptingUser, trade, TradeStatus.ACCEPTED)) {
+            throw new BadRequestError("Trade with this status cannot be accepted");
+        }
+
+        const acceptedBy = [...(trade.acceptedBy || []), acceptingUser.id!];
+        await this.dao.updateAcceptedBy(id, acceptedBy);
 
         if (acceptedBy.length === trade.recipients.length) {
             trade = await this.dao.updateStatus(id, TradeStatus.ACCEPTED);

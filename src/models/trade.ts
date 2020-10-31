@@ -81,9 +81,6 @@ export default class Trade extends BaseModel {
     @Column({nullable: true, type: "jsonb"})
     public acceptedBy?: string[];
 
-    @Column({nullable: true})
-    public acceptedOnDate?: Date;
-
     @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade,
         {cascade: true, eager: true})
     public tradeParticipants?: TradeParticipant[];
