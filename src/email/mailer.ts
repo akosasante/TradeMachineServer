@@ -229,11 +229,13 @@ export const Emailer = {
 
     async sendTradeRequestEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
         logger.debug(`preparing trade req email for tradeId: ${trade.id}.`);
+
         const emailPrefix = recipient.split("@")[0];
         const sendToV2 = Emailer.sendToV2(recipient);
         const acceptUrl = sendToV2 ? `${baseDomain}/trade/${trade!.id}/accept` : `${v1BaseDomain}/confirm/${trade.id}_${emailPrefix}`;
         const acceptText = sendToV2 ? "Accept Trade" : "Review Trade";
         const rejectUrl = sendToV2 ? `${baseDomain}/trade/${trade!.id}/reject` : "";
+
         logger.debug(`sending trade request email to=${recipient}, v2=${sendToV2}, acceptUrl=${acceptUrl}, rejectUrl=${rejectUrl}`);
         rollbar.info("sendTradeRequestEmail", {recipient, sendToV2, id: trade.id});
 
