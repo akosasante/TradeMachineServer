@@ -42,7 +42,7 @@
   "author": "Akosua Asante",
   "license": "ISC",
   "dependencies": {
-    "@fast-csv/parse": "^4.3.1",
+    "@fast-csv/parse": "^4.3.6",
     "@slack/webhook": "^5.0.3",
     "axios": "^0.18.1",
     "bcryptjs": "^2.4.3",
