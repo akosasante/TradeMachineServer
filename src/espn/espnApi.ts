@@ -139,11 +139,11 @@ export default class EspnAPI {
     private req: AxiosInstance;
     private ESPNS2_COOKIE = process.env.ESPN_COOKIE;
     private ESPN_SWID = process.env.ESPN_SWID;
-    private static getBaseUrl(season: number = 2019, leagueId: number): string {
+    private static getBaseUrl(season: number = 2020, leagueId: number): string {
         if (season >= 2017) {
             return `http://fantasy.espn.com/apis/v3/games/flb/seasons/${season}/segments/0/leagues/${leagueId}`;
         } else {
-            return `https://fantasy.espn.com/apis/v3/games/ffl/leagueHistory/${leagueId}?seasonId=${season}`;
+            return `https://fantasy.espn.com/apis/v3/games/flb/leagueHistory/${leagueId}?seasonId=${season}`;
         }
     }
 
