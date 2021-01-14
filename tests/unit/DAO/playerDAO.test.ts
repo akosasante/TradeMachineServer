@@ -156,8 +156,9 @@ describe("PlayerDAO", () => {
     it("queryPlayersByName - should call the query the db with the correct params", async () => {
         const queryName = "test";
         const defaultLimit = 50;
+        const defaultCacheTimeout = 60000;
         const expectedWhere = { name: expect.objectContaining({"_value": `%${queryName}%`})};
-        const expectedOptions = { where: expect.objectContaining(expectedWhere), take: defaultLimit, cache: expect.toContainKeys(["id", "milliseconds"])};
+        const expectedOptions = { where: expect.objectContaining(expectedWhere), take: defaultLimit, cache: defaultCacheTimeout };
 
         mockPlayerDb.find.mockResolvedValueOnce([testPlayer1]);
         await playerDAO.queryPlayersByName(queryName);

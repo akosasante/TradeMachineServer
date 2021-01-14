@@ -28,7 +28,7 @@ export default class PlayerDAO {
 
     public async queryPlayersByName(query: string): Promise<Player[]> {
         const defaultLimit = 50;
-        const cacheOptions = { id: "player_name_query", milliseconds: 60000 };
+        const cacheOptions = 60000;
         const where: FindConditions<Player> = { name: ILike(`%${query}%`) };
         return await this.playerDb.find({ where, take: defaultLimit, cache: cacheOptions });
     }
