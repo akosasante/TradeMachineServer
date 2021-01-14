@@ -8,6 +8,13 @@ import UserDO from "../../models/user";
 
 // tslint:disable:max-classes-per-file
 
+// declare the additional fields that we add to express session (via routing-controllers)
+declare module "express-session" {
+    interface Session {
+        user: string | undefined;
+    }
+}
+
 export class LoginHandler implements ExpressMiddlewareInterface {
     constructor(public userDAO: UserDAO = new UserDAO()) {}
 
