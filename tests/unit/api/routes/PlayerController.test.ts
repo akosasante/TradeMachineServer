@@ -20,6 +20,7 @@ describe("PlayerController", () => {
         getAllPlayers: jest.fn(),
         getPlayerById: jest.fn(),
         findPlayers: jest.fn(),
+        queryPlayersByName: jest.fn(),
         createPlayers: jest.fn(),
         updatePlayer: jest.fn(),
         deletePlayer: jest.fn(),
@@ -107,6 +108,21 @@ describe("PlayerController", () => {
                 throw new EntityNotFoundError(Player, "ID not found.");
             });
             await expect(playerController.findPlayersByQuery(query)).rejects.toThrow(EntityNotFoundError);
+        });
+    });
+
+    describe("findPlayersByName method", () => {
+        const query = "lop";
+
+        it("should find players by the given query options", async () => {
+            const leagueId = 1;
+
+            mockPlayerDAO.queryPlayersByName.mockReturnValue([testPlayer]);
+            const res = await playerController.findPlayersByName(query, leagueId);
+
+            expect(mockPlayerDAO.queryPlayersByName).toHaveBeenCalledTimes(1);
+            expect(mockPlayerDAO.queryPlayersByName).toHaveBeenCalledWith(query, leagueId);
+            expect(res).toEqual([testPlayer]);
         });
     });
 
