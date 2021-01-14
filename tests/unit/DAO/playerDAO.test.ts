@@ -157,11 +157,12 @@ describe("PlayerDAO", () => {
         const queryName = "test";
         const defaultLimit = 50;
         const defaultCacheTimeout = 60000;
-        const expectedWhere = { name: expect.objectContaining({"_value": `%${queryName}%`})};
+        const leagueId = 1;
+        const expectedWhere = { name: expect.objectContaining({"_value": `%${queryName}%`}), league: leagueId };
         const expectedOptions = { where: expect.objectContaining(expectedWhere), take: defaultLimit, cache: defaultCacheTimeout };
 
         mockPlayerDb.find.mockResolvedValueOnce([testPlayer1]);
-        await playerDAO.queryPlayersByName(queryName);
+        await playerDAO.queryPlayersByName(queryName, leagueId);
 
         expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
         expect(mockPlayerDb.find).toHaveBeenCalledWith(expectedOptions);
