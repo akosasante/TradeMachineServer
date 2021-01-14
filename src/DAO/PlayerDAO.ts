@@ -29,7 +29,10 @@ export default class PlayerDAO {
     public async queryPlayersByName(query: string, league?: number): Promise<Player[]> {
         const defaultLimit = 50;
         const cacheOptions = 60000;
-        const where: FindConditions<Player> = { name: ILike(`%${query}%`), league };
+        const where: FindConditions<Player> = { name: ILike(`%${query}%`) };
+        if (league) {
+            where.league = league;
+        }
         return await this.playerDb.find({ where, take: defaultLimit, cache: cacheOptions });
     }
 
