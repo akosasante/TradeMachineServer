@@ -190,6 +190,33 @@ describe("Player API endpoints", () => {
         });
     });
 
+    describe("GET /players/search_by_name?name (search for players by name)", () => {
+        const findRequest = (name: string, status: number = 200) =>
+            makeGetRequest(request(app), `/players/search_by_name?name=${name}`, status);
+        const findRequestWithLeagueId = (name: string, league: number, status: number = 200) =>
+            makeGetRequest(request(app), `/players/search_by_name?name=${name}&league=${league}`, status);
+
+        it("should return players whose names match the given query", async () => {
+            const {body} = await findRequest("aro");
+            const expected = {...testPlayer2,
+                dateCreated: expect.stringMatching(DatePatternRegex),
+                dateModified: expect.stringMatching(DatePatternRegex),
+            };
+            expect(body).toBeArrayOfSize(1);
+            expect(body[0]).toMatchObject(expected);
+        });
+
+        it("should allow passing in a leagueId to further filter the results", async () => {
+            const {body} = await findRequestWithLeagueId("aro", 1);
+            const expected = {...testPlayer2,
+                dateCreated: expect.stringMatching(DatePatternRegex),
+                dateModified: expect.stringMatching(DatePatternRegex),
+            };
+            expect(body).toBeArrayOfSize(1);
+            expect(body[0]).toMatchObject(expected);
+        });
+    });
+
     describe("PUT /players/:id (update one player)", () => {
         const putRequest = (id: string, playerObj: Partial<Player>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>

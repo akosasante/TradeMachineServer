@@ -57,6 +57,14 @@ export default class PlayerController {
         }
     }
 
+    @Get("/search_by_name")
+    public async findPlayersByName(@QueryParam("name") partialName: string, @QueryParam("league") leagueId?: number): Promise<Player[]> {
+        logger.debug(`searching for players with names that contain: ${partialName} in league ${leagueId}`);
+        rollbar.info("findPlayersByName", { partialName, leagueId });
+
+        return await this.dao.queryPlayersByName(partialName, leagueId);
+    }
+
     @Post("/")
     public async createPlayers(@Body() playerObj: Partial<Player>[]): Promise<Player[]> {
         logger.debug("create player endpoint");

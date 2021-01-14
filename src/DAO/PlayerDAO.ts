@@ -1,4 +1,4 @@
-import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
+import { DeleteResult, FindManyOptions, FindConditions, getConnection, ILike, In, InsertResult, Repository } from "typeorm";
 import Player from "../models/player";
 
 export default class PlayerDAO {
@@ -21,8 +21,19 @@ export default class PlayerDAO {
         return await this.playerDb.findOne({name});
     }
 
-    public async findPlayers(query: Partial<Player>): Promise<Player[]> {
-        return await this.playerDb.find({where: query});
+    public async findPlayers(query: Partial<Player>, limit?: number): Promise<Player[]> {
+        const options: FindManyOptions = limit ? { where: query, take: limit } : { where: query };
+        return await this.playerDb.find(options);
+    }
+
+    public async queryPlayersByName(query: string, league?: number): Promise<Player[]> {
+        const defaultLimit = 50;
+        const cacheOptions = 60000;
+        const where: FindConditions<Player> = { name: ILike(`%${query}%`) };
+        if (league) {
+            where.league = league;
+        }
+        return await this.playerDb.find({ where, take: defaultLimit, cache: cacheOptions });
     }
 
     public async createPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
