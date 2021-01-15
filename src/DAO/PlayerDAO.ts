@@ -33,7 +33,7 @@ export default class PlayerDAO {
         if (league) {
             where.league = league;
         }
-        return await this.playerDb.find({ where, take: defaultLimit, cache: cacheOptions });
+        return await this.playerDb.find({ where, take: defaultLimit, cache: cacheOptions, order: {name: "ASC"} });
     }
 
     public async createPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
