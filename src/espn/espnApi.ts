@@ -208,7 +208,7 @@ export default class EspnAPI {
             );
 
             if (associatedEspnTeam) {
-                await teamDao.updateTeam(team.id!, {espnTeam: associatedEspnTeam});
+                await teamDao.updateTeam(team.id!, {espnTeam: associatedEspnTeam, name: `${associatedEspnTeam.location} ${associatedEspnTeam.nickname}` || team.name});
             }
         }
     }
