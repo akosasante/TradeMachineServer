@@ -31,6 +31,9 @@ if (process.env.NODE_ENV !== "test") {
         filename: `${logDir}/server-error.log`,
         level: "error",
         eol: "\r\n",
+        maxsize: 52428800,
+        maxFiles: 10,
+        tailable: true,
     });
 
     combinedLogger = new winston.transports.File({
@@ -38,11 +41,17 @@ if (process.env.NODE_ENV !== "test") {
         level: "info",
         eol: "\r\n",
         format: combine(timestamp({format: timestampFormat}), uncolorize(), fileLogFormat),
+        maxsize: 52428800,
+        maxFiles: 10,
+        tailable: true,
     });
 
     exceptionHandler = new winston.transports.File({
         filename: `${logDir}/uncaught-exceptions.log`,
         eol: "\r\n",
+        maxsize: 52428800,
+        maxFiles: 10,
+        tailable: true,
     });
 }
 // Logger object
