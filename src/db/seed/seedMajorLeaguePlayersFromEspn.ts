@@ -4,6 +4,7 @@ import initializeDb from "../../bootstrap/db";
 import PlayerDAO from "../../DAO/PlayerDAO";
 import EspnAPI from "../../espn/espnApi";
 import logger from "../../bootstrap/logger";
+import TeamDAO from "../../DAO/TeamDAO";
 
 dotenvConfig({path: resolvePath(__dirname, "../../../tests/.env")});
 
@@ -13,12 +14,13 @@ async function run() {
     await initializeDb(process.env.DB_LOGS === "true");
     const espnApi = new EspnAPI(545);
     const playerDAO = new PlayerDAO();
+    const teamDAO = new TeamDAO();
     let year = 2020;
     if (args[0] && !isNaN(parseInt(args[0], 10))) {
         year = parseInt(args[0], 10);
     }
 
-    return await espnApi.updateMajorLeaguePlayers(year, playerDAO);
+    return await espnApi.updateMajorLeaguePlayers(year, playerDAO, teamDAO);
 }
 
 run()
