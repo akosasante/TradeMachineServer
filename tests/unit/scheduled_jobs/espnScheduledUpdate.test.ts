@@ -38,6 +38,6 @@ describe("Espn Scheduled Update Jobs", () => {
         expect(mockEspnApi.updateEspnTeamInfo).toHaveBeenCalledTimes(1);
         expect(mockEspnApi.updateMajorLeaguePlayers).toHaveBeenCalledTimes(1);
         expect(mockEspnApi.updateEspnTeamInfo).toHaveBeenCalledWith(currentYear, mockTeamDao);
-        expect(mockEspnApi.updateMajorLeaguePlayers).toHaveBeenCalledWith(currentYear, mockPlayerDao);
+        expect(mockEspnApi.updateMajorLeaguePlayers).toHaveBeenCalledWith(currentYear, mockPlayerDao, mockTeamDao);
     });
 });
