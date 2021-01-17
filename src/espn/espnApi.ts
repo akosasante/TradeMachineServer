@@ -4,6 +4,7 @@ import { uniqWith } from "lodash";
 import logger from "../bootstrap/logger";
 import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";
+import { cleanupQuery } from "../api/helpers/ApiHelpers";
 
 export interface EspnLeagueMember {
     id: string;
@@ -147,6 +148,10 @@ export default class EspnAPI {
         }
     }
 
+    private static sleep(ms = 5000) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     constructor(leagueId: number) {
         this.leagueId = leagueId;
         this.req = axios.create({
@@ -172,7 +177,20 @@ export default class EspnAPI {
     }
 
     public async getAllMajorLeaguePlayers(year: number): Promise<EspnMajorLeaguePlayer[]> {
-        const { data: {players: players} } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`);
+        let total = 0;
+        const players = [];
+        let serverTotal = 0;
+        let offset = 0;
+
+        do {
+            const { data, headers } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`, { headers: {"X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`}});
+            players.push(...data.players);
+            total += data.players.length;
+            offset += 100;
+            serverTotal = serverTotal > 0 ? serverTotal : Number(headers["x-fantasy-filter-player-count"]);
+            await EspnAPI.sleep();
+        } while (serverTotal > 0 && total < serverTotal);
+
         return players;
     }
 
@@ -186,11 +204,17 @@ export default class EspnAPI {
         return teams[0].roster;
     }
 
-    public async updateMajorLeaguePlayers(year: number, playerDAO: PlayerDAO) {
+    public async updateMajorLeaguePlayers(year: number, playerDAO: PlayerDAO, teamDao: TeamDAO) {
+        logger.debug("fetching teams with ESPN teams associated");
+        const allLeagueTeamsWithEspn = await teamDao.findTeams(cleanupQuery({espnId: "!null"}));
         logger.debug(`making espn api call for year: ${year}`);
         const allEspnPlayers = await this.getAllMajorLeaguePlayers(year);
         logger.debug("mapping to player objects");
-        const allPlayers = allEspnPlayers.map(player => Player.convertEspnMajorLeaguerToPlayer(player));
+        const allPlayers = allEspnPlayers.map(player => {
+            const p = Player.convertEspnMajorLeaguerToPlayer(player);
+            p.leagueTeam = allLeagueTeamsWithEspn.find(t => t.espnId === p.meta.espnPlayer.onTeamId);
+            return p;
+        });
         logger.debug("deduping all players");
         const dedupedPlayers = uniqWith(allPlayers, (player1, player2) => (player1.name === player2.name) && (player1.playerDataId === player2.playerDataId));
         logger.debug("batch save to db");
@@ -208,7 +232,7 @@ export default class EspnAPI {
             );
 
             if (associatedEspnTeam) {
-                await teamDao.updateTeam(team.id!, {espnTeam: associatedEspnTeam});
+                await teamDao.updateTeam(team.id!, {espnTeam: associatedEspnTeam, name: `${associatedEspnTeam.location} ${associatedEspnTeam.nickname}` || team.name});
             }
         }
     }
