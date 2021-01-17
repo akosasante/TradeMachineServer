@@ -95,7 +95,7 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
 
 async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO, append: boolean = false): Promise<Partial<Player>[]> {
     logger.debug(`CSV PLAYERS: ${csvPlayers.length}`);
-    const existingPlayers = await playerDAO.getAllPlayers();
+    const existingPlayers = await playerDAO.findPlayers({ league: PlayerLeagueType.MINOR });
     logger.debug(`EXISTING PLAYERS: ${existingPlayers.length}`);
 
     const uniqueWithIds = uniqWith(csvPlayers.filter(player => !!player), (player1, player2) =>
