@@ -15,6 +15,9 @@ import Team from "../../../src/models/team";
 import logger from "../../../src/bootstrap/logger";
 
 const mockedGet = jest.fn();
+const headers = {
+    "x-fantasy-filter-player-count": 1,
+};
 
 jest.mock("axios", () => ({
     create: jest.fn(() => ({
@@ -64,7 +67,7 @@ describe("EspnApi Class", () => {
     });
 
     it("getAllMajorLeaguePlayers/1 - should return league member data", async () => {
-        mockedGet.mockResolvedValueOnce({data: playersJson} as unknown as AxiosPromise);
+        mockedGet.mockResolvedValueOnce({data: playersJson, headers} as unknown as AxiosPromise);
         const res = await Api.getAllMajorLeaguePlayers(2019);
         expect(res).toEqual(playersJson.players);
     });
@@ -82,7 +85,7 @@ describe("EspnApi Class", () => {
     });
 
     it("updateMajorLeaguePlayers/2 - should prepare and perform a batch upsert of major league players", async () => {
-        mockedGet.mockResolvedValueOnce({data: playersJson} as unknown as AxiosPromise);
+        mockedGet.mockResolvedValueOnce({data: playersJson, headers} as unknown as AxiosPromise);
         await Api.updateMajorLeaguePlayers(2019, mockPlayerDao as unknown as PlayerDAO, mockTeamDao as unknown as TeamDAO);
 
         expect(mockPlayerDao.batchUpsertPlayers).toBeCalledTimes(1);
