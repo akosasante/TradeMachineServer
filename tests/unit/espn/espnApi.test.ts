@@ -23,9 +23,11 @@ jest.mock("axios", () => ({
 }) as unknown as AxiosPromise);
 
 const team = TeamFactory.getTeam();
+
 const mockTeamDao = {
     getAllTeams: jest.fn(() => [team]),
     updateTeam: jest.fn(),
+    findTeams: jest.fn(),
 };
 
 const mockPlayerDao = {
@@ -81,7 +83,7 @@ describe("EspnApi Class", () => {
 
     it("updateMajorLeaguePlayers/2 - should prepare and perform a batch upsert of major league players", async () => {
         mockedGet.mockResolvedValueOnce({data: playersJson} as unknown as AxiosPromise);
-        await Api.updateMajorLeaguePlayers(2019, mockPlayerDao as unknown as PlayerDAO);
+        await Api.updateMajorLeaguePlayers(2019, mockPlayerDao as unknown as PlayerDAO, mockTeamDao as unknown as TeamDAO);
 
         expect(mockPlayerDao.batchUpsertPlayers).toBeCalledTimes(1);
         expect(mockPlayerDao.batchUpsertPlayers).toBeCalledWith(expect.toBeArrayOfSize(4));
