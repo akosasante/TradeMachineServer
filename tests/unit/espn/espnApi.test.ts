@@ -86,6 +86,8 @@ describe("EspnApi Class", () => {
 
     it("updateMajorLeaguePlayers/2 - should prepare and perform a batch upsert of major league players", async () => {
         mockedGet.mockResolvedValueOnce({data: playersJson, headers} as unknown as AxiosPromise);
+        const fakeTeamsWithIds = Array.from(Array(10).keys()).map(espnId => new Team({name: "Fake Team", espnId: espnId + 1}));
+        mockTeamDao.findTeams.mockReturnValueOnce(fakeTeamsWithIds);
         await Api.updateMajorLeaguePlayers(2019, mockPlayerDao as unknown as PlayerDAO, mockTeamDao as unknown as TeamDAO);
 
         expect(mockPlayerDao.batchUpsertPlayers).toBeCalledTimes(1);
