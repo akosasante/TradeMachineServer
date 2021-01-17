@@ -38,6 +38,7 @@ describe("PlayerParser", () => {
         getAllPlayers: jest.fn(),
         deleteAllPlayers: jest.fn(),
         batchUpsertPlayers: jest.fn(),
+        findPlayers: jest.fn(),
     };
 
     beforeEach(() => {
