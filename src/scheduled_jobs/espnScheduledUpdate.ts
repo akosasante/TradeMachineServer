@@ -54,7 +54,7 @@ export async function updateEspnData(deps: EspnUpdateDaos) {
 
     await espnApi.updateEspnTeamInfo(currentYear, teamDao);
     logger.debug("team reload complete");
-    await espnApi.updateMajorLeaguePlayers(currentYear, playerDao);
+    await espnApi.updateMajorLeaguePlayers(currentYear, playerDao, teamDao);
     logger.debug("player reload complete");
     return `updated @ ${new Date().toLocaleString()}`;
 }
