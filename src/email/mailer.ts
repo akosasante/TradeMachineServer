@@ -142,7 +142,9 @@ export const Emailer = {
     v2Emails: process.env.V2_EMAILS!.split(","),
 
     sendToV2(email: string) {
-        return Emailer.v2Emails.includes(email);
+        // TODO: Remove completely once we're confident things are working
+        // return Emailer.v2Emails.includes(email);
+        return true;
     },
 
     async sendPasswordResetEmail(user: User): Promise<SendInBlueSendResponse> {
