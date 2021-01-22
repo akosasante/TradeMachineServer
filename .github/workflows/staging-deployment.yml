@@ -1,0 +1,104 @@
+name: Staging Workflow
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  build:
+    name: Transpile typescript code and upload artifacts
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - name: Notify Rollbar of deploy start
+        uses: rollbar/github-deploy-action@2.0.0
+        id: rollbar_pre_deploy
+        with:
+          environment: 'production'
+          version: ${{ github.sha }}
+          status: 'started'
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: ${{ github.actor }}
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Install all packages
+        run: npm install
+
+      - name: Transpile typescript code
+        run: npm run build
+
+      - name: Compress built folders
+        uses:  master-atul/tar-action@v1.0.2
+        id: compress
+        with:
+          command: c
+          files: |
+            ./.tool-versions
+            ./declarations
+            ./dist
+            ./ormconfig.js
+            ./tsconfig.json
+            ./package.json
+            ./package-lock.json
+            ./check_migrations.sh
+          outPath: out-staging.tar.gz
+
+      - name: Upload built folders to artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: transpiled_app_folder
+          path: ./out-staging.tar.gz
+
+
+  deploy:
+    name: Deploy to digital ocean server
+    needs: build
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Download dist folder
+        uses: actions/download-artifact@v2
+        with:
+          name: transpiled_app_folder
+
+      - name: Upload to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "out-staging.tar.gz"
+          target: "/opt/Apps/StagingTradeMachine"
+
+      - name: Unzip and restart the server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /opt/Apps/StagingTradeMachine
+            tar -xzf out-staging.tar.gz --overwrite
+            /home/dev_deployer/.asdf/shims/npm install --production
+            /home/dev_deployer/.asdf/shims/npx pm2 restart trademachine
+            rm out-staging.tar.gz
+
+      - name: Notify Rollbar of deploy finish
+        uses: rollbar/github-deploy-action@1.1.0
+        id: rollbar_post_deploy
+        with:
+          environment: 'staging'
+          version: ${{ github.sha }}
+          status: 'succeeded'
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: ${{ github.actor }}
+          DEPLOY_ID: ${{ steps.rollbar_pre_deploy.outputs.deploy_id }}
