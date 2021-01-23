@@ -88,6 +88,7 @@ jobs:
             cd /opt/Apps/StagingTradeMachine
             tar -xzf out-staging.tar.gz --overwrite
             /home/dev_deployer/.asdf/shims/npm install --production
+            /home/dev_deployer/.asdf/shims/npx pm2 restart staging_trademachine
             rm out-staging.tar.gz
 
       - name: Notify Rollbar of deploy finish
