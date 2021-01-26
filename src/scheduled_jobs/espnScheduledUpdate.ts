@@ -23,7 +23,12 @@ export function setupScheduledEspnUpdates() {
 
     espnQueue.on("error", error => {
         logger.error(`Bull error during setupScheduledEspnUpdates: ${inspect(error)}`);
-        rollbar.error(error);
+        rollbar.error("scheduledEspnUpdate error", error);
+    });
+
+    espnQueue.on("stalled", job => {
+        logger.error(`Bull stalled during setupScheduledEspnUpdates: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        rollbar.error("scheduledEspnUpdate stalled", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
     });
 
     espnQueue.on("active", job => {
@@ -36,7 +41,7 @@ export function setupScheduledEspnUpdates() {
 
     espnQueue.on("failed", (job, err) => {
         logger.error(`"setupScheduledEspnUpdates Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
-        rollbar.error(err);
+        rollbar.error("scheduledEspnUpdate failed", err);
     });
 }
 
@@ -50,7 +55,8 @@ export async function updateEspnData(deps: EspnUpdateDaos) {
     const playerDao = deps.playerDao || new PlayerDAO();
     const teamDao = deps.teamDao || new TeamDAO();
     const espnApi = deps.espnApi || new EspnAPI(545);
-    const currentYear = new Date().getFullYear();
+    // const currentYear = new Date().getFullYear();
+    const currentYear = 2020; // TODO: Manually set until ESPN gets their api updated
 
     await espnApi.updateEspnTeamInfo(currentYear, teamDao);
     logger.debug("team reload complete");

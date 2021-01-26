@@ -32,6 +32,7 @@ export function setupSlackConsumers() {
     });
 
     slackQueue.on("completed", (job, _result) => {
+        rollbar.info("Slack Worker completed", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
         logger.info(`Slack Worker completed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
     });
 

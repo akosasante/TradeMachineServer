@@ -5,7 +5,6 @@ import axios, { AxiosResponse } from "axios";
 import Player, { PlayerLeagueType } from "../models/player";
 import { merge, partition, uniqWith } from "lodash";
 import { inspect } from "util";
-import { v4 as uuid } from "uuid";
 import { cleanJobForLogging } from "./job_utils";
 import { rollbar } from "../bootstrap/rollbar";
 
@@ -20,11 +19,16 @@ export function setupScheduledMlbMinorLeagueUpdates() {
     mlbQueue.process(JobName, async () => {
         return await updateMinorLeaguePlayers({});
     });
-    mlbQueue.add(JobName, uuid(), { repeat: { cron } });
+    mlbQueue.add(JobName, { repeat: { cron } });
 
     mlbQueue.on("error", error => {
         logger.error(`Bull error during mlbMinorsScheduledUpdate: ${inspect(error)}`);
-        rollbar.error(error);
+        rollbar.error("mlbMinorsScheduledUpdate error", error);
+    });
+
+    mlbQueue.on("stalled", job => {
+        logger.error(`Bull stalled during mlbMinorsScheduledUpdate: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        rollbar.error("mlbMinorsScheduledUpdate stalled", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
     });
 
     mlbQueue.on("active", job => {

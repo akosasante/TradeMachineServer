@@ -58,6 +58,7 @@ export function setupEmailConsumers() {
     });
 
     emailQueue.on("completed", (job, _result) => {
+        rollbar.info("Email Worker completed", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
         logger.info(`Email Worker completed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
     });
 
