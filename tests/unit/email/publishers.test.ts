@@ -28,7 +28,7 @@ describe("EmailPublisher", () => {
     const tradeJson = JSON.stringify(trade);
     const event = {
         event: "request",
-        email: "example@example.com",
+        email: "example@example+test.com",
         id: 134503,
         date: "2020-04-11 00:13:02",
         ts: 1586556782,

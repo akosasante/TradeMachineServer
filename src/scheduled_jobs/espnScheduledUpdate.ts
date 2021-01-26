@@ -36,6 +36,7 @@ export function setupScheduledEspnUpdates() {
     });
 
     espnQueue.on("completed", (job, _result) => {
+        rollbar.info("setupScheduledEspnUpdates Worker completed", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
         logger.info(`setupScheduledEspnUpdates Worker completed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
     });
 

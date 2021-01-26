@@ -6,6 +6,7 @@ import Player, { PlayerLeagueType } from "../models/player";
 import { merge, partition, uniqWith } from "lodash";
 import { inspect } from "util";
 import { cleanJobForLogging } from "./job_utils";
+import { v4 as uuid } from "uuid";
 import { rollbar } from "../bootstrap/rollbar";
 
 export function setupScheduledMlbMinorLeagueUpdates() {
@@ -19,7 +20,7 @@ export function setupScheduledMlbMinorLeagueUpdates() {
     mlbQueue.process(JobName, async () => {
         return await updateMinorLeaguePlayers({});
     });
-    mlbQueue.add(JobName, { repeat: { cron } });
+    mlbQueue.add(JobName, uuid(), { repeat: { cron } });
 
     mlbQueue.on("error", error => {
         logger.error(`Bull error during mlbMinorsScheduledUpdate: ${inspect(error)}`);
@@ -36,7 +37,8 @@ export function setupScheduledMlbMinorLeagueUpdates() {
     });
 
     mlbQueue.on("completed", (job, _result) => {
-         logger.info(`mlbMinorsScheduledUpdate Worker completed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        rollbar.info("mlbMinorsScheduledUpdate Worker completed", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
+        logger.info(`mlbMinorsScheduledUpdate Worker completed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
     });
 
     mlbQueue.on("failed", (job, err) => {
