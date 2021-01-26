@@ -94,7 +94,10 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick from _$
     getSubtitleText(trade: Trade) {
         logger.info("Rendering subtitle text");
         function getSlackUsernamesForOwners(owners: User[]) {
-            return owners.map(owner => "<@" + owner.slackUsername + ">").join(", ");
+            return owners
+                .filter(owner => !!owner.slackUsername)
+                .map(owner => "<@" + owner.slackUsername + ">")
+                .join(", ");
         }
         return `*${new Date().toDateString()}* \
 | Trade requested by ${getSlackUsernamesForOwners(trade.creator!.owners!)} \
