@@ -4,8 +4,8 @@ import { v4 as uuid } from "uuid";
 export class UserFactory {
     public static TEST_EMAIL = "test@example.com";
     public static GENERIC_PASSWORD = "lol";
-    public static ADMIN_EMAIL = "admin@example.com";
-    public static OWNER_EMAIL = "owner@example.com";
+    public static ADMIN_EMAIL = "admin@example+test.com";
+    public static OWNER_EMAIL = "owner@example+test.com";
     public static GENERIC_NAME = "John Smith";
 
     public static getUserObject(email = UserFactory.TEST_EMAIL, displayName = UserFactory.GENERIC_NAME,
