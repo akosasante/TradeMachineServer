@@ -2,7 +2,7 @@ import User, { Role } from "../../src/models/user";
 import { v4 as uuid } from "uuid";
 
 export class UserFactory {
-    public static TEST_EMAIL = "test@example.com";
+    public static TEST_EMAIL = "test@example+test.com";
     public static GENERIC_PASSWORD = "lol";
     public static ADMIN_EMAIL = "admin@example+test.com";
     public static OWNER_EMAIL = "owner@example+test.com";
