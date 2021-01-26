@@ -124,7 +124,7 @@ export default class AuthController {
     @Get("/session_check")
     public async sessionCheck(@CurrentUser({ required: true }) user: User): Promise<User> {
         logger.debug("session check worked " + user);
-        rollbar.info("sessionCheck", { user });
+        // rollbar.info("sessionCheck", { user });
         return user;
     }
 }
