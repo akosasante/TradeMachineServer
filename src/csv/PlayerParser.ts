@@ -25,11 +25,15 @@ export async function processMinorLeagueCsv(csvFilePath: string, teams: Team[], 
     const parsedPlayers = await readAndParseMinorLeagueCsv(csvFilePath, teams);
     logger.debug("DONE PARSING");
 
-    logger.debug("DEDUPING, ADDING PLAYER IDS, FILTERING OUT SAME NAME NULL PID ENTRIES");
-    const playersToInsert = await formatForDb(parsedPlayers, dao, mode === "append");
+    if (mode !== "return") {
+        logger.debug("DEDUPING, ADDING PLAYER IDS, FILTERING OUT SAME NAME NULL PID ENTRIES");
+        const playersToInsert = await formatForDb(parsedPlayers, dao, mode === "append");
 
-    logger.debug(`INSERTING INTO DB ${playersToInsert.length} items`);
-    return dao.batchUpsertPlayers(playersToInsert);
+        logger.debug(`INSERTING INTO DB ${playersToInsert.length} items`);
+        return dao.batchUpsertPlayers(playersToInsert);
+    } else {
+        return parsedPlayers as Player[];
+    }
 }
 
 async function maybeDropMinorPlayers(dao: PlayerDAO, mode?: WriteMode) {
@@ -98,6 +102,8 @@ async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO, 
     const existingPlayers = await playerDAO.getAllPlayers();
     logger.debug(`EXISTING PLAYERS: ${existingPlayers.length}`);
 
+    // Filter the csv list of players to get rid of null entries, and any entries thathave the same name+playerDataId+mlbTeam
+    // Then add the playerId of any existing players in the db that have the same name (this might be bad because it's possible a major leaguer who is different but has the same name exists...)
     const uniqueWithIds = uniqWith(csvPlayers.filter(player => !!player), (player1, player2) =>
         (player1.name === player2.name) &&
         (player1.playerDataId === player2.playerDataId) &&
@@ -108,6 +114,7 @@ async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO, 
         return player;
     });
 
+    // If we chose to overwrite, then take the unique list of players and if there's an existing player with the same name and player Id, reject it from the list
     return append ? uniqueWithIds : uniqueWithIds.filter(player => {
         const existingPlayerSameName = existingPlayers.find(existing => existing.name === player.name);
         return !(existingPlayerSameName && !existingPlayerSameName.playerDataId);
