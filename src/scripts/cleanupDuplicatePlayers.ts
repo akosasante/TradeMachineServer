@@ -78,7 +78,7 @@ SELECT * FROM player WHERE name in (SELECT dupes.name FROM dupes) ORDER by name`
                     const {owner: ownerId, meta} = getMetaFromSheet(minorLeaguer);
                     console.log("deleting major league player because it duplicates a minor leaguer that exists in the sheets", majorLeaguer);
                     await dbConn.query(`DELETE FROM player WHERE id = '${majorLeaguer.id}'`);
-                    await dbConn.query(`UPDATE player SET "playerDataId" = ${playerDataIdToCopyOver}, "leagueTeamId" = '${ownerId}', "meta" = '${meta}'::json  WHERE id = '${minorLeaguer.id}'`);
+                    await dbConn.query(`UPDATE player SET "playerDataId" = ${playerDataIdToCopyOver}, "leagueTeamId" = '${ownerId}', "meta" = '${JSON.stringify(meta)}'::json  WHERE id = '${minorLeaguer.id}'`);
                 }
             }
         }
