@@ -5,6 +5,6 @@ import { setupScheduledMlbMinorLeagueUpdates } from "./scheduled_jobs/mlbMinorsS
 
 const server: Promise<Server> = startServer();
 setupScheduledEspnUpdates();
-setupScheduledMlbMinorLeagueUpdates();
+// setupScheduledMlbMinorLeagueUpdates();
 
 export default server;
