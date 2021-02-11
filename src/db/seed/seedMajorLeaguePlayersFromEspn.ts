@@ -15,7 +15,7 @@ async function run() {
     const espnApi = new EspnAPI(545);
     const playerDAO = new PlayerDAO();
     const teamDAO = new TeamDAO();
-    let year = 2020;
+    let year = 2021;
     if (args[0] && !isNaN(parseInt(args[0], 10))) {
         year = parseInt(args[0], 10);
     }
