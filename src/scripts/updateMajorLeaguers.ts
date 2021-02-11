@@ -10,7 +10,7 @@ async function run() {
     const playerDao = new PlayerDAO();
     const teamDao = new TeamDAO();
     const espnApi = new EspnAPI(545);
-    const year = Number(args[0]) || 2020;
+    const year = Number(args[0]) || 2021;
 
     await espnApi.updateMajorLeaguePlayers(year, playerDao, teamDao);
 }

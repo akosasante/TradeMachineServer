@@ -56,8 +56,7 @@ export async function updateEspnData(deps: EspnUpdateDaos) {
     const playerDao = deps.playerDao || new PlayerDAO();
     const teamDao = deps.teamDao || new TeamDAO();
     const espnApi = deps.espnApi || new EspnAPI(545);
-    // const currentYear = new Date().getFullYear();
-    const currentYear = 2020; // TODO: Manually set until ESPN gets their api updated
+    const currentYear = new Date().getFullYear();
 
     await espnApi.updateEspnTeamInfo(currentYear, teamDao);
     logger.debug("team reload complete");
