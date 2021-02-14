@@ -51,7 +51,7 @@ export default class PlayerDAO {
                 .createQueryBuilder()
                 .insert()
                 .values(playerObjs)
-                .onConflict('("name", "playerDataId") DO UPDATE SET "meta" = player.meta || EXCLUDED.meta, "leagueTeamId" = EXCLUDED."leagueTeamId"')
+                .onConflict('("name", "playerDataId") DO UPDATE SET "meta" = player.meta || EXCLUDED.meta, "leagueTeamId" = EXCLUDED."leagueTeamId", "mlbTeam" = EXCLUDED."mlbTeam"')
                 .execute();
 
             return await this.playerDb.find({id: In(result.identifiers.filter(res => !!res).map(({id}) => id))});
