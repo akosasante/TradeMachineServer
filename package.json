@@ -73,7 +73,7 @@
     "reflect-metadata": "^0.1.13",
     "response-time": "^2.3.2",
     "rollbar": "^2.19.4",
-    "routing-controllers": "latest",
+    "routing-controllers": "0.9.0-alpha.6",
     "typedi": "^0.8.0",
     "typeorm": "^0.2.30",
     "uuid": "^3.4.0",
