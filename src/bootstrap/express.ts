@@ -11,7 +11,7 @@ import { rollbar } from "./rollbar";
 
 const app = express();
 
-// Express configuration
+// Express configuration.
 app.set("port", process.env.PORT || "3000");
 app.set("ip", process.env.IP || "localhost");
 app.set("env", process.env.NODE_ENV || "development");
