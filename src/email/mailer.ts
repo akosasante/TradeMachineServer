@@ -100,7 +100,7 @@ function getTradeTextForRequest(trade: Trade) {
             sender: participant.team.name,
             majors: receivedMajors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
             minors: receivedMinors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
-            picks: receivedPicks.map(([pick, sender]) => `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal((pick as DraftPick).round)} round ${getPickTypeString((pick as DraftPick).type)} pick from ${sender}`),
+            picks: receivedPicks.map(([pick, sender]) => `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal((pick as DraftPick).round)} round ${getPickTypeString((pick as DraftPick).type)} pick${(pick as DraftPick)?.pickNumber ? " (#" + (pick as DraftPick).pickNumber + ")" : ""} from ${sender}`),
         };
     });
 }

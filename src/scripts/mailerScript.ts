@@ -1,24 +1,24 @@
+import initializeDb from "../bootstrap/db";
 import User from "../models/user";
 import logger from "../bootstrap/logger";
 import { inspect } from "util";
-import { Emailer } from "../email/mailer";
-import initializeDb from "../bootstrap/db";
 import TradeDAO from "../DAO/TradeDAO";
 import { TradeItemType } from "../models/tradeItem";
 import DraftPickDAO from "../DAO/DraftPickDAO";
 import PlayerDAO from "../DAO/PlayerDAO";
 
-async function test() {
-    const mailer = Emailer;
-    const user = new User({displayName: "Akosua", email: "tripleabatt@gmail.com"});
-    logger.info("BEFORE");
-    const res = await mailer.sendTestEmail(user);
-    logger.info(`RESULT: ${inspect(res)}`);
-}
+// async function test() {
+//     const mailer = Emailer;
+//     const user = new User({displayName: "Akosua", email: "tripleabatt@gmail.com"});
+//     logger.info("BEFORE");
+//     const res = await mailer.sendTestEmail(user);
+//     logger.info(`RESULT: ${inspect(res)}`);
+// }
 async function testTrade() {
     const args = process.argv.slice(2);
-    const mailer = Emailer;
-    await initializeDb(true);
+    // dynamic import because the Emailer object immediately instantiates the mailDAO
+    // which needs the database to be initialized first.
+    const { Emailer: mailer } = await import( "../email/mailer");
     const tradeDao = new TradeDAO();
     const pickDao = new DraftPickDAO();
     const playerDao = new PlayerDAO();
@@ -32,13 +32,16 @@ async function testTrade() {
     }
     return await mailer.sendTradeSubmissionEmail(args[1] || "tripleabatt@gmail.com", trade);
 }
-testTrade()
-    .then(res => {
-        logger.info(`RESULT: ${inspect(res)}`);
-        process.exit(0);
-    })
-    .catch(err => {
-        logger.error(inspect(err));
-        process.exit(999);
-    });
+
+initializeDb(true).then(() => {
+    testTrade()
+        .then(res => {
+            logger.info(`RESULT: ${inspect(res)}`);
+            process.exit(0);
+        })
+        .catch(err => {
+            logger.error(inspect(err));
+            process.exit(999);
+        });
+});
 // test();
