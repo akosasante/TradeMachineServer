@@ -65,14 +65,14 @@ const TradeFormatter = {
             return zip(tradedPicks, picks)
                 .map(([tradedPick, pick]) => {
                     return `• *${pick!.originalOwner?.name}'s* ${pick!.season} \
-${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick from _${tradedPick!.sender.name}_`;
+${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${pick?.pickNumber ? " (#" + pick.pickNumber + ")" : ""} from _${tradedPick!.sender.name}_`;
                 })
                 .join("\n")
                 .trim();
         } else {
             return picks
                 .map((pick: DraftPick) => {
-                    return `• *${pick.originalOwner?.name}'s* ${pick.season} ${ordinal(pick.round)} round ${this.getPickTypeString(pick!.type)} pick`;
+                    return `• *${pick.originalOwner?.name}'s* ${pick.season} ${ordinal(pick.round)} round ${this.getPickTypeString(pick!.type)} pick${pick?.pickNumber ? " (#" + pick.pickNumber + ")" : ""}`;
                 })
                 .join("\n")
                 .trim();
