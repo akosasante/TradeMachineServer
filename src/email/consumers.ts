@@ -49,8 +49,13 @@ export function setupEmailConsumers() {
     emailQueue.process("trade_accepted", handleTradeEmailJob);
 
     emailQueue.on("error", error => {
-        logger.error(`Bull error during email queue job: ${inspect(error)}`);
-        rollbar.error(error);
+        logger.error(`Bull error during Email Worker job: ${inspect(error)}`);
+        rollbar.error("Email Worker error", error);
+    });
+
+    emailQueue.on("stalled", job => {
+        logger.error(`Bull stalled during Email Worker job: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        rollbar.error("Email Worker job stalled", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
     });
 
     emailQueue.on("active", job => {
@@ -64,6 +69,6 @@ export function setupEmailConsumers() {
 
     emailQueue.on("failed", (job, err) => {
         logger.error(`"Email Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
-        rollbar.error(err);
+        rollbar.error("Email Worker job failed", err);
     });
 }

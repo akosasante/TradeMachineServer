@@ -23,8 +23,13 @@ export function setupSlackConsumers() {
     slackQueue.process("trade_announce", x => processTradeAnnounceJob(x));
 
     slackQueue.on("error", error => {
-        logger.error(`Bull error during slack queue cron job: ${inspect(error)}`);
-        rollbar.error(error);
+        logger.error(`Bull error during Slack Worker job: ${inspect(error)}`);
+        rollbar.error("Slack Worker job error", error);
+    });
+
+    slackQueue.on("stalled", job => {
+        logger.error(`Bull stalled during Slack Worker job: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        rollbar.error("Slack Worker job stalled", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
     });
 
     slackQueue.on("active", job => {
@@ -38,6 +43,6 @@ export function setupSlackConsumers() {
 
     slackQueue.on("failed", (job, err) => {
         logger.error(`"Slack Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
-        rollbar.error(err);
+        rollbar.error("Slack Worker failed", err);
     });
 }
