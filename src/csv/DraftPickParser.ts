@@ -17,7 +17,7 @@ interface DraftPickCSVRow {
 }
 
 let i = 0;
-const season = 2020; // TODO: How to get these values from our CSVs. Maybe have some set aside cells; or force this as an attribute of the api call
+const season = 2021; // TODO: How to get these values from our CSVs. Maybe have some set aside cells; or force this as an attribute of the api call
 
 export async function processDraftPickCsv(csvFilePath: string, teams: Team[], dao: DraftPickDAO, mode?: WriteMode)
     : Promise<DraftPick[]> {
