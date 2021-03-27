@@ -18,7 +18,7 @@ app.set("env", process.env.NODE_ENV || "development");
 app.set("json spaces", 2);
 app.set("trust proxy", 1);
 app.use(compression());
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: "10mb"}));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan("dev", { stream: { write: message => logger.info(message.trim()) } }));
 app.use(responseTime());
