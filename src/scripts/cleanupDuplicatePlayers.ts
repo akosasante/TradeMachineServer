@@ -1,8 +1,8 @@
 import initializeDb from "../bootstrap/db";
 import { getConnection } from "typeorm";
 import { uniqBy } from "lodash";
-import {getCsvFromUrl} from "../db/seed/helpers/csvHelper";
-import {processMinorLeagueCsv} from "../csv/PlayerParser";
+import { getCsvFromUrl } from "../db/seed/helpers/csvHelper";
+import { processMinorLeagueCsv } from "../csv/PlayerParser";
 import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";
 import Player from "../models/player";
