@@ -45,7 +45,7 @@ jobs:
         run: npm ci
 
       - name: Build js files
-        run: npm run build
+        run: make build
 
       - name: Setup db
         run: node db_setup.js
@@ -55,7 +55,7 @@ jobs:
           PGDATABASE: ${{ secrets.PG_DB }}
 
       - name: Run unit and integration tests
-        run: npm run test
+        run: make test-ci
         env:
           PG_USER: ${{ secrets.PG_USER }}
           PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
@@ -69,5 +69,5 @@ jobs:
           V2_EMAILS: test@example.com
 
       - name: Run typechecking and linting
-        run: npm run typecheck && npm run lint-fix
+        run: make typecheck && make lint
 
