@@ -1,9 +1,6 @@
-MIGRATION_COMMAND := migration:generate
-
 # List any targets that are not an actual file here to ensure they are always run
+.PHONY: help
 .PHONY: help test-ci test-unit test-integration test-update-snapshots test-local
-.PHONY: disable-logs disable-db-logging test-unit-no-logs test-integration-no-logs test-local-no-logs
-.PHONY: test-unit-no-db-logging test-integration-no-db-logging test-local-no-db-logging
 .PHONY: watch-ts-files watch-js-server dev-server watch-js-debug-server debug-server
 .PHONY: lint lint-fix compile-ts copy-email-templates build serve typecheck
 .PHONY: generate-migration run-migration revert-migration
@@ -21,35 +18,39 @@ test-ci: ## run tests using CI config, and no logging
   --detectOpenHandles --runInBand --silent --bail --forceExit --ci
 
 test-unit: ## run tests using local testing config, only run tests in `unit` folder, run in parallel
+	@read -r -p $$'\e[4m\e[96m Do you want to enable logging? [Y/n]\e[0m: ' GENERAL_LOGGING_ENABLED; \
+	read -r -p $$'\e[4m\e[96m Do you want to enable database logging? [Y/n]\e[0m: ' DB_LOGGING_ENABLED; \
+	if [[ $$GENERAL_LOGGING_ENABLED = '' || $$GENERAL_LOGGING_ENABLED = 'y' || $$GENERAL_LOGGING_ENABLED = 'Y' ]]; \
+	then \
+	  export ENABLE_LOGS=true; \
+  	else \
+  	  export ENABLE_LOGS=false; \
+  	fi; \
+	if [[ $$DB_LOGGING_ENABLED = '' || $$DB_LOGGING_ENABLED = 'y' || $$DB_LOGGING_ENABLED = 'Y' ]]; \
+	then \
+	  export DB_LOGS=true; \
+	else \
+	  export DB_LOGS=false; \
+	fi; \
 	NODE_ENV=test \
-	jest --config ./jest.config.js \
+	npx jest --config ./jest.config.js \
 	--detectOpenHandles --bail --forceExit --testPathPattern=unit/
 
 test-integration: ## run tests using local testing config, only run tests in `integration` folder, run tests serially
 	NODE_ENV=test \
-	jest --config ./jest.config.js \
+	npx jest --config ./jest.config.js \
 	--detectOpenHandles --runInBand --bail --forceExit --testPathPattern=integration/
 
 test-update-snapshots: ## update the jest snapshots (currently only targeted to mailer folder)
 	NODE_ENV=test \
-	jest --config ./jest.ci-config.js \
+	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=mailer --update-snapshot
 
+test-watch: ## Watch for changes and run tests for git changed files
+	NODE_ENV=test \
+	npx jest --watch --config ./jest.config.js
+
 test-local: test-unit test-integration ## run unit, then integration tests using local config
-
-disable-logs: #! do not log to any output
-	export ENABLE_LOGS = false
-
-disable-db-logging: #! exclude db logs from output
-	export DB_LOGS = false
-
-test-unit-no-logs: disable-logs test-unit ## local unit tests with no logging
-test-integration-no-logs: disable-logs test-integration ## local integration tests with no logging
-test-local-no-logs: disable-logs test-local ## run local test suites with no logging
-
-test-unit-no-db-logging: disable-db-logging test-unit ## local unit tests with no database logging
-test-integration-no-db-logging: disable-db-logging test-integration ## local integration tests with no database logging
-test-local-no-db-logging: disable-db-logging test-local ## run local test suites with no database logging
 
 # |----------- LOCAL DEV SCRIPTS ---------|
 watch-ts-files: ## Watch tsconfig input files and compile typescript to javascript files
