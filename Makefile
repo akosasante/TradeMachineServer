@@ -6,9 +6,7 @@ MIGRATION_COMMAND := migration:generate
 .PHONY: test-unit-no-db-logging test-integration-no-db-logging test-local-no-db-logging
 .PHONY: watch-ts-files watch-js-server dev-server watch-js-debug-server debug-server
 .PHONY: lint lint-fix compile-ts copy-email-templates build serve typecheck
-.PHONY: generate-migration generate-migration-prod generate-migration-test
-.PHONY: run-migration run-migration-prod run-migration-test
-.PHONY: revert-migration revert-migration-prod revert-migration-test
+.PHONY: generate-migration run-migration revert-migration
 
 help: ## show make commands
 	@echo "\n"
@@ -102,31 +100,37 @@ typecheck: ## Check for type errors that would caausee faiilures to build
 	tsc --noEmit --incremental false
 
 # |----------- DATABASE MIGRATION SCRIPTS ---------|
-generate-migration: compile-ts ## Generate a new migration file with name=MIGRATION_NAME
-	npx typeorm migration:generate -f ormconfig -c development -n $(MIGRATION_NAME)
+generate-migration: ## Generate a new migration file with name=MIGRATION_NAME and using config for ENV
+	@read -r -p $$'\e[4m\e[96m Please enter the environment/config name to use (default: development)\e[0m: ' ENV; \
+  	read -r -p $$'\e[4m\e[96m Please enter migration name (required)\e[0m: ' MIGRATION_NAME; \
+	if [[ $$ENV = '' ]]; \
+	then \
+	  export SELECTED_ENV=development; \
+  	else \
+  	  export SELECTED_ENV=$$ENV; \
+  	fi; \
+	if [[ $$MIGRATION_NAME = '' ]]; \
+	then \
+	  echo "A name is required"; exit 1; \
+	else \
+	  export SELECTED_NAME=$$MIGRATION_NAME; \
+	fi; \
+  	npx typeorm migration:generate -f ormconfig -c "$$SELECTED_ENV" -n "$$SELECTED_NAME"
 
-run-migration: compile-ts ## Run all unapplied migration files
-	npx typeorm migration:run -f ormconfig -c development
+run-migration: ## Run all unapplied migration files using config file=ENV
+	@read -r -p "please enter the environment/config name to use (default: development): " ENV; \
+	if [[ $$ENV = '' ]]; \
+	then \
+	  npx typeorm migration:run -f ormconfig -c development; \
+  	else \
+  	  npx typeorm migration:run -f ormconfig -c $$ENV; \
+  	fi
 
-revert-migration: compile-ts ## Rever the most recently applied migration
-	npx typeorm migration:revert -f ormconfig -c development
-
-
-generate-migration-prod: compile-ts ## Generate a new production migration file with name=MIGRATION_NAME
-	npx typeorm migration:generate -f ormconfig -c production -n $(MIGRATION_NAME)
-
-run-migration-prod: compile-ts ## Run all unapplied production migration files
-	npx typeorm migration:run -f ormconfig -c production
-
-revert-migration-prod: compile-ts ## Rever the most recently applied production migration
-	npx typeorm migration:revert -f ormconfig -c production
-
-
-generate-migration-test: compile-ts ## Generate a new test migration file with name=MIGRATION_NAME
-	npx typeorm migration:generate -f ormconfig -c test -n $(MIGRATION_NAME)
-
-run-migration-test: compile-ts ## Run all unapplied test migration files
-	npx typeorm migration:run -f ormconfig -c test
-
-revert-migration-test: compile-ts ## Rever the most recently applied test migration
-	npx typeorm migration:revert -f ormconfig -c test
+revert-migration: ## Revert the most recently applied migration using config file=ENV
+	@read -r -p "please enter the environment/config name to use (default: development): " ENV; \
+	if [[ $$ENV = '' ]]; \
+	then \
+	  npx typeorm migration:revert -f ormconfig -c development; \
+  	else \
+  	  npx typeorm migration:revert -f ormconfig -c $$ENV; \
+  	fi
