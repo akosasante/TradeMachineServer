@@ -97,7 +97,7 @@ build: compile-ts copy-email-templates ## Build steps required to release the se
 serve: ## Serve the node server statically (no restarting on file changes)
 	node -r dotenv/config ./dist/server.js
 
-typecheck: ## Check for type errors that would caausee faiilures to build
+typecheck: ## Check for type errors that would cause failures to build
 	tsc --noEmit --incremental false
 
 # |----------- DATABASE MIGRATION SCRIPTS ---------|
