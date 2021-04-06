@@ -1,6 +1,6 @@
 import "jest";
 import "jest-extended";
-import Player, {PlayerLeagueType} from "../../../src/models/player";
+import Player, { PlayerLeagueType } from "../../../src/models/player";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import logger from "../../../src/bootstrap/logger";
 import { clone } from "lodash";
@@ -15,6 +15,35 @@ describe("Player Class", () => {
 
     const playerObj = PlayerFactory.getPlayerObject();
     const player = new Player(playerObj);
+    const espnPlayer = {
+        "id": 2966,
+        "lineupLocked": true,
+        "onTeamId": 0,
+        "player": {
+            "active": true,
+            "defaultPositionId": 1,
+            "droppable": true,
+            "eligibleSlots": [12, 9, 13, 14, 16, 17],
+            "firstName": "Luis",
+            "fullName": "Luis Ortiz",
+            "gamesPlayedByPosition": {"1": 1},
+            "id": 2966,
+            "injured": false,
+            "injuryStatus": "ACTIVE",
+            "jersey": "59",
+            "lastName": "Ortiz",
+            "proTeamId": 1,
+        },
+        "ratings": {
+            "0": {"positionalRanking": 326, "totalRanking": 1353, "totalRating": -3.5},
+            "1": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0},
+            "2": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0},
+            "3": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0},
+        },
+        "rosterLocked": true,
+        "status": "FREEAGENT",
+        "tradeLocked": false,
+    };
 
     describe("constructor", () => {
         it("should construct the object as expected", () => {
@@ -38,41 +67,17 @@ describe("Player Class", () => {
             expect(player.parse()).toEqual(playerObj);
             expect(player.parse()).toEqual(expect.any(Object));
         });
+
+        it("getEspnEligiblePositions/0 - should return a comma-separated list of eligible ESPN positions for the player", () => {
+            const convertedPlayer = Player.convertEspnMajorLeaguerToPlayer(espnPlayer);
+            const eligiblePositions = convertedPlayer.getEspnEligiblePositions();
+            expect(eligiblePositions).toEqual("CF, SP");
+        });
     });
 
     describe("static methods", () => {
-        const espnPlayer = {
-            "id": 2966,
-            "lineupLocked": true,
-            "onTeamId": 0,
-            "player": {
-                "active": true,
-                "defaultPositionId": 1,
-                "droppable": true,
-                "eligibleSlots": [13, 14, 16, 17],
-                "firstName": "Luis",
-                "fullName": "Luis Ortiz",
-                "gamesPlayedByPosition": {"1": 1},
-                "id": 2966,
-                "injured": false,
-                "injuryStatus": "ACTIVE",
-                "jersey": "59",
-                "lastName": "Ortiz",
-                "proTeamId": 1,
-            },
-            "ratings": {
-                "0": {"positionalRanking": 326, "totalRanking": 1353, "totalRating": -3.5},
-                "1": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0},
-                "2": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0},
-                "3": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0}
-            },
-            "rosterLocked": true,
-            "status": "FREEAGENT",
-            "tradeLocked": false,
-        };
         const convertedPlayer = Player.convertEspnMajorLeaguerToPlayer(espnPlayer);
-        const noNamePlayer = clone(espnPlayer);
-        delete noNamePlayer.player.fullName;
+        const {player: {fullName: ignoreFullName}, ...noNamePlayer} = clone(espnPlayer);
 
         it("convertEspnMajorLeaguerToPlayer/1 - should always assume major league players", () => {
             expect(convertedPlayer.league).toEqual(PlayerLeagueType.MAJOR);

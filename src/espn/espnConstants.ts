@@ -287,7 +287,7 @@ export const EspnEligiblePositionMapping: {[key: number]: string} = {
     18: "IF", // ?
 };
 
-export const EspnNonPositionalNonValidSlots = [5, 6, 7, 11, 13, 16, 17, 18, 19];
+export const EspnNonPositionalNonValidSlots = [5, 6, 7, 11, 12, 13, 16, 17, 18, 19];
 
 export function espnMajorLeagueTeamFromId(id?: number) {
     return EspnTeamMapping.find(team => team.id === id);
