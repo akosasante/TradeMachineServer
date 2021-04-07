@@ -37,6 +37,20 @@ test-unit: ## run tests using local testing config, only run tests in `unit` fol
 	--detectOpenHandles --bail --forceExit --testPathPattern=unit/
 
 test-integration: ## run tests using local testing config, only run tests in `integration` folder, run tests serially
+	@read -r -p $$'\e[4m\e[96m Do you want to enable logging? [Y/n]\e[0m: ' GENERAL_LOGGING_ENABLED; \
+	read -r -p $$'\e[4m\e[96m Do you want to enable database logging? [Y/n]\e[0m: ' DB_LOGGING_ENABLED; \
+	if [[ $$GENERAL_LOGGING_ENABLED = '' || $$GENERAL_LOGGING_ENABLED = 'y' || $$GENERAL_LOGGING_ENABLED = 'Y' ]]; \
+	then \
+	  export ENABLE_LOGS=true; \
+  	else \
+  	  export ENABLE_LOGS=false; \
+  	fi; \
+	if [[ $$DB_LOGGING_ENABLED = '' || $$DB_LOGGING_ENABLED = 'y' || $$DB_LOGGING_ENABLED = 'Y' ]]; \
+	then \
+	  export DB_LOGS=true; \
+	else \
+	  export DB_LOGS=false; \
+	fi; \
 	NODE_ENV=test \
 	npx jest --config ./jest.config.js \
 	--detectOpenHandles --runInBand --bail --forceExit --testPathPattern=integration/
@@ -47,8 +61,41 @@ test-update-snapshots: ## update the jest snapshots (currently only targeted to 
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=mailer --update-snapshot
 
 test-watch: ## Watch for changes and run tests for git changed files
+	@read -r -p $$'\e[4m\e[96m Do you want to enable logging? [Y/n]\e[0m: ' GENERAL_LOGGING_ENABLED; \
+	read -r -p $$'\e[4m\e[96m Do you want to enable database logging? [Y/n]\e[0m: ' DB_LOGGING_ENABLED; \
+	if [[ $$GENERAL_LOGGING_ENABLED = '' || $$GENERAL_LOGGING_ENABLED = 'y' || $$GENERAL_LOGGING_ENABLED = 'Y' ]]; \
+	then \
+	  export ENABLE_LOGS=true; \
+  	else \
+  	  export ENABLE_LOGS=false; \
+  	fi; \
+	if [[ $$DB_LOGGING_ENABLED = '' || $$DB_LOGGING_ENABLED = 'y' || $$DB_LOGGING_ENABLED = 'Y' ]]; \
+	then \
+	  export DB_LOGS=true; \
+	else \
+	  export DB_LOGS=false; \
+	fi; \
 	NODE_ENV=test \
 	npx jest --watch --config ./jest.config.js
+
+test-file: ## Test a specific file
+	@read -r -p $$'\e[4m\e[96m Exact file name to run: ' PATH_NAME; \
+	read -r -p $$'\e[4m\e[96m Do you want to enable logging? [Y/n]\e[0m: ' GENERAL_LOGGING_ENABLED; \
+	read -r -p $$'\e[4m\e[96m Do you want to enable database logging? [Y/n]\e[0m: ' DB_LOGGING_ENABLED; \
+	if [[ $$GENERAL_LOGGING_ENABLED = '' || $$GENERAL_LOGGING_ENABLED = 'y' || $$GENERAL_LOGGING_ENABLED = 'Y' ]]; \
+	then \
+	  export ENABLE_LOGS=true; \
+  	else \
+  	  export ENABLE_LOGS=false; \
+  	fi; \
+	if [[ $$DB_LOGGING_ENABLED = '' || $$DB_LOGGING_ENABLED = 'y' || $$DB_LOGGING_ENABLED = 'Y' ]]; \
+	then \
+	  export DB_LOGS=true; \
+	else \
+	  export DB_LOGS=false; \
+	fi; \
+	NODE_ENV=test \
+	npx jest --watch --runTestsByPath $$PATH_NAME --config ./jest.config.js
 
 test-local: test-unit test-integration ## run unit, then integration tests using local config
 
