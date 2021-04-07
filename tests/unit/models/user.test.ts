@@ -50,6 +50,9 @@ describe("User Class", () => {
 
                 owner.role = undefined;
                 expect(owner.isAdmin()).toEqual(false);
+
+                owner.role = undefined;
+                expect(owner.isAdmin()).toEqual(false);
             });
             it("should return true if the user's role is admin", () => {
                 const admin = new User({ email: "test@example.com", role: Role.ADMIN });
