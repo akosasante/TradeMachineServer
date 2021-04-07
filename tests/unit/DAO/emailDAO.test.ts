@@ -7,6 +7,7 @@ import logger from "../../../src/bootstrap/logger";
 describe("EmailDAO", () => {
     const mockEmailDb: MockObj = {
         findOne: jest.fn(),
+        save: jest.fn(),
     };
 
     const testEmail = {messageId: "<5d0e2800bbddbd4ed05cc56a@domain.com>", status: "opened"};
@@ -29,5 +30,25 @@ describe("EmailDAO", () => {
         expect(mockEmailDb.findOne).toHaveBeenCalledTimes(1);
         expect(mockEmailDb.findOne).toHaveBeenCalledWith(testEmail.messageId);
         expect(res).toEqual(testEmail);
+    });
+
+    it("createEmail/1 - should call the db save method once with the email object", async () => {
+        const expectedEmail = new Email(testEmail);
+        mockEmailDb.save.mockResolvedValueOnce(expectedEmail);
+        const res = await emailDAO.createEmail(testEmail);
+
+        expect(mockEmailDb.save).toHaveBeenCalledTimes(1);
+        expect(mockEmailDb.save).toHaveBeenCalledWith(testEmail);
+        expect(res).toEqual(expectedEmail);
+    });
+
+    it("updateEmail/1 - should call the db save method once with the email object", async () => {
+        const expectedEmail = new Email(testEmail);
+        mockEmailDb.save.mockResolvedValueOnce(expectedEmail);
+        const res = await emailDAO.createEmail(testEmail);
+
+        expect(mockEmailDb.save).toHaveBeenCalledTimes(1);
+        expect(mockEmailDb.save).toHaveBeenCalledWith(testEmail);
+        expect(res).toEqual(expectedEmail);
     });
 });
