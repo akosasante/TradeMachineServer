@@ -1,4 +1,3 @@
-import "jest";
 import "jest-extended";
 import { processMinorLeagueCsv } from "../../../src/csv/PlayerParser";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
@@ -63,6 +62,12 @@ describe("PlayerParser", () => {
             mockDAO as unknown as PlayerDAO, "overwrite");
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(1);
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledWith({league: PlayerLeagueType.MINOR});
+    });
+    it("should not do any upserting and just return the parsed players if mode is return", async () => {
+        await processMinorLeagueCsv(threeOwnerCsv, [testTeam1, testTeam2, testTeam3],
+            mockDAO as unknown as PlayerDAO, "return");
+        expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(0);
+        expect(mockDAO.batchUpsertPlayers).toHaveBeenCalledTimes(0);
     });
 
     it("should return an error if error occurs while deleting existing players", async () => {
