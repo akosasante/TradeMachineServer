@@ -4,7 +4,7 @@ import logger from "../../../src/bootstrap/logger";
 import UserDAO from "../../../src/DAO/UserDAO";
 import User from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
-import { mockDeleteChain, mockExecute, mockWhereInIds, MockObj } from "./daoHelpers";
+import { mockDeleteChain, mockExecute, mockWhereInIds, MockObj, mockReturning } from "./daoHelpers";
 import { Repository } from "typeorm";
 
 describe("UserDAO", () => {
@@ -50,7 +50,7 @@ describe("UserDAO", () => {
         it("should return an array of users as result of db call with the team relation", async () => {
             mockUserDb.find.mockResolvedValueOnce([testUser]);
             const res = await userDAO.getAllUsersWithTeams();
-            const options = { order: { id: "ASC" }, relations: ["team"]};
+            const options = {order: {id: "ASC"}, relations: ["team"]};
 
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
             expect(mockUserDb.find).toHaveBeenCalledWith(options);
@@ -94,7 +94,7 @@ describe("UserDAO", () => {
         });
     });
 
-    describe("findUsers", () => {
+    describe("findUserWithPassword", () => {
         it("should pass a query object to the find method and return an array", async () => {
             mockUserDb.find.mockResolvedValueOnce([testUser]);
             const condition = {email: testUser.email};
@@ -107,6 +107,32 @@ describe("UserDAO", () => {
         });
     });
 
+    describe("findUserWithPassword", () => {
+        it("should pass a query object to the find method and return an array", async () => {
+            const getOneFn = jest.fn().mockResolvedValueOnce(testUser);
+            const whereFn = jest.fn();
+            const addSelectFn = jest.fn();
+            const selectFn = jest.fn();
+            const findUserWithPasswordChain = {
+                select: selectFn.mockReturnThis(),
+                addSelect: addSelectFn.mockReturnThis(),
+                where: whereFn.mockReturnThis(),
+                getOne: getOneFn,
+            };
+            mockUserDb.createQueryBuilder.mockReturnValueOnce(findUserWithPasswordChain);
+
+            const condition = { password: testUser.password };
+            const res = await userDAO.findUserWithPassword(condition);
+
+            expect(whereFn).toBeCalledWith(condition);
+            expect(addSelectFn).toBeCalledWith("user.password");
+            expect(addSelectFn).toBeCalledWith("user.email");
+            expect(selectFn).toBeCalledWith("user.id");
+            expect(mockUserDb.createQueryBuilder).toBeCalledWith("user");
+            expect(res).toEqual(testUser);
+        });
+    });
+
     describe("createUsers", () => {
         it("should create users in the db for all the objs passed in", async () => {
             mockUserDb.insert.mockResolvedValueOnce({identifiers: [{id: testUser.id!}], generatedMaps: [], raw: []});
@@ -116,7 +142,14 @@ describe("UserDAO", () => {
             expect(mockUserDb.insert).toHaveBeenCalledTimes(1);
             expect(mockUserDb.insert).toHaveBeenCalledWith([testUser.parse()]);
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testUser.id]}});
+            expect(mockUserDb.find).toHaveBeenCalledWith({
+                "id": {
+                    "_multipleParameters": true,
+                    "_type": "in",
+                    "_useParameter": true,
+                    "_value": [testUser.id],
+                },
+            });
 
             expect(res).toEqual([testUser]);
         });
@@ -140,7 +173,7 @@ describe("UserDAO", () => {
         it("should return a delete result", async () => {
             mockUserDb.findOneOrFail.mockResolvedValueOnce(testUser);
             mockUserDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
-            const deleteResult = { affected: 1, raw: {id: testUser.id!} };
+            const deleteResult = {affected: 1, raw: {id: testUser.id!}};
             mockExecute.mockResolvedValueOnce(deleteResult);
             const res = await userDAO.deleteUser(testUser.id!);
 
@@ -155,7 +188,7 @@ describe("UserDAO", () => {
 
     describe("setPasswordExpires", () => {
         it("should return successfully if db call has on errors", async () => {
-            const updatePartial = { passwordResetExpiresOn: expect.toBeDate(), passwordResetToken: expect.toBeString() };
+            const updatePartial = {passwordResetExpiresOn: expect.toBeDate(), passwordResetToken: expect.toBeString()};
             const res = await userDAO.setPasswordExpires(testUser.id!);
 
             expect(mockUserDb.update).toHaveBeenCalledTimes(1);

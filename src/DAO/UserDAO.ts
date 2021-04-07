@@ -3,7 +3,7 @@ import User from "../models/user";
 import { v4 as uuid } from "uuid";
 
 export default class UserDAO {
-    private userDb: Repository<User>;
+    private readonly userDb: Repository<User>;
 
     constructor(repo?: Repository<User>) {
         this.userDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("User");
@@ -26,7 +26,7 @@ export default class UserDAO {
 
     public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User|undefined> {
         const findFn = failIfNotFound ? this.userDb.findOneOrFail.bind(this.userDb) : this.userDb.findOne.bind(this.userDb);
-        return await findFn(query);
+        return findFn(query);
     }
 
     public async findUserWithPassword(query: Partial<User>): Promise<User|undefined> {
