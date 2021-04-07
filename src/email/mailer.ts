@@ -41,7 +41,6 @@ const SendInBlueOpts = {
 const SendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SendInBlueOpts));
 
 const baseDomain = process.env.BASE_URL;
-const v1BaseDomain = process.env.V1_BASE_URL;
 
 function getTitleText(trade: Trade) {
     if (trade.tradeParticipants?.length === 2) {
@@ -139,14 +138,6 @@ export const Emailer = {
 
     dao: new EmailDAO(),
 
-    v2Emails: process.env.V2_EMAILS!.split(","),
-
-    sendToV2(email: string) {
-        // TODO: Remove completely once we're confident things are working
-        // return Emailer.v2Emails.includes(email);
-        return true;
-    },
-
     async sendPasswordResetEmail(user: User): Promise<SendInBlueSendResponse> {
         const resetPassPage = `${baseDomain}/reset_password?u=${encodeURI(user.passwordResetToken!)}`;
         logger.debug("sending password reset email");
@@ -233,13 +224,12 @@ export const Emailer = {
         logger.debug(`preparing trade req email for tradeId: ${trade.id}.`);
 
         const emailPrefix = recipient.split("@")[0];
-        const sendToV2 = Emailer.sendToV2(recipient);
-        const acceptUrl = sendToV2 ? `${baseDomain}/trade/${trade!.id}/accept` : `${v1BaseDomain}/confirm/${trade.id}_${emailPrefix}`;
-        const acceptText = sendToV2 ? "Accept Trade" : "Review Trade";
-        const rejectUrl = sendToV2 ? `${baseDomain}/trade/${trade!.id}/reject` : "";
+        const acceptUrl = `${baseDomain}/trade/${trade!.id}/accept`;
+        const acceptText = "Accept Trade";
+        const rejectUrl = `${baseDomain}/trade/${trade!.id}/reject`;
 
-        logger.debug(`sending trade request email to=${recipient}, v2=${sendToV2}, acceptUrl=${acceptUrl}, rejectUrl=${rejectUrl}`);
-        rollbar.info("sendTradeRequestEmail", {recipient, sendToV2, id: trade.id});
+        logger.debug(`sending trade request email to=${recipient}, acceptUrl=${acceptUrl}, rejectUrl=${rejectUrl}`);
+        rollbar.info("sendTradeRequestEmail", {recipient, id: trade.id});
 
         return Emailer.emailer.send({
             template: "trade_request",
@@ -258,17 +248,17 @@ export const Emailer = {
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade request email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
-                    rollbar.info("sendTradeRequestEmail", {recipient, sendToV2, id: trade.id, messageId: res.messageId});
+                    rollbar.info("sendTradeRequestEmail", {recipient, id: trade.id, messageId: res.messageId});
                     await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
                 } else {
-                    rollbar.error("sendTradeRequestEmail_NoEmailId", {recipient, sendToV2, id: trade.id});
+                    rollbar.error("sendTradeRequestEmail_NoEmailId", {recipient, id: trade.id});
                     logger.error("No message id found, not saving email to db.");
                 }
                 return res;
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade request email: ${inspect(err)}`);
-                rollbar.error(err, {recipient, sendToV2, id: trade.id});
+                rollbar.error(err, {recipient, id: trade.id});
                 return undefined;
             });
     },
@@ -312,11 +302,10 @@ export const Emailer = {
     async sendTradeSubmissionEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
         logger.debug(`got a trade submission email request for tradeId: ${trade.id}.`);
         const emailPrefix = recipient.split("@")[0];
-        const sendToV2 = Emailer.sendToV2(recipient);
-        const acceptUrl = sendToV2 ? `${baseDomain}/trade/${trade!.id}/submit` : `${v1BaseDomain}/send/${trade.id}_${emailPrefix}`;
+        const acceptUrl = `${baseDomain}/trade/${trade!.id}/submit`;
        // const discardUrl = `${baseDomain}/trade/${trade!.id}/discard`
-        logger.debug(`sending trade submission email to=${recipient}, v2=${sendToV2}, acceptUrl=${acceptUrl}, discardUrl=""`);
-        rollbar.info("sendTradeSubmissionEmail", {recipient, sendToV2, id: trade.id});
+        logger.debug(`sending trade submission email to=${recipient}, acceptUrl=${acceptUrl}, discardUrl=""`);
+        rollbar.info("sendTradeSubmissionEmail", {recipient, id: trade.id});
 
         return Emailer.emailer.send({
             template: "trade_accepted",
@@ -332,17 +321,17 @@ export const Emailer = {
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade submission email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
-                    rollbar.info("sendTradeSubmissionEmail", {recipient, sendToV2, id: trade.id, messageId: res.messageId});
+                    rollbar.info("sendTradeSubmissionEmail", {recipient, id: trade.id, messageId: res.messageId});
                     await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
                 } else {
-                    rollbar.error("sendTradeSubmissionEmail_NoEmailId", {recipient, sendToV2, id: trade.id});
+                    rollbar.error("sendTradeSubmissionEmail_NoEmailId", {recipient, id: trade.id});
                     logger.error("No message id found, not saving email to db.");
                 }
                 return res;
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade submission email: ${inspect(err)}`);
-                rollbar.error(err, {recipient, sendToV2, id: trade.id});
+                rollbar.error(err, {recipient, id: trade.id});
                 return undefined;
             });
     },
