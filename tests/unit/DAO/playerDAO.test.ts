@@ -1,5 +1,4 @@
 import "jest";
-import "jest-extended";
 import { Repository } from "typeorm";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import Player, { PlayerLeagueType } from "../../../src/models/player";
@@ -10,6 +9,7 @@ import logger from "../../../src/bootstrap/logger";
 describe("PlayerDAO", () => {
     const mockPlayerDb: MockObj = {
         find: jest.fn(),
+        findOne: jest.fn(),
         findOneOrFail: jest.fn(),
         save: jest.fn(),
         insert: jest.fn(),
@@ -51,6 +51,15 @@ describe("PlayerDAO", () => {
 
         expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledWith(testPlayer1.id);
+        expect(res).toEqual(testPlayer1);
+    });
+
+    it("getPlayerByName - should call the db findOne once with name", async () => {
+        mockPlayerDb.findOne.mockResolvedValueOnce(testPlayer1);
+        const res = await playerDAO.getPlayerByName(testPlayer1.name!);
+
+        expect(mockPlayerDb.findOne).toHaveBeenCalledTimes(1);
+        expect(mockPlayerDb.findOne).toHaveBeenCalledWith({name: testPlayer1.name!});
         expect(res).toEqual(testPlayer1);
     });
 
