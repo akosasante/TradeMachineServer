@@ -273,7 +273,7 @@ export const Emailer = {
     },
 
     async sendTradeDeclinedEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
-        logger.debug(`got a trade decline email request for tradeId: ${trade.id}`);
+        logger.debug(`got a trade decline email request for tradeId: ${trade.id}, declined by: ${trade.declinedById}`);
         rollbar.info("sendTradeDeclinedEmail", {recipient, id: trade.id});
 
         return Emailer.emailer.send({
