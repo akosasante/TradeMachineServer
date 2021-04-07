@@ -26,38 +26,34 @@ describe("Emailer Class", () => {
     const testTrade = TradeFactory.getTrade( testItems, undefined, undefined, {id: "test-uuid"});
 
     describe("email snapshots", () => {
+        // each test removes dynamic message/messageId values that we don't want to match on in our snapshots
         it("sendTestEmail", async () => {
-            const res = await Emailer.sendTestEmail(testUser);
-            delete res.message; // value varies due to include a dynamic messageId so keep it out of the snapshot
-            delete res.messageId;
+            const {message, messageId, ...res} = await Emailer.sendTestEmail(testUser);
             expect(res).toMatchSnapshot();
         });
 
         it("sendRegistrationEmail", async () => {
-            const res = await Emailer.sendRegistrationEmail(testUser);
-            delete res.message; // value varies due to include a dynamic messageId so keep it out of the snapshot
-            delete res.messageId;
+            const {message, messageId, ...res} = await Emailer.sendRegistrationEmail(testUser);
             expect(res).toMatchSnapshot();
         });
 
         it("sendPasswordResetEmail", async () => {
-            const res = await Emailer.sendPasswordResetEmail(testUser);
-            delete res.message; // value varies due to include a dynamic messageId so keep it out of the snapshot
-            delete res.messageId;
+            const {message, messageId, ...res} = await Emailer.sendPasswordResetEmail(testUser);
             expect(res).toMatchSnapshot();
         });
 
         it("sendTradeRequestEmail", async () => {
-            const res = await Emailer.sendTradeRequestEmail(testUser.email, testTrade);
-            delete res.message;
-            delete res.messageId;
+            const {message, messageId, ...res} = await Emailer.sendTradeRequestEmail(testUser.email, testTrade);
             expect(res).toMatchSnapshot();
         });
 
         it("sendTradeSubmissionEmail", async () => {
-            const res = await Emailer.sendTradeSubmissionEmail(testUser.email, testTrade);
-            delete res.message;
-            delete res.messageId;
+            const {message, messageId, ...res} = await Emailer.sendTradeSubmissionEmail(testUser.email, testTrade);
+            expect(res).toMatchSnapshot();
+        });
+
+        it("sendTradeDeclinedEmail", async () => {
+            const {message, messageId, ...res} = await Emailer.sendTradeDeclinedEmail(testUser.email, testTrade);
             expect(res).toMatchSnapshot();
         });
     });
