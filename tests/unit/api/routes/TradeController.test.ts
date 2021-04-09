@@ -1,4 +1,3 @@
-import "jest";
 import "jest-extended";
 import TradeController from "../../../../src/api/routes/TradeController";
 import TradeDAO from "../../../../src/DAO/TradeDAO";
@@ -24,6 +23,7 @@ describe("TradeController", () => {
         updateItems: jest.fn(),
         updateDeclinedBy: jest.fn(),
         deleteTrade: jest.fn(),
+        updateAcceptedBy: jest.fn(),
     };
 
     // @ts-ignore
@@ -55,6 +55,18 @@ describe("TradeController", () => {
 
             expect(mockTradeDAO.getAllTrades).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.getAllTrades).toHaveBeenCalledWith();
+            expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(0);
+            expect(res).toEqual([testTrade]);
+        });
+        it("should hydrate each trade before returning an array of trades if query param is present", async () => {
+            mockTradeDAO.getAllTrades.mockResolvedValueOnce([testTrade]);
+            mockTradeDAO.hydrateTrade.mockResolvedValueOnce(testTrade);
+            const res = await tradeController.getAllTrades(true);
+
+            expect(mockTradeDAO.getAllTrades).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.getAllTrades).toHaveBeenCalledWith();
+            expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledWith(testTrade);
             expect(res).toEqual([testTrade]);
         });
         it("should bubble up any errors from the DAO", async () => {
@@ -73,6 +85,8 @@ describe("TradeController", () => {
 
             expect(mockTradeDAO.getTradeById).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id);
+            expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(0);
+
             expect(res).toEqual(testTrade);
         });
         it("should hydrate the trade if the boolean is set to true", async () => {
@@ -216,6 +230,159 @@ describe("TradeController", () => {
             expect(mockTradeDAO.updateParticipants).toHaveBeenCalledTimes(0);
         });
     });
+
+    describe("acceptTrade method", () => {
+        beforeEach(() => {
+            mockTradeDAO.getTradeById.mockResolvedValue(testTrade);
+        });
+
+        it("should throw an error if a non-admin, non-trade participator tries to update it", async () => {
+            const otherUser = UserFactory.getOwnerUser();
+            await expect(tradeController.acceptTrade(otherUser, testTrade.id!)).rejects.toThrow(UnauthorizedError);
+        });
+        it("should only allow accepting trades with the status of REQUESTED or PENDING", async () => {
+            const validStatuses = [TradeStatus.REQUESTED, TradeStatus.PENDING];
+            const invalidStatuses = [TradeStatus.DRAFT, TradeStatus.ACCEPTED, TradeStatus.REJECTED, TradeStatus.SUBMITTED];
+
+            for (const status of invalidStatuses) {
+                mockTradeDAO.getTradeById.mockReset();
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status}));
+                await expect(tradeController.acceptTrade(tradeRecipient, testTrade.id!)).rejects.toThrow(BadRequestError);
+            }
+
+            for (const status of validStatuses) {
+                mockTradeDAO.getTradeById.mockReset();
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status}));
+                await expect(tradeController.acceptTrade(tradeRecipient, testTrade.id!)).resolves;
+            }
+        });
+        it("should updated the acceptedBy field for valid trades by adding the accepting user's id to the acceptedBy field", async () => {
+            const additionalRecipient = TradeFactory.getTradeRecipient(TeamFactory.getTeam("RECIPIENT_TEAM_2"), testTrade);
+            const additionalRecipientUser = UserFactory.getOwnerUser();
+            additionalRecipient!.team!.owners = [additionalRecipientUser];
+            const tradeParticipants = testTrade.tradeParticipants?.concat([additionalRecipient]);
+            const status = TradeStatus.REQUESTED;
+            const acceptedBy = [additionalRecipient.id!];
+            mockTradeDAO.getTradeById.mockReset();
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status, tradeParticipants, acceptedBy }));
+
+            await tradeController.acceptTrade(tradeRecipient, testTrade.id!);
+
+            expect(mockTradeDAO.updateAcceptedBy).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.updateAcceptedBy).toHaveBeenCalledWith(testTrade.id, [additionalRecipient.id, tradeRecipient.id]);
+        });
+        it("should update the trade status to ACCEPTED if all recipients have accepted", async () => {
+            mockTradeDAO.getTradeById.mockReset();
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status: TradeStatus.REQUESTED}));
+
+            await tradeController.acceptTrade(tradeRecipient, testTrade.id!);
+
+            expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.updateStatus).toHaveBeenCalledWith(testTrade.id, TradeStatus.ACCEPTED);
+        });
+        it("should update the trade status to PENDING if not all recipients have responded yet", async () => {
+            const additionalRecipient = TradeFactory.getTradeRecipient(TeamFactory.getTeam("RECIPIENT_TEAM_2"), testTrade);
+            const additionalRecipientUser = UserFactory.getOwnerUser();
+            additionalRecipient!.team!.owners = [additionalRecipientUser];
+            mockTradeDAO.getTradeById.mockReset();
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status: TradeStatus.REQUESTED, tradeParticipants: testTrade.tradeParticipants?.concat([additionalRecipient])}));
+
+            await tradeController.acceptTrade(tradeRecipient, testTrade.id!);
+
+            expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.updateStatus).toHaveBeenCalledWith(testTrade.id, TradeStatus.PENDING);
+        });
+    });
+
+    describe("rejectTrade method", () => {
+        beforeEach(() => {
+            mockTradeDAO.getTradeById.mockResolvedValue(testTrade);
+        });
+
+        it("should throw an error if a non-admin, non-trade participator tries to update it", async () => {
+            const otherUser = UserFactory.getOwnerUser();
+
+            await expect(tradeController.rejectTrade(otherUser, testTrade.id!, tradeRecipient.id!, "reason")).rejects.toThrow(UnauthorizedError);
+        });
+
+        it("should only allow accepting trades with the status of REQUESTED or PENDING", async () => {
+            const validStatuses = [TradeStatus.REQUESTED, TradeStatus.PENDING];
+            const invalidStatuses = [TradeStatus.DRAFT, TradeStatus.ACCEPTED, TradeStatus.REJECTED, TradeStatus.SUBMITTED];
+
+            for (const status of invalidStatuses) {
+                mockTradeDAO.getTradeById.mockReset();
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status}));
+
+                await expect(tradeController.rejectTrade(tradeRecipient, testTrade.id!, tradeRecipient.id!, "reason")).rejects.toThrow(BadRequestError);
+            }
+
+            for (const status of validStatuses) {
+                mockTradeDAO.getTradeById.mockReset();
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status}));
+
+                await expect(tradeController.rejectTrade(tradeRecipient, testTrade.id!, tradeRecipient.id!, "reason")).resolves;
+            }
+        });
+
+        it("should updated the declined by and declined reason fields for valid trades and update the status to REJECTED", async () => {
+            mockTradeDAO.getTradeById.mockReset();
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status: TradeStatus.REQUESTED}));
+
+            await tradeController.rejectTrade(tradeRecipient, testTrade.id!, tradeRecipient.id!, "reason");
+
+            expect(mockTradeDAO.updateDeclinedBy).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.updateDeclinedBy).toHaveBeenCalledWith(testTrade.id, tradeRecipient.id, "reason");
+            expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.updateStatus).toHaveBeenCalledWith(testTrade.id, TradeStatus.REJECTED);
+        });
+    });
+
+    describe("submitTrade method", () => {
+        const acceptedTrade = new Trade({...testTrade, status: TradeStatus.ACCEPTED});
+        beforeEach(() => {
+            mockTradeDAO.getTradeById.mockReset();
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(acceptedTrade);
+        });
+
+        it("should throw an error if a non-admin, non-trade participator tries to update it", async () => {
+            const otherUser = UserFactory.getOwnerUser();
+
+            await expect(tradeController.submitTrade(otherUser, acceptedTrade.id!)).rejects.toThrow(UnauthorizedError);
+        });
+
+        it("should throw an error if a trade recipient tries to update it", async () => {
+            await expect(tradeController.submitTrade(tradeRecipient, acceptedTrade.id!)).rejects.toThrow(UnauthorizedError);
+        });
+
+        it("should only allow accepting trades with the status of ACCEPTED", async () => {
+            const validStatuses = [TradeStatus.ACCEPTED];
+            const invalidStatuses = [TradeStatus.DRAFT, TradeStatus.REQUESTED, TradeStatus.REJECTED, TradeStatus.SUBMITTED, TradeStatus.PENDING];
+
+            for (const status of invalidStatuses) {
+                mockTradeDAO.getTradeById.mockReset();
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status}));
+
+                await expect(tradeController.submitTrade(tradeOwner, testTrade.id!)).rejects.toThrow(BadRequestError);
+            }
+
+            for (const status of validStatuses) {
+                mockTradeDAO.getTradeById.mockReset();
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status}));
+
+                await expect(tradeController.submitTrade(tradeOwner, testTrade.id!)).resolves;
+            }
+        });
+
+        it("should hydrate the trade, append it to the trade tracker, and update the status to SUBMITTED", async () => {
+            await tradeController.submitTrade(tradeOwner, acceptedTrade.id!);
+
+            expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledWith(acceptedTrade);
+            expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.updateStatus).toHaveBeenCalledWith(acceptedTrade.id, TradeStatus.SUBMITTED);
+        });
+    });
+
 
     describe("deleteTrade method", () => {
         it("should delete a trade by id from the db", async () => {
