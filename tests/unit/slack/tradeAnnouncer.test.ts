@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import TradeFormatter from "../../../src/slack/tradeFormatter";
 import { mocked } from "ts-jest/utils";

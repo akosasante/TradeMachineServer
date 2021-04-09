@@ -1,6 +1,4 @@
 import { Request, Response } from "express";
-import "jest";
-import "jest-extended";
 import AuthController from "../../../../src/api/routes/AuthController";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import { UserFactory } from "../../../factories/UserFactory";

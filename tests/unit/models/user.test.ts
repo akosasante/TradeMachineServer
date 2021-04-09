@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import User, { Role } from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";

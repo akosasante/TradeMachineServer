@@ -1,6 +1,4 @@
 import { Response } from "express";
-import "jest";
-import "jest-extended";
 import { NotFoundError } from "routing-controllers";
 import EmailController from "../../../../src/api/routes/EmailController";
 import UserDAO from "../../../../src/DAO/UserDAO";

@@ -10,5 +10,5 @@ export const mockDeleteChain = {
 };
 
 export interface MockObj {
-    [key: string]: jest.Mock<any, any>;
+    [key: string]: jest.Mock;
 }

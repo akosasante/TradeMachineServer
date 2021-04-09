@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { clone } from "lodash";
 import { PlayerLeagueType } from "../../../src/models/player";
 import Trade, { TradeStatus } from "../../../src/models/trade";

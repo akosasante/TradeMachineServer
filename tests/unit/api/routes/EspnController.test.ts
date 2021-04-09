@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { MockObj } from "../../DAO/daoHelpers";
 import EspnController from "../../../../src/api/routes/EspnController";
 import EspnAPI from "../../../../src/espn/espnApi";

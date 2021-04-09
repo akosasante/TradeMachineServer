@@ -1,7 +1,5 @@
 import { hash } from "bcryptjs";
 import { NextFunction, Request, Response } from "express";
-import "jest";
-import "jest-extended";
 import { UnauthorizedError } from "routing-controllers";
 import { LoginHandler, RegisterHandler } from "../../../../src/api/middlewares/AuthenticationHandler";
 import { ConflictError } from "../../../../src/api/middlewares/ErrorHandler";
@@ -63,7 +61,7 @@ describe("Authentication middleware", () => {
     });
     describe("Register Handler", () => {
         it("should serialize the user and return the next function if sign up was successful", async () => {
-            const passwordlessUser ={...testUser};
+            const passwordlessUser = {...testUser};
             delete passwordlessUser.password;
             mockUserDAO.findUserWithPassword.mockResolvedValueOnce(passwordlessUser);
             mockUserDAO.updateUser.mockResolvedValueOnce(testUser);

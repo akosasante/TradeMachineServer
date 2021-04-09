@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { TradeFactory } from "../../factories/TradeFactory";
 import { appendNewTrade } from "../../../src/csv/TradeTracker";
 import { google } from "googleapis";
@@ -11,6 +9,7 @@ import { TeamFactory } from "../../factories/TeamFactory";
 jest.mock("googleapis");
 const mockedGoogleSheets = mocked(google);
 const mockBatchUpdate = jest.fn();
+// @ts-ignore
 mockedGoogleSheets.sheets = jest.fn(() => {
     return {
         spreadsheets: {
@@ -18,6 +17,7 @@ mockedGoogleSheets.sheets = jest.fn(() => {
         },
     };
 });
+// @ts-ignore
 mockedGoogleSheets.auth = {
     getClient: jest.fn().mockResolvedValue("authed"),
 };
@@ -45,8 +45,6 @@ beforeAll(async () => {
     values = getCellValues(mockBatchUpdate.mock);
 });
 describe("TradeTracker.appendNewTrade/1", () => {
-
-
     it("should call the spreadsheet batchUpdate api method once and with the expected BatchUpdateRequest shape", () => {
         const expectedRequests = [
             {insertDimension: {range: {sheetId: expect.toBeNumber(), startIndex: 1, endIndex: 2, dimension: "ROWS"}}},

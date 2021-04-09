@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { UserFactory } from "../../factories/UserFactory";
 import { handleEmailJob, handleTradeEmailJob, handleWebhookResponse } from "../../../src/email/processors";
 import { Emailer } from "../../../src/email/mailer";

@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import Player, { PlayerLeagueType } from "../../../src/models/player";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import logger from "../../../src/bootstrap/logger";

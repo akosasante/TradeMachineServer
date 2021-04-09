@@ -1,3 +1,4 @@
+import "jest-extended";
 import { Emailer } from "../../../src/email/mailer";
 import { UserFactory } from "../../factories/UserFactory";
 import logger from "../../../src/bootstrap/logger";
@@ -5,7 +6,6 @@ import { TradeFactory } from "../../factories/TradeFactory";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import { PlayerLeagueType } from "../../../src/models/player";
-import {inspect} from "util";
 
 jest.mock("../../../src/DAO/EmailDAO");
 

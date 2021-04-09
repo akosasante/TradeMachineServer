@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { NotFoundError } from "routing-controllers";
 import UserController from "../../../../src/api/routes/UserController";
 import logger from "../../../../src/bootstrap/logger";

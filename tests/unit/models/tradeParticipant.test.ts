@@ -1,4 +1,3 @@
-import "jest";
 import "jest-extended";
 import { TradeParticipantType } from "../../../src/models/tradeParticipant";
 import { TeamFactory } from "../../factories/TeamFactory";

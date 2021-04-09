@@ -1,10 +1,9 @@
-import { Authorized, BadRequestError, Controller, Param, Post, Res } from "routing-controllers";
+import { BadRequestError, Controller, Param, Post, Res } from "routing-controllers";
 import { EmailPublisher } from "../../email/publishers";
 import { UUIDPattern } from "../helpers/ApiHelpers";
 import logger from "../../bootstrap/logger";
 import TradeDAO from "../../DAO/TradeDAO";
 import { Response } from "express";
-import { Role } from "../../models/user";
 import { TradeStatus } from "../../models/trade";
 import { SlackPublisher } from "../../slack/publishers";
 import { rollbar } from "../../bootstrap/rollbar";

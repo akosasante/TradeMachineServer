@@ -1,6 +1,4 @@
 import axios, { AxiosPromise } from "axios";
-import "jest";
-import "jest-extended";
 import EspnAPI from "../../../src/espn/espnApi";
 import allDataJson from "../../resources/espn-general-resp.json";
 import membersJson from "../../resources/espn-members-resp.json";
@@ -70,7 +68,7 @@ describe("EspnApi Class", () => {
         mockedGet.mockResolvedValueOnce({data: playersJson, headers} as unknown as AxiosPromise);
         const res = await Api.getAllMajorLeaguePlayers(2019);
         expect(res).toEqual(playersJson.players);
-    });
+    }, 6000);
 
     it("getScheduleForYear/1 - should return league member data", async () => {
         mockedGet.mockResolvedValueOnce({data: scheduleJson} as unknown as AxiosPromise);
@@ -92,7 +90,7 @@ describe("EspnApi Class", () => {
 
         expect(mockPlayerDao.batchUpsertPlayers).toBeCalledTimes(1);
         expect(mockPlayerDao.batchUpsertPlayers).toBeCalledWith(expect.toBeArrayOfSize(4));
-    });
+    }, 6000);
 
     it("updateEspnTeamInfo/2 - should prepare and perform many updates of espn league teams", async () => {
         mockedGet.mockResolvedValueOnce({data: teamsJson} as unknown as AxiosPromise);
