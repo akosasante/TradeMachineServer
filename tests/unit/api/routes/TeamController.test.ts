@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { BadRequestError, NotFoundError } from "routing-controllers";
 import TeamController from "../../../../src/api/routes/TeamController";
 import logger from "../../../../src/bootstrap/logger";

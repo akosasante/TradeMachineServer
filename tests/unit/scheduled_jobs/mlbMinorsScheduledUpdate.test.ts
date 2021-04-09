@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import { doUpdate } from "../../../src/scheduled_jobs/mlbMinorsScheduledUpdate";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
@@ -31,7 +29,7 @@ afterAll(() => {
 afterEach(() => {
     mockedGet.mockClear();
     Object.values(mockPlayerDao).forEach(mockFn => mockFn.mockReset());
-})
+});
 
 describe("Minor League Scheduled Jobs", () => {
     test("doUpdate/1 - should make an axios call and then insert into the db", async () => {

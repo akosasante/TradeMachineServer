@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { Repository } from "typeorm";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
@@ -65,7 +63,7 @@ describe("DraftPickDAO", () => {
         expect(res).toEqual([testPick1]);
     });
 
-    it("createPick - should call the db save once with pickObj", async () => {
+    it("createPicks - should call the db save once with pickObj", async () => {
         mockPickDb.insert.mockResolvedValueOnce({identifiers: [{id: testPick1.id!}], generatedMaps: [], raw: []});
         mockPickDb.find.mockResolvedValueOnce(testPick1);
         const res = await draftPickDAO.createPicks([testPick1]);

@@ -1,4 +1,3 @@
-import "jest";
 import { Repository } from "typeorm";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import Player, { PlayerLeagueType } from "../../../src/models/player";

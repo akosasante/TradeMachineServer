@@ -1,7 +1,6 @@
-import {TradeFactory} from "../../factories/TradeFactory";
+import { TradeFactory } from "../../factories/TradeFactory";
 import logger from "../../../src/bootstrap/logger";
-import {Emailer} from "../../../src/email/mailer";
-import {processTradeAnnounceJob} from "../../../src/slack/processors";
+import { processTradeAnnounceJob } from "../../../src/slack/processors";
 
 const mockSlackAnnouncer = {
     sendTradeAnnouncement: jest.fn(),

@@ -1,4 +1,3 @@
-import "jest";
 import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import Team from "../../../src/models/team";

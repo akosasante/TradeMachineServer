@@ -3,4 +3,4 @@ const resolvePath = require("path").resolve
 
 dotenvConfig({path: resolvePath(__dirname, "./tests/.env")});
 /* global jest */
-jest.setTimeout(10000)
+jest.setTimeout(1000)

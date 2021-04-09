@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import Settings from "../../../src/models/settings";
 import { SettingsFactory } from "../../factories/SettingsFactory";
 import logger from "../../../src/bootstrap/logger";

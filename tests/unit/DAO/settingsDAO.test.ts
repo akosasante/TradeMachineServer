@@ -1,12 +1,9 @@
-import "jest";
-import "jest-extended";
 import { Repository } from "typeorm";
 import SettingsDAO from "../../../src/DAO/SettingsDAO";
 import Settings from "../../../src/models/settings";
 import { SettingsFactory } from "../../factories/SettingsFactory";
 import { MockObj } from "./daoHelpers";
 import logger from "../../../src/bootstrap/logger";
-import { inspect } from "util";
 
 describe("SettingsDAO", () => {
     const mockSettingsDb: MockObj = {

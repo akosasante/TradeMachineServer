@@ -1,6 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import "jest";
-import "jest-extended";
 import { HttpError } from "routing-controllers";
 import { QueryFailedError } from "typeorm";
 import { EntityColumnNotFound } from "typeorm/error/EntityColumnNotFound";

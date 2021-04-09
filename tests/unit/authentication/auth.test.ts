@@ -1,4 +1,3 @@
-import "jest";
 import "jest-extended";
 import { Action, BadRequestError } from "routing-controllers";
 import { ConflictError } from "../../../src/api/middlewares/ErrorHandler";

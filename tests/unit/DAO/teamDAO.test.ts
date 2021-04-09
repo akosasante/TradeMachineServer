@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import TeamDAO from "../../../src/DAO/TeamDAO";
 import User from "../../../src/models/user";

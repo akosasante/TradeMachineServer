@@ -6,6 +6,7 @@ import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import logger from "../../bootstrap/logger";
 import { AuthorizationRequiredError } from "routing-controllers/error/AuthorizationRequiredError";
 import { rollbar } from "../../bootstrap/rollbar";
+import { inspect } from "util";
 // tslint:disable:max-classes-per-file
 
 @Middleware({type: "after"})
@@ -29,7 +30,7 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
              logger.error(`Database Error: ${error.message}`);
              response.status(404).json(CustomErrorHandler.cleanErrorObject(error));
         } else if (error instanceof QueryFailedError || error instanceof EntityColumnNotFound) {
-            logger.error(`Database/Entity Error: ${error.message}`);
+            logger.error(`Database/Entity Error: ${inspect(error.message)}`);
             response.status(400).json(CustomErrorHandler.cleanErrorObject(error));
         } else {
             logger.error(`Unknown Error: ${JSON.stringify(Object.getPrototypeOf(error))}`);

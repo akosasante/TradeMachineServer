@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import SettingsController from "../../../../src/api/routes/SettingsController";
 import SettingsDAO from "../../../../src/DAO/SettingsDAO";
 import { SettingsFactory } from "../../../factories/SettingsFactory";

@@ -7,6 +7,7 @@ import TradeItem from "./tradeItem";
 import TradeParticipant, { TradeParticipantType } from "./tradeParticipant";
 import logger from "../bootstrap/logger";
 import Email from "./email";
+import {inspect} from "util";
 
 export enum TradeStatus {
     DRAFT = 1,
@@ -30,6 +31,8 @@ export default class Trade extends BaseModel {
     }
 
     public get recipients(): Team[] {
+        logger.debug(`this: ${inspect(this)}`);
+        logger.debug(`this.tp: ${inspect(this.tradeParticipants)}`);
         return (this.tradeParticipants || [])
             .filter(part => part.participantType === TradeParticipantType.RECIPIENT)
             .map(part => part.team);

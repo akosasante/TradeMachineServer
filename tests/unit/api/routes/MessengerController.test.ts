@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { MockObj } from "../../DAO/daoHelpers";
 import logger from "../../../../src/bootstrap/logger";
 import MessengerController from "../../../../src/api/routes/MessengerController";
