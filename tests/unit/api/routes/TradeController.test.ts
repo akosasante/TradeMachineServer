@@ -1,4 +1,3 @@
-import "jest-extended";
 import TradeController from "../../../../src/api/routes/TradeController";
 import TradeDAO from "../../../../src/DAO/TradeDAO";
 import Trade, { TradeStatus } from "../../../../src/models/trade";
