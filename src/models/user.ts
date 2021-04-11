@@ -15,6 +15,8 @@ export enum UserStatus {
     INACTIVE,
 }
 
+export const TIME_TO_EXPIRE_USER_PASSWORD_IN_MS = 1 * 60 * 60 * 1000; // 1 hr * 60 min/hr * 60 s/min * 1000ms/s
+
 @Entity()
 @Unique(["email"])
 export default class User extends BaseModel {
@@ -22,7 +24,7 @@ export default class User extends BaseModel {
         return new Date(dateMs + User.TIME_TO_EXPIRE_PASSWORD_MS);
     }
 
-    private static TIME_TO_EXPIRE_PASSWORD_MS: number = (1 * 60 * 60 * 1000);  // 1 hr * 60 min/hr * 60 s/min * 1000ms/s
+    private static TIME_TO_EXPIRE_PASSWORD_MS: number = TIME_TO_EXPIRE_USER_PASSWORD_IN_MS;  // password expires in 1 hour after being set
 
     @Column()
     public email!: string;
