@@ -1,21 +1,24 @@
 import { Server } from "http";
-import "jest";
-import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import User from "../../src/models/user";
 import startServer from "../../src/bootstrap/app";
-import { makePostRequest, setupOwnerAndAdminUsers } from "./helpers";
+import { clearDb, makePostRequest, setupOwnerAndAdminUsers } from "./helpers";
+import { getConnection } from "typeorm";
 
 let app: Server;
 let ownerUser: User;
-let adminUser: User;
 
 async function shutdown() {
-    await new Promise(resolve => {
-        redisClient.quit(() => {
-            resolve();
+    await new Promise<void>((resolve, reject) => {
+        redisClient.quit((err, reply) => {
+            if (err) {
+                reject(err);
+            } else {
+                logger.debug(`Redis quit successfully with reply ${reply}`);
+                resolve();
+            }
         });
     });
     // redis.quit() creates a thread to close the connection.
@@ -26,7 +29,6 @@ async function shutdown() {
 beforeAll(async () => {
     logger.debug("~~~~~~EMAIL ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
-    [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
 });
 
 afterAll(async () => {
@@ -40,6 +42,13 @@ afterAll(async () => {
 });
 
 describe("Email API endpoints", () => {
+    beforeEach(async () => {
+        ownerUser = (await setupOwnerAndAdminUsers())[0];
+    });
+    afterEach(async () => {
+        await clearDb(getConnection(process.env.NODE_ENV));
+    });
+
     const emailPostRequest = (email: string, url: string, status: number = 202) =>
         (agent: request.SuperTest<request.Test>) =>
             makePostRequest<{email: string}>(agent, `/email/${url}`, {email}, status);
@@ -50,6 +59,10 @@ describe("Email API endpoints", () => {
     describe("POST /testEmail (send a test notification email)", () => {
         it("should return a 202 message if the email is successfully queued", async () => {
             await emailPostRequest(ownerUser.email, "testEmail")(request(app));
+        });
+
+        it("should return a 404 response if no user exists with the given email", async () => {
+            await emailPostRequest("unknown@example.com", "testEmail", 404)(request(app));
         });
     });
 
