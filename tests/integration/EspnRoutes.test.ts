@@ -1,20 +1,27 @@
 import { Server } from "http";
-import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
-import { adminLoggedIn, makeGetRequest, setupOwnerAndAdminUsers } from "./helpers";
+import {adminLoggedIn, clearDb, makeGetRequest, ownerLoggedIn, setupOwnerAndAdminUsers} from "./helpers";
 import startServer from "../../src/bootstrap/app";
 import User from "../../src/models/user";
+import {getConnection} from "typeorm";
+import {inspect} from "util";
 
 let app: Server;
 let adminUser: User;
+let ownerUser: User;
 
 async function shutdown() {
-    await new Promise(resolve => {
-        redisClient.quit(() => {
-            resolve();
+    await new Promise<void>((resolve, reject) => {
+        redisClient.quit((err, reply) => {
+            if (err) {
+                reject(err);
+            } else {
+                logger.debug(`Redis quit successfully with reply ${reply}`);
+                resolve();
+            }
         });
     });
     // redis.quit() creates a thread to close the connection.
@@ -25,7 +32,6 @@ async function shutdown() {
 beforeAll(async () => {
     logger.debug("~~~~~~ESPN ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
-    [adminUser] = await setupOwnerAndAdminUsers();
 });
 
 afterAll(async () => {
@@ -38,6 +44,13 @@ afterAll(async () => {
 });
 
 describe("ESPN API endpoints", () => {
+    beforeEach(async () => {
+        [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+    });
+    afterEach(async () => {
+        await clearDb(getConnection(process.env.NODE_ENV));
+    });
+
     describe("GET /espn/teams?year (get all ESPN teams)", () => {
         const getAllRequest = (year?: number, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) => {
@@ -57,6 +70,12 @@ describe("ESPN API endpoints", () => {
             expect(body).toBeArray();
             expect(body[0]).toContainKeys(["id", "abbrev", "location", "nickname", "owners", "divisionId", "isActive"]);
         }, 10000);
+        it("should throw a 403 Forbidden Error if a non-admin tries to call the endpoint", async () => {
+            await ownerLoggedIn(getAllRequest(2019,  403), app);
+        });
+        it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
+            await getAllRequest(2019,  403)(request(app));
+        });
     });
 
     describe("GET /espn/members?year (get all ESPN teams)", () => {
@@ -77,5 +96,11 @@ describe("ESPN API endpoints", () => {
             expect(body).toBeArray();
             expect(body[0]).toContainAllKeys(["id", "isLeagueManager", "displayName"]);
         }, 10000);
+        it("should throw a 403 Forbidden Error if a non-admin tries to call the endpoint", async () => {
+            await ownerLoggedIn(getAllRequest(2019,  403), app);
+        });
+        it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
+            await getAllRequest(2019,  403)(request(app));
+        });
     });
 });
