@@ -1,5 +1,4 @@
 import { Server } from "http";
-import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
@@ -7,45 +6,73 @@ import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
 import { UserFactory } from "../factories/UserFactory";
 import User from "../../src/models/user";
-import { adminLoggedIn, DatePatternRegex, doLogout, makeDeleteRequest, makeGetRequest,
-    makePostRequest, makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, stringifyQuery } from "./helpers";
+import {
+    adminLoggedIn,
+    clearDb,
+    DatePatternRegex,
+    doLogout,
+    makeDeleteRequest,
+    makeGetRequest,
+    makePostRequest,
+    makePutRequest,
+    ownerLoggedIn,
+    setupOwnerAndAdminUsers,
+    stringifyQuery
+} from "./helpers";
 import { v4 as uuid } from "uuid";
+import { getConnection } from "typeorm";
+import UserDAO from "../../src/DAO/UserDAO";
 
 let app: Server;
 let ownerUser: User;
 let adminUser: User;
+let userDao: UserDAO;
 
 async function shutdown() {
-    await new Promise(resolve => {
-        redisClient.quit(() => {
-            resolve();
+    await new Promise<void>((resolve, reject) => {
+        redisClient.quit((err, reply) => {
+            if (err) {
+                reject(err);
+            } else {
+                logger.debug(`Redis quit successfully with reply ${reply}`);
+                resolve();
+            }
         });
     });
     // redis.quit() creates a thread to close the connection.
     // We wait until all threads have been run once to ensure the connection closes.
-    await new Promise(resolve => setImmediate(resolve));
+    return await new Promise(resolve => setImmediate(resolve));
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~USER ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
+    userDao = new UserDAO();
 
-    // Create admin and owner users in db for rest of this suite's use
-    [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
-    logger.debug("~~~~~STARTING TESTS~~~~~~~~~~");
+    return app;
 });
 
 afterAll(async () => {
     logger.debug("~~~~~~USER ROUTES AFTER ALL~~~~~~");
-    await shutdown();
+    const shutdownRedis = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
+    return shutdownRedis;
 });
 
 describe("User API endpoints", () => {
+    beforeEach(async () => {
+        // Create admin and owner users in db for rest of this suite's use
+        [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+        return [adminUser, ownerUser];
+    });
+    afterEach(async () => {
+        return await clearDb(getConnection(process.env.NODE_ENV));
+    });
+
     describe("POST /users (create new user)", () => {
         const jatheeshUser = UserFactory.getUser("jatheesh@example.com");
         const akosUser = UserFactory.getUser("akos@example.com");
@@ -57,7 +84,7 @@ describe("User API endpoints", () => {
 
 
         afterEach(async () => {
-            await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return a single user object instance to the object passed in", async () => {
@@ -68,6 +95,7 @@ describe("User API endpoints", () => {
                 password: undefined,
             };
             delete expected.password;
+
             expect(body[0]).toMatchObject(expected);
         });
         it("should ignore any invalid properties from the object passed in", async () => {
@@ -84,6 +112,7 @@ describe("User API endpoints", () => {
                 password: undefined,
             };
             delete expected.password;
+
             expect(getBody).toMatchObject(expected);
             expect(getBody.blah).toBeUndefined();
         });
@@ -93,6 +122,7 @@ describe("User API endpoints", () => {
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should return a 400 Bad Request error if user with this email already exists in db", async () => {
+            await userDao.createUsers([UserFactory.getUser(jatheeshUser.email).parse()]);
             const {body} = await adminLoggedIn(postRequest([jatheeshUser.parse()], 400), app);
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         });
@@ -108,13 +138,14 @@ describe("User API endpoints", () => {
         const getAllRequest = (status: number = 200) => makeGetRequest(request(app), "/users", status);
 
         it("should return an array of all the users in the db", async () => {
+            // admin and owner user are inserted in beforeEach block; here we insert two additional users
+            await userDao.createUsers([UserFactory.getUser("akos@example.com"), UserFactory.getUser()]);
             const {body} = await getAllRequest();
             expect(body).toBeArrayOfSize(4);
             const returnedAdmin = body.find((user: User) => user.id === adminUser.id);
             expect(returnedAdmin).toMatchObject({...adminUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
-                lastLoggedIn: expect.stringMatching(DatePatternRegex),
             });
             expect(returnedAdmin.password).toBeUndefined();
         });
@@ -125,26 +156,30 @@ describe("User API endpoints", () => {
             makeGetRequest(request(app), `/users?full=${full}`, status);
 
         it("should return an array of all the users with teams in the db if full=true", async () => {
+            // admin and owner user are inserted in beforeEach block; here we insert two additional users
+            await userDao.createUsers([UserFactory.getUser("akos@example.com"), UserFactory.getUser()]);
+
             const {body} = await getAllRequest();
             expect(body).toBeArrayOfSize(4);
             const returnedAdmin = body.find((user: User) => user.id === adminUser.id);
             expect(returnedAdmin).toMatchObject({...adminUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
-                lastLoggedIn: expect.stringMatching(DatePatternRegex),
             });
             expect(returnedAdmin).toHaveProperty("team");
             expect(returnedAdmin.password).toBeUndefined();
         });
 
         it("should return an array of all the users without teams in the db if full=false", async () => {
+            // admin and owner user are inserted in beforeEach block; here we insert two additional users
+            await userDao.createUsers([UserFactory.getUser("akos@example.com"), UserFactory.getUser()]);
+
             const {body} = await getAllRequest(false );
             expect(body).toBeArrayOfSize(4);
             const returnedAdmin = body.find((user: User) => user.id === adminUser.id);
             expect(returnedAdmin).toMatchObject({...adminUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
-                lastLoggedIn: expect.stringMatching(DatePatternRegex),
             });
             expect(returnedAdmin).not.toHaveProperty("team");
             expect(returnedAdmin.password).toBeUndefined();
@@ -161,7 +196,6 @@ describe("User API endpoints", () => {
             expect(body).toMatchObject({...adminUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
-                lastLoggedIn: expect.stringMatching(DatePatternRegex),
             });
             expect(body.password).toBeUndefined();
         });
@@ -180,7 +214,6 @@ describe("User API endpoints", () => {
             expect(body).toMatchObject({...ownerUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
-                lastLoggedIn: expect.stringMatching(DatePatternRegex),
             });
             expect(body.password).toBeUndefined();
         });
@@ -194,7 +227,6 @@ describe("User API endpoints", () => {
             expect(body[0]).toMatchObject({...ownerUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
-                lastLoggedIn: expect.stringMatching(DatePatternRegex),
             });
             expect(body[0].password).toBeUndefined();
         });
@@ -212,7 +244,7 @@ describe("User API endpoints", () => {
         const updatedAdmin = {...adminUser, slackUsername};
 
         afterEach(async () => {
-            await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return the updated user", async () => {
@@ -241,16 +273,18 @@ describe("User API endpoints", () => {
 
             // Confirm db was NOT updated:
             const {body: getOneRes} = await getOneRequest(adminUser.id!);
-            const expected = {...updatedAdmin,
+            const expected = {...adminUser,
                 password: expect.any(String),
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
+
             };
             delete expected.password;
             expect(getOneRes).toMatchObject(expected);
 
             expect(getOneRes.blah).toBeUndefined();
+            expect(getOneRes.slackUsername).toBeNull();
             expect(getOneRes.email).toEqual(adminUser.email);
         });
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
@@ -269,10 +303,13 @@ describe("User API endpoints", () => {
             (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/users/${id}`, status);
         const getAllRequest = () => makeGetRequest(request(app), "/users", 200);
         afterEach(async () => {
-            await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return a delete result when logged in", async () => {
+            // admin and owner user are inserted in beforeEach block; here we insert two additional users
+            await userDao.createUsers([UserFactory.getUser("akos@example.com"), UserFactory.getUser()]);
+
             const {body: getAllBefore} = await getAllRequest();
             const deletableUser = getAllBefore.filter((user: User) => user.id !== adminUser.id! && user.id !== ownerUser.id!)[0];
             expect(getAllBefore).toBeArrayOfSize(4);
