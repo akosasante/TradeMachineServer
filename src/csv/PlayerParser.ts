@@ -102,7 +102,9 @@ async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO, 
     const existingPlayers = await playerDAO.getAllPlayers();
     logger.debug(`EXISTING PLAYERS: ${existingPlayers.length}`);
 
-    // Filter the csv list of players to get rid of null entries, and any entries thathave the same name+playerDataId+mlbTeam
+    // TODO: Figure out how to make this work better; instead of fetching all players, maybe just fetch ones with matching names
+    // TODO: Figure out how to more accurately check for existing players. And log who we're including/excluding
+    // Filter the csv list of players to get rid of null entries, and any entries that have the same name+playerDataId+mlbTeam
     // Then add the playerId of any existing players in the db that have the same name (this might be bad because it's possible a major leaguer who is different but has the same name exists...)
     const uniqueWithIds = uniqWith(csvPlayers.filter(player => !!player), (player1, player2) =>
         (player1.name === player2.name) &&
