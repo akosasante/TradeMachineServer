@@ -1,5 +1,4 @@
 import { Server } from "http";
-import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
@@ -9,58 +8,79 @@ import Team from "../../src/models/team";
 import { TeamFactory } from "../factories/TeamFactory";
 import { UserFactory } from "../factories/UserFactory";
 import { v4 as uuid } from "uuid";
-import { adminLoggedIn, DatePatternRegex, doLogout, makeDeleteRequest, makeGetRequest, makePatchRequest,
-    makePostRequest, makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, stringifyQuery } from "./helpers";
+import {
+    adminLoggedIn,
+    clearDb,
+    DatePatternRegex,
+    doLogout,
+    makeDeleteRequest,
+    makeGetRequest,
+    makePatchRequest,
+    makePostRequest,
+    makePutRequest,
+    ownerLoggedIn,
+    setupOwnerAndAdminUsers,
+    stringifyQuery
+} from "./helpers";
 import startServer from "../../src/bootstrap/app";
 import User from "../../src/models/user";
 import TeamDAO from "../../src/DAO/TeamDAO";
+import { getConnection } from "typeorm";
 
 let app: Server;
 let ownerUser: User;
 let adminUser: User;
 let otherUser: User;
-let testTeam: Team;
-let testTeam2: Team;
-let ownerUserMatcher: object;
-let otherUserMatcher: object;
+let userDAO: UserDAO;
+let teamDAO: TeamDAO;
 
 async function shutdown() {
-    await new Promise(resolve => {
-        redisClient.quit(() => {
-            resolve();
+    await new Promise<void>((resolve, reject) => {
+        redisClient.quit((err, reply) => {
+            if (err) {
+                reject(err);
+            } else {
+                logger.debug(`Redis quit successfully with reply ${reply}`);
+                resolve();
+            }
         });
     });
     // redis.quit() creates a thread to close the connection.
     // We wait until all threads have been run once to ensure the connection closes.
-    await new Promise(resolve => setImmediate(resolve));
+    return await new Promise(resolve => setImmediate(resolve));
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
 
-    // Create admin and owner users in db for rest of this suite's use
-    const userDAO = new UserDAO();
-    [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
-    [otherUser] = await userDAO.createUsers([UserFactory.getUser().parse()]);
-    testTeam = TeamFactory.getTeam();
-    testTeam2 = TeamFactory.getTeam("Team Two", 2);
+    userDAO = new UserDAO();
+    teamDAO = new TeamDAO();
+    return app;
 });
 
 afterAll(async () => {
-    logger.debug("~~~~~~TEAM ROUTES AFTER ALL~~~~~~");
-    await shutdown();
+    logger.debug("~~~~~~TEAMs ROUTES AFTER ALL~~~~~~");
+    const shutdownRedis = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
+    return shutdownRedis;
 });
 
 describe("Team API endpoints", () => {
-    const updatedName = "Hello darkness my old friend";
-    ownerUserMatcher = {...ownerUser, dateCreated: expect.stringMatching(DatePatternRegex), dateModified: expect.stringMatching(DatePatternRegex)};
-    otherUserMatcher = {...otherUser, dateCreated: expect.stringMatching(DatePatternRegex), dateModified: expect.stringMatching(DatePatternRegex)};
+    beforeEach(async () => {
+        // Create admin and owner users in db for rest of this suite's use
+        [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+        [otherUser] = await userDAO.createUsers([UserFactory.getUser().parse()]);
+        return otherUser;
+    });
+
+    afterEach(async () => {
+        return await clearDb(getConnection(process.env.NODE_ENV));
+    });
 
     describe("POST /teams (create new team)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
@@ -71,33 +91,35 @@ describe("Team API endpoints", () => {
             makeGetRequest(request(app), `/teams/${id}`, status);
 
         afterEach(async () => {
-            await doLogout(request.agent(app));
-        });
-
-        afterAll(async () => {
-            const teamDAO = new TeamDAO();
-            await teamDAO.updateTeamOwners(testTeam2.id!, [ownerUser, otherUser], []);
+            return await doLogout(request.agent(app));
         });
 
         it("should return a single team object based on the object passed in", async () => {
-            const {body} = await adminLoggedIn(postRequest([testTeam.parse()]), app);
-            expect(body[0]).toMatchObject(testTeam);
+            const testTeam1 = TeamFactory.getTeam();
+            const {body} = await adminLoggedIn(postRequest([testTeam1.parse()]), app);
+            expect(body[0]).toMatchObject(testTeam1);
         });
         it("should ignore any invalid properties from the object passed in", async () => {
-            const {body: createBody} = await adminLoggedIn(postRequest([{...testTeam2, blah: "bloop"} as Partial<Team>]), app);
+            const testTeam1 = TeamFactory.getTeam();
+            const {body: createBody} = await adminLoggedIn(postRequest([{
+                ...testTeam1.parse(),
+                blah: "bloop",
+            } as Partial<Team>]), app);
             const {body} = await getOneRequest(createBody[0].id);
-            expect(body).toMatchObject({...testTeam2.parse(), owners: expect.any(Array)});
+            expect(body).toMatchObject({...testTeam1.parse(), owners: expect.any(Array)});
             expect(body.blah).toBeUndefined();
         });
         it("should return a 400 Bad Request error if missing a required property", async () => {
-            const {body} = await adminLoggedIn(postRequest([{ espnId: 3 }], 400), app);
+            const {body} = await adminLoggedIn(postRequest([{espnId: 3}], 400), app);
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a team", async () => {
-            await ownerLoggedIn(postRequest([testTeam.parse()], 403), app);
+            const testTeam1 = TeamFactory.getTeam();
+            await ownerLoggedIn(postRequest([testTeam1.parse()], 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
-            await postRequest([testTeam.parse()], 403)(request(app));
+            const testTeam1 = TeamFactory.getTeam();
+            await postRequest([testTeam1.parse()], 403)(request(app));
         });
     });
 
@@ -107,19 +129,39 @@ describe("Team API endpoints", () => {
             makeGetRequest(request(app), `/teams?hasOwners=${condition}`, status);
 
         it("should return an array of all teams (public vers.) in the db", async () => {
+            const teams = [TeamFactory.getTeam(), TeamFactory.getTeam("Team Two", 2)];
+            await teamDAO.createTeams(teams.map(t => t.parse()));
+
             const {body} = await getAllRequest();
+
             expect(body).toBeArrayOfSize(2);
-            expect(body.map((t: Team) => t.id)).toIncludeSameMembers([testTeam.id, testTeam2.id]);
+            expect(body.map((returnedTeam: Team) => returnedTeam.id)).toIncludeSameMembers(teams.map(t => t.id));
         });
         it("should return an array of all teams with owners", async () => {
+            const teams = [TeamFactory.getTeam(), TeamFactory.getTeam("Team Two", 2)];
+            await teamDAO.createTeams(teams.map(t => t.parse()));
+            await teamDAO.updateTeamOwners(teams[1].parse().id!, [ownerUser, otherUser], []);
+
             const {body} = await getAllOwnerRequest("true");
+
             expect(body).toBeArrayOfSize(1);
-            expect(body[0]).toMatchObject({...testTeam2.parse(), owners: expect.any(Array)});
+            expect(body[0]).toMatchObject(teams[1]);
         });
         it("should return an array of all teams without owners", async () => {
+            const teams = [TeamFactory.getTeam().parse(), TeamFactory.getTeam("Team Two", 2).parse()];
+            await teamDAO.createTeams(teams);
+            await teamDAO.updateTeamOwners(teams[1].id!, [ownerUser, otherUser], []);
+
             const {body} = await getAllOwnerRequest("false");
+
             expect(body).toBeArrayOfSize(1);
-            expect(body[0]).toMatchObject(testTeam);
+            expect(body[0]).toMatchObject({
+                ...teams[0],
+                owners: expect.any(Array),
+                dateCreated: expect.stringMatching(DatePatternRegex),
+                dateModified: expect.stringMatching(DatePatternRegex),
+                status: expect.toBeNumber(),
+            });
         });
     });
 
@@ -128,9 +170,13 @@ describe("Team API endpoints", () => {
             makeGetRequest(request(app), `/teams/${id}`, status);
 
         it("should return a single team (public vers.) for the given id", async () => {
-            const {body} = await getOneRequest(testTeam.id!);
+            const testTeam1 = TeamFactory.getTeam();
+            await teamDAO.createTeams([testTeam1.parse()]);
+
+            const {body} = await getOneRequest(testTeam1.id!);
+
             expect(body).toBeObject();
-            expect(body).toMatchObject(testTeam);
+            expect(body).toMatchObject(testTeam1);
         });
         it("should throw a 404 Not Found error if there is no team with that ID", async () => {
             await getOneRequest(uuid(), 404);
@@ -142,12 +188,16 @@ describe("Team API endpoints", () => {
             makeGetRequest(request(app), `/teams/search${stringifyQuery(query as { [key: string]: string; })}`, status);
 
         it("should return teams (public vers.) for the given query", async () => {
+            const teams = [TeamFactory.getTeam(), TeamFactory.getTeam("Team Two", 2)];
+            await teamDAO.createTeams(teams.map(t => t.parse()));
+
             const {body} = await findRequest({espnId: 2});
+
             expect(body).toBeArrayOfSize(1);
-            expect(body[0]).toMatchObject({...testTeam2.parse(), owners: expect.any(Array)});
+            expect(body[0]).toMatchObject(teams[1]);
         });
         it("should throw a 404 error if no team with that query is found", async () => {
-            await findRequest({ espnId: 999 }, 404);
+            await findRequest({espnId: 999}, 404);
         });
     });
 
@@ -155,23 +205,30 @@ describe("Team API endpoints", () => {
         const putTeamRequest = (id: string, teamObj: Partial<Team>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<Team>>(agent, `/teams/${id}`, teamObj, status);
-        const updatedTeamObj = {name: updatedName};
-        const updatedTeam = new Team({...testTeam, ...updatedTeamObj});
+        const updatedTeamObj = {name: "Hello darkness my old friend"};
+
         afterEach(async () => {
-            await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return the updated team", async () => {
-            const {body} = await adminLoggedIn(putTeamRequest(testTeam.id!, updatedTeamObj), app);
-            expect(body).toMatchObject(updatedTeam);
+            const testTeam1 = TeamFactory.getTeam();
+            await teamDAO.createTeams([testTeam1.parse()]);
+
+            const {body} = await adminLoggedIn(putTeamRequest(testTeam1.id!, updatedTeamObj), app);
+
+            expect(body).toMatchObject(new Team({...testTeam1, ...updatedTeamObj}));
         });
         it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
+            const testTeam1 = TeamFactory.getTeam();
+            await teamDAO.createTeams([testTeam1.parse()]);
             const teamObj = {...updatedTeamObj, blah: "wassup"};
-            await adminLoggedIn( putTeamRequest(testTeam.id!, teamObj, 400), app);
+
+            await adminLoggedIn(putTeamRequest(testTeam1.id!, teamObj, 400), app);
 
             // Confirm db was not updated:
-            const {body: getOneBody} = await request(app).get(`/teams/${testTeam.id}`).expect(200);
-            expect(getOneBody).toMatchObject(updatedTeam);
+            const {body: getOneBody} = await request(app).get(`/teams/${testTeam1.id}`).expect(200);
+            expect(getOneBody).toMatchObject(testTeam1);
             expect(getOneBody.blah).toBeUndefined();
         });
         it("should throw a 404 Not Found error if there is no team with that ID", async () => {
@@ -190,16 +247,25 @@ describe("Team API endpoints", () => {
             (agent: request.SuperTest<request.Test>) =>
                 makePatchRequest(agent, `/teams/${id}`, {add: ownersToAdd, remove: ownersToRemove}, status);
         afterEach(async () => {
-            await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return the updated team with added owners", async () => {
-            const {body} = await adminLoggedIn(patchTeamRequest(testTeam.id!, [otherUser, adminUser], []), app);
+            const testTeam1 = TeamFactory.getTeam();
+            await teamDAO.createTeams([testTeam1.parse()]);
+
+            const {body} = await adminLoggedIn(patchTeamRequest(testTeam1.id!, [otherUser, adminUser], []), app);
+
             expect(body.owners).toBeArrayOfSize(2);
             expect(body.owners.map((owner: User) => owner.id)).toIncludeSameMembers([adminUser.id, otherUser.id]);
         });
         it("should allow adding and removing at the same time", async () => {
-            const {body} = await adminLoggedIn(patchTeamRequest(testTeam.id!, [ownerUser], [otherUser]), app);
+            const testTeam1 = TeamFactory.getTeam();
+            await teamDAO.createTeams([testTeam1.parse()]);
+            await teamDAO.updateTeamOwners(testTeam1.id!, [otherUser, adminUser], []);
+
+            const {body} = await adminLoggedIn(patchTeamRequest(testTeam1.id!, [ownerUser], [otherUser]), app);
+
             expect(body.owners).toBeArrayOfSize(2);
             expect(body.owners.map((owner: User) => owner.id)).toIncludeSameMembers([adminUser.id, ownerUser.id]);
         });
@@ -215,29 +281,48 @@ describe("Team API endpoints", () => {
     });
 
     describe("DELETE /teams/:id (delete one team)", () => {
-            const deleteTeamRequest = (id: string, status: number = 200) =>
-                (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/teams/${id}`, status);
-            afterEach(async () => {
-                await doLogout(request.agent(app));
-            });
+        const deleteTeamRequest = (id: string, status: number = 200) =>
+            (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/teams/${id}`, status);
+        afterEach(async () => {
+            return await doLogout(request.agent(app));
+        });
 
-            it("should return a delete result if successful", async () => {
-            const {body} = await adminLoggedIn(deleteTeamRequest(testTeam.id!), app);
-            expect(body).toEqual({ deleteCount: 1, id: testTeam.id });
+        it("should return a delete result if successful", async () => {
+            const teams = [TeamFactory.getTeam(), TeamFactory.getTeam("Team Two", 2)];
+            await teamDAO.createTeams(teams.map(t => t.parse()));
+
+            const {body} = await adminLoggedIn(deleteTeamRequest(teams[0].id!), app);
+            expect(body).toEqual({deleteCount: 1, id: teams[0].id});
 
             // Confirm that it was deleted from the db:
             const {body: getAllRes} = await request(app).get("/teams").expect(200);
             expect(getAllRes).toBeArrayOfSize(1);
-
-            // TODO Confirm that users that were previously owners of this team have their TeamID set to none
         });
-            it("should throw a 404 Not Found error if there is no team with that ID", async () => {
+        it("should reset the team_id field of any owner users of deleted teams", async () => {
+            const testTeam1 = TeamFactory.getTeam();
+            await teamDAO.createTeams([testTeam1.parse()]);
+            await teamDAO.updateTeamOwners(testTeam1.id!, [otherUser], []);
+
+            // user has been updated with team id
+            const {body: bodyBefore} = await request(app).get("/users?full=true").expect(200);
+            const otherUserWithTeamId = bodyBefore.find((u: User) => u.id === otherUser.id);
+            expect(otherUserWithTeamId.team.id).toEqual(testTeam1.id);
+
+            // delete owned team
+            await adminLoggedIn(deleteTeamRequest(testTeam1.id!), app);
+
+            // confirm that user's team id has been set to null
+            const {body: bodyAfter} = await request(app).get("/users?full=true").expect(200);
+            const otherUserWithoutTeamId = bodyAfter.find((u: User) => u.id === otherUser.id);
+            expect(otherUserWithoutTeamId.team).toBeNull();
+        });
+        it("should throw a 404 Not Found error if there is no team with that ID", async () => {
             await adminLoggedIn(deleteTeamRequest(uuid(), 404), app);
         });
-            it("should throw a 403 Forbidden error if a non-admin tries to delete a team", async () => {
+        it("should throw a 403 Forbidden error if a non-admin tries to delete a team", async () => {
             await ownerLoggedIn(deleteTeamRequest(uuid(), 403), app);
         });
-            it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
+        it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await deleteTeamRequest(uuid(), 403)(request(app));
         });
     });
