@@ -3,12 +3,13 @@ import request from "supertest";
 import UserDAO from "../../src/DAO/UserDAO";
 import { UserFactory } from "../factories/UserFactory";
 import { generateHashedPassword } from "../../src/authentication/auth";
+import { Connection } from "typeorm";
 
 export async function makeLoggedInRequest(agent: request.SuperTest<request.Test>, email: string, password: string,
                                           req: (ag: request.SuperTest<request.Test>) => any) {
     await agent
         .post("/auth/login")
-        .send({email, password})
+        .send({ email, password })
         .expect(200);
     return req(agent);
 }
@@ -61,7 +62,7 @@ export async function makePatchRequest<T>(agent: request.SuperTest<request.Test>
         .expect(expectedStatus);
 }
 
-export function stringifyQuery(query: {[key: string]: string}) {
+export function stringifyQuery(query: { [key: string]: string }) {
     return "?".concat(Object.entries(query).map(([key, val]) => {
         if (typeof val === "object") val = stringifyQuery(val);
         return `${key}=${encodeURIComponent(val)}`;
@@ -73,7 +74,10 @@ export async function setupOwnerAndAdminUsers() {
     const ownerUser = UserFactory.getOwnerUser();
     const adminUser = UserFactory.getAdminUser();
     const password = await generateHashedPassword(UserFactory.GENERIC_PASSWORD);
-    const [savedAdmin, savedOwner] = await userDAO.createUsers([{...adminUser.parse(), password}, {...ownerUser.parse(), password}]);
+    const [savedAdmin, savedOwner] = await userDAO.createUsers([{ ...adminUser.parse(), password }, {
+        ...ownerUser.parse(),
+        password,
+    }]);
     return [savedAdmin, savedOwner];
 }
 
@@ -84,3 +88,13 @@ export const ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) =
 
 export const DatePatternRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
 export const UUIDPatternRegex = /([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/;
+
+export const clearDb = async (connection: Connection) => {
+    const entities = connection.entityMetadatas;
+
+    for (const entity of entities) {
+        const repository = await connection.getRepository(entity.name);
+        await repository.query(`DELETE
+                                FROM ${entity.schema}.${entity.tableName}`);
+    }
+};

@@ -10,7 +10,6 @@ import { getConnection } from "typeorm";
 import { generateHashedPassword } from "../../src/authentication/auth";
 import "jest-date-mock";
 import { advanceBy } from "jest-date-mock";
-import {inspect} from "util";
 
 let app: Server;
 let userDAO: UserDAO;
@@ -28,30 +27,32 @@ async function shutdown() {
     });
     // redis.quit() creates a thread to close the connection.
     // We wait until all threads have been run once to ensure the connection closes.
-    await new Promise(resolve => setImmediate(resolve));
+    return await new Promise(resolve => setImmediate(resolve));
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~AUTH ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
     userDAO = new UserDAO();
+    return app;
 });
 afterAll(async () => {
     logger.debug("~~~~~~AUTH ROUTES AFTER ALL~~~~~~");
-    await shutdown();
+    const shutdownRedis = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
+    return shutdownRedis;
 });
 
 describe("Auth API endpoints", () => {
-    afterEach(async () => {
-        await clearDb(getConnection(process.env.NODE_ENV));
-    });
+    const testUser = { email: "test@example.com", password: "lol"};
 
-    const testUser = { email: "test@example.com", password: "lol" };
+    afterEach(async () => {
+        return await clearDb(getConnection(process.env.NODE_ENV));
+    });
 
     describe("POST /auth/signup", () => {
         const signupRequest = (email: string, password: string, status: number = 200) =>
@@ -59,7 +60,7 @@ describe("Auth API endpoints", () => {
                 makePostRequest<Partial<User>>(agent, "/auth/signup", { email, password }, status);
 
         it("should successfully signup the user, set up the session, and return the public user", async () => {
-            const {body} = await signupRequest(testUser.email, testUser.password)(request(app));
+            const { body } = await signupRequest(testUser.email, testUser.password)(request(app));
 
             expect(body.email).toEqual(testUser.email);
             expect(body).not.toHaveProperty("password");
@@ -73,39 +74,43 @@ describe("Auth API endpoints", () => {
         });
         it("should have updated just the password for an existing user with no password", async () => {
             // Create user directly in db, with just email
-            await userDAO.createUsers([{email: testUser.email}]);
+            await userDAO.createUsers([{ email: testUser.email }]);
 
-            const noPassUser = await userDAO.findUserWithPassword({email: testUser.email});
+            const noPassUser = await userDAO.findUserWithPassword({ email: testUser.email });
             expect(noPassUser!.password).toBeFalsy();
 
             // Sign up user
-            const {body} = await signupRequest(testUser.email, testUser.password)(request(app));
+            const { body } = await signupRequest(testUser.email, testUser.password)(request(app));
             expect(body).not.toHaveProperty("password");
             expect(body.lastLoggedIn).toBeDefined();
 
             // Check that user password is now set
-            const updatedUser = await userDAO.findUserWithPassword({email: testUser.email});
+            const updatedUser = await userDAO.findUserWithPassword({ email: testUser.email });
             expect(updatedUser!.password).toBeDefined();
         });
         it("should not allow signing up with the same email for an existing user that already has a password", async () => {
             const hashedPass = await generateHashedPassword(testUser.password);
-            await userDAO.createUsers([{email: testUser.email, password: hashedPass}]);
+            await userDAO.createUsers([{ email: testUser.email, password: hashedPass }]);
 
             await signupRequest(testUser.email, "anotha one", 409)(request(app));
         });
     });
 
     describe("POST /auth/login", () => {
-        const testUser2 = {email: "test2@example.com", password: testUser.password};
-        beforeEach(async() => {
+        const testUser2 = { email: "test2@example.com", password: testUser.password };
+
+        beforeEach(async () => {
             const hashedPass = await generateHashedPassword(testUser.password);
-            await userDAO.createUsers([{email: testUser.email, password: hashedPass}, {email: testUser2.email, password: hashedPass}]);
+            return await userDAO.createUsers([{ email: testUser.email, password: hashedPass }, {
+                email: testUser2.email,
+                password: hashedPass,
+            }]);
         });
 
         it("should successfully login the user, set up the session, and return the public user", async () => {
-            const {body} = await request(app)
+            const { body } = await request(app)
                 .post("/auth/login")
-                .send({email: testUser.email, password: testUser.password})
+                .send({ email: testUser.email, password: testUser.password })
                 .expect(200);
             expect(body.email).toEqual(testUser.email);
             expect(body).not.toHaveProperty("password");
@@ -130,9 +135,9 @@ describe("Auth API endpoints", () => {
     describe("POST /auth/logout", () => {
         const logoutFunc = (agent: request.SuperTest<request.Test>) => agent.post("/auth/logout").expect(200);
 
-        beforeEach(async() => {
+        beforeEach(async () => {
             const hashedPass = await generateHashedPassword(testUser.password);
-            await userDAO.createUsers([{email: testUser.email, password: hashedPass}]);
+            return await userDAO.createUsers([{ email: testUser.email, password: hashedPass }]);
         });
 
         it("should successfully 'logout' a non-initialized session", async () => {
@@ -146,13 +151,13 @@ describe("Auth API endpoints", () => {
     });
 
     describe("POST /auth/reset_password", () => {
-        beforeEach(async() => {
+        beforeEach(async () => {
             const hashedPass = await generateHashedPassword(testUser.password);
-            await userDAO.createUsers([{email: testUser.email, password: hashedPass}]);
+            return await userDAO.createUsers([{ email: testUser.email, password: hashedPass }]);
         });
 
         it("should successfully update the user with the hashed password", async () => {
-            const { id } = await userDAO.findUser({email: testUser.email}, true) as User;
+            const { id } = await userDAO.findUser({ email: testUser.email }, true) as User;
             const { passwordResetToken } = await userDAO.setPasswordExpires(id!);
             const resetPasswordObj = { id, token: passwordResetToken, password: "newPass"};
 
@@ -164,8 +169,8 @@ describe("Auth API endpoints", () => {
         });
 
         it("should return a 404 if there's no user with that passwordResetToken", async () => {
-            const { id } = await userDAO.findUser({email: testUser.email}, true) as User;
-            const resetPasswordObj = {id, token: "xyz-uuid", password: "newPass"};
+            const { id } = await userDAO.findUser({ email: testUser.email }, true) as User;
+            const resetPasswordObj = { id, token: "xyz-uuid", password: "newPass"};
 
             await request(app)
                 .post("/auth/reset_password")
@@ -174,9 +179,9 @@ describe("Auth API endpoints", () => {
         });
 
         it("should return a 403 if there's trying to reset a password past the expiry time", async () => {
-            const { id } = await userDAO.findUser({email: testUser.email}, true) as User;
+            const { id } = await userDAO.findUser({ email: testUser.email }, true) as User;
             const { passwordResetToken } = await userDAO.setPasswordExpires(id!);
-            const resetPasswordObj = {id, token: passwordResetToken, password: "newPass"};
+            const resetPasswordObj = { id, token: passwordResetToken, password: "newPass"};
 
             advanceBy(TIME_TO_EXPIRE_USER_PASSWORD_IN_MS + 1000);
 
@@ -188,39 +193,39 @@ describe("Auth API endpoints", () => {
     });
 
     describe("POST /auth/login/sendResetEmail (send a reset password email)", () => {
-        beforeEach(async() => {
+        beforeEach(async () => {
             const hashedPass = await generateHashedPassword(testUser.password);
-            await userDAO.createUsers([{email: testUser.email, password: hashedPass}]);
+            return await userDAO.createUsers([{ email: testUser.email, password: hashedPass }]);
         });
 
         it("should return a 202 message if the email is successfully queued", async () => {
             await request(app)
                 .post("/auth/login/sendResetEmail")
-                .send({email: testUser.email})
+                .send({ email: testUser.email })
                 .expect(202);
         });
     });
 
     describe("POST /auth/signup/sendEmail (send a registration email)", () => {
-        beforeEach(async() => {
+        beforeEach(async () => {
             const hashedPass = await generateHashedPassword(testUser.password);
-            await userDAO.createUsers([{email: testUser.email, password: hashedPass}]);
+            return await userDAO.createUsers([{ email: testUser.email, password: hashedPass }]);
         });
 
         it("should return a 202 message if the email is successfully queued", async () => {
             await request(app)
                 .post("/auth/signup/sendEmail")
-                .send({email: testUser.email})
+                .send({ email: testUser.email })
                 .expect(202);
         });
     });
 
-    describe("GET /auth/session_check",  () => {
+    describe("GET /auth/session_check", () => {
         const sessionCheckFn = (agent: request.SuperTest<request.Test>) => agent.get("/auth/session_check").expect(200);
 
-        beforeEach(async() => {
+        beforeEach(async () => {
             const hashedPass = await generateHashedPassword(testUser.password);
-            await userDAO.createUsers([{email: testUser.email, password: hashedPass}]);
+            return await userDAO.createUsers([{ email: testUser.email, password: hashedPass }]);
         });
 
         it("should return a 200 if a logged in user calls the endpoint", async () => {

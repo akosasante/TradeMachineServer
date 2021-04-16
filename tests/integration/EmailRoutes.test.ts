@@ -23,35 +23,38 @@ async function shutdown() {
     });
     // redis.quit() creates a thread to close the connection.
     // We wait until all threads have been run once to ensure the connection closes.
-    await new Promise(resolve => setImmediate(resolve));
+    return await new Promise(resolve => setImmediate(resolve));
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~EMAIL ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
+    return app;
 });
 
 afterAll(async () => {
     logger.debug("~~~~~~EMAIL ROUTES AFTER ALL~~~~~~");
-    await shutdown();
+    const shutdownRedis = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
+    return shutdownRedis;
 });
 
 describe("Email API endpoints", () => {
     beforeEach(async () => {
-        ownerUser = (await setupOwnerAndAdminUsers())[0];
+        ownerUser = (await setupOwnerAndAdminUsers())[1];
+        return ownerUser;
     });
     afterEach(async () => {
-        await clearDb(getConnection(process.env.NODE_ENV));
+        return await clearDb(getConnection(process.env.NODE_ENV));
     });
 
     const emailPostRequest = (email: string, url: string, status: number = 202) =>
         (agent: request.SuperTest<request.Test>) =>
-            makePostRequest<{email: string}>(agent, `/email/${url}`, {email}, status);
+            makePostRequest<{ email: string }>(agent, `/email/${url}`, { email }, status);
     const webhookPostRequest = (event: object, status: number = 200) =>
         (agent: request.SuperTest<request.Test>) =>
             makePostRequest<object>(agent, "/email/sendInMailWebhook", event, status);

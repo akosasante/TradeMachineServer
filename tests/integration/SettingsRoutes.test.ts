@@ -7,8 +7,13 @@ import Settings from "../../src/models/settings";
 import User from "../../src/models/user";
 import { SettingsFactory } from "../factories/SettingsFactory";
 import {
-    adminLoggedIn, clearDb, doLogout, makeGetRequest, makePostRequest,
-    ownerLoggedIn, setupOwnerAndAdminUsers
+    adminLoggedIn,
+    clearDb,
+    doLogout,
+    makeGetRequest,
+    makePostRequest,
+    ownerLoggedIn,
+    setupOwnerAndAdminUsers
 } from "./helpers";
 import startServer from "../../src/bootstrap/app";
 import { getConnection } from "typeorm";
@@ -49,26 +54,35 @@ beforeAll(async () => {
 
 afterAll(async () => {
     logger.debug("~~~~~~SETTINGS ROUTES AFTER ALL~~~~~~");
-    const res = await shutdown();
+    const shutdownRedis = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
-    return res;
+    return shutdownRedis;
 });
 
 describe("Settings API endpoints for general settings", () => {
     beforeEach(async () => {
         [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
-        testSettings = SettingsFactory.getSettings(ownerUser, {tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START, tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END});
+        testSettings = SettingsFactory.getSettings(ownerUser, {
+            tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
+            tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
+        });
         delete testSettings.downtime;
-        testSettings2 = SettingsFactory.getSettings(adminUser, undefined, {scheduled: [{downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START, downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END, downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON}]});
+        testSettings2 = SettingsFactory.getSettings(adminUser, undefined, {
+            scheduled: [{
+                downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START,
+                downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END,
+                downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON,
+            }],
+        });
         delete testSettings2.tradeWindowEnd;
         delete testSettings2.tradeWindowStart;
 
         expectedTestSettings = {
-            id: expect.toBeString(),
+            id: expect.any(String),
             modifiedBy: expect.toBeObject(),
             tradeWindowStart: testSettings.tradeWindowStart,
             tradeWindowEnd: testSettings.tradeWindowEnd,
@@ -77,7 +91,7 @@ describe("Settings API endpoints for general settings", () => {
         };
 
         const expectedDowntimeObj = {
-            scheduled: [ {
+            scheduled: [{
                 downtimeStartDate: testSettings2.downtime?.scheduled[0].downtimeStartDate?.toISOString(),
                 downtimeEndDate: testSettings2.downtime?.scheduled[0].downtimeEndDate?.toISOString(),
                 downtimeReason: testSettings2.downtime?.scheduled[0].downtimeReason,
@@ -85,7 +99,7 @@ describe("Settings API endpoints for general settings", () => {
         };
 
         expectedTestSettings2 = {
-            id: expect.toBeString(),
+            id: expect.any(String),
             modifiedBy: expect.toBeObject(),
             downtime: expect.objectContaining(expectedDowntimeObj),
             // tslint:disable-next-line:no-null-keyword
@@ -95,7 +109,7 @@ describe("Settings API endpoints for general settings", () => {
         };
 
         mergedSettings = {
-            id: expect.toBeString(),
+            id: expect.any(String),
             modifiedBy: expect.toBeObject(),
             downtime: expect.objectContaining(expectedDowntimeObj),
             tradeWindowStart: testSettings.tradeWindowStart,
@@ -117,7 +131,7 @@ describe("Settings API endpoints for general settings", () => {
             await settingsDAO.insertNewSettings(testSettings);
             await settingsDAO.insertNewSettings(testSettings2);
 
-            const {body} = await adminLoggedIn(getAllRequest(), app);
+            const { body } = await adminLoggedIn(getAllRequest(), app);
 
             expect(body).toBeArrayOfSize(2);
             const returnedSetting = body.find((setting: Settings) => setting.id === testSettings.id);
@@ -141,7 +155,7 @@ describe("Settings API endpoints for general settings", () => {
             await settingsDAO.insertNewSettings(testSettings);
             await settingsDAO.insertNewSettings(testSettings2);
 
-            const {body} = await adminLoggedIn(getRecentRequest(), app);
+            const { body } = await adminLoggedIn(getRecentRequest(), app);
 
             expect(body).toMatchObject(mergedSettings);
         });
@@ -164,7 +178,7 @@ describe("Settings API endpoints for general settings", () => {
             await settingsDAO.insertNewSettings(testSettings);
             await settingsDAO.insertNewSettings(testSettings2);
 
-            const {body} = await adminLoggedIn(getOneRequest(testSettings.id!), app);
+            const { body } = await adminLoggedIn(getOneRequest(testSettings.id!), app);
 
             expect(body).toMatchObject(expectedTestSettings);
         });
@@ -187,23 +201,26 @@ describe("Settings API endpoints for general settings", () => {
                 makeGetRequest(agent, `/settings/${id}`, status);
 
         afterEach(async () => {
-           return await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return a single settings object based on the object passed in", async () => {
-            const {body} = await adminLoggedIn(postRequest(testSettings.parse()), app);
+            const { body } = await adminLoggedIn(postRequest(testSettings.parse()), app);
             expect(body).toMatchObject(expectedTestSettings);
         });
         it("should ignore any invalid properties from the object passed in and include values from previous settings", async () => {
-            const {body: createBody} = await adminLoggedIn(postRequest({...testSettings2, blah: "bloop"} as Partial<Settings>), app);
-            const {body} = await adminLoggedIn(getOneRequest(createBody.id), app);
+            const { body: createBody } = await adminLoggedIn(postRequest({
+                ...testSettings2,
+                blah: "bloop",
+            } as Partial<Settings>), app);
+            const { body } = await adminLoggedIn(getOneRequest(createBody.id), app);
 
             expect(body).toMatchObject(expectedTestSettings2);
             expect(body.blah).toBeUndefined();
         });
         it("should merge the posted settings object with the most recent one in the database", async () => {
             await settingsDAO.insertNewSettings(testSettings);
-            const {body} = await adminLoggedIn(postRequest(testSettings2.parse()), app);
+            const { body } = await adminLoggedIn(postRequest(testSettings2.parse()), app);
 
             expect(body).toMatchObject(mergedSettings);
         });
@@ -211,17 +228,20 @@ describe("Settings API endpoints for general settings", () => {
             await settingsDAO.insertNewSettings(testSettings);
             // @ts-ignore
             // tslint:disable-next-line:no-null-keyword
-            const {body} = await adminLoggedIn(postRequest({...testSettings2.parse(), tradeWindowEnd: null }), app);
+            const { body } = await adminLoggedIn(postRequest({ ...testSettings2.parse(), tradeWindowEnd: null }), app);
 
             expect(body.tradeWindowStart).toBeDefined();
             expect(body.tradeWindowEnd).toBeNull();
         });
         it("should return a 400 Bad Request error if missing a required property", async () => {
-            const {body} = await adminLoggedIn(postRequest({tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START, tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END}, 400), app);
+            const { body } = await adminLoggedIn(postRequest({
+                tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
+                tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
+            }, 400), app);
             expect(body.message).toEqual(expectErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {
-            await ownerLoggedIn(postRequest({...testSettings.parse()}, 403), app);
+            await ownerLoggedIn(postRequest({ ...testSettings.parse() }, 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await postRequest(testSettings.parse(), 403)(request(app));

@@ -7,7 +7,6 @@ import { WriteMode } from "../../src/csv/CsvUtils";
 import TeamDAO from "../../src/DAO/TeamDAO";
 import UserDAO from "../../src/DAO/UserDAO";
 import Player, { PlayerLeagueType } from "../../src/models/player";
-import Team from "../../src/models/team";
 import User, { Role } from "../../src/models/user";
 import { PlayerFactory } from "../factories/PlayerFactory";
 import { TeamFactory } from "../factories/TeamFactory";
@@ -93,24 +92,26 @@ describe("Player API endpoints", () => {
         const getOneRequest = (id: string, status: number = 200) =>
             makeGetRequest(request(app), `/players/${id}`, status);
 
-        it("should return a single player object based on object passed in", async () => {
+        it("should return a list of player objects based on object(s) passed in", async () => {
             const testPlayer1 = PlayerFactory.getPlayer();
 
-            const {body} = await adminLoggedIn(postRequest([testPlayer1.parse()]), app);
+            const { body } = await adminLoggedIn(postRequest([testPlayer1.parse()]), app);
 
-            expect(body[0]).toMatchObject({...testPlayer1,
+            expect(body[0]).toMatchObject({
+                ...testPlayer1,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
             });
         });
         it("should ignore any invalid properties from the object passed in", async () => {
             const testPlayer1 = PlayerFactory.getPlayer();
-            const invalidPropsObj = {...testPlayer1.parse(), blah: "Hello"};
+            const invalidPropsObj = { ...testPlayer1.parse(), blah: "Hello" };
 
-            const {body} = await adminLoggedIn(postRequest([invalidPropsObj]), app);
-            const {body: getBody} =  await getOneRequest(body[0].id);
+            const { body } = await adminLoggedIn(postRequest([invalidPropsObj]), app);
+            const { body: getBody } = await getOneRequest(body[0].id);
 
-            expect(getBody).toMatchObject({...testPlayer1,
+            expect(getBody).toMatchObject({
+                ...testPlayer1,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
             });
@@ -134,24 +135,31 @@ describe("Player API endpoints", () => {
             makeGetRequest(request(app), `/players${param}`, status);
 
         it("should return an array of all players in the db", async () => {
-            const testPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"})];
+            const testPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" })];
             await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
 
-            const {body} = await getAllRequest();
+            const { body } = await getAllRequest();
 
             expect(body).toBeArrayOfSize(2);
-            expect(body[0]).toMatchObject(testPlayers[0]);
+            expect(body.map((p: Player) => p.id)).toSatisfyAll(id => testPlayers.map(tp => tp.id).includes(id));
         });
         it("should return an array of all players in a given league or leagues", async () => {
-            const testPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"})];
+            const testPlayers = [
+                PlayerFactory.getPlayer(),
+                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
+                PlayerFactory.getPlayer("Bo Bichette", PlayerLeagueType.MAJOR),
+            ];
             await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
 
-            const {body: minorPlayers} = await getAllRequest("?include[]=minors");
-            const {body: majorPlayers} = await getAllRequest("?include[]=majors");
+            const { body: minorPlayers } = await getAllRequest("?include[]=minors");
+            const { body: majorPlayers } = await getAllRequest("?include[]=majors");
+            const { body: allPlayers } = await getAllRequest("?include[]=majors&include[]=minors");
 
             expect(minorPlayers).toBeArrayOfSize(1);
-            expect(majorPlayers).toBeArrayOfSize(1);
+            expect(majorPlayers).toBeArrayOfSize(2);
+            expect(allPlayers).toBeArrayOfSize(3);
             expect(minorPlayers[0].id).toEqual(testPlayers[0].id);
+            expect(allPlayers[0].id).toEqual(testPlayers[0].id);
             expect(majorPlayers[0].id).toEqual(testPlayers[1].id);
         });
     });
@@ -161,10 +169,10 @@ describe("Player API endpoints", () => {
             makeGetRequest(request(app), `/players/${id}`, status);
 
         it("should return a single player for the given id", async () => {
-            const testPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"})];
+            const testPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" })];
             await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
 
-            const {body} = await getOneRequest(testPlayers[0].id!);
+            const { body } = await getOneRequest(testPlayers[0].id!);
 
             expect(body).toBeObject();
             expect(body).toMatchObject(testPlayers[0]);
@@ -179,10 +187,10 @@ describe("Player API endpoints", () => {
             makeGetRequest(request(app), `/players/search${stringifyQuery(query as { [key: string]: string; })}`, status);
 
         it("should return players for the given query", async () => {
-            const testPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"})];
+            const testPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" })];
             await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
 
-            const {body} = await findRequest({mlbTeam: "Boston Red Sox"});
+            const { body } = await findRequest({ mlbTeam: "Boston Red Sox" });
 
             expect(body).toBeArrayOfSize(1);
             expect(body[0]).toMatchObject(testPlayers[1]);
@@ -202,11 +210,11 @@ describe("Player API endpoints", () => {
             const testPlayers = [
                 PlayerFactory.getPlayer(),
                 PlayerFactory.getPlayer("Aaron Fudge"),
-                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"}),
+                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
             ];
             await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
 
-            const {body} = await findRequest("ron");
+            const { body } = await findRequest("ron");
 
             expect(body).toBeArrayOfSize(2);
             expect(body[0]).toMatchObject(testPlayers[1]);
@@ -217,11 +225,11 @@ describe("Player API endpoints", () => {
             const testPlayers = [
                 PlayerFactory.getPlayer(),
                 PlayerFactory.getPlayer("Aaron Fudge"),
-                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"}),
+                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
             ];
             await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
 
-            const {body} = await findRequestWithLeagueId("ron", 1);
+            const { body } = await findRequestWithLeagueId("ron", 1);
 
             expect(body).toBeArrayOfSize(1);
             expect(body[0]).toMatchObject(testPlayers[2]);
@@ -232,7 +240,7 @@ describe("Player API endpoints", () => {
         const putRequest = (id: string, playerObj: Partial<Player>, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<Player>>(agent, `/players/${id}`, playerObj, status);
-        const updatedPlayerObj = {mlbTeam: "Miami Marlins"};
+        const updatedPlayerObj = { mlbTeam: "Miami Marlins" };
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -242,24 +250,25 @@ describe("Player API endpoints", () => {
             const testPlayer1 = PlayerFactory.getPlayer();
             await playerDAO.createPlayers([testPlayer1.parse()]);
 
-            const {body} = await adminLoggedIn(putRequest(testPlayer1.id!, updatedPlayerObj), app);
-            expect(body).toMatchObject(new Player({...testPlayer1, ...updatedPlayerObj}));
+            const { body } = await adminLoggedIn(putRequest(testPlayer1.id!, updatedPlayerObj), app);
+
+            expect(body).toMatchObject(new Player({ ...testPlayer1, ...updatedPlayerObj }));
         });
         it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
             const testPlayer1 = PlayerFactory.getPlayer();
             await playerDAO.createPlayers([testPlayer1.parse()]);
-            const invalidObj = {...updatedPlayerObj, blah: "wassup"};
+            const invalidObj = { ...updatedPlayerObj, blah: "wassup" };
 
             await adminLoggedIn(putRequest(testPlayer1.id!, invalidObj, 400), app);
 
             // Confirm db was not updated:
-            const {body: getOneBody} = await request(app).get(`/players/${testPlayer1.id}`).expect(200);
+            const { body: getOneBody } = await request(app).get(`/players/${testPlayer1.id}`).expect(200);
             expect(getOneBody).toMatchObject(testPlayer1);
             expect(getOneBody.blah).toBeUndefined();
         });
         it("should throw a 404 Not Found error if there is no player with that ID", async () => {
             await adminLoggedIn(putRequest(uuid(), updatedPlayerObj, 404), app);
-        });
+        }, 2000);
         it("should throw a 403 Forbidden error if a non-admin tries to update a player", async () => {
             await ownerLoggedIn(putRequest(uuid(), updatedPlayerObj, 403), app);
         });
@@ -276,24 +285,24 @@ describe("Player API endpoints", () => {
         });
 
         it("should return a delete result if successful", async () => {
-            const testPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"})];
+            const testPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" })];
             await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
 
-            const {body} = await adminLoggedIn(deleteRequest(testPlayers[0].id!), app);
-            expect(body).toEqual({deleteCount: 1, id: testPlayers[0].id});
+            const { body } = await adminLoggedIn(deleteRequest(testPlayers[0].id!), app);
+            expect(body).toEqual({ deleteCount: 1, id: testPlayers[0].id });
 
             // Confirm that it was deleted from the db:
-            const {body: getAllRes} = await request(app).get("/players").expect(200);
+            const { body: getAllRes } = await request(app).get("/players").expect(200);
 
             expect(getAllRes).toBeArrayOfSize(1);
             expect(getAllRes[0].id).toEqual(testPlayers[1].id);
         });
         it("should throw a 404 Not Found error if there is no player with that ID", async () => {
-            const testPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"})];
+            const testPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" })];
             await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
 
             await adminLoggedIn(deleteRequest(uuid(), 404), app);
-            const {body: getAllRes} = await request(app).get("/players").expect(200);
+            const { body: getAllRes } = await request(app).get("/players").expect(200);
 
             expect(getAllRes).toBeArrayOfSize(2);
         });
@@ -324,17 +333,20 @@ describe("Player API endpoints", () => {
 
         beforeEach(async () => {
             // Updating + adding users for each of the owners in the test CSV file
-            await userDAO.updateUser(adminUser.id!, {csvName: "Cam"});
-            await userDAO.updateUser(ownerUser.id!, {csvName: "Squad"});
+            await userDAO.updateUser(adminUser.id!, { csvName: "Cam" });
+            await userDAO.updateUser(ownerUser.id!, { csvName: "Squad" });
             const [akos, kwasi] = await userDAO.createUsers([
                 UserFactory.getUserObject("akos@example.com", undefined,
-                    undefined, Role.OWNER, {name: "A", csvName: "Akos"}),
-                UserFactory.getUserObject("kwasi@example.com", undefined, undefined, Role.OWNER,  {name: "K", csvName: "Kwasi"}),
+                    undefined, Role.OWNER, { name: "A", csvName: "Akos" }),
+                UserFactory.getUserObject("kwasi@example.com", undefined, undefined, Role.OWNER, {
+                    name: "K",
+                    csvName: "Kwasi",
+                }),
             ]);
             const [team1, team2, team3] = await teamDAO.createTeams([
-                TeamFactory.getTeamObject( "Camtastic", 1),
-                TeamFactory.getTeamObject( "Squad", 2),
-                TeamFactory.getTeamObject( "Asantes", 3),
+                TeamFactory.getTeamObject("Camtastic", 1),
+                TeamFactory.getTeamObject("Squad", 2),
+                TeamFactory.getTeamObject("Asantes", 3),
             ]);
 
             await teamDAO.updateTeamOwners(team1.id!, [adminUser], []);
@@ -347,51 +359,51 @@ describe("Player API endpoints", () => {
         });
 
         it("should append by default", async () => {
-            const initialPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"})];
+            const initialPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" })];
             await playerDAO.createPlayers(initialPlayers.map(p => p.parse()));
 
-            const {body: getAllRes} = await request(app).get("/players").expect(200);
+            const { body: getAllRes } = await request(app).get("/players").expect(200);
             expect(getAllRes).toBeArrayOfSize(2);
 
-            const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv), app);
+            const { body: batchPutRes } = await adminLoggedIn(postFileRequest(csv), app);
             expect(batchPutRes).toBeArrayOfSize(99);
 
-            const {body: afterGetAllRes} = await request(app).get("/players").expect(200);
+            const { body: afterGetAllRes } = await request(app).get("/players").expect(200);
             expect(afterGetAllRes).toBeArrayOfSize(101);
 
-            const {body: afterGetAllResMinorsOnly} = await request(app).get("/players?include[]=minors").expect(200);
+            const { body: afterGetAllResMinorsOnly } = await request(app).get("/players?include[]=minors").expect(200);
             expect(afterGetAllResMinorsOnly).toBeArrayOfSize(100);
-        });
+        }, 2000);
         it("should append with the given mode passed in", async () => {
-            const initialPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"})];
+            const initialPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" })];
             await playerDAO.createPlayers(initialPlayers.map(p => p.parse()));
 
-            const {body: getAllRes} = await request(app).get("/players").expect(200);
+            const { body: getAllRes } = await request(app).get("/players").expect(200);
             expect(getAllRes).toBeArrayOfSize(2);
 
-            const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv, "append"), app);
+            const { body: batchPutRes } = await adminLoggedIn(postFileRequest(csv, "append"), app);
             expect(batchPutRes).toBeArrayOfSize(99);
 
-            const {body: afterGetAllRes} = await request(app).get("/players").expect(200);
+            const { body: afterGetAllRes } = await request(app).get("/players").expect(200);
             expect(afterGetAllRes).toBeArrayOfSize(101);
 
-            const {body: afterGetAllResMinorsOnly} = await request(app).get("/players?include[]=minors").expect(200);
+            const { body: afterGetAllResMinorsOnly } = await request(app).get("/players?include[]=minors").expect(200);
             expect(afterGetAllResMinorsOnly).toBeArrayOfSize(100);
         });
         it("should overwrite with the given mode passed in", async () => {
-            const initialPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, {mlbTeam: "Boston Red Sox"})];
+            const initialPlayers = [PlayerFactory.getPlayer(), PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" })];
             await playerDAO.createPlayers(initialPlayers.map(p => p.parse()));
 
-            const {body: getAllRes} = await request(app).get("/players").expect(200);
+            const { body: getAllRes } = await request(app).get("/players").expect(200);
             expect(getAllRes).toBeArrayOfSize(2);
 
-            const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv, "overwrite"), app);
+            const { body: batchPutRes } = await adminLoggedIn(postFileRequest(csv, "overwrite"), app);
             expect(batchPutRes).toBeArrayOfSize(99);
 
-            const {body: afterGetAllRes} = await request(app).get("/players").expect(200);
+            const { body: afterGetAllRes } = await request(app).get("/players").expect(200);
             expect(afterGetAllRes).toBeArrayOfSize(100);
 
-            const {body: afterGetAllResMinorsOnly} = await request(app).get("/players?include[]=minors").expect(200);
+            const { body: afterGetAllResMinorsOnly } = await request(app).get("/players?include[]=minors").expect(200);
             expect(afterGetAllResMinorsOnly).toBeArrayOfSize(99);
             expect(afterGetAllRes.find((player: Player) => player.id === initialPlayers[0].id)).toBeUndefined();
         });

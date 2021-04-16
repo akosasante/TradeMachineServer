@@ -107,7 +107,7 @@ describe("Trade API endpoints", () => {
         it("should return a single trade object based on the object passed in", async () => {
             const testTrade = TradeFactory.getTrade();
 
-            const {body} = await adminLoggedIn(postRequest(testTrade.parse()), app);
+            const { body } = await adminLoggedIn(postRequest(testTrade.parse()), app);
 
             const expected = {
                 ...testTrade,
@@ -121,8 +121,8 @@ describe("Trade API endpoints", () => {
         it("should ignore any invalid properties from the object passed in", async () => {
             const testTrade = TradeFactory.getTrade();
             // @ts-ignore
-            await adminLoggedIn(postRequest({...testTrade.parse(), blah: "boop"}), app);
-            const {body} = await getOneRequest(testTrade.id!);
+            await adminLoggedIn(postRequest({ ...testTrade.parse(), blah: "boop" }), app);
+            const { body } = await getOneRequest(testTrade.id!);
 
             const expected = {
                 ...testTrade,
@@ -135,7 +135,7 @@ describe("Trade API endpoints", () => {
         it("should return a 400 Bad Request error if missing a required property", async () => {
             const testTrade = TradeFactory.getTrade();
 
-            const {body} = await adminLoggedIn(postRequest({tradeParticipants: testTrade.tradeParticipants}, 400), app);
+            const { body } = await adminLoggedIn(postRequest({ tradeParticipants: testTrade.tradeParticipants }, 400), app);
 
             expect(body.message).toEqual(expectErrorString);
         });
@@ -153,7 +153,7 @@ describe("Trade API endpoints", () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
 
-            const {body} = await getAllRequest();
+            const { body } = await getAllRequest();
 
             const expected = {
                 ...testTrade,
@@ -167,13 +167,13 @@ describe("Trade API endpoints", () => {
         it("should return a list of hydrated trades if the hydrated param is passed in", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
-            await teamDAO.createTeams(testTrade.picks.map((p, i) => ({...p.originalOwner!.parse(), espnId: i})));
+            await teamDAO.createTeams(testTrade.picks.map((p, i) => ({ ...p.originalOwner!.parse(), espnId: i })));
             await pickDAO.createPicks(testTrade.picks.map(p => p.parse()));
             await playerDAO.createPlayers(testTrade.players.map(p => p.parse()));
             const pickIds = testTrade.picks.map(p => p.id);
             const playerIds = testTrade.players.map(p => p.id);
 
-            const {body} = await getAllRequest("?hydrated=true");
+            const { body } = await getAllRequest("?hydrated=true");
 
             const expected = {
                 ...testTrade,
@@ -194,7 +194,7 @@ describe("Trade API endpoints", () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
 
-            const {body} = await getOneRequest(testTrade.id!);
+            const { body } = await getOneRequest(testTrade.id!);
 
             const expected = {
                 ...testTrade,
@@ -206,13 +206,13 @@ describe("Trade API endpoints", () => {
         it("should return a hydrated trade if the param is passed in", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
-            await teamDAO.createTeams(testTrade.picks.map((p, i) => ({...p.originalOwner!.parse(), espnId: i})));
+            await teamDAO.createTeams(testTrade.picks.map((p, i) => ({ ...p.originalOwner!.parse(), espnId: i })));
             await pickDAO.createPicks(testTrade.picks.map(p => p.parse()));
             await playerDAO.createPlayers(testTrade.players.map(p => p.parse()));
             const pickIds = testTrade.picks.map(p => p.id);
             const playerIds = testTrade.players.map(p => p.id);
 
-            const {body} = await getOneRequest(testTrade.id!, "?hydrated=true");
+            const { body } = await getOneRequest(testTrade.id!, "?hydrated=true");
 
             const expected = {
                 ...testTrade,
@@ -248,7 +248,7 @@ describe("Trade API endpoints", () => {
             const newItem = TradeFactory.getTradedMajorPlayer(undefined, originalCreator!.team, updatedParticipants[1]!.team);
 
 
-            const {body} = await adminLoggedIn(putTradeRequest(testTrade.id!, {
+            const { body } = await adminLoggedIn(putTradeRequest(testTrade.id!, {
                 ...testTrade.parse(),
                 tradeParticipants: updatedParticipants as TradeParticipant[],
                 tradeItems: [newItem],
@@ -316,7 +316,7 @@ describe("Trade API endpoints", () => {
             testTrade.status = TradeStatus.REQUESTED;
             await tradeDAO.createTrade(testTrade.parse());
 
-            const {body} = await adminLoggedIn(putTradeRequest("accept", testTrade.id!, undefined), app);
+            const { body } = await adminLoggedIn(putTradeRequest("accept", testTrade.id!, undefined), app);
 
             const expected = {
                 ...testTrade,
@@ -331,7 +331,7 @@ describe("Trade API endpoints", () => {
             testTrade.status = TradeStatus.REQUESTED;
             await tradeDAO.createTrade(testTrade.parse());
 
-            const {body} = await adminLoggedIn(putTradeRequest("reject", testTrade.id!, undefined), app);
+            const { body } = await adminLoggedIn(putTradeRequest("reject", testTrade.id!, undefined), app);
 
             const expected = {
                 ...testTrade,
@@ -345,11 +345,11 @@ describe("Trade API endpoints", () => {
             const testTrade = TradeFactory.getTrade();
             testTrade.status = TradeStatus.ACCEPTED;
             await tradeDAO.createTrade(testTrade.parse());
-            await teamDAO.createTeams(testTrade.picks.map((p, i) => ({...p.originalOwner!.parse(), espnId: i})));
+            await teamDAO.createTeams(testTrade.picks.map((p, i) => ({ ...p.originalOwner!.parse(), espnId: i })));
             await pickDAO.createPicks(testTrade.picks.map(p => p.parse()));
             await playerDAO.createPlayers(testTrade.players.map(p => p.parse()));
 
-            const {body} = await adminLoggedIn(putTradeRequest("submit", testTrade.id!, undefined), app);
+            const { body } = await adminLoggedIn(putTradeRequest("submit", testTrade.id!, undefined), app);
 
             const expected = {
                 ...testTrade,
@@ -372,11 +372,11 @@ describe("Trade API endpoints", () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
 
-            const {body} = await adminLoggedIn(deleteTradeRequest(testTrade.id!), app);
-            expect(body).toEqual({deleteCount: 1, id: testTrade.id});
+            const { body } = await adminLoggedIn(deleteTradeRequest(testTrade.id!), app);
+            expect(body).toEqual({ deleteCount: 1, id: testTrade.id });
 
             // Confirm that it was deleted from the db:
-            const {body: getAllRes} = await request(app).get("/trades").expect(200);
+            const { body: getAllRes } = await request(app).get("/trades").expect(200);
             expect(getAllRes).toBeArrayOfSize(0);
         });
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {

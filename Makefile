@@ -1,6 +1,6 @@
 # List any targets that are not an actual file here to ensure they are always run
 .PHONY: help
-.PHONY: help test-ci test-unit test-integration test-update-snapshots test-local
+.PHONY: test-ci test-unit test-integration test-update-snapshots test-local
 .PHONY: watch-ts-files watch-js-server dev-server watch-js-debug-server debug-server
 .PHONY: lint lint-fix compile-ts copy-email-templates build serve typecheck
 .PHONY: generate-migration run-migration revert-migration
@@ -13,9 +13,9 @@ help: ## show make commands
 
 # |----------- TESTING SCRIPTS ---------|
 test-ci: ## run tests using CI config, and no logging
-  NODE_ENV=test \
-  jest --config ./jest.ci-config.js \
-  --detectOpenHandles --runInBand --silent --bail --forceExit --ci
+	NODE_ENV=test ENABLE_LOGS=false \
+	npx jest --config ./jest.ci-config.js \
+	--detectOpenHandles --runInBand --silent --bail --forceExit --ci
 
 test-unit: ## run tests using local testing config, only run tests in `unit` folder, run in parallel
 	@read -r -p $$'\e[4m\e[96m Do you want to enable logging? [Y/n]\e[0m: ' GENERAL_LOGGING_ENABLED; \
@@ -116,7 +116,7 @@ dev-server: ## Watch typescript files for changes, incrementally compile. While 
 
 watch-js-debug-server: ## Run the server.js file with DEBUG flags and watch for js changes
 	NODE_ENV=development \
-	nodemon $NODE_DEBUG_OPTION --inspect ./dist/server.js \
+	npx nodemon $NODE_DEBUG_OPTION --inspect ./dist/server.js \
 	-- -r dotenv/config
 
 debug-server: ## Watch for ts file changes, and js file changes, run server with DEBUG flags
