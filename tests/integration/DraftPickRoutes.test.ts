@@ -1,5 +1,4 @@
 import { Server } from "http";
-import "jest";
 import "jest-extended";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
@@ -8,74 +7,85 @@ import { WriteMode } from "../../src/csv/CsvUtils";
 import TeamDAO from "../../src/DAO/TeamDAO";
 import UserDAO from "../../src/DAO/UserDAO";
 import DraftPick, { LeagueLevel } from "../../src/models/draftPick";
-import Team from "../../src/models/team";
 import User, { Role } from "../../src/models/user";
 import { DraftPickFactory } from "../factories/DraftPickFactory";
 import { TeamFactory } from "../factories/TeamFactory";
 import {
-    adminLoggedIn, DatePatternRegex, doLogout, makeDeleteRequest, makeGetRequest, makePostRequest,
-    makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, stringifyQuery
+    adminLoggedIn,
+    clearDb,
+    doLogout,
+    makeDeleteRequest,
+    makeGetRequest,
+    makePostRequest,
+    makePutRequest,
+    ownerLoggedIn,
+    setupOwnerAndAdminUsers,
+    stringifyQuery
 } from "./helpers";
 import { v4 as uuid } from "uuid";
 import startServer from "../../src/bootstrap/app";
+import { getConnection } from "typeorm";
+import DraftPickDAO from "../../src/DAO/DraftPickDAO";
 
 let app: Server;
 let adminUser: User;
 let ownerUser: User;
-let team1: Team;
-let team2: Team;
-let team3: Team;
-let user3: User;
+let userDAO: UserDAO;
+let teamDAO: TeamDAO;
+let pickDAO: DraftPickDAO;
 
 async function shutdown() {
-    await new Promise(resolve => {
-        redisClient.quit(() => {
-            resolve();
+    await new Promise<void>((resolve, reject) => {
+        redisClient.quit((err, reply) => {
+            if (err) {
+                reject(err);
+            } else {
+                logger.debug(`Redis quit successfully with reply ${reply}`);
+                resolve();
+            }
         });
     });
     // redis.quit() creates a thread to close the connection.
     // We wait until all threads have been run once to ensure the connection closes.
-    await new Promise(resolve => setImmediate(resolve));
+    return await new Promise(resolve => setImmediate(resolve));
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~DRAFT PICK ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
+    userDAO = new UserDAO();
+    teamDAO = new TeamDAO();
+    pickDAO = new DraftPickDAO();
 
-    const userDAO = new UserDAO();
-    const teamDAO = new TeamDAO();
-    // Create admin and owner users in db for rest of this suite's use
-    [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
-    await userDAO.updateUser(adminUser.id!, { displayName: "Cam", csvName: "Cam" });
-    await userDAO.updateUser(ownerUser.id!, { displayName: "A", csvName: "Akos" });
-    // Create users and teams for batch upload tests
-    [user3] = await userDAO.createUsers([{ email: "kwasi@example.com", password: "lol", displayName: "K",
-        role: Role.OWNER, csvName: "Kwasi"}]);
-    [team1, team2, team3] = await teamDAO.createTeams([
-        TeamFactory.getTeamObject( "Camtastic", 1, {owners: [adminUser]}),
-        TeamFactory.getTeamObject( "Squad", 2, {owners: [ownerUser]}),
-        TeamFactory.getTeamObject( "Asantes", 3, {owners: [user3]}),
-    ]);
-
-    await teamDAO.updateTeamOwners(team1.id!, [adminUser], []);
-    await teamDAO.updateTeamOwners(team2.id!, [ownerUser], []);
-    await teamDAO.updateTeamOwners(team3.id!, [user3], []);
+    return app;
 });
+
 afterAll(async () => {
     logger.debug("~~~~~~DRAFT PICK ROUTES AFTER ALL~~~~~~");
-    await shutdown();
+    const shutdownRedis = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
+    return shutdownRedis;
 });
 
 describe("Pick API endpoints", () => {
     const testPick = DraftPickFactory.getPick(undefined, undefined, LeagueLevel.HIGH);
-    const testPick2 =  DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS);
+    const testPick2 = DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS);
     delete testPick.originalOwner;
     delete testPick2.originalOwner;
+
+    beforeEach(async () => {
+        // Create admin and owner users in db for rest of this suite's use
+        [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+        return adminUser;
+    });
+
+    afterEach(async () => {
+        return await clearDb(getConnection(process.env.NODE_ENV));
+    });
 
     describe("POST /picks (create new pick)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
@@ -86,39 +96,46 @@ describe("Pick API endpoints", () => {
             makeGetRequest(request(app), `/picks/${id}`, status);
 
         afterEach(async () => {
-            await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return a single pick object based on object passed in", async () => {
-            const {body} = await adminLoggedIn(postRequest([testPick.parse()]), app);
-            const expected = {...testPick,
-                dateCreated: expect.stringMatching(DatePatternRegex),
-                dateModified: expect.stringMatching(DatePatternRegex),
-            };
-            expect(body[0]).toMatchObject(expected);
+            const testPick1 = DraftPickFactory.getPick();
+            await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
+
+            const {body} = await adminLoggedIn(postRequest([testPick1.parse()]), app);
+
+            expect(body[0]).toMatchObject(testPick1);
         });
         it("should ignore any invalid properties from the object passed in", async () => {
-            const testInvalidProps = {...testPick2.parse(), blah: "Hello"};
-            const {body} = await adminLoggedIn(postRequest([testInvalidProps]), app);
-            const {body: getBody} = await getOneRequest(body[0].id);
-            const expected = {...testPick2,
-                dateCreated: expect.stringMatching(DatePatternRegex),
-                dateModified: expect.stringMatching(DatePatternRegex),
-            };
+            const testPick1 = DraftPickFactory.getPick();
+            await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
 
-            expect(getBody).toMatchObject(expected);
+            const {body} = await adminLoggedIn(postRequest([{
+                ...testPick1.parse(),
+                blah: "Hello",
+            } as Partial<DraftPick>]), app);
+            const {body: getBody} = await getOneRequest(body[0].id);
+
+            expect(getBody).toMatchObject(testPick1);
             expect(getBody.blah).toBeUndefined();
         });
         it("should return a 400 Bad Request error if missing a required property", async () => {
-            const pickObj = { season: 2017 };
-            const {body} = await adminLoggedIn(postRequest([pickObj], 400), app);
+            const {body} = await adminLoggedIn(postRequest([{season: 2017}], 400), app);
+
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a pick", async () => {
-            await ownerLoggedIn(postRequest([testPick.parse()], 403), app);
+            const testPick1 = DraftPickFactory.getPick();
+            await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
+
+            await ownerLoggedIn(postRequest([testPick1.parse()], 403), app);
         });
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
-            await postRequest([testPick.parse()], 403)(request(app));
+            const testPick1 = DraftPickFactory.getPick();
+            await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
+
+            await postRequest([testPick1.parse()], 403)(request(app));
         });
     });
 
@@ -127,27 +144,31 @@ describe("Pick API endpoints", () => {
             makeGetRequest(request(app), `/picks${param}`, status);
 
         it("should return an array of all picks in the db", async () => {
+            const picks = [DraftPickFactory.getPick(), DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS)];
+            await teamDAO.createTeams(picks.map((p, i) => ({...p.originalOwner!.parse(), espnId: i})));
+            await pickDAO.createPicks(picks.map(p => p.parse()));
+
             const {body} = await getAllRequest();
-            const expected = {...testPick,
-                dateCreated: expect.stringMatching(DatePatternRegex),
-                dateModified: expect.stringMatching(DatePatternRegex),
-            };
-            const returnedPick = body.find((pick: DraftPick) => pick.id === testPick.id);
+
             expect(body).toBeArrayOfSize(2);
-            expect(returnedPick).toMatchObject(expected);
+            expect(body.map((returnedPick: DraftPick) => returnedPick.id)).toIncludeSameMembers(picks.map(p => p.id));
         });
         it("should return an array of all picks in a given league or leagues", async () => {
+            const picks = [
+                DraftPickFactory.getPick(),
+                DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS),
+                DraftPickFactory.getPick(1, 1, LeagueLevel.HIGH),
+            ];
+            await teamDAO.createTeams(picks.map((p, i) => ({...p.originalOwner!.parse(), espnId: i})));
+            await pickDAO.createPicks(picks.map(p => p.parse()));
+
             const {body: highPicks} = await getAllRequest("?include[]=high");
             const {body: highMajorPicks} = await getAllRequest("?include[]=high&include[]=majors");
-            const expected = {...testPick,
-                dateCreated: expect.stringMatching(DatePatternRegex),
-                dateModified: expect.stringMatching(DatePatternRegex),
-            };
 
             expect(highPicks).toBeArrayOfSize(1);
             expect(highMajorPicks).toBeArrayOfSize(2);
-            expect(highPicks[0]).toMatchObject(expected);
-            expect(highMajorPicks).toSatisfyAll((pick: DraftPick) => pick.id === testPick.id || pick.id === testPick2.id);
+            expect(highPicks[0].id).toEqual(picks[2].id);
+            expect(highMajorPicks.map((returnedPick: DraftPick) => returnedPick.id)).toIncludeSameMembers(picks.slice(1).map(p => p.id));
         });
     });
 
@@ -156,14 +177,14 @@ describe("Pick API endpoints", () => {
             makeGetRequest(request(app), `/picks/${id}`, status);
 
         it("should return a single pick for the given id", async () => {
-            const {body} = await getOneRequest(testPick.id!);
-            const expected = {...testPick,
-                dateCreated: expect.stringMatching(DatePatternRegex),
-                dateModified: expect.stringMatching(DatePatternRegex),
-            };
+            const picks = [DraftPickFactory.getPick(), DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS)];
+            await teamDAO.createTeams(picks.map((p, i) => ({...p.originalOwner!.parse(), espnId: i})));
+            await pickDAO.createPicks(picks.map(p => p.parse()));
+
+            const {body} = await getOneRequest(picks[0].id!);
 
             expect(body).toBeObject();
-            expect(body).toMatchObject(expected);
+            expect(body).toMatchObject({...picks[0], originalOwner: expect.toBeObject()});
         });
         it("should throw a 404 Not Found error if there is no pick with that ID", async () => {
             await getOneRequest(uuid(), 404);
@@ -172,20 +193,20 @@ describe("Pick API endpoints", () => {
 
     describe("GET /picks/search?queryOpts (get picks by query)", () => {
         const findRequest = (query: Partial<DraftPick>, status: number = 200) =>
-            makeGetRequest(request(app), `/picks/search${stringifyQuery(query as {[key: string]: string})}`, status);
+            makeGetRequest(request(app), `/picks/search${stringifyQuery(query as { [key: string]: string })}`, status);
 
         it("should return picks for the given query", async () => {
+            const picks = [DraftPickFactory.getPick(), DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS)];
+            await teamDAO.createTeams(picks.map((p, i) => ({...p.originalOwner!.parse(), espnId: i})));
+            await pickDAO.createPicks(picks.map(p => p.parse()));
+
             const {body} = await findRequest({round: 2});
-            const expected = {...testPick2,
-                dateCreated: expect.stringMatching(DatePatternRegex),
-                dateModified: expect.stringMatching(DatePatternRegex),
-            };
 
             expect(body).toBeArrayOfSize(1);
-            expect(body[0]).toMatchObject(expected);
+            expect(body).toMatchObject([{...picks[1], originalOwner: expect.toBeObject()}]);
         });
         it("should throw a 404 error if no pick with that query is found", async () => {
-            await findRequest({ round: 4 }, 404);
+            await findRequest({round: 4}, 404);
         });
     });
 
@@ -194,27 +215,31 @@ describe("Pick API endpoints", () => {
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<DraftPick>>(agent, `/picks/${id}`, pickObj, status);
         const updatedPickObj = {season: 2018};
-        const updatedPick = new DraftPick({...testPick, ...updatedPickObj});
+
         afterEach(async () => {
-            await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return the updated pick", async () => {
-            const {body} = await adminLoggedIn(putRequest(updatedPick.id!, updatedPickObj), app);
-            const expected = {...updatedPick,
-                dateCreated: expect.stringMatching(DatePatternRegex),
-                dateModified: expect.stringMatching(DatePatternRegex),
-            };
+            const testPick1 = DraftPickFactory.getPick();
+            await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
+            await pickDAO.createPicks([testPick1.parse()]);
 
-            expect(body).toMatchObject(expected);
+            const {body} = await adminLoggedIn(putRequest(testPick1.id!, updatedPickObj), app);
+
+            expect(body).toMatchObject({...testPick1, ...updatedPickObj});
         });
         it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
+            const testPick1 = DraftPickFactory.getPick();
+            await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
+            await pickDAO.createPicks([testPick1.parse()]);
             const invalidObj = {...updatedPickObj, blah: "wassup"};
-            await adminLoggedIn(putRequest(testPick.id!, invalidObj, 400), app);
+
+            await adminLoggedIn(putRequest(testPick1.id!, invalidObj, 400), app);
 
             // Confirm db was not updated:
-            const {body: getOneBody} = await request(app).get(`/picks/${testPick.id}`).expect(200);
-            expect(getOneBody).toMatchObject(updatedPick);
+            const {body: getOneBody} = await request(app).get(`/picks/${testPick1.id}`).expect(200);
+            expect(getOneBody).toMatchObject(testPick1);
             expect(getOneBody.blah).toBeUndefined();
         });
         it("should throw a 404 Not Found error if there is no pick with that ID", async () => {
@@ -231,30 +256,50 @@ describe("Pick API endpoints", () => {
     describe("DELETE /picks/:id (delete one pick)", () => {
         const deleteRequest = (id: string, status: number = 200) =>
             (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/picks/${id}`, status);
+
         afterEach(async () => {
-            await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return a delete result if successful", async () => {
-            const {body} = await adminLoggedIn(deleteRequest(testPick.id!), app);
-            expect(body).toEqual({deleteCount: 1, id: testPick.id});
+            const testPick1 = DraftPickFactory.getPick();
+            await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
+            await pickDAO.createPicks([testPick1.parse()]);
+
+            const {body} = await adminLoggedIn(deleteRequest(testPick1.id!), app);
+            expect(body).toEqual({deleteCount: 1, id: testPick1.id});
 
             // Confirm that it was deleted from the db:
             const {body: getAllRes} = await request(app).get("/picks").expect(200);
-            expect(getAllRes).toBeArrayOfSize(1);
+            expect(getAllRes).toBeArrayOfSize(0);
         });
         it("should throw a 404 Not Found error if there is no pick with that ID", async () => {
-            await adminLoggedIn(deleteRequest(testPick.id!, 404), app);
+            const testPick1 = DraftPickFactory.getPick();
+            await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
+            await pickDAO.createPicks([testPick1.parse()]);
+
+            await adminLoggedIn(deleteRequest(uuid(), 404), app);
+
             const {body: getAllRes} = await request(app).get("/picks").expect(200);
             expect(getAllRes).toBeArrayOfSize(1);
         });
         it("should throw a 403 Forbidden error if a non-admin tries to delete a pick", async () => {
-            await ownerLoggedIn(deleteRequest(testPick.id!, 403), app);
+            const testPick1 = DraftPickFactory.getPick();
+            await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
+            await pickDAO.createPicks([testPick1.parse()]);
+
+            await ownerLoggedIn(deleteRequest(testPick1.id!, 403), app);
+
             const {body: getAllRes} = await request(app).get("/picks").expect(200);
             expect(getAllRes).toBeArrayOfSize(1);
         });
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
-            await deleteRequest(testPick.id!, 403)(request(app));
+            const testPick1 = DraftPickFactory.getPick();
+            await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
+            await pickDAO.createPicks([testPick1.parse()]);
+
+            await deleteRequest(testPick1.id!, 403)(request(app));
+
             const {body: getAllRes} = await request(app).get("/picks").expect(200);
             expect(getAllRes).toBeArrayOfSize(1);
         });
@@ -277,7 +322,37 @@ describe("Pick API endpoints", () => {
                     .expect("Content-Type", /json/)
                     .expect(status);
 
+        beforeEach(async () => {
+            // Updating + adding users for each of the owners in the test CSV file
+            await userDAO.updateUser(adminUser.id!, {displayName: "Cam", csvName: "Cam"});
+            await userDAO.updateUser(ownerUser.id!, {displayName: "A", csvName: "Akos"});
+
+            const [kwasi] = await userDAO.createUsers([{
+                email: "kwasi@example.com",
+                password: "lol",
+                displayName: "K",
+                role: Role.OWNER,
+                csvName: "Kwasi",
+            }]);
+            const [team1, team2, team3] = await teamDAO.createTeams([
+                TeamFactory.getTeamObject("Camtastic", 2),
+                TeamFactory.getTeamObject("Squad", 3),
+                TeamFactory.getTeamObject("Asantes", 4),
+            ]);
+
+            await teamDAO.updateTeamOwners(team1.id!, [adminUser], []);
+            await teamDAO.updateTeamOwners(team2.id!, [ownerUser], []);
+            return await teamDAO.updateTeamOwners(team3.id!, [kwasi], []);
+        });
+
+        afterEach(async () => {
+            return await doLogout(request.agent(app));
+        });
+
         it("should append by default", async () => {
+            const initialPick = DraftPickFactory.getPick();
+            await teamDAO.createTeams([initialPick.originalOwner!.parse()]);
+            await pickDAO.createPicks([initialPick.parse()]);
             const {body: getAllRes} = await request(app).get("/picks").expect(200);
             expect(getAllRes).toBeArrayOfSize(1);
 
@@ -287,17 +362,23 @@ describe("Pick API endpoints", () => {
             expect(afterGetAllRes).toBeArrayOfSize(34);
         });
         it("should append with the given mode passed in", async () => {
+            const initialPick = DraftPickFactory.getPick();
+            await teamDAO.createTeams([initialPick.originalOwner!.parse()]);
+            await pickDAO.createPicks([initialPick.parse()]);
             const {body: getAllRes} = await request(app).get("/picks").expect(200);
-            expect(getAllRes).toBeArrayOfSize(34);
+            expect(getAllRes).toBeArrayOfSize(1);
 
             const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv2, "append"), app);
             expect(batchPutRes).toBeArrayOfSize(17);
             const {body: afterGetAllRes} = await request(app).get("/picks").expect(200);
-            expect(afterGetAllRes).toBeArrayOfSize(51);
+            expect(afterGetAllRes).toBeArrayOfSize(18);
         });
         it("should overwrite with the given mode passed in", async () => {
+            const initialPick = DraftPickFactory.getPick();
+            await teamDAO.createTeams([initialPick.originalOwner!.parse()]);
+            await pickDAO.createPicks([initialPick.parse()]);
             const {body: getAllRes} = await request(app).get("/picks").expect(200);
-            expect(getAllRes).toBeArrayOfSize(51);
+            expect(getAllRes).toBeArrayOfSize(1);
 
             const {body: batchPutRes} = await adminLoggedIn(postFileRequest(csv1, "overwrite"), app);
             expect(batchPutRes).toBeArrayOfSize(33);
