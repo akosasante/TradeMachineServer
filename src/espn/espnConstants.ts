@@ -1,6 +1,6 @@
 import { EspnProTeam } from "./espnApi";
 
-const EspnTeamMapping: EspnProTeam[] = [
+const ESPN_TEAM_MAPPING: EspnProTeam[] = [
     {
         abbrev: "Oak",
         byeWeek: 0,
@@ -251,7 +251,7 @@ const EspnTeamMapping: EspnProTeam[] = [
     },
 ];
 
-export const EspnPositionMapping: { [key: number]: string } = {
+export const ESPN_POSITION_MAPPING: { [key: number]: string } = {
     1: "SP",
     2: "C",
     3: "1B",
@@ -265,7 +265,7 @@ export const EspnPositionMapping: { [key: number]: string } = {
     11: "RP",
 };
 
-export const EspnEligiblePositionMapping: { [key: number]: string } = {
+export const ESPN_ELIGIBLE_POSITION_MAPPING: { [key: number]: string } = {
     0: "C",
     1: "1B",
     2: "2B",
@@ -287,8 +287,8 @@ export const EspnEligiblePositionMapping: { [key: number]: string } = {
     18: "IF", // ?
 };
 
-export const EspnNonPositionalNonValidSlots = [5, 6, 7, 11, 12, 13, 16, 17, 18, 19];
+export const ESPN_NON_POSITIONAL_NON_VALID_SLOTS = [5, 6, 7, 11, 12, 13, 16, 17, 18, 19];
 
-export function espnMajorLeagueTeamFromId(id?: number) {
-    return EspnTeamMapping.find(team => team.id === id);
+export function espnMajorLeagueTeamFromId(id?: number): EspnProTeam | undefined {
+    return ESPN_TEAM_MAPPING.find(team => team.id === id);
 }

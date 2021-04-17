@@ -6,6 +6,7 @@ import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";
 import { cleanupQuery } from "../api/helpers/ApiHelpers";
 
+/* eslint-disable @typescript-eslint/ban-types */
 export interface EspnLeagueMember {
     id: string;
     isLeagueManager: boolean;
@@ -131,26 +132,28 @@ interface EspnScheduleItem {
     away?: EspnScoreObj;
     playoffTierType?: string;
 }
+/* eslint-enable @typescript-eslint/ban-types */
 
 type EspnSchedule = EspnScheduleItem[];
 
 
 export default class EspnAPI {
-    private leagueId: number;
+    private readonly leagueId: number;
     private req: AxiosInstance;
-    private ESPNS2_COOKIE = process.env.ESPN_COOKIE;
-    private ESPN_SWID = process.env.ESPN_SWID;
+    private espn2Cookie = process.env.ESPN_COOKIE;
+    private espnSwid = process.env.ESPN_SWID;
 
     constructor(leagueId: number) {
         this.leagueId = leagueId;
         this.req = axios.create({
             withCredentials: true,
-            headers: {Cookie: `espn_s2=${this.ESPNS2_COOKIE}; SWID=${this.ESPN_SWID};`},
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            headers: {Cookie: `espn_s2=${this.espn2Cookie}; SWID=${this.espnSwid};`},
             timeout: 30000,
         });
     }
 
-    private static getBaseUrl(season: number = 2021, leagueId: number): string {
+    private static getBaseUrl(season = 2021, leagueId: number): string {
         if (season >= 2017) {
             return `https://fantasy.espn.com/apis/v3/games/flb/seasons/${season}/segments/0/leagues/${leagueId}`;
         } else {
@@ -162,7 +165,8 @@ export default class EspnAPI {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    public async getAllLeagueData(year: number) {
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access */
+    public async getAllLeagueData(year: number): Promise<any> {
         const {data} = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}`);
         return data;
     }
@@ -187,6 +191,7 @@ export default class EspnAPI {
             const {
                 data,
                 headers,
+                // eslint-disable-next-line @typescript-eslint/naming-convention
             } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`, {headers: {"X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`}});
             players.push(...data.players);
             total += data.players.length;
@@ -208,7 +213,7 @@ export default class EspnAPI {
         return teams[0].roster;
     }
 
-    public async updateMajorLeaguePlayers(year: number, playerDAO: PlayerDAO, teamDao: TeamDAO) {
+    public async updateMajorLeaguePlayers(year: number, playerDAO: PlayerDAO, teamDao: TeamDAO): Promise<Player[]> {
         logger.debug("fetching teams with ESPN teams associated");
         const allLeagueTeamsWithEspn = await teamDao.findTeams(cleanupQuery({espnId: "!null"}));
         logger.debug(`making espn api call for year: ${year}`);
@@ -225,7 +230,7 @@ export default class EspnAPI {
         return await playerDAO.batchUpsertPlayers(dedupedPlayers);
     }
 
-    public async updateEspnTeamInfo(year: number, teamDao: TeamDAO) {
+    public async updateEspnTeamInfo(year: number, teamDao: TeamDAO): Promise<void> {
         logger.debug("reloading ESPN league team objects");
         const allEspnTeams = await this.getAllLeagueTeams(year);
         logger.debug("got all espn fantasy teams");
@@ -244,4 +249,5 @@ export default class EspnAPI {
         }
     }
 }
+/* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access */
 
