@@ -16,7 +16,8 @@ declare module "express-session" {
 }
 
 export class LoginHandler implements ExpressMiddlewareInterface {
-    constructor(public userDAO: UserDAO = new UserDAO()) {}
+    constructor(public userDAO: UserDAO = new UserDAO()) {
+    }
 
     public async use(request: Request, response: Response, next: NextFunction) {
         logger.debug("IN LOGIN HANDLER");
@@ -44,7 +45,8 @@ export class LoginHandler implements ExpressMiddlewareInterface {
 }
 
 export class RegisterHandler implements ExpressMiddlewareInterface {
-    constructor(public userDAO: UserDAO = new UserDAO()) {}
+    constructor(public userDAO: UserDAO = new UserDAO()) {
+    }
 
     public async use(request: Request, response: Response, next: NextFunction) {
         logger.debug("IN REGISTER HANDLER");

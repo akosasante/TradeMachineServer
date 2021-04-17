@@ -1,6 +1,16 @@
 import { Request, Response } from "express";
-import {  BodyParam, Controller, CurrentUser, Get, NotFoundError, Post, Req,
-    Res, Session, UseBefore } from "routing-controllers";
+import {
+    BodyParam,
+    Controller,
+    CurrentUser,
+    Get,
+    NotFoundError,
+    Post,
+    Req,
+    Res,
+    Session,
+    UseBefore
+} from "routing-controllers";
 import { deserializeUser, generateHashedPassword, passwordResetDateIsValid } from "../../authentication/auth";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
@@ -29,7 +39,7 @@ export default class AuthController {
     @Post("/login/sendResetEmail")
     public async sendResetEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
         logger.debug(`Preparing to send reset password email to: ${email}`);
-        rollbar.info("sendResetEmail", { email });
+        rollbar.info("sendResetEmail", {email});
         const user = await this.userDao.findUser({email});
 
         if (!user) {
@@ -55,7 +65,7 @@ export default class AuthController {
     public async sendRegistrationEmail(@BodyParam("email") email: string, @Res() response: Response):
         Promise<Response> {
         logger.debug(`Preparing to send registration email to: ${email}`);
-        rollbar.info("sendRegistrationEmail", { email });
+        rollbar.info("sendRegistrationEmail", {email});
         const user = await this.userDao.findUser({email});
 
         if (!user) {
@@ -79,7 +89,7 @@ export default class AuthController {
                         reject(err);
                     } else {
                         logger.debug(`Destroying user session for userId#${session.user}`);
-                        await this.userDao.updateUser(session.user, { lastLoggedIn: new Date() });
+                        await this.userDao.updateUser(session.user, {lastLoggedIn: new Date()});
                         delete session.user;
                         resolve(true);
                     }
@@ -98,7 +108,7 @@ export default class AuthController {
                                @BodyParam("password") newPassword: string,
                                @BodyParam("token") passwordResetToken: string,
                                @Res() response: Response): Promise<Response> {
-        rollbar.info("resetPassword", { userId });
+        rollbar.info("resetPassword", {userId});
         const existingUser = await this.userDao.getUserById(userId);
 
         if (!existingUser || !existingUser.passwordResetToken ||
@@ -122,7 +132,7 @@ export default class AuthController {
     }
 
     @Get("/session_check")
-    public async sessionCheck(@CurrentUser({ required: true }) user: User): Promise<User> {
+    public async sessionCheck(@CurrentUser({required: true}) user: User): Promise<User> {
         logger.debug("session check worked " + user);
         // rollbar.info("sessionCheck", { user });
         return user;

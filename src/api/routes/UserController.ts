@@ -1,6 +1,16 @@
 import User, { Role } from "../../models/user";
-import { Authorized, Body, Delete, Get, JsonController,
-    NotFoundError, Param, Post, Put, QueryParam } from "routing-controllers";
+import {
+    Authorized,
+    Body,
+    Delete,
+    Get,
+    JsonController,
+    NotFoundError,
+    Param,
+    Post,
+    Put,
+    QueryParam
+} from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
@@ -19,7 +29,7 @@ export default class UserController {
     @Get("/")
     public async getAll(@QueryParam("full") full?: boolean): Promise<User[]> {
         logger.debug(`get all users endpoint${full ? " with teams" : ""}`);
-        rollbar.info("getAllUsers", { full });
+        rollbar.info("getAllUsers", {full});
         const users = full ? await this.dao.getAllUsersWithTeams() : await this.dao.getAllUsers();
         logger.debug(`got ${users.length} users`);
         return users;
@@ -28,7 +38,7 @@ export default class UserController {
     @Get(UUIDPattern)
     public async getById(@Param("id") id: string): Promise<User> {
         logger.debug("get one user by id endpoint");
-        rollbar.info("getUserById", { id });
+        rollbar.info("getUserById", {id});
         const user = await this.dao.getUserById(id);
         logger.debug(`got user: ${user}`);
         return user;
@@ -36,9 +46,9 @@ export default class UserController {
 
     @Get("/search")
     public async findUser(@QueryParam("query") query: string,
-                          @QueryParam("multiple") multiple?: boolean): Promise<User[]|User> {
+                          @QueryParam("multiple") multiple?: boolean): Promise<User[] | User> {
         logger.debug(`searching for user with props: ${query}, multiple=${multiple}`);
-        rollbar.info("findUser", { query, multiple });
+        rollbar.info("findUser", {query, multiple});
         const queryObj = Array.from(new URLSearchParams(query)).reduce((acc, [key, value]) => {
             // @ts-ignore
             acc[key] = value;
@@ -68,7 +78,7 @@ export default class UserController {
     @Post("/")
     public async createUsers(@Body() userObjs: Partial<User>[]): Promise<User[]> {
         logger.debug(`create user endpoint: ${inspect(userObjs)}`);
-        rollbar.info("createUsers", { userObjs });
+        rollbar.info("createUsers", {userObjs});
         const users = await this.dao.createUsers(userObjs);
         logger.debug(`created users: ${users.length}`);
         logger.debug(`created users: ${users[0]}`);
@@ -80,7 +90,7 @@ export default class UserController {
     @Put(UUIDPattern)
     public async updateUser(@Param("id") id: string, @Body() userObj: Partial<User>): Promise<User> {
         logger.debug("update user endpoint");
-        rollbar.info("updateUser", { id, userObj });
+        rollbar.info("updateUser", {id, userObj});
         const user = await this.dao.updateUser(id, userObj);
         logger.debug(`updated user: ${user}`);
         return user;
@@ -90,7 +100,7 @@ export default class UserController {
     @Delete(UUIDPattern)
     public async deleteUser(@Param("id") id: string) {
         logger.debug("delete user endpoint");
-        rollbar.info("deleteUser", { id });
+        rollbar.info("deleteUser", {id});
         const result = await this.dao.deleteUser(id);
         logger.debug(`delete successful: ${inspect(result)}`);
         return {deleteCount: result.affected, id: result.raw[0].id};
