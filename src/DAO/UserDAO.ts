@@ -24,7 +24,7 @@ export default class UserDAO {
         return await this.userDb.findOneOrFail(id, options);
     }
 
-    public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User | undefined> {
+    public async findUser(query: Partial<User>, failIfNotFound = true): Promise<User | undefined> {
         const findFn = failIfNotFound ? this.userDb.findOneOrFail.bind(this.userDb) : this.userDb.findOne.bind(this.userDb);
         return findFn(query);
     }
@@ -45,7 +45,7 @@ export default class UserDAO {
 
     public async createUsers(userObjs: Partial<User>[]): Promise<User[]> {
         const result: InsertResult = await this.userDb.insert(userObjs);
-        return await this.userDb.find({id: In(result.identifiers.map(({id}) => id))});
+        return await this.userDb.find({id: In(result.identifiers.map(({id}) => id as string))});
     }
 
     public async updateUser(id: string, userObj: Partial<User>): Promise<User> {
