@@ -13,7 +13,7 @@ interface PlayerCSVRow {
     Player: string;
     Position: string;
     Team: string;
-    Level: "High"|"Low";
+    Level: "High" | "Low";
 }
 
 export async function processMinorLeagueCsv(csvFilePath: string, teams: Team[], dao: PlayerDAO, mode?: WriteMode)
@@ -69,7 +69,7 @@ async function readAndParseMinorLeagueCsv(path: string, teams: Team[]): Promise<
     });
 }
 
-function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Player>|undefined {
+function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Player> | undefined {
     const MINOR_LEAGUE_PLAYER_PROPS = ["Owner", "Player", "Position", "Team", "Level"];
 
     const validRow = validateRow(row, MINOR_LEAGUE_PLAYER_PROPS);
@@ -93,7 +93,7 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
         name: row.Player,
         league: PlayerLeagueType.MINOR,
         leagueTeam,
-        meta: { minorLeaguePlayerFromSheet: { position: row.Position, leagueLevel: row.Level, mlbTeam: row.Team } },
+        meta: {minorLeaguePlayerFromSheet: {position: row.Position, leagueLevel: row.Level, mlbTeam: row.Team}},
     };
 }
 

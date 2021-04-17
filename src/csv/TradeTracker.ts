@@ -40,10 +40,10 @@ function getOwnerNameFromTeam(team?: Team): string {
 
 function generateTradeRow(trade: Trade) {
     return (trade.tradeParticipants || []).reduce((rowsAcc, recipient, index) => {
-        const ratingsBlankField = " ";
-        const columns = generateColumnsForRecipients(trade.tradeItems || [], recipient.team);
-        return rowsAcc.concat(columns).concat([ratingsBlankField]);
-    }, [(trade.dateModified || trade.dateCreated || new Date()).toISOString().substring(0, 10)]
+            const ratingsBlankField = " ";
+            const columns = generateColumnsForRecipients(trade.tradeItems || [], recipient.team);
+            return rowsAcc.concat(columns).concat([ratingsBlankField]);
+        }, [(trade.dateModified || trade.dateCreated || new Date()).toISOString().substring(0, 10)]
     );
 }
 
@@ -76,7 +76,7 @@ export async function appendNewTrade(trade: Trade) {
         },
         rows: [
             {
-                values: generateTradeRow(trade).map(datum => ({ userEnteredValue: { stringValue: datum } })),
+                values: generateTradeRow(trade).map(datum => ({userEnteredValue: {stringValue: datum}})),
             },
         ],
     };
