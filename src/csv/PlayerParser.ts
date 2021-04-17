@@ -8,16 +8,18 @@ import { validateRow, WriteMode } from "./CsvUtils";
 import { uniqWith } from "lodash";
 import { rollbar } from "../bootstrap/rollbar";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 interface PlayerCSVRow {
     Owner: string;
     Player: string;
     Position: string;
     Team: string;
     Level: "High" | "Low";
+    [key: string]: string | undefined;
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
-export async function processMinorLeagueCsv(csvFilePath: string, teams: Team[], dao: PlayerDAO, mode?: WriteMode)
-    : Promise<Player[]> {
+export async function processMinorLeagueCsv(csvFilePath: string, teams: Team[], dao: PlayerDAO, mode?: WriteMode): Promise<Player[]> {
 
     await maybeDropMinorPlayers(dao, mode);
 
@@ -97,7 +99,7 @@ function parseMinorLeaguePlayer(row: PlayerCSVRow, teams: Team[]): Partial<Playe
     };
 }
 
-async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO, append: boolean = false): Promise<Partial<Player>[]> {
+async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO, append = false): Promise<Partial<Player>[]> {
     logger.debug(`CSV PLAYERS: ${csvPlayers.length}`);
     const existingPlayers = await playerDAO.getAllPlayers();
     logger.debug(`EXISTING PLAYERS: ${existingPlayers.length}`);
