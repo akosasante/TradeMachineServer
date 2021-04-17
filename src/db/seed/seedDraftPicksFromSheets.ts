@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
 import { getCsvFromUrl } from "./helpers/csvHelper";
@@ -34,3 +35,4 @@ run()
         logger.error(err);
         process.exit(99);
     });
+/* eslint-enable */

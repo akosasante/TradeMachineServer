@@ -8,7 +8,7 @@ export default class CustomQueryLogger implements Logger {
 
     public sqlString(query: string, parameters?: any[]) {
         return `${query};
-        ${parameters && parameters.length ? " -- PARAMETERS: " + parameters : ""}`;
+        ${parameters && parameters.length ? ` -- PARAMETERS: ${parameters}` : ""}`;
     }
 
     /**

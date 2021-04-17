@@ -1,3 +1,4 @@
+/* eslint-disable */
 import initializeDb from "../../bootstrap/db";
 import PlayerDAO from "../../DAO/PlayerDAO";
 import { doUpdate } from "../../scheduled_jobs/mlbMinorsScheduledUpdate";
@@ -19,3 +20,4 @@ run()
         logger.error(err);
         process.exit(99);
     });
+/* eslint-enable */
