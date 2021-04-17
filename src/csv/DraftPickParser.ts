@@ -12,7 +12,7 @@ interface DraftPickCSVRow {
     Owner: string;
     Round: string;
     "Pick Owner": string;
-    Type: "Major"|"High"|"Low";
+    Type: "Major" | "High" | "Low";
     "Pick Number": string | undefined;
 }
 
@@ -74,10 +74,10 @@ async function readAndParsePickCsv(path: string, teams: Team[]): Promise<Partial
     });
 }
 
-function parseDraftPick(row: DraftPickCSVRow, teams: Team[], index: number): Partial<DraftPick>|undefined {
+function parseDraftPick(row: DraftPickCSVRow, teams: Team[], index: number): Partial<DraftPick> | undefined {
     // logger.debug(`INDEX=${index}`);
     const DRAFT_PICK_REQUIRED_PROPS = ["Round", "Pick Owner", "Type", "Owner"];
-    const KEYWORD_TO_LEVEL: {[key: string]: LeagueLevel} = {
+    const KEYWORD_TO_LEVEL: { [key: string]: LeagueLevel } = {
         High: LeagueLevel.HIGH,
         Low: LeagueLevel.LOW,
         Major: LeagueLevel.MAJORS,
