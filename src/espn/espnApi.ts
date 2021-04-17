@@ -19,7 +19,7 @@ interface EspnRecord {
     pointsAgainst: number;
     pointsFor: number;
     streakLength: number;
-    streakType: "WIN"|"LOSS"|string;
+    streakType: "WIN" | "LOSS" | string;
     ties: number;
     wins: number;
 }
@@ -126,7 +126,7 @@ interface EspnScoreObj {
 
 interface EspnScheduleItem {
     id: number;
-    winner?: "HOME"|"AWAY"|"UNDECIDED";
+    winner?: "HOME" | "AWAY" | "UNDECIDED";
     home?: EspnScoreObj;
     away?: EspnScoreObj;
     playoffTierType?: string;
@@ -140,6 +140,16 @@ export default class EspnAPI {
     private req: AxiosInstance;
     private ESPNS2_COOKIE = process.env.ESPN_COOKIE;
     private ESPN_SWID = process.env.ESPN_SWID;
+
+    constructor(leagueId: number) {
+        this.leagueId = leagueId;
+        this.req = axios.create({
+            withCredentials: true,
+            headers: {Cookie: `espn_s2=${this.ESPNS2_COOKIE}; SWID=${this.ESPN_SWID};`},
+            timeout: 30000,
+        });
+    }
+
     private static getBaseUrl(season: number = 2021, leagueId: number): string {
         if (season >= 2017) {
             return `https://fantasy.espn.com/apis/v3/games/flb/seasons/${season}/segments/0/leagues/${leagueId}`;
@@ -152,27 +162,18 @@ export default class EspnAPI {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    constructor(leagueId: number) {
-        this.leagueId = leagueId;
-        this.req = axios.create({
-            withCredentials: true,
-            headers: {Cookie: `espn_s2=${this.ESPNS2_COOKIE}; SWID=${this.ESPN_SWID};`},
-            timeout: 30000,
-        });
-    }
-
     public async getAllLeagueData(year: number) {
-        const { data } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}`);
+        const {data} = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}`);
         return data;
     }
 
     public async getAllMembers(year: number): Promise<EspnLeagueMember[]> {
-        const { data: members } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/members`);
+        const {data: members} = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/members`);
         return members;
     }
 
     public async getAllLeagueTeams(year: number): Promise<EspnFantasyTeam[]> {
-        const { data: teams } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/teams?view=mTeam`);
+        const {data: teams} = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/teams?view=mTeam`);
         return teams;
     }
 
@@ -183,7 +184,10 @@ export default class EspnAPI {
         let offset = 0;
 
         do {
-            const { data, headers } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`, { headers: {"X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`}});
+            const {
+                data,
+                headers,
+            } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`, {headers: {"X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`}});
             players.push(...data.players);
             total += data.players.length;
             offset += 100;
@@ -195,12 +199,12 @@ export default class EspnAPI {
     }
 
     public async getScheduleForYear(year: number): Promise<EspnSchedule> {
-        const { data: schedule } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/schedule?view=mScoreboard`);
+        const {data: schedule} = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/schedule?view=mScoreboard`);
         return schedule;
     }
 
     public async getRosterForTeamAndDay(year: number, teamId: number, scoringPeriodId: number): Promise<EspnRoster> {
-        const { data: {teams: teams} } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?forTeamId=${teamId}&scoringPeriodId=${scoringPeriodId}&view=mRoster`);
+        const {data: {teams: teams}} = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?forTeamId=${teamId}&scoringPeriodId=${scoringPeriodId}&view=mRoster`);
         return teams[0].roster;
     }
 
@@ -232,7 +236,10 @@ export default class EspnAPI {
             );
 
             if (associatedEspnTeam) {
-                await teamDao.updateTeam(team.id!, {espnTeam: associatedEspnTeam, name: `${associatedEspnTeam.location} ${associatedEspnTeam.nickname}` || team.name});
+                await teamDao.updateTeam(team.id!, {
+                    espnTeam: associatedEspnTeam,
+                    name: `${associatedEspnTeam.location} ${associatedEspnTeam.nickname}` || team.name,
+                });
             }
         }
     }
