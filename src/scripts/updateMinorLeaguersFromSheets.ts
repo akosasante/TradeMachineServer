@@ -1,10 +1,9 @@
+/* eslint-disable */
 import initializeDb from "../bootstrap/db";
 import TeamDAO from "../DAO/TeamDAO";
 import PlayerDAO from "../DAO/PlayerDAO";
 import { getCsvFromUrl } from "../db/seed/helpers/csvHelper";
 import { processMinorLeagueCsv } from "../csv/PlayerParser";
-
-// tslint:disable:no-console
 
 async function run() {
     const args = process.argv.slice(2);
@@ -31,3 +30,4 @@ run()
         console.error(err);
         process.exit(99);
     });
+/* eslint-enable */
