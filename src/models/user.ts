@@ -4,6 +4,7 @@ import Settings from "./settings";
 import Team from "./team";
 import { EspnLeagueMember } from "../espn/espnApi";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export enum Role {
     ADMIN = 1,
     OWNER,
@@ -53,11 +54,12 @@ export default class User extends BaseModel {
         Object.assign(this, props);
     }
 
-    public static generateTimeToPasswordExpires(dateMs: number = Date.now()) {
+    public static generateTimeToPasswordExpires(dateMs: number = Date.now()): Date {
         return new Date(dateMs + User.TIME_TO_EXPIRE_PASSWORD_MS);
     }
 
-    public isAdmin() {
+    public isAdmin(): boolean {
         return this.role === Role.ADMIN;
     }
 }
+/* eslint-enable @typescript-eslint/naming-convention */

@@ -3,10 +3,12 @@ import Team from "./team";
 import Trade from "./trade";
 import { BaseModel } from "./base";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export enum TradeParticipantType {
     CREATOR = 1,
     RECIPIENT,
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
 @Index(["trade", "team"], {unique: true})

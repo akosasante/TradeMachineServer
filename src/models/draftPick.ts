@@ -2,6 +2,7 @@ import { AfterLoad, Column, Entity, ManyToOne, Unique } from "typeorm";
 import { BaseModel } from "./base";
 import Team from "./team";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export enum LeagueLevel {
     MAJORS = 1,
     HIGH,
@@ -9,6 +10,7 @@ export enum LeagueLevel {
 }
 
 export const MinorLeagueLevels = [LeagueLevel.HIGH, LeagueLevel.LOW];
+/* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
 @Unique(["type", "season", "round", "originalOwner"])
@@ -31,7 +33,7 @@ export default class DraftPick extends BaseModel {
         Object.assign(this, props);
     }
 
-    static leagueLevelToString(level: LeagueLevel) {
+    static leagueLevelToString(level: LeagueLevel): string | undefined {
         switch (level) {
             case LeagueLevel.MAJORS:
                 return "Majors";
@@ -40,12 +42,12 @@ export default class DraftPick extends BaseModel {
             case LeagueLevel.LOW:
                 return "Low Minors";
             default:
-                break;
+                return;
         }
     }
 
     @AfterLoad()
-    ensureRoundType() {
+    ensureRoundType(): void {
         this.round = Number(this.round);
     }
 
