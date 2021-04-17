@@ -10,7 +10,7 @@ describe("User Class", () => {
     afterAll(() => {
         logger.debug("~~~~~~USER TESTS COMPLETE~~~~~~");
     });
-    const userObj = UserFactory.getUserObject(undefined, undefined,  undefined, Role.ADMIN, {id: uuid()});
+    const userObj = UserFactory.getUserObject(undefined, undefined, undefined, Role.ADMIN, { id: uuid() });
     const user = new User(userObj);
 
     describe("constructor", () => {

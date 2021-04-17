@@ -106,7 +106,10 @@ describe("Trade Formatter methods", () => {
         mockGetPlayerById
             .mockResolvedValueOnce(tradedMajorPlayer)
             .mockResolvedValueOnce(tradedMinorPlayer);
-        const text = await TradeFormatter.getTradeTextForParticipant(true, trade, trade.tradeParticipants![0], {playerDao: mockPlayerDao, pickDao: mockPickDao});
+        const text = await TradeFormatter.getTradeTextForParticipant(true, trade, trade.tradeParticipants![0], {
+            playerDao: mockPlayerDao,
+            pickDao: mockPickDao,
+        });
         expect(text).toMatch("receives:*");
         expect(text).toMatch(trade.tradeParticipants![0].team!.name!);
         expect(text).toMatch("Majors");

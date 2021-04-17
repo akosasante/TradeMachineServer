@@ -2,7 +2,7 @@ import { Repository } from "typeorm";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import Player, { PlayerLeagueType } from "../../../src/models/player";
 import { PlayerFactory } from "../../factories/PlayerFactory";
-import { MockObj, mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
+import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
 import logger from "../../../src/bootstrap/logger";
 
 describe("PlayerDAO", () => {
@@ -80,7 +80,14 @@ describe("PlayerDAO", () => {
         expect(mockPlayerDb.insert).toHaveBeenCalledTimes(1);
         expect(mockPlayerDb.insert).toHaveBeenCalledWith([testPlayer1.parse()]);
         expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testPlayer1.id]}});
+        expect(mockPlayerDb.find).toHaveBeenCalledWith({
+            "id": {
+                "_multipleParameters": true,
+                "_type": "in",
+                "_useParameter": true,
+                "_value": [testPlayer1.id],
+            },
+        });
 
         expect(res).toEqual(testPlayer1);
     });
@@ -99,7 +106,7 @@ describe("PlayerDAO", () => {
     it("deletePlayer - should call the db delete once with id", async () => {
         mockPlayerDb.findOneOrFail.mockResolvedValueOnce(testPlayer1);
         mockPlayerDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
-        const deleteResult = { affected: 1, raw: {id: testPlayer1.id!} };
+        const deleteResult = { affected: 1, raw: { id: testPlayer1.id! } };
         mockExecute.mockResolvedValueOnce(deleteResult);
         const res = await playerDAO.deletePlayer(testPlayer1.id!);
 
@@ -111,7 +118,7 @@ describe("PlayerDAO", () => {
         expect(res).toEqual(deleteResult);
     });
 
-    describe("deleteAllPlayers - should delete all queried players in chunks",  () => {
+    describe("deleteAllPlayers - should delete all queried players in chunks", () => {
         it("should delete queried players", async () => {
             const query = {league: PlayerLeagueType.MINOR};
             mockPlayerDb.find.mockResolvedValueOnce([testPlayer1]);
@@ -157,7 +164,14 @@ describe("PlayerDAO", () => {
         expect(mockValues).toHaveBeenCalledTimes(1);
         expect(mockValues).toHaveBeenCalledWith([testPlayer1]);
         expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testPlayer1.id]}});
+        expect(mockPlayerDb.find).toHaveBeenCalledWith({
+            "id": {
+                "_multipleParameters": true,
+                "_type": "in",
+                "_useParameter": true,
+                "_value": [testPlayer1.id],
+            },
+        });
         expect(res).toEqual([testPlayer1]);
     });
 
@@ -166,9 +180,14 @@ describe("PlayerDAO", () => {
         const defaultLimit = 50;
         const defaultCacheTimeout = 60000;
         const leagueId = 1;
-        const order = {name: "ASC"};
-        const expectedWhere = { name: expect.objectContaining({"_value": `%${queryName}%`}), league: leagueId };
-        const expectedOptions = { where: expect.objectContaining(expectedWhere), take: defaultLimit, cache: defaultCacheTimeout, order };
+        const order = { name: "ASC" };
+        const expectedWhere = { name: expect.objectContaining({ "_value": `%${queryName}%` }), league: leagueId };
+        const expectedOptions = {
+            where: expect.objectContaining(expectedWhere),
+            take: defaultLimit,
+            cache: defaultCacheTimeout,
+            order,
+        };
 
         mockPlayerDb.find.mockResolvedValueOnce([testPlayer1]);
         await playerDAO.queryPlayersByName(queryName, leagueId);

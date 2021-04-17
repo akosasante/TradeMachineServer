@@ -1,3 +1,4 @@
+import "jest-extended";
 import { TradeFactory } from "../../factories/TradeFactory";
 import { appendNewTrade } from "../../../src/csv/TradeTracker";
 import { google } from "googleapis";
@@ -33,8 +34,9 @@ trade.tradeItems!.push(TradeFactory.getTradedMajorPlayer(
     trade.recipients[0]
 ));
 let values: any[];
+
 function getCellValues(mockBatchUpdateMock: jest.MockContext<any, any>) {
-    const {requestBody: {requests}} = mockBatchUpdateMock.calls[0][0];
+    const { requestBody: { requests } } = mockBatchUpdateMock.calls[0][0];
     const { updateCells: { rows } } = (requests as any[]).find(obj => obj.hasOwnProperty("updateCells"));
     return rows[0].values;
 }
@@ -47,12 +49,18 @@ beforeAll(async () => {
 describe("TradeTracker.appendNewTrade/1", () => {
     it("should call the spreadsheet batchUpdate api method once and with the expected BatchUpdateRequest shape", () => {
         const expectedRequests = [
-            {insertDimension: {range: {sheetId: expect.toBeNumber(), startIndex: 1, endIndex: 2, dimension: "ROWS"}}},
-            {updateCells: {fields: "*", start: {sheetId: expect.toBeNumber(), rowIndex: 1, columnIndex: 0}, rows: expect.toBeArray()}},
+            { insertDimension: { range: { sheetId: expect.toBeNumber(), startIndex: 1, endIndex: 2, dimension: "ROWS" } } },
+            {
+                updateCells: {
+                    fields: "*",
+                    start: {sheetId: expect.toBeNumber(), rowIndex: 1, columnIndex: 0 },
+                    rows: expect.toBeArray(),
+                },
+            },
         ];
         const expectedBatchUpdate = {
-            spreadsheetId: expect.toBeString(),
-            auth: expect.toBeString(),
+            spreadsheetId: expect.any(String),
+            auth: expect.any(String),
             requestBody: {
                 requests: expectedRequests,
             },
@@ -81,8 +89,8 @@ describe("TradeTracker.appendNewTrade/1", () => {
     it("should format the owner names correctly", () => {
         const ownerCells = [values[1], values[6]];
         expect(ownerCells).toEqual([
-            {"userEnteredValue": {"stringValue": trade.creator!.name }},
-            {"userEnteredValue": {"stringValue": trade.tradeParticipants![1].team.name }},
+            { "userEnteredValue": { "stringValue": trade.creator!.name } },
+            { "userEnteredValue": { "stringValue": trade.tradeParticipants![1].team.name } },
         ]);
     });
 

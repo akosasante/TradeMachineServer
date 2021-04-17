@@ -33,7 +33,7 @@ describe("Authentication middleware", () => {
                 session: {save: jest.fn()},
             };
             // @ts-ignore
-            const response: Response  = {};
+            const response: Response = {};
             const loginHandler = new LoginHandler(mockUserDAO as unknown as UserDAO);
             await loginHandler.use(request, response, next);
 
@@ -49,7 +49,7 @@ describe("Authentication middleware", () => {
                 session: {destroy: jest.fn()},
             };
             // @ts-ignore
-            const response: Response  = {};
+            const response: Response = {};
             const loginHandler = new LoginHandler(mockUserDAO as unknown as UserDAO);
             await loginHandler.use(request, response, next);
 
@@ -72,7 +72,7 @@ describe("Authentication middleware", () => {
                 session: {},
             };
             // @ts-ignore
-            const response: Response  = {};
+            const response: Response = {};
             const registerHandler = new RegisterHandler(mockUserDAO as unknown as UserDAO);
             await registerHandler.use(request, response, next);
 
@@ -90,7 +90,7 @@ describe("Authentication middleware", () => {
                 session: {},
             };
             // @ts-ignore
-            const response: Response  = {};
+            const response: Response = {};
             const registerHandler = new RegisterHandler(mockUserDAO as unknown as UserDAO);
             await registerHandler.use(request, response, next);
 

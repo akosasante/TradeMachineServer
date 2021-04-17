@@ -71,7 +71,14 @@ describe("DraftPickDAO", () => {
         expect(mockPickDb.insert).toHaveBeenCalledTimes(1);
         expect(mockPickDb.insert).toHaveBeenCalledWith([testPick1.parse()]);
         expect(mockPickDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testPick1.id]}});
+        expect(mockPickDb.find).toHaveBeenCalledWith({
+            "id": {
+                "_multipleParameters": true,
+                "_type": "in",
+                "_useParameter": true,
+                "_value": [testPick1.id],
+            },
+        });
 
         expect(res).toEqual(testPick1);
     });
@@ -90,7 +97,7 @@ describe("DraftPickDAO", () => {
     it("deletePick - should call the db delete once with id", async () => {
         mockPickDb.findOneOrFail.mockResolvedValueOnce(testPick1);
         mockPickDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
-        const deleteResult = { affected: 1, raw: {id: testPick1.id!} };
+        const deleteResult = { affected: 1, raw: { id: testPick1.id! } };
         mockExecute.mockResolvedValueOnce(deleteResult);
         const res = await draftPickDAO.deletePick(testPick1.id!);
 
@@ -148,7 +155,14 @@ describe("DraftPickDAO", () => {
         expect(mockValues).toHaveBeenCalledTimes(1);
         expect(mockValues).toHaveBeenCalledWith([testPick1]);
         expect(mockPickDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testPick1.id]}});
+        expect(mockPickDb.find).toHaveBeenCalledWith({
+            "id": {
+                "_multipleParameters": true,
+                "_type": "in",
+                "_useParameter": true,
+                "_value": [testPick1.id],
+            },
+        });
         expect(res).toEqual([testPick1]);
     });
 });

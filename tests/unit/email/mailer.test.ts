@@ -16,13 +16,27 @@ describe("Emailer Class", () => {
     afterAll(() => {
         logger.debug("~~~~~~EMAILER TESTS COMPLETE~~~~~~");
     });
-    const testUser = UserFactory.getUser("test@example.com", "Jatheesh", undefined, undefined, {id: "test-uuid", passwordResetToken: "random-token"});
+    const testUser = UserFactory.getUser("test@example.com", "Jatheesh", undefined, undefined, {
+        id: "test-uuid",
+        passwordResetToken: "random-token",
+    });
     const testItems = [
-        TradeFactory.getTradedMajorPlayer(PlayerFactory.getPlayer(undefined, PlayerLeagueType.MAJOR, {mlbTeam: "Pirates", meta: {espnPlayer: {player: {eligibleSlots: [0, 1, 7]}}}})),
-        TradeFactory.getTradedMinorPlayer(PlayerFactory.getPlayer("MiniMe", undefined, {meta: {minorLeaguePlayerFromSheet: {mlbTeam: "Jays", position: "P", leagueLevel: "Low"}}})),
+        TradeFactory.getTradedMajorPlayer(PlayerFactory.getPlayer(undefined, PlayerLeagueType.MAJOR, {
+            mlbTeam: "Pirates",
+            meta: { espnPlayer: { player: { eligibleSlots: [0, 1, 7] } } },
+        })),
+        TradeFactory.getTradedMinorPlayer(PlayerFactory.getPlayer("MiniMe", undefined, {
+            meta: {
+                minorLeaguePlayerFromSheet: {
+                    mlbTeam: "Jays",
+                    position: "P",
+                    leagueLevel: "Low",
+                },
+            },
+        })),
         TradeFactory.getTradedPick(DraftPickFactory.getPick(undefined, undefined, undefined, undefined)),
     ];
-    const testTrade = TradeFactory.getTrade( testItems, undefined, undefined, {id: "test-uuid"});
+    const testTrade = TradeFactory.getTrade(testItems, undefined, undefined, { id: "test-uuid" });
 
     describe("email snapshots", () => {
         // each test removes dynamic message/messageId values that we don't want to match on in our snapshots

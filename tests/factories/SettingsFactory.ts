@@ -13,12 +13,13 @@ export class SettingsFactory {
     public static getSettingsObject(modifiedBy: User = UserFactory.getUser(),
                                     tradeWindow?: TradeWindowSettings,
                                     downtimeWindows?: DowntimeSettings) {
-        return { id: uuid(),
+        return {
+            id: uuid(),
             modifiedBy,
             tradeWindowStart: tradeWindow?.tradeWindowStart,
             tradeWindowEnd: tradeWindow?.tradeWindowEnd,
             downtime: downtimeWindows,
-            };
+        };
     }
 
     public static getSettings(modifiedBy: User = UserFactory.getUser(),

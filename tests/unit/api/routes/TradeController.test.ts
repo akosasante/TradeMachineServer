@@ -1,3 +1,4 @@
+import "jest-extended";
 import TradeController from "../../../../src/api/routes/TradeController";
 import TradeDAO from "../../../../src/DAO/TradeDAO";
 import Trade, { TradeStatus } from "../../../../src/models/trade";
@@ -126,7 +127,11 @@ describe("TradeController", () => {
         });
         it("should allow any updates by admins even if not part of the trade", async () => {
             const otherUser = UserFactory.getAdminUser();
-            await tradeController.updateTrade(otherUser, testTrade.id!, {status: TradeStatus.ACCEPTED, tradeParticipants: [], tradeItems: []});
+            await tradeController.updateTrade(otherUser, testTrade.id!, {
+                status: TradeStatus.ACCEPTED,
+                tradeParticipants: [],
+                tradeItems: [],
+            });
 
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.updateStatus).toBeCalledWith(testTrade.id, TradeStatus.ACCEPTED);
@@ -137,7 +142,11 @@ describe("TradeController", () => {
         });
         it("should not call updateStatus DAO method if user is requesting an invalid status state change", async () => {
             // Trying to go from DRAFT -> ACCEPTED as trade owner is not an allowed state change
-            await tradeController.updateTrade(tradeOwner, testTrade.id!, {status: TradeStatus.ACCEPTED, tradeParticipants: [], tradeItems: []});
+            await tradeController.updateTrade(tradeOwner, testTrade.id!, {
+                status: TradeStatus.ACCEPTED,
+                tradeParticipants: [],
+                tradeItems: [],
+            });
 
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(0);
             expect(mockTradeDAO.updateItems).toHaveBeenCalledTimes(1);
@@ -191,7 +200,7 @@ describe("TradeController", () => {
                 testTrade.tradeParticipants![0].team,
                 testTrade.tradeParticipants![1].team);
             const existingPlayers = testTrade.tradeItems!.filter(item => item.tradeItemType !== TradeItemType.PICK);
-            const existingPick  = testTrade.tradeItems!.find(item => item.tradeItemType === TradeItemType.PICK);
+            const existingPick = testTrade.tradeItems!.find(item => item.tradeItemType === TradeItemType.PICK);
             const updatedTrade = new Trade({...testTrade.parse(), tradeItems: [newPick, ...existingPlayers]});
             mockTradeDAO.updateItems.mockResolvedValueOnce(updatedTrade);
             mockTradeDAO.updateParticipants.mockResolvedValueOnce(updatedTrade);
@@ -263,7 +272,12 @@ describe("TradeController", () => {
             const status = TradeStatus.REQUESTED;
             const acceptedBy = [additionalRecipient.id!];
             mockTradeDAO.getTradeById.mockReset();
-            mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status, tradeParticipants, acceptedBy }));
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({
+                ...testTrade,
+                status,
+                tradeParticipants,
+                acceptedBy,
+            }));
 
             await tradeController.acceptTrade(tradeRecipient, testTrade.id!);
 
@@ -284,7 +298,11 @@ describe("TradeController", () => {
             const additionalRecipientUser = UserFactory.getOwnerUser();
             additionalRecipient!.team!.owners = [additionalRecipientUser];
             mockTradeDAO.getTradeById.mockReset();
-            mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status: TradeStatus.REQUESTED, tradeParticipants: testTrade.tradeParticipants?.concat([additionalRecipient])}));
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({
+                ...testTrade,
+                status: TradeStatus.REQUESTED,
+                tradeParticipants: testTrade.tradeParticipants?.concat([additionalRecipient]),
+            }));
 
             await tradeController.acceptTrade(tradeRecipient, testTrade.id!);
 
@@ -385,7 +403,7 @@ describe("TradeController", () => {
 
     describe("deleteTrade method", () => {
         it("should delete a trade by id from the db", async () => {
-            mockTradeDAO.deleteTrade.mockResolvedValueOnce({raw: [ {id: testTrade.id} ], affected: 1});
+            mockTradeDAO.deleteTrade.mockResolvedValueOnce({ raw: [{ id: testTrade.id }], affected: 1 });
             const res = await tradeController.deleteTrade(testTrade.id!);
 
             expect(mockTradeDAO.deleteTrade).toHaveBeenCalledTimes(1);
