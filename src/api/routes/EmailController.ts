@@ -12,8 +12,10 @@ export interface EmailStatusEvent {
     email: string;
     date: string;
     "message-id": string;
+    /* eslint-disable @typescript-eslint/naming-convention */
     ts_epoch?: number;
     ts_event?: number;
+    /* eslint-enable @typescript-eslint/naming-convention */
     ts?: number;
     subject?: string;
     tag?: string;

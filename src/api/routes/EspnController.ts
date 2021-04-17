@@ -7,10 +7,10 @@ import { rollbar } from "../../bootstrap/rollbar";
 @JsonController("/espn")
 export default class EspnController {
     private readonly api: EspnAPI;
-    private FFLeagueId: number = 545;
+    private ffLeagueId = 545;
 
     constructor(api?: EspnAPI) {
-        this.api = api || new EspnAPI(this.FFLeagueId);
+        this.api = api || new EspnAPI(this.ffLeagueId);
     }
 
     @Authorized(Role.ADMIN)
