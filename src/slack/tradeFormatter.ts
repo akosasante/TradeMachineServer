@@ -19,6 +19,7 @@ interface TradeFormatterDeps {
 const TradeFormatter = {
     async prepPlayerText(twoPlayerTrade: boolean, tradedPlayers: TradeItem[], dao?: PlayerDAO): Promise<string> {
         logger.info(`Rendering text for ${tradedPlayers.length} players`);
+
         function getMinorLeaguePlayerText(player: Player) {
             const playerMetaInfo = player.meta ? `(${player.meta?.minorLeaguePlayerFromSheet?.position} - ${player.meta?.minorLeaguePlayerFromSheet?.leagueLevel} Minors - ${player.meta?.minorLeaguePlayerFromSheet?.mlbTeam})` : "(Minors)";
             const text = `• *${player.name}* ${playerMetaInfo}`;
@@ -32,7 +33,7 @@ const TradeFormatter = {
 
         function getMajorLeaguePlayerText(player: Player) {
             const playerMetaInfo = player.meta ? `(${player.getEspnEligiblePositions()} - Majors - ${player.mlbTeam})` : "(Majors)";
-            const text =  `• *${player.name}* ${playerMetaInfo}`;
+            const text = `• *${player.name}* ${playerMetaInfo}`;
             if (!twoPlayerTrade) {
                 const tradedPlayer = tradedPlayers.find(pl => pl.tradeItemId === player.id);
                 return `${text} from _${tradedPlayer?.sender.name}_`;
@@ -93,12 +94,14 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${pick?.
 
     getSubtitleText(trade: Trade) {
         logger.info("Rendering subtitle text");
+
         function getSlackUsernamesForOwners(owners: User[]) {
             return owners
                 .filter(owner => !!owner.slackUsername)
                 .map(owner => "<@" + owner.slackUsername + ">")
                 .join(", ");
         }
+
         return `*${new Date().toDateString()}* \
 | Trade requested by ${getSlackUsernamesForOwners(trade.creator!.owners!)} \
 - Trading with: ${getSlackUsernamesForOwners(trade.recipients.flatMap(r => r.owners!))}`;
