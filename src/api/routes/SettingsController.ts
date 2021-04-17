@@ -4,15 +4,15 @@ import logger from "../../bootstrap/logger";
 import SettingsDAO from "../../DAO/SettingsDAO";
 import Settings from "../../models/settings";
 import { Role } from "../../models/user";
-import { UUIDPattern } from "../helpers/ApiHelpers";
+import { UUID_PATTERN } from "../helpers/ApiHelpers";
 import { rollbar } from "../../bootstrap/rollbar";
 
 @JsonController("/settings")
 export default class SettingsController {
     private dao: SettingsDAO;
 
-    constructor(DAO?: SettingsDAO) {
-        this.dao = DAO || new SettingsDAO();
+    constructor(dao?: SettingsDAO) {
+        this.dao = dao || new SettingsDAO();
     }
 
     @Authorized(Role.ADMIN)
@@ -36,7 +36,7 @@ export default class SettingsController {
     }
 
     @Authorized(Role.ADMIN)
-    @Get(UUIDPattern)
+    @Get(UUID_PATTERN)
     public async getOneSettingsLine(@Param("id") id: string): Promise<Settings> {
         rollbar.info("getOneSettingsLine", {id});
         logger.debug("get one settings line by id endpoint");

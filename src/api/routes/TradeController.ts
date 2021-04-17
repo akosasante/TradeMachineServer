@@ -19,7 +19,7 @@ import logger from "../../bootstrap/logger";
 import TradeDAO from "../../DAO/TradeDAO";
 import Trade, { TradeStatus } from "../../models/trade";
 import User, { Role } from "../../models/user";
-import { UUIDPattern } from "../helpers/ApiHelpers";
+import { UUID_PATTERN } from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
 import { appendNewTrade } from "../../csv/TradeTracker";
 import { EmailPublisher } from "../../email/publishers";
@@ -52,7 +52,7 @@ function validateStatusChange(user: User, trade: Trade, newStatus: TradeStatus):
     };
 
     if (trade.status === newStatus) return false;
-    // TODO: Consider whether we weant a separate role for LeagueAdmin and/or whether this check should only be allowed for env var admin override
+    // TODO: Consider whether we want a separate role for LeagueAdmin and/or whether this check should only be allowed for env var admin override
     if (user.isAdmin() || process.env.ADMIN_OVERRIDE === "true") return true;
 
     const validChangesForParticipants = {
@@ -99,8 +99,8 @@ export default class TradeController {
     private emailPublisher: EmailPublisher;
     private slackPublisher: SlackPublisher;
 
-    constructor(DAO?: TradeDAO, publisher?: EmailPublisher, slackPublisher?: SlackPublisher) {
-        this.dao = DAO || new TradeDAO();
+    constructor(dao?: TradeDAO, publisher?: EmailPublisher, slackPublisher?: SlackPublisher) {
+        this.dao = dao || new TradeDAO();
         this.emailPublisher = publisher || EmailPublisher.getInstance();
         this.slackPublisher = slackPublisher || SlackPublisher.getInstance();
     }
@@ -118,7 +118,7 @@ export default class TradeController {
         }
     }
 
-    @Get(UUIDPattern)
+    @Get(UUID_PATTERN)
     public async getOneTrade(@Param("id") id: string, @QueryParam("hydrated") hydrated?: boolean): Promise<Trade> {
         logger.debug(`get one trade endpoint. hydrated? ${hydrated}`);
         rollbar.info("getOneTrade", {id, hydrated});
@@ -143,7 +143,7 @@ export default class TradeController {
         return trade;
     }
 
-    @Put(UUIDPattern)
+    @Put(UUID_PATTERN)
     public async updateTrade(@CurrentUser({required: true}) user: User, @Param("id") id: string, @Body() tradeObj: Partial<Trade>): Promise<Trade | undefined> {
         rollbar.info("updateTrade", {user: user.id, id, tradeObj});
         const existingTrade = await this.dao.getTradeById(id);
@@ -202,8 +202,8 @@ export default class TradeController {
         }
     }
 
-    @Put(`${UUIDPattern}/accept`)
-    public async acceptTrade(@CurrentUser({required: true}) user: User, @Param("id") id: string) {
+    @Put(`${UUID_PATTERN}/accept`)
+    public async acceptTrade(@CurrentUser({required: true}) user: User, @Param("id") id: string): Promise<Trade> {
         rollbar.info("acceptTrade", {user: user.id, id});
         logger.debug("accept trade endpoint");
         let trade = await this.dao.getTradeById(id);
@@ -219,9 +219,9 @@ export default class TradeController {
         return trade;
     }
 
-    @Put(`${UUIDPattern}/reject`)
+    @Put(`${UUID_PATTERN}/reject`)
     public async rejectTrade(@CurrentUser({required: true}) user: User, @Param("id") id: string,
-                             @BodyParam("declinedById") declinedBy: string, @BodyParam("declinedReason") reason: string) {
+                             @BodyParam("declinedById") declinedBy: string, @BodyParam("declinedReason") reason: string): Promise<Trade> {
         rollbar.info("rejectTrade", {user: user.id, declinedBy, reason});
         logger.debug("reject trade endpoint");
         const trade = await this.dao.getTradeById(id);
@@ -240,8 +240,8 @@ export default class TradeController {
         return await this.dao.updateStatus(id, TradeStatus.REJECTED);
     }
 
-    @Put(`${UUIDPattern}/submit`)
-    public async submitTrade(@CurrentUser({required: true}) user: User, @Param("id") id: string) {
+    @Put(`${UUID_PATTERN}/submit`)
+    public async submitTrade(@CurrentUser({required: true}) user: User, @Param("id") id: string): Promise<Trade> {
         rollbar.info("submitTrade", {user: user.id, id});
         logger.debug("submit trade endpoint");
         const trade = await this.dao.getTradeById(id);
@@ -260,12 +260,13 @@ export default class TradeController {
     }
 
     @Authorized(Role.ADMIN)
-    @Delete(UUIDPattern)
-    public async deleteTrade(@Param("id") id: string) {
+    @Delete(UUID_PATTERN)
+    public async deleteTrade(@Param("id") id: string): Promise<{ deleteCount: number | null | undefined; id: any }> {
         rollbar.info("deleteTrade", {id});
         logger.debug("delete trade endpoint");
         const result = await this.dao.deleteTrade(id);
         logger.debug(`delete successful: ${inspect(result)}`);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
         return {deleteCount: result.affected, id: result.raw[0].id};
     }
 }

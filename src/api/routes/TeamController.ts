@@ -19,15 +19,15 @@ import logger from "../../bootstrap/logger";
 import TeamDAO from "../../DAO/TeamDAO";
 import Team from "../../models/team";
 import User, { Role } from "../../models/user";
-import { cleanupQuery, UUIDPattern } from "../helpers/ApiHelpers";
+import { cleanupQuery, UUID_PATTERN } from "../helpers/ApiHelpers";
 import { rollbar } from "../../bootstrap/rollbar";
 
 @JsonController("/teams")
 export default class TeamController {
     private dao: TeamDAO;
 
-    constructor(DAO?: TeamDAO) {
-        this.dao = DAO || new TeamDAO();
+    constructor(dao?: TeamDAO) {
+        this.dao = dao || new TeamDAO();
     }
 
     @Get("/")
@@ -46,7 +46,7 @@ export default class TeamController {
         return teams;
     }
 
-    @Get(UUIDPattern)
+    @Get(UUID_PATTERN)
     public async getOneTeam(@Param("id") id: string): Promise<Team> {
         logger.debug("get one team endpoint");
         rollbar.info("getOneTeam", {id});
@@ -81,7 +81,7 @@ export default class TeamController {
     }
 
     @Authorized(Role.ADMIN)
-    @Put(UUIDPattern)
+    @Put(UUID_PATTERN)
     public async updateTeam(@Param("id") id: string, @Body() teamObj: Partial<Team>): Promise<Team> {
         logger.debug("update team endpoint");
         rollbar.info("updateTeam", {id, teamObj});
@@ -91,17 +91,18 @@ export default class TeamController {
     }
 
     @Authorized(Role.ADMIN)
-    @Delete(UUIDPattern)
-    public async deleteTeam(@Param("id") id: string) {
+    @Delete(UUID_PATTERN)
+    public async deleteTeam(@Param("id") id: string): Promise<{ deleteCount: number | null | undefined; id: any }> {
         logger.debug("delete team endpoint");
         rollbar.info("deleteTeam", {id});
         const result = await this.dao.deleteTeam(id);
         logger.debug(`delete successful: ${inspect(result)}`);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
         return {deleteCount: result.affected, id: result.raw[0].id};
     }
 
     @Authorized(Role.ADMIN)
-    @Patch(UUIDPattern)
+    @Patch(UUID_PATTERN)
     public async updateTeamOwners(@Param("id") id: string,
                                   @BodyParam("add") ownersToAdd: User[],
                                   @BodyParam("remove") ownersToRemove: User[]): Promise<Team> {

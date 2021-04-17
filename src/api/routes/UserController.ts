@@ -14,7 +14,7 @@ import {
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
-import { cleanupQuery, UUIDPattern } from "../helpers/ApiHelpers";
+import { cleanupQuery, UUID_PATTERN } from "../helpers/ApiHelpers";
 import { URLSearchParams } from "url";
 import { rollbar } from "../../bootstrap/rollbar";
 
@@ -22,8 +22,8 @@ import { rollbar } from "../../bootstrap/rollbar";
 export default class UserController {
     private dao: UserDAO;
 
-    constructor(DAO?: UserDAO) {
-        this.dao = DAO || new UserDAO();
+    constructor(dao?: UserDAO) {
+        this.dao = dao || new UserDAO();
     }
 
     @Get("/")
@@ -35,7 +35,7 @@ export default class UserController {
         return users;
     }
 
-    @Get(UUIDPattern)
+    @Get(UUID_PATTERN)
     public async getById(@Param("id") id: string): Promise<User> {
         logger.debug("get one user by id endpoint");
         rollbar.info("getUserById", {id});
@@ -50,8 +50,7 @@ export default class UserController {
         logger.debug(`searching for user with props: ${query}, multiple=${multiple}`);
         rollbar.info("findUser", {query, multiple});
         const queryObj = Array.from(new URLSearchParams(query)).reduce((acc, [key, value]) => {
-            // @ts-ignore
-            acc[key] = value;
+            (acc as { [k: string]: string })[key] = value;
             return acc;
         }, {} as Partial<User>);
         if (multiple) {
@@ -87,7 +86,7 @@ export default class UserController {
     }
 
     @Authorized(Role.ADMIN)
-    @Put(UUIDPattern)
+    @Put(UUID_PATTERN)
     public async updateUser(@Param("id") id: string, @Body() userObj: Partial<User>): Promise<User> {
         logger.debug("update user endpoint");
         rollbar.info("updateUser", {id, userObj});
@@ -97,12 +96,13 @@ export default class UserController {
     }
 
     @Authorized(Role.ADMIN)
-    @Delete(UUIDPattern)
-    public async deleteUser(@Param("id") id: string) {
+    @Delete(UUID_PATTERN)
+    public async deleteUser(@Param("id") id: string): Promise<{ deleteCount: number | null | undefined; id: any }> {
         logger.debug("delete user endpoint");
         rollbar.info("deleteUser", {id});
         const result = await this.dao.deleteUser(id);
         logger.debug(`delete successful: ${inspect(result)}`);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
         return {deleteCount: result.affected, id: result.raw[0].id};
     }
 }

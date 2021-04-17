@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import { NextFunction, Request, Response } from "express";
 import { ExpressErrorMiddlewareInterface, HttpError, Middleware } from "routing-controllers";
 import { QueryFailedError } from "typeorm";
@@ -7,7 +8,6 @@ import logger from "../../bootstrap/logger";
 import { AuthorizationRequiredError } from "routing-controllers/error/AuthorizationRequiredError";
 import { rollbar } from "../../bootstrap/rollbar";
 import { inspect } from "util";
-// tslint:disable:max-classes-per-file
 
 @Middleware({type: "after"})
 export default class CustomErrorHandler implements ExpressErrorMiddlewareInterface {
@@ -15,7 +15,7 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
         return {message: error.message || "", stack: error.stack || ""};
     }
 
-    public error(error: Error, request: Request, response: Response, next: NextFunction) {
+    public error(error: Error, request: Request, response: Response, next: NextFunction): void {
         logger.error(`Handling error: ${error.stack}`);
         rollbar.error(error);
         if (response.headersSent) {
@@ -45,3 +45,4 @@ export class ConflictError extends HttpError {
         super(409, msg || "Conflict Found In Request");
     }
 }
+/* eslint-enable max-classes-per-file */

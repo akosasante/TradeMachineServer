@@ -20,7 +20,7 @@ import DraftPickDAO from "../../DAO/DraftPickDAO";
 import TeamDAO from "../../DAO/TeamDAO";
 import DraftPick, { LeagueLevel } from "../../models/draftPick";
 import { Role } from "../../models/user";
-import { cleanupQuery, fileUploadOptions as uploadOpts, UUIDPattern } from "../helpers/ApiHelpers";
+import { cleanupQuery, fileUploadOptions as uploadOpts, UUID_PATTERN } from "../helpers/ApiHelpers";
 import { rollbar } from "../../bootstrap/rollbar";
 
 @JsonController("/picks")
@@ -28,14 +28,14 @@ export default class DraftPickController {
     private readonly dao: DraftPickDAO;
     private teamDAO: TeamDAO;
 
-    constructor(DAO?: DraftPickDAO, teamDAO?: TeamDAO) {
-        this.dao = DAO || new DraftPickDAO();
+    constructor(dao?: DraftPickDAO, teamDAO?: TeamDAO) {
+        this.dao = dao || new DraftPickDAO();
         this.teamDAO = teamDAO || new TeamDAO();
     }
 
     @Get("/")
     public async getAllDraftPicks(@QueryParam("include") include?: string[]): Promise<DraftPick[]> {
-        logger.debug("get all draftPicks endpoint" + `${include ? " with params: " + include : ""}`);
+        logger.debug("get all draftPicks endpoint" + `${include ? ` with params: ${include}` : ""}`);
         rollbar.info("getAllDraftPicks", {include});
         let draftPicks: DraftPick[] = [];
         if (include) {
@@ -48,7 +48,7 @@ export default class DraftPickController {
         return draftPicks;
     }
 
-    @Get(UUIDPattern)
+    @Get(UUID_PATTERN)
     public async getOneDraftPick(@Param("id") id: string): Promise<DraftPick> {
         logger.debug("get one draftPick endpoint");
         rollbar.info("getOneDraftPick", {id});
@@ -77,7 +77,7 @@ export default class DraftPickController {
 
     @Authorized(Role.ADMIN)
     @Post("/batch")
-    public async batchUploadDraftPicks(@UploadedFile("picks", {required: true, options: uploadOpts}) file: any,
+    public async batchUploadDraftPicks(@UploadedFile("picks", {required: true, options: uploadOpts}) file: Express.Multer.File,
                                        @QueryParam("mode") mode: WriteMode): Promise<DraftPick[]> {
         logger.debug("batch add draft picks endpoint");
         rollbar.info("batchUploadDraftPicks");
@@ -86,7 +86,7 @@ export default class DraftPickController {
     }
 
     @Authorized(Role.ADMIN)
-    @Put(UUIDPattern)
+    @Put(UUID_PATTERN)
     public async updateDraftPick(@Param("id") id: string, @Body() draftPickObj: Partial<DraftPick>):
         Promise<DraftPick> {
         logger.debug("update draftPick endpoint");
@@ -95,12 +95,13 @@ export default class DraftPickController {
     }
 
     @Authorized(Role.ADMIN)
-    @Delete(UUIDPattern)
-    public async deleteDraftPick(@Param("id") id: string) {
+    @Delete(UUID_PATTERN)
+    public async deleteDraftPick(@Param("id") id: string): Promise<{ deleteCount: number | null | undefined; id: any }> {
         logger.debug("delete draftPick endpoint");
         rollbar.info("deleteDraftPick", {id});
         const result = await this.dao.deletePick(id);
         logger.debug(`delete successful: ${inspect(result)}`);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
         return {deleteCount: result.affected, id: result.raw[0].id};
     }
 }

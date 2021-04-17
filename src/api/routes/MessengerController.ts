@@ -1,6 +1,6 @@
 import { BadRequestError, Controller, Param, Post, Res } from "routing-controllers";
 import { EmailPublisher } from "../../email/publishers";
-import { UUIDPattern } from "../helpers/ApiHelpers";
+import { UUID_PATTERN } from "../helpers/ApiHelpers";
 import logger from "../../bootstrap/logger";
 import TradeDAO from "../../DAO/TradeDAO";
 import { Response } from "express";
@@ -20,8 +20,8 @@ export default class MessengerController {
         this.slackPublisher = slackPublisher || SlackPublisher.getInstance();
     }
 
-    @Post(`/requestTrade${UUIDPattern}`)
-    public async sendRequestTradeMessage(@Param("id") id: string, @Res() response: Response) {
+    @Post(`/requestTrade${UUID_PATTERN}`)
+    public async sendRequestTradeMessage(@Param("id") id: string, @Res() response: Response): Promise<Response> {
         rollbar.info("sendRequestTradeMessage", {id});
         logger.debug(`queuing trade request email for tradeId: ${id}`);
         let trade = await this.tradeDao.getTradeById(id);
@@ -39,8 +39,8 @@ export default class MessengerController {
         }
     }
 
-    @Post(`/declineTrade${UUIDPattern}`)
-    public async sendTradeDeclineMessage(@Param("id") id: string, @Res() response: Response) {
+    @Post(`/declineTrade${UUID_PATTERN}`)
+    public async sendTradeDeclineMessage(@Param("id") id: string, @Res() response: Response): Promise<Response> {
         rollbar.info("sendTradeDeclineMessage", {id});
         logger.debug(`queueing trade declined email for tradeId: ${id}`);
         let trade = await this.tradeDao.getTradeById(id);
@@ -61,8 +61,8 @@ export default class MessengerController {
         }
     }
 
-    @Post(`/acceptTrade${UUIDPattern}`)
-    public async sendTradeAcceptanceMessage(@Param("id") id: string, @Res() response: Response) {
+    @Post(`/acceptTrade${UUID_PATTERN}`)
+    public async sendTradeAcceptanceMessage(@Param("id") id: string, @Res() response: Response): Promise<Response> {
         rollbar.info("sendTradeAcceptanceMessage", {id});
         logger.debug(`queueing trade acceptance email for tradeId: ${id}`);
         let trade = await this.tradeDao.getTradeById(id);
@@ -80,8 +80,8 @@ export default class MessengerController {
         }
     }
 
-    @Post(`/submitTrade${UUIDPattern}`)
-    public async sendTradeAnnouncementMessage(@Param("id") id: string, @Res() response: Response) {
+    @Post(`/submitTrade${UUID_PATTERN}`)
+    public async sendTradeAnnouncementMessage(@Param("id") id: string, @Res() response: Response): Promise<Response> {
         logger.debug(`queuing trade announcement slack message for tradeId: ${id}`);
         rollbar.info("sendTradeAnnouncementMessage", {id});
         let trade = await this.tradeDao.getTradeById(id);

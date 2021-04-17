@@ -18,10 +18,18 @@ import { LoginHandler, RegisterHandler } from "../middlewares/AuthenticationHand
 import User from "../../models/user";
 import { EmailPublisher } from "../../email/publishers";
 import { rollbar } from "../../bootstrap/rollbar";
+import { SessionData } from "express-session";
+
+// declare the additional fields that we add to express session (via routing-controllers)
+declare module "express-session" {
+    interface SessionData {
+        user: string | undefined;
+    }
+}
 
 @Controller("/auth")
 export default class AuthController {
-    private userDao: UserDAO;
+    private readonly userDao: UserDAO;
     private emailPublisher: EmailPublisher;
 
     constructor(userDAO?: UserDAO, publisher?: EmailPublisher) {
@@ -31,9 +39,9 @@ export default class AuthController {
 
     @Post("/login")
     @UseBefore(LoginHandler)
-    public async login(@Req() request: Request, @Session() session: any): Promise<User> {
+    public async login(@Req() request: Request, @Session() session: SessionData): Promise<User> {
         rollbar.info("login");
-        return await deserializeUser(session.user, this.userDao);
+        return await deserializeUser(session.user!, this.userDao);
     }
 
     @Post("/login/sendResetEmail")
@@ -56,9 +64,9 @@ export default class AuthController {
 
     @Post("/signup")
     @UseBefore(RegisterHandler)
-    public async signup(@Req() request: Request, @Session() session: any): Promise<User> {
+    public async signup(@Req() request: Request, @Session() session: SessionData): Promise<User> {
         rollbar.info("signup");
-        return await deserializeUser(session.user, this.userDao);
+        return await deserializeUser(session.user!, this.userDao);
     }
 
     @Post("/signup/sendEmail")
@@ -78,18 +86,18 @@ export default class AuthController {
     }
 
     @Post("/logout")
-    public async logout(@Req() request: Request, @Session() session: any) {
+    public async logout(@Req() request: Request, @Session() session: SessionData) {
         rollbar.info("logout");
         return new Promise((resolve, reject) => {
             if (session && session.user && request.session) {
-                request.session.destroy(async err => {
+                request.session.destroy(err => {
                     if (err) {
                         logger.error("Error destroying session");
                         rollbar.error(err);
                         reject(err);
                     } else {
                         logger.debug(`Destroying user session for userId#${session.user}`);
-                        await this.userDao.updateUser(session.user, {lastLoggedIn: new Date()});
+                        // await this.userDao.updateUser(session.user, {lastLoggedIn: new Date()});
                         delete session.user;
                         resolve(true);
                     }
@@ -133,7 +141,7 @@ export default class AuthController {
 
     @Get("/session_check")
     public async sessionCheck(@CurrentUser({required: true}) user: User): Promise<User> {
-        logger.debug("session check worked " + user);
+        logger.debug(`session check worked ${user}`);
         // rollbar.info("sessionCheck", { user });
         return user;
     }

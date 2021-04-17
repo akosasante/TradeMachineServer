@@ -1,4 +1,3 @@
-// @ts-ignore
 import v1MemberMap from "./v1MemberMap.json";
 import v1PickMap from "./v1PickMap.json";
 import TradeItem, { TradeItemType } from "../../models/tradeItem";
@@ -175,7 +174,7 @@ async function getTradeItems(payload: V1Payload, teamDao: TeamDAO, playerDao: Pl
 }
 
 function getTradeParticipants(payload: V1Payload, teamDao: TeamDAO) {
-    const createTradeParticipant = async (player: V1Player, isCreator: boolean = false) => {
+    const createTradeParticipant = async (player: V1Player, isCreator = false) => {
         const team = await teamDao.getTeamById(v1MemberMap[player._id.$oid].v2TeamId);
         return new TradeParticipant({team, participantType: isCreator ? TradeParticipantType.CREATOR : TradeParticipantType.RECIPIENT});
     };
@@ -208,7 +207,7 @@ function getV1PlayersFromTrade(trade: Trade, sender: TradeParticipant): V1Traded
         .map(({player, rec}) => ({ player: player.name, rec: {name: rec.name} }));
 }
 
-export const V1TradeMachineAdaptor: V1TradeMachineAdaptor = {
+export const v1TradeMachineAdaptor: V1TradeMachineAdaptor = {
     teamDao: undefined,
     playerDao: undefined,
     userDao: undefined,
