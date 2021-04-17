@@ -1,5 +1,4 @@
 import initializeDb from "../bootstrap/db";
-import User from "../models/user";
 import logger from "../bootstrap/logger";
 import { inspect } from "util";
 import TradeDAO from "../DAO/TradeDAO";

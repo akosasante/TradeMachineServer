@@ -6,6 +6,7 @@ import { processMinorLeagueCsv } from "../csv/PlayerParser";
 import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";
 import Player from "../models/player";
+
 // tslint:disable:no-console
 
 async function run() {
@@ -36,6 +37,7 @@ SELECT * FROM player WHERE name in (SELECT dupes.name FROM dupes) ORDER by name`
     function hasAMinorLeaguer(playerList: any[]) {
         return playerList.some(p => p.league === "2");
     }
+
     function hasAMajorLeaguer(playerList: any[]) {
         return playerList.some(p => p.league === "1");
     }
@@ -85,7 +87,6 @@ SELECT * FROM player WHERE name in (SELECT dupes.name FROM dupes) ORDER by name`
     }
 
     console.log(`found ${uniqueNamedPlayers.length} unique names`);
-
 
 
     return true;

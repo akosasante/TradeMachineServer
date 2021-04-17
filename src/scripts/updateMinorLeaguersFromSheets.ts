@@ -3,6 +3,7 @@ import TeamDAO from "../DAO/TeamDAO";
 import PlayerDAO from "../DAO/PlayerDAO";
 import { getCsvFromUrl } from "../db/seed/helpers/csvHelper";
 import { processMinorLeagueCsv } from "../csv/PlayerParser";
+
 // tslint:disable:no-console
 
 async function run() {
@@ -22,5 +23,11 @@ async function run() {
 }
 
 run()
-    .then(inserted => { console.log(`${inserted.length}`); process.exit(0); })
-    .catch(err => { console.error(err); process.exit(99); });
+    .then(inserted => {
+        console.log(`${inserted.length}`);
+        process.exit(0);
+    })
+    .catch(err => {
+        console.error(err);
+        process.exit(99);
+    });
