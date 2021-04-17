@@ -251,7 +251,7 @@ const EspnTeamMapping: EspnProTeam[] = [
     },
 ];
 
-export const EspnPositionMapping: {[key: number]: string} = {
+export const EspnPositionMapping: { [key: number]: string } = {
     1: "SP",
     2: "C",
     3: "1B",
@@ -265,7 +265,7 @@ export const EspnPositionMapping: {[key: number]: string} = {
     11: "RP",
 };
 
-export const EspnEligiblePositionMapping: {[key: number]: string} = {
+export const EspnEligiblePositionMapping: { [key: number]: string } = {
     0: "C",
     1: "1B",
     2: "2B",
