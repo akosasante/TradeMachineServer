@@ -20,7 +20,7 @@ async function init() {
 export function createGenericTeam() {
     const name = `Team ${random.word()}`;
     const status = TeamStatus.ACTIVE;
-    return new Team({ name, status });
+    return new Team({name, status});
 }
 
 export function createInactiveTeam() {
