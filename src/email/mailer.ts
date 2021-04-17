@@ -160,15 +160,15 @@ export const Emailer = {
                 url: resetPassPage,
             },
         })
-        .then((res: SendInBlueSendResponse) => {
-            logger.info(`Successfully sent password reset email: ${inspect(res.messageId)}`);
-            return res;
-        })
-        .catch((err: Error) => {
-            logger.error(`Ran into an error while sending password reset email: ${inspect(err)}`);
-            rollbar.error(err);
-            return undefined;
-        });
+            .then((res: SendInBlueSendResponse) => {
+                logger.info(`Successfully sent password reset email: ${inspect(res.messageId)}`);
+                return res;
+            })
+            .catch((err: Error) => {
+                logger.error(`Ran into an error while sending password reset email: ${inspect(err)}`);
+                rollbar.error(err);
+                return undefined;
+            });
     },
 
     async sendTestEmail(user: User): Promise<SendInBlueSendResponse> {
@@ -183,20 +183,20 @@ export const Emailer = {
                 name: user.displayName || user.email,
             },
         })
-        .then(async (res: SendInBlueSendResponse) => {
-            logger.info(`Successfully sent test email: ${inspect(res.messageId)}`);
-            if (res.messageId) {
-                await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
-            } else {
-                logger.error("No message id found, not saving email to db.");
-            }
-            return res;
-        })
-        .catch((err: Error) => {
-            logger.error(`Ran into an error while sending test email: ${inspect(err)}`);
-            rollbar.error(err);
-            return undefined;
-        });
+            .then(async (res: SendInBlueSendResponse) => {
+                logger.info(`Successfully sent test email: ${inspect(res.messageId)}`);
+                if (res.messageId) {
+                    await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
+                } else {
+                    logger.error("No message id found, not saving email to db.");
+                }
+                return res;
+            })
+            .catch((err: Error) => {
+                logger.error(`Ran into an error while sending test email: ${inspect(err)}`);
+                rollbar.error(err);
+                return undefined;
+            });
     },
 
     async sendRegistrationEmail(user: User): Promise<SendInBlueSendResponse> {
@@ -213,20 +213,20 @@ export const Emailer = {
                 url: registrationLink,
             },
         })
-        .then(async (res: SendInBlueSendResponse) => {
-            logger.info(`Successfully sent registration email: ${inspect(res.messageId)}`);
-            if (res.messageId) {
-                await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
-            } else {
-                logger.error("No message id found, not saving email to db.");
-            }
-            return res;
-        })
-        .catch((err: Error) => {
-            logger.error(`Ran into an error while sending registration email: ${inspect(err)}`);
-            rollbar.error(err);
-            return undefined;
-        });
+            .then(async (res: SendInBlueSendResponse) => {
+                logger.info(`Successfully sent registration email: ${inspect(res.messageId)}`);
+                if (res.messageId) {
+                    await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
+                } else {
+                    logger.error("No message id found, not saving email to db.");
+                }
+                return res;
+            })
+            .catch((err: Error) => {
+                logger.error(`Ran into an error while sending registration email: ${inspect(err)}`);
+                rollbar.error(err);
+                return undefined;
+            });
     },
 
     async sendTradeRequestEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
@@ -311,7 +311,7 @@ export const Emailer = {
         logger.debug(`got a trade submission email request for tradeId: ${trade.id}.`);
         const emailPrefix = recipient.split("@")[0];
         const acceptUrl = `${baseDomain}/trade/${trade!.id}/submit`;
-       // const discardUrl = `${baseDomain}/trade/${trade!.id}/discard`
+        // const discardUrl = `${baseDomain}/trade/${trade!.id}/discard`
         logger.debug(`sending trade submission email to=${recipient}, acceptUrl=${acceptUrl}, discardUrl=""`);
         rollbar.info("sendTradeSubmissionEmail", {recipient, id: trade.id});
 
