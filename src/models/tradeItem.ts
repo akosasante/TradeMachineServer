@@ -15,6 +15,23 @@ export type TradedItem = Player | DraftPick;
 @Entity()
 @Index(["trade", "tradeItemId", "tradeItemType", "sender", "recipient"], {unique: true})
 export default class TradeItem extends BaseModel {
+    public entity?: TradedItem;
+    @Column({type: "uuid"})
+    public readonly tradeItemId!: string;
+    @Column({type: "enum", enum: TradeItemType, default: TradeItemType.PLAYER})
+    public readonly tradeItemType!: TradeItemType;
+    @ManyToOne(_type => Trade, trade => trade.tradeParticipants, {onDelete: "CASCADE"})
+    public trade!: Trade;
+    @ManyToOne(_type => Team, team => team.tradeItemsSent, {cascade: true, eager: true})
+    public sender!: Team;
+    @ManyToOne(_type => Team, team => team.tradeItemsReceived, {cascade: true, eager: true})
+    public recipient!: Team;
+
+    constructor(props: Partial<TradeItem>) {
+        super();
+        Object.assign(this, props);
+    }
+
     public static filterPlayers(tradeItems?: TradeItem[]): TradeItem[] {
         return tradeItems ? tradeItems.filter(item =>
             (item.tradeItemType === TradeItemType.PLAYER)) : [];
@@ -30,27 +47,5 @@ export default class TradeItem extends BaseModel {
 
     public static itemsReceivedBy(items: TradeItem[], recipient: Team): TradeItem[] {
         return items.filter(item => item.recipient.name === recipient.name);
-    }
-
-    public entity?: TradedItem;
-
-    @Column({type: "uuid"})
-    public readonly tradeItemId!: string;
-
-    @Column({type: "enum", enum: TradeItemType, default: TradeItemType.PLAYER})
-    public readonly tradeItemType!: TradeItemType;
-
-    @ManyToOne(_type => Trade, trade => trade.tradeParticipants, {onDelete: "CASCADE"})
-    public trade!: Trade;
-
-    @ManyToOne(_type => Team, team => team.tradeItemsSent, {cascade: true, eager: true})
-    public sender!: Team;
-
-    @ManyToOne(_type => Team, team => team.tradeItemsReceived, {cascade: true, eager: true})
-    public recipient!: Team;
-
-    constructor(props: Partial<TradeItem>) {
-        super();
-        Object.assign(this, props);
     }
 }

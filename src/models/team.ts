@@ -29,10 +29,10 @@ export default class Team extends BaseModel {
     @Column({type: "jsonb", nullable: true})
     public espnTeam?: EspnFantasyTeam;
 
-    @OneToMany(_type => User, user => user.team, { eager: true, onDelete: "SET NULL"})
+    @OneToMany(_type => User, user => user.team, {eager: true, onDelete: "SET NULL"})
     public owners?: User[];
 
-    @OneToMany(_type => Player, player => player.leagueTeam, { onDelete: "SET NULL"})
+    @OneToMany(_type => Player, player => player.leagueTeam, {onDelete: "SET NULL"})
     public players?: Player[];
 
     @OneToMany(_type => TradeParticipant, tradeParticipant => tradeParticipant.team)

@@ -19,15 +19,15 @@ export default class Email {
     @ManyToOne(_type => Trade, trade => trade.tradeParticipants, {onDelete: "SET NULL", nullable: true})
     public trade!: Trade;
 
+    constructor(props: Partial<Email> & Required<Pick<Email, "messageId">>) {
+        Object.assign(this, props);
+    }
+
     public toString(): string {
         return `${this.constructor.name}#${this.messageId}`;
     }
 
     public parse<T extends Email>(): Partial<T> {
         return Object.assign({}, this);
-    }
-
-    constructor(props: Partial<Email> & Required<Pick<Email, "messageId">>) {
-        Object.assign(this, props);
     }
 }
