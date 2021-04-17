@@ -20,7 +20,7 @@ export async function deserializeUser(id: string, userDAO: UserDAO = new UserDAO
 }
 
 export async function signUpAuthentication(email: string, password: string, userDAO: UserDAO = new UserDAO(),
-                                           done: (err?: Error, user?: User) => any): Promise<void> {
+                                           done: (err?: Error, user?: User) => void): Promise<void> {
     try {
         logger.debug("sign up strategy");
         const user = await userDAO.findUserWithPassword({email});
@@ -46,7 +46,7 @@ export async function signUpAuthentication(email: string, password: string, user
 }
 
 export async function signInAuthentication(email: string, password: string, userDAO: UserDAO = new UserDAO(),
-                                           done: (err?: Error, user?: User) => any): Promise<void> {
+                                           done: (err?: Error, user?: User) => void): Promise<void> {
     try {
         logger.debug("sign in strategy");
         // Will throw EntityNotFoundError if user is not found
@@ -107,10 +107,12 @@ export async function generateHashedPassword(plainPassword: string): Promise<str
 }
 
 async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO()): Promise<User | undefined> {
-    const userId = action.request?.session?.user;
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+    const userId = action.request?.session?.user as string;
     logger.debug(inspect(action.request.session));
     logger.debug(inspect(action.request.sessionID));
     logger.debug(`Current userId: ${userId}`);
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
     return userId ? await deserializeUser(userId, userDAO) : undefined;
 }
 
