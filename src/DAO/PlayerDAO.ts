@@ -47,7 +47,7 @@ export default class PlayerDAO {
 
     public async createPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
         const result: InsertResult = await this.playerDb.insert(playerObjs);
-        return await this.playerDb.find({id: In(result.identifiers.map(({id}) => id))});
+        return await this.playerDb.find({id: In(result.identifiers.map(({id}) => id as string))});
     }
 
     public async batchCreatePlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
@@ -63,7 +63,7 @@ export default class PlayerDAO {
                 .onConflict('("name", "playerDataId") DO UPDATE SET "meta" = player.meta || EXCLUDED.meta, "leagueTeamId" = EXCLUDED."leagueTeamId", "mlbTeam" = EXCLUDED."mlbTeam"')
                 .execute();
 
-            return await this.playerDb.find({id: In(result.identifiers.filter(res => !!res).map(({id}) => id))});
+            return await this.playerDb.find({id: In(result.identifiers.filter(res => !!res).map(({id}) => id as string))});
         } else {
             return [];
         }
