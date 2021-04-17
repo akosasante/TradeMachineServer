@@ -34,7 +34,7 @@ describe("EmailPublisher", () => {
         ts_event: 1586556782,
     };
     const eventJson = JSON.stringify(event);
-    const exponentialBackoff = { attempts: 3, backoff: {type: "exponential", delay: 30000}};
+    const exponentialBackoff = { attempts: 3, backoff: { type: "exponential", delay: 30000 } };
     const linearBackoff = { attempts: 3, backoff: 10000 };
 
     it("queueResetEmail/1 - should add email job with correct parameters to the emailQueue", async () => {
@@ -64,18 +64,27 @@ describe("EmailPublisher", () => {
     it("queueTradeRequestMail/1 - should add email job with correct parameters to emailQueue", async () => {
         await publisher.queueTradeRequestMail(trade, "test_email@exmple.com");
         expect(mockQueue.add).toHaveBeenCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith("request_trade", {trade: tradeJson, recipient: "test_email@exmple.com"}, exponentialBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("request_trade", {
+            trade: tradeJson,
+            recipient: "test_email@exmple.com",
+        }, exponentialBackoff);
     });
 
     it("queueTradeDeclinedMail/1 - should add email job with correct parameters to emailQueue", async () => {
         await publisher.queueTradeDeclinedMail(trade, "test_email@exmple.com");
         expect(mockQueue.add).toHaveBeenCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith("trade_declined", {trade: tradeJson, recipient: "test_email@exmple.com"}, exponentialBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("trade_declined", {
+            trade: tradeJson,
+            recipient: "test_email@exmple.com",
+        }, exponentialBackoff);
     });
 
     it("queueTradeAcceptedMail/1 - should add email job with correct parameters to emailQueue", async () => {
         await publisher.queueTradeAcceptedMail(trade, "test_email@exmple.com");
         expect(mockQueue.add).toHaveBeenCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith("trade_accepted", {trade: tradeJson, recipient: "test_email@exmple.com"}, exponentialBackoff);
+        expect(mockQueue.add).toHaveBeenCalledWith("trade_accepted", {
+            trade: tradeJson,
+            recipient: "test_email@exmple.com",
+        }, exponentialBackoff);
     });
 });

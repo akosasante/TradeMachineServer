@@ -11,7 +11,10 @@ describe("SettingsController", () => {
         insertNewSettings: jest.fn(),
     };
 
-    const testSettings = SettingsFactory.getSettingsObject(undefined, {tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START, tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END});
+    const testSettings = SettingsFactory.getSettingsObject(undefined, {
+        tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
+        tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
+    });
     const settingsController = new SettingsController(mockSettingsDAO as unknown as SettingsDAO);
 
     beforeAll(() => {
@@ -24,55 +27,63 @@ describe("SettingsController", () => {
         Object.values(mockSettingsDAO).forEach(mockFn => mockFn.mockReset());
     });
 
-   describe("getAllSettings method", () => {
-       it("should return an array of settings", async () => {
-           mockSettingsDAO.getAllSettings.mockResolvedValueOnce([testSettings]);
-           const res = await settingsController.getAllSettings();
+    describe("getAllSettings method", () => {
+        it("should return an array of settings", async () => {
+            mockSettingsDAO.getAllSettings.mockResolvedValueOnce([testSettings]);
+            const res = await settingsController.getAllSettings();
 
-           expect(mockSettingsDAO.getAllSettings).toHaveBeenCalledTimes(1);
-           expect(mockSettingsDAO.getAllSettings).toHaveBeenCalledWith();
-           expect(res).toEqual([testSettings]);
-       });
-       it("should bubble up any errors from the DAO", async () => {
-           mockSettingsDAO.getAllSettings.mockImplementation(() => {
-               throw new Error("Generic Error");
-           });
-           await expect(settingsController.getAllSettings())
-               .rejects.toThrow(Error);
-       });
-   });
+            expect(mockSettingsDAO.getAllSettings).toHaveBeenCalledTimes(1);
+            expect(mockSettingsDAO.getAllSettings).toHaveBeenCalledWith();
+            expect(res).toEqual([testSettings]);
+        });
+        it("should bubble up any errors from the DAO", async () => {
+            mockSettingsDAO.getAllSettings.mockImplementation(() => {
+                throw new Error("Generic Error");
+            });
+            await expect(settingsController.getAllSettings())
+                .rejects.toThrow(Error);
+        });
+    });
 
-   describe("getCurrentSettings method", () => {
-       it("should return the most recent settings line", async () => {
-           mockSettingsDAO.getMostRecentSettings.mockResolvedValueOnce(testSettings);
-           const res = await settingsController.getCurrentSettings();
+    describe("getCurrentSettings method", () => {
+        it("should return the most recent settings line", async () => {
+            mockSettingsDAO.getMostRecentSettings.mockResolvedValueOnce(testSettings);
+            const res = await settingsController.getCurrentSettings();
 
-           expect(mockSettingsDAO.getMostRecentSettings).toHaveBeenCalledTimes(1);
-           expect(mockSettingsDAO.getMostRecentSettings).toHaveBeenCalledWith();
-           expect(res).toEqual(testSettings);
-       });
-   });
+            expect(mockSettingsDAO.getMostRecentSettings).toHaveBeenCalledTimes(1);
+            expect(mockSettingsDAO.getMostRecentSettings).toHaveBeenCalledWith();
+            expect(res).toEqual(testSettings);
+        });
+    });
 
-   describe("getOneSettingsLine method", () => {
-       it("should return a settings line by id", async () => {
-           mockSettingsDAO.getSettingsById.mockResolvedValueOnce(testSettings);
-           const res = await settingsController.getOneSettingsLine(testSettings.id!);
+    describe("getOneSettingsLine method", () => {
+        it("should return a settings line by id", async () => {
+            mockSettingsDAO.getSettingsById.mockResolvedValueOnce(testSettings);
+            const res = await settingsController.getOneSettingsLine(testSettings.id!);
 
-           expect(mockSettingsDAO.getSettingsById).toHaveBeenCalledTimes(1);
-           expect(mockSettingsDAO.getSettingsById).toHaveBeenCalledWith(testSettings.id!);
-           expect(res).toEqual(testSettings);
-       });
-   });
+            expect(mockSettingsDAO.getSettingsById).toHaveBeenCalledTimes(1);
+            expect(mockSettingsDAO.getSettingsById).toHaveBeenCalledWith(testSettings.id!);
+            expect(res).toEqual(testSettings);
+        });
+    });
 
-   describe("appendNewSettingsLine method", () => {
-       it("should create a new settings line", async () => {
-           mockSettingsDAO.insertNewSettings.mockResolvedValueOnce(testSettings);
-           const downtimeObj = {downtime: {scheduled: [{downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START, downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END, downtimeReason: "hello"}]}};
-           const res = await settingsController.appendNewSettingsLine(downtimeObj);
+    describe("appendNewSettingsLine method", () => {
+        it("should create a new settings line", async () => {
+            mockSettingsDAO.insertNewSettings.mockResolvedValueOnce(testSettings);
+            const downtimeObj = {
+                downtime: {
+                    scheduled: [{
+                        downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START,
+                        downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END,
+                        downtimeReason: "hello",
+                    }],
+                },
+            };
+            const res = await settingsController.appendNewSettingsLine(downtimeObj);
 
-           expect(mockSettingsDAO.insertNewSettings).toHaveBeenCalledTimes(1);
-           expect(mockSettingsDAO.insertNewSettings).toHaveBeenCalledWith(downtimeObj);
-           expect(res).toEqual(testSettings);
-       });
-   });
+            expect(mockSettingsDAO.insertNewSettings).toHaveBeenCalledTimes(1);
+            expect(mockSettingsDAO.insertNewSettings).toHaveBeenCalledWith(downtimeObj);
+            expect(res).toEqual(testSettings);
+        });
+    });
 });

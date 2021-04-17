@@ -2,7 +2,7 @@ import logger from "../../../src/bootstrap/logger";
 import UserDAO from "../../../src/DAO/UserDAO";
 import User from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
-import { mockDeleteChain, mockExecute, mockWhereInIds, MockObj, mockReturning } from "./daoHelpers";
+import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
 import { Repository } from "typeorm";
 
 describe("UserDAO", () => {
@@ -186,7 +186,7 @@ describe("UserDAO", () => {
 
     describe("setPasswordExpires", () => {
         it("should return successfully if db call has on errors", async () => {
-            const updatePartial = {passwordResetExpiresOn: expect.toBeDate(), passwordResetToken: expect.toBeString()};
+            const updatePartial = { passwordResetExpiresOn: expect.any(Date), passwordResetToken: expect.any(String) };
             const res = await userDAO.setPasswordExpires(testUser.id!);
 
             expect(mockUserDb.update).toHaveBeenCalledTimes(1);

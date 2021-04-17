@@ -13,7 +13,10 @@ describe("SettingsDAO", () => {
         insert: jest.fn(),
     };
 
-    const testSettings = SettingsFactory.getSettingsObject(undefined, { tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START, tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END});
+    const testSettings = SettingsFactory.getSettingsObject(undefined, {
+        tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
+        tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
+    });
     const settingsDAO = new SettingsDAO(mockSettingsDb as unknown as Repository<Settings>);
 
     afterEach(() => {
@@ -58,16 +61,31 @@ describe("SettingsDAO", () => {
 
     it("insertNewSettings - should first get most recent settings and then insert and return the new value", async () => {
         mockSettingsDb.findOne.mockResolvedValueOnce(testSettings);
-        mockSettingsDb.insert.mockResolvedValueOnce({identifiers: [{id: testSettings.id!}], generatedMaps: [], raw: []});
+        mockSettingsDb.insert.mockResolvedValueOnce({
+            identifiers: [{id: testSettings.id!}],
+            generatedMaps: [],
+            raw: [],
+        });
 
-        const newSettings = SettingsFactory.getSettings(undefined, undefined, {scheduled: [{downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START, downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END, downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON}]});
+        const newSettings = SettingsFactory.getSettings(undefined, undefined, {
+            scheduled: [{
+                downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START,
+                downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END,
+                downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON,
+            }],
+        });
         const expectedSettings = {...testSettings, ...newSettings};
         mockSettingsDb.findOneOrFail.mockResolvedValueOnce(expectedSettings);
         const res = await settingsDAO.insertNewSettings(newSettings);
 
         expect(mockSettingsDb.findOne).toHaveBeenCalledTimes(1);
         expect(mockSettingsDb.insert).toHaveBeenCalledTimes(1);
-        expect(mockSettingsDb.insert).toHaveBeenCalledWith({...expectedSettings, id: newSettings.id, dateCreated: undefined, dateModified: undefined});
+        expect(mockSettingsDb.insert).toHaveBeenCalledWith({
+            ...expectedSettings,
+            id: newSettings.id,
+            dateCreated: undefined,
+            dateModified: undefined,
+        });
         expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith({id: testSettings.id!});
         expect(res).toEqual(expectedSettings);

@@ -115,7 +115,7 @@ describe("TeamController", () => {
 
     describe("deleteTeam method", () => {
         it("should delete a team by id from the db", async () => {
-            mockTeamDAO.deleteTeam.mockReturnValue({raw: [ {id: testTeam.id} ], affected: 1});
+            mockTeamDAO.deleteTeam.mockReturnValue({ raw: [{ id: testTeam.id }], affected: 1 });
             const res = await teamController.deleteTeam(testTeam.id!);
 
             expect(mockTeamDAO.deleteTeam).toHaveBeenCalledTimes(1);

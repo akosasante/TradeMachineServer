@@ -1,8 +1,16 @@
 import "jest-extended";
 import { Action, BadRequestError } from "routing-controllers";
 import { ConflictError } from "../../../src/api/middlewares/ErrorHandler";
-import { authorizationChecker, currentUserChecker, deserializeUser, generateHashedPassword,
-    passwordResetDateIsValid, serializeUser, signInAuthentication, signUpAuthentication } from "../../../src/authentication/auth";
+import {
+    authorizationChecker,
+    currentUserChecker,
+    deserializeUser,
+    generateHashedPassword,
+    passwordResetDateIsValid,
+    serializeUser,
+    signInAuthentication,
+    signUpAuthentication
+} from "../../../src/authentication/auth";
 import UserDAO from "../../../src/DAO/UserDAO";
 import User, { Role } from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
@@ -70,15 +78,15 @@ describe("Authorization helper methods", () => {
             expect(mockUserDAO.createUsers).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.createUsers).toHaveBeenCalledWith([{
                 email: testUser.email,
-                password: expect.toBeString(),
-                lastLoggedIn: expect.toBeDate(),
+                password: expect.any(String),
+                lastLoggedIn: expect.any(Date),
             }]);
             expect(cb).toBeCalledTimes(1);
             expect(cb).toBeCalledWith(undefined, testUser);
         });
         it("should update and return an existing user with no password", async () => {
-                const passwordlessUser = new User({...testUser});
-                delete passwordlessUser.password;
+            const passwordlessUser = new User({...testUser});
+            delete passwordlessUser.password;
             mockUserDAO.findUserWithPassword.mockResolvedValueOnce(passwordlessUser);
             mockUserDAO.updateUser.mockResolvedValueOnce(testUser);
             await signUpAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
@@ -87,8 +95,8 @@ describe("Authorization helper methods", () => {
             expect(mockUserDAO.findUserWithPassword).toBeCalledWith({email: testUser.email});
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.updateUser).toHaveBeenCalledWith(testUser.id, {
-                password: expect.toBeString(),
-                lastLoggedIn: expect.toBeDate(),
+                password: expect.any(String),
+                lastLoggedIn: expect.any(Date),
             });
             expect(cb).toBeCalledTimes(1);
             expect(cb).toBeCalledWith(undefined, testUser);
@@ -124,7 +132,7 @@ describe("Authorization helper methods", () => {
             expect(mockUserDAO.findUserWithPassword).toBeCalledWith({email: testUser.email});
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.updateUser).toHaveBeenCalledWith(testUser.id, {
-                lastLoggedIn: expect.toBeDate(),
+                lastLoggedIn: expect.any(Date),
             });
             expect(cb).toBeCalledTimes(1);
             expect(cb).toBeCalledWith(undefined, passwordlessUser);

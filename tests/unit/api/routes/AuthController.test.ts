@@ -25,7 +25,7 @@ describe("AuthController", () => {
     };
     const authController: AuthController = new AuthController(mockUserDAO as unknown as UserDAO, mockMailPublisher as unknown as EmailPublisher);
     // @ts-ignore
-    const mockReq = { session: {destroy: jest.fn()} };
+    const mockReq = { session: { destroy: jest.fn() } };
     // @ts-ignore
     const mockRes: Response = {
         status: jest.fn().mockReturnThis(),
@@ -69,7 +69,7 @@ describe("AuthController", () => {
             expect(mockSess.user).toBeUndefined();
             expect(res).toBeTrue();
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.updateUser).toHaveBeenCalledWith(testUser.id, {lastLoggedIn: expect.toBeDate()});
+            expect(mockUserDAO.updateUser).toHaveBeenCalledWith(testUser.id, { lastLoggedIn: expect.any(Date) });
         });
         it("should resolve the promise if there is no userId on the session", async () => {
             const res = await authController.logout(mockReq as unknown as Request, {});
@@ -97,7 +97,7 @@ describe("AuthController", () => {
             mockUserDAO.getUserById.mockResolvedValueOnce({...testUser, passwordResetExpiresOn: date});
             await authController.resetPassword(testUser.id!, "lol2", "xyz-uuid", mockRes);
             const expectedUserUpdateObj = {
-                password: expect.toBeString(),
+                password: expect.any(String),
                 passwordResetExpiresOn: undefined,
                 passwordResetToken: undefined,
             };

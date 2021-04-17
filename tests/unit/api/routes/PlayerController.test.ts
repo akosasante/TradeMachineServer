@@ -162,7 +162,7 @@ describe("PlayerController", () => {
 
     describe("deletePlayer method", () => {
         it("should delete a player by id from the db", async () => {
-            mockPlayerDAO.deletePlayer.mockReturnValue({raw: [ {id: testPlayer.id} ], affected: 1});
+            mockPlayerDAO.deletePlayer.mockReturnValue({ raw: [{ id: testPlayer.id }], affected: 1 });
             const res = await playerController.deletePlayer(testPlayer.id!);
 
             expect(mockPlayerDAO.deletePlayer).toHaveBeenCalledTimes(1);

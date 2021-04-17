@@ -10,7 +10,10 @@ describe("GeneralSettings Class", () => {
         logger.debug("~~~~~~SETTINGS TESTS COMPLETE~~~~~~");
     });
 
-    const settingsObj = SettingsFactory.getSettingsObject(undefined, {tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START, tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END});
+    const settingsObj = SettingsFactory.getSettingsObject(undefined, {
+        tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
+        tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
+    });
     const settings = new Settings(settingsObj);
 
     describe("constructor", () => {

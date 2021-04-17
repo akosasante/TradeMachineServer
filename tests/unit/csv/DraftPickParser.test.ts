@@ -86,12 +86,12 @@ describe("DraftPickParser", () => {
         expect(mockDAO.batchUpsertPicks.mock.calls[0][0]).toSatisfyAll(pickPredicate);
     });
     it("should call DAO.batchUpsertPicks once even if more than 50 rows", async () => {
-         await processDraftPickCsv(threePlayerCsv, [testTeam1, testTeam2, testTeam3],
-             mockDAO as unknown as DraftPickDAO);
-         expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
-         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledTimes(1);
-         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledWith(expect.toBeArrayOfSize(50));
-         expect(mockDAO.batchUpsertPicks.mock.calls[0][0]).toSatisfyAll(pickPredicate);
+        await processDraftPickCsv(threePlayerCsv, [testTeam1, testTeam2, testTeam3],
+            mockDAO as unknown as DraftPickDAO);
+        expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
+        expect(mockDAO.batchUpsertPicks).toHaveBeenCalledTimes(1);
+        expect(mockDAO.batchUpsertPicks).toHaveBeenCalledWith(expect.toBeArrayOfSize(50));
+        expect(mockDAO.batchUpsertPicks.mock.calls[0][0]).toSatisfyAll(pickPredicate);
     });
 
     it("should return all the rows from the csv as draft picks", async () => {

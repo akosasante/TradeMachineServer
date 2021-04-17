@@ -84,7 +84,10 @@ describe("EspnApi Class", () => {
 
     it("updateMajorLeaguePlayers/2 - should prepare and perform a batch upsert of major league players", async () => {
         mockedGet.mockResolvedValueOnce({data: playersJson, headers} as unknown as AxiosPromise);
-        const fakeTeamsWithIds = Array.from(Array(10).keys()).map(espnId => new Team({name: "Fake Team", espnId: espnId + 1}));
+        const fakeTeamsWithIds = Array.from(Array(10).keys()).map(espnId => new Team({
+            name: "Fake Team",
+            espnId: espnId + 1,
+        }));
         mockTeamDao.findTeams.mockReturnValueOnce(fakeTeamsWithIds);
         await Api.updateMajorLeaguePlayers(2019, mockPlayerDao as unknown as PlayerDAO, mockTeamDao as unknown as TeamDAO);
 
@@ -94,7 +97,10 @@ describe("EspnApi Class", () => {
 
     it("updateEspnTeamInfo/2 - should prepare and perform many updates of espn league teams", async () => {
         mockedGet.mockResolvedValueOnce({data: teamsJson} as unknown as AxiosPromise);
-        const fakeTeamsWithIds = Array.from(Array(10).keys()).map(espnId => new Team({name: "Fake Team", espnId: espnId + 1}));
+        const fakeTeamsWithIds = Array.from(Array(10).keys()).map(espnId => new Team({
+            name: "Fake Team",
+            espnId: espnId + 1,
+        }));
         mockTeamDao.getAllTeams.mockReturnValueOnce(fakeTeamsWithIds);
         await Api.updateEspnTeamInfo(2019, mockTeamDao as unknown as TeamDAO);
 

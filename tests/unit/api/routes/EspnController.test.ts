@@ -20,7 +20,7 @@ describe("EspnController", () => {
         logger.debug("~~~~~~ESPN CONTROLLER TESTS COMPLETE~~~~~~");
     });
     afterEach(() => {
-        Object.values(mockEspnApi).forEach(mockFn =>  mockFn.mockReset());
+        Object.values(mockEspnApi).forEach(mockFn => mockFn.mockReset());
     });
 
     describe("getAllEspnMembers method", () => {

@@ -10,7 +10,7 @@ export class UserFactory {
 
     public static getUserObject(email = UserFactory.TEST_EMAIL, displayName = UserFactory.GENERIC_NAME,
                                 password = UserFactory.GENERIC_PASSWORD, role = Role.ADMIN, rest = {}) {
-        return { id: uuid(), email, displayName, password, role , ...rest};
+        return { id: uuid(), email, displayName, password, role, ...rest };
     }
 
     public static getUser(email = UserFactory.TEST_EMAIL, displayName = UserFactory.GENERIC_NAME,
@@ -27,6 +27,6 @@ export class UserFactory {
     }
 
     public static getPasswordlessOwner() {
-        return new User({email: UserFactory.OWNER_EMAIL, displayName: "Len Mitch", role: Role.OWNER});
+        return new User({ email: UserFactory.OWNER_EMAIL, displayName: "Len Mitch", role: Role.OWNER });
     }
 }

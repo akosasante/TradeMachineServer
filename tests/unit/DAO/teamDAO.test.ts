@@ -2,7 +2,7 @@ import logger from "../../../src/bootstrap/logger";
 import TeamDAO from "../../../src/DAO/TeamDAO";
 import User from "../../../src/models/user";
 import { TeamFactory } from "../../factories/TeamFactory";
-import { MockObj, mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
+import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
 import Team from "../../../src/models/team";
 import { Repository } from "typeorm";
 
@@ -94,7 +94,14 @@ describe("TeamDAO", () => {
         expect(mockTeamDb.insert).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.insert).toHaveBeenCalledWith([testTeam.parse()]);
         expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
-        expect(mockTeamDb.find).toHaveBeenCalledWith({"id": {"_multipleParameters": true, "_type": "in", "_useParameter": true, "_value": [testTeam.id]}});
+        expect(mockTeamDb.find).toHaveBeenCalledWith({
+            "id": {
+                "_multipleParameters": true,
+                "_type": "in",
+                "_useParameter": true,
+                "_value": [testTeam.id],
+            },
+        });
         expect(res).toEqual([testTeam]);
     });
 
@@ -112,7 +119,7 @@ describe("TeamDAO", () => {
     it("deleteTeam - should call the db delete once with id", async () => {
         mockTeamDb.findOneOrFail.mockResolvedValueOnce(testTeam);
         mockTeamDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
-        const deleteResult = { raw: [{id: testTeam.id!}], affected: 1};
+        const deleteResult = { raw: [{ id: testTeam.id! }], affected: 1 };
         mockExecute.mockResolvedValueOnce(deleteResult);
         const res = await teamDAO.deleteTeam(testTeam.id!);
 

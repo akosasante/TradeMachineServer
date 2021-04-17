@@ -146,7 +146,7 @@ describe("DraftPickController", () => {
 
     describe("deleteDraftPick method", () => {
         it("should delete a draftPick by id from the db", async () => {
-            mockDraftPickDAO.deletePick.mockReturnValue({raw: [ {id: testDraftPick.id} ], affected: 1});
+            mockDraftPickDAO.deletePick.mockReturnValue({ raw: [{ id: testDraftPick.id }], affected: 1 });
             const res = await draftPickController.deleteDraftPick(testDraftPick.id!);
 
             expect(mockDraftPickDAO.deletePick).toHaveBeenCalledTimes(1);
