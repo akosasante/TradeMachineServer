@@ -26,7 +26,7 @@ app.use(rollbar.errorHandler());
 
 // Session tracking
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 60 sec * 60 min * 24hr * 7 = 7 days
-const RedisSessionStore = connectRedis(expressSession);
+const redisStore = connectRedis(expressSession);
 export const redisClient = redis.createClient(
     Number(process.env.REDIS_PORT || 6379),
     process.env.REDIS_IP || "localhost");
@@ -42,7 +42,7 @@ app.use(expressSession({
     resave: false,
     saveUninitialized: true,
     secret: process.env.SESSION_SECRET || "test",
-    store: new RedisSessionStore(REDIS_OPTS),
+    store: new redisStore(REDIS_OPTS),
     unset: "destroy",
     name: process.env.ORM_CONFIG === "staging" ? "staging_trades.sid" : "trades.sid",
     cookie: {

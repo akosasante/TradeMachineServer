@@ -7,6 +7,7 @@ import expressApp, { redisClient } from "./express";
 import logger from "./logger";
 import { inspect } from "util";
 import { rollbar } from "./rollbar";
+import { Server } from "http";
 
 export async function setupExpressApp(): Promise<Express> {
     // Set up db
@@ -43,7 +44,7 @@ export async function setupExpressApp(): Promise<Express> {
     return expressApp;
 }
 
-export default async function startServer() {
+export default async function startServer(): Promise<Server> {
     try {
         const app = await setupExpressApp();
         const srv = app.listen(app.get("port"), app.get("ip"), () => {

@@ -17,8 +17,7 @@ const consoleLogger = new winston.transports.Console({
     format: combine(winston.format.cli()),
 });
 
-// tslint:disable-next-line
-let errorLogger, combinedLogger, exceptionHandler;
+let errorLogger; let combinedLogger; let exceptionHandler;
 
 if (process.env.NODE_ENV !== "test") {
     const logDir = path.resolve(`${process.env.BASE_DIR}/logs`);
@@ -74,7 +73,7 @@ if (process.env.ENABLE_LOGS === "true") {
 }
 
 // Last ditch if the logger itself errors
-// tslint:disable-next-line:no-console
+// eslint-disable-next-line no-console
 logger.on("error", err => console.error(err));
 
 export default logger;
