@@ -10,12 +10,12 @@ export default class UserDAO {
     }
 
     public async getAllUsers(): Promise<User[]> {
-        const options: FindManyOptions = { order: { id: "ASC" } };
+        const options: FindManyOptions = {order: {id: "ASC"}};
         return await this.userDb.find(options);
     }
 
     public async getAllUsersWithTeams(): Promise<User[]> {
-        const options: FindManyOptions = { order: { id: "ASC" }, relations: ["team"]};
+        const options: FindManyOptions = {order: {id: "ASC"}, relations: ["team"]};
         return await this.userDb.find(options);
     }
 
@@ -24,12 +24,12 @@ export default class UserDAO {
         return await this.userDb.findOneOrFail(id, options);
     }
 
-    public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User|undefined> {
+    public async findUser(query: Partial<User>, failIfNotFound: boolean = true): Promise<User | undefined> {
         const findFn = failIfNotFound ? this.userDb.findOneOrFail.bind(this.userDb) : this.userDb.findOne.bind(this.userDb);
         return findFn(query);
     }
 
-    public async findUserWithPassword(query: Partial<User>): Promise<User|undefined> {
+    public async findUserWithPassword(query: Partial<User>): Promise<User | undefined> {
         return await this.userDb
             .createQueryBuilder("user")
             .select("user.id")
@@ -68,7 +68,8 @@ export default class UserDAO {
             {id},
             {
                 passwordResetExpiresOn: User.generateTimeToPasswordExpires(),
-                passwordResetToken: uuid() });
+                passwordResetToken: uuid(),
+            });
         return await this.getUserById(id);
     }
 }

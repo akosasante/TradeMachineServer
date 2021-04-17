@@ -1,4 +1,13 @@
-import { DeleteResult, FindManyOptions, FindConditions, getConnection, ILike, In, InsertResult, Repository } from "typeorm";
+import {
+    DeleteResult,
+    FindConditions,
+    FindManyOptions,
+    getConnection,
+    ILike,
+    In,
+    InsertResult,
+    Repository
+} from "typeorm";
 import Player from "../models/player";
 
 export default class PlayerDAO {
@@ -17,23 +26,23 @@ export default class PlayerDAO {
         return await this.playerDb.findOneOrFail(id);
     }
 
-    public async getPlayerByName(name: string): Promise<Player|undefined> {
+    public async getPlayerByName(name: string): Promise<Player | undefined> {
         return await this.playerDb.findOne({name});
     }
 
     public async findPlayers(query: Partial<Player>, limit?: number): Promise<Player[]> {
-        const options: FindManyOptions = limit ? { where: query, take: limit } : { where: query };
+        const options: FindManyOptions = limit ? {where: query, take: limit} : {where: query};
         return await this.playerDb.find(options);
     }
 
     public async queryPlayersByName(query: string, league?: number): Promise<Player[]> {
         const defaultLimit = 50;
         const cacheOptions = 60000;
-        const where: FindConditions<Player> = { name: ILike(`%${query}%`) };
+        const where: FindConditions<Player> = {name: ILike(`%${query}%`)};
         if (league) {
             where.league = league;
         }
-        return await this.playerDb.find({ where, take: defaultLimit, cache: cacheOptions, order: {name: "ASC"} });
+        return await this.playerDb.find({where, take: defaultLimit, cache: cacheOptions, order: {name: "ASC"}});
     }
 
     public async createPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
@@ -61,7 +70,7 @@ export default class PlayerDAO {
     }
 
     public async updatePlayer(id: string, playerObj: Partial<Player>): Promise<Player> {
-        await this.playerDb.update({ id }, playerObj);
+        await this.playerDb.update({id}, playerObj);
         return await this.getPlayerById(id);
     }
 
