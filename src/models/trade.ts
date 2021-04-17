@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToMany, OneToOne } from "typeorm";
+import { Column, Entity, OneToMany } from "typeorm";
 import { BaseModel } from "./base";
 import DraftPick, { LeagueLevel, MinorLeagueLevels } from "./draftPick";
 import Player, { PlayerLeagueType } from "./player";
@@ -7,7 +7,7 @@ import TradeItem from "./tradeItem";
 import TradeParticipant, { TradeParticipantType } from "./tradeParticipant";
 import logger from "../bootstrap/logger";
 import Email from "./email";
-import {inspect} from "util";
+import { inspect } from "util";
 
 export enum TradeStatus {
     DRAFT = 1,
@@ -20,11 +20,30 @@ export enum TradeStatus {
 
 @Entity()
 export default class Trade extends BaseModel {
-    public static isValid(trade: Partial<Trade>) {
-        return new Trade(trade).isValid();
+    @Column({type: "enum", enum: TradeStatus, default: TradeStatus.DRAFT})
+    public status?: TradeStatus;
+    @Column({nullable: true})
+    public declinedReason?: string;
+    @Column({nullable: true, type: "uuid"})
+    public declinedById?: string;
+    @Column({nullable: true, type: "jsonb"})
+    public acceptedBy?: string[];
+    @Column({nullable: true})
+    public acceptedOnDate?: Date;
+    @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade,
+        {cascade: true, eager: true})
+    public tradeParticipants?: TradeParticipant[];
+    @OneToMany(type => TradeItem, tradeItem => tradeItem.trade, {cascade: true, eager: true})
+    public tradeItems?: TradeItem[];
+    @OneToMany(_type => Email, email => email.trade, {eager: true})
+    public emails?: Email[];
+
+    constructor(props: Partial<Trade>) {
+        super();
+        Object.assign(this, props);
     }
 
-    public get creator(): Team|undefined {
+    public get creator(): Team | undefined {
         const creator = (this.tradeParticipants || []).find(part =>
             part.participantType === TradeParticipantType.CREATOR);
         return creator ? creator.team : undefined;
@@ -72,34 +91,8 @@ export default class Trade extends BaseModel {
         return this.picks.filter(pick => pick.type === LeagueLevel.LOW);
     }
 
-    @Column({type: "enum", enum: TradeStatus, default: TradeStatus.DRAFT})
-    public status?: TradeStatus;
-
-    @Column({nullable: true})
-    public declinedReason?: string;
-
-    @Column({nullable: true, type: "uuid"})
-    public declinedById?: string;
-
-    @Column({nullable: true, type: "jsonb"})
-    public acceptedBy?: string[];
-
-    @Column({nullable: true})
-    public acceptedOnDate?: Date;
-
-    @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade,
-        {cascade: true, eager: true})
-    public tradeParticipants?: TradeParticipant[];
-
-    @OneToMany(type => TradeItem, tradeItem => tradeItem.trade, {cascade: true, eager: true})
-    public tradeItems?: TradeItem[];
-
-    @OneToMany(_type => Email, email => email.trade, {eager: true})
-    public emails?: Email[];
-
-    constructor(props: Partial<Trade>) {
-        super();
-        Object.assign(this, props);
+    public static isValid(trade: Partial<Trade>) {
+        return new Trade(trade).isValid();
     }
 
     public isValid(): boolean {

@@ -48,11 +48,11 @@ export default class Player extends BaseModel {
             name: espnPlayer.player?.fullName || `ESPN Player #${espnPlayer.id || ""}`,
             mlbTeam: espnMajorLeagueTeamFromId(espnPlayer.player?.proTeamId)?.abbrev.toUpperCase(),
             playerDataId: espnPlayer.id,
-            meta: { espnPlayer, position },
+            meta: {espnPlayer, position},
         });
     }
 
-    public getEspnEligiblePositions(): string|undefined {
+    public getEspnEligiblePositions(): string | undefined {
         const slots = this.meta?.espnPlayer?.player?.eligibleSlots;
         if (slots && slots.length) {
             return slots
