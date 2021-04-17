@@ -1,3 +1,4 @@
+/* eslint-disable */
 import initializeDb from "../../bootstrap/db";
 import { createGenericTeam, createInactiveTeam, saveOwners, saveTeam } from "./helpers/teamCreator";
 import Team from "../../models/team";
@@ -75,3 +76,4 @@ run()
         logger.error(err);
         process.exit(999);
     });
+/* eslint-enable */

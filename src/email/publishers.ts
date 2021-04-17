@@ -40,7 +40,7 @@ export class EmailPublisher extends Publisher {
         return await this.queueEmail(user, "test_email");
     }
 
-    public async queueWebhookResponse(event: EmailStatusEvent) {
+    public async queueWebhookResponse(event: EmailStatusEvent): Promise<Bull.Job> {
         const jobName = "handle_webhook";
         const job: EmailJob = {
             event: JSON.stringify(event),

@@ -29,16 +29,18 @@ export interface SendInBlueSendResponse {
         subject: string;
         html: string;
         text: string;
+        // eslint-disable-next-line @typescript-eslint/ban-types
         attachments: object[];
     };
 }
 
-const SendInBlueOpts = {
+const SEND_IN_BLUE_OPTS = {
     apiKey: process.env.EMAIL_KEY,
     apiUrl: process.env.EMAIL_API_URL,
 };
 
-const SendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SendInBlueOpts));
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+const sendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SEND_IN_BLUE_OPTS));
 
 const baseDomain = process.env.BASE_URL;
 
@@ -62,9 +64,11 @@ function getPlayerDetails(player: Player) {
             return " ";
         }
     } else if (player.league === PlayerLeagueType.MINOR) {
-        const team = player.meta?.minorLeaguePlayerFromSheet?.mlbTeam;
-        const position = player.meta?.minorLeaguePlayerFromSheet?.position;
-        const league = player.meta?.minorLeaguePlayerFromSheet?.leagueLevel;
+        /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+        const team = player.meta?.minorLeaguePlayerFromSheet?.mlbTeam as string;
+        const position = player.meta?.minorLeaguePlayerFromSheet?.position as string;
+        const league = player.meta?.minorLeaguePlayerFromSheet?.leagueLevel as string;
+        /* eslint-enable @typescript-eslint/no-unsafe-member-access */
         if (team && position) {
             return ` (${team} - ${position} - ${league || ""} Minors)`;
         } else if (team && league) {
@@ -99,7 +103,7 @@ function getTradeTextForRequest(trade: Trade) {
             sender: participant.team.name,
             majors: receivedMajors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
             minors: receivedMinors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
-            picks: receivedPicks.map(([pick, sender]) => `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal((pick as DraftPick).round)} round ${getPickTypeString((pick as DraftPick).type)} pick${(pick as DraftPick)?.pickNumber ? " (#" + (pick as DraftPick).pickNumber + ")" : ""} from ${sender}`),
+            picks: receivedPicks.map(([pick, sender]) => `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal((pick as DraftPick).round)} round ${getPickTypeString((pick as DraftPick).type)} pick${(pick as DraftPick)?.pickNumber ? ` (#${(pick as DraftPick).pickNumber})` : ""} from ${sender}`),
         };
     });
 }
@@ -109,15 +113,11 @@ function emailIsCreatorOfTrade(email: string, trade: Trade) {
     return (ownerEmails || []).includes(email);
 }
 
-function getParticipantByEmail(email: string, trade: Trade) {
-    return trade.tradeParticipants?.find(tp => tp.team.owners?.find(u => u.email === email));
-}
-
 function getParticipantById(id: string, trade: Trade) {
     return trade.tradeParticipants?.find(tp => tp.team.owners?.find(u => u.id === id));
 }
 
-export const Emailer = {
+export const EMAILER = {
     emailer: new Email({
         juice: true,
         juiceResources: {
@@ -130,7 +130,7 @@ export const Emailer = {
             from: "tradebot@flexfoxfantasy.com",
         },
         subjectPrefix: "FlexFoxFantasy TradeMachine - ",
-        transport: SendInBlueTransport,
+        transport: sendInBlueTransport,
         views: {
             root: path.resolve(__dirname, "templates"),
         },
@@ -141,7 +141,8 @@ export const Emailer = {
     async sendPasswordResetEmail(user: User): Promise<SendInBlueSendResponse> {
         const resetPassPage = `${baseDomain}/reset_password?u=${encodeURI(user.passwordResetToken!)}`;
         logger.debug("sending password reset email");
-        return Emailer.emailer.send({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+        return EMAILER.emailer.send({
             template: "reset_password",
             message: {
                 to: user.email,
@@ -164,7 +165,8 @@ export const Emailer = {
 
     async sendTestEmail(user: User): Promise<SendInBlueSendResponse> {
         logger.debug(`sending test email to user: ${user}`);
-        return Emailer.emailer.send({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+        return EMAILER.emailer.send({
             template: "test_email",
             message: {
                 to: user.email,
@@ -177,7 +179,7 @@ export const Emailer = {
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent test email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
-                    await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
+                    await EMAILER.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
                 } else {
                     logger.error("No message id found, not saving email to db.");
                 }
@@ -194,7 +196,8 @@ export const Emailer = {
         logger.debug("sending registration email");
         const userEmailEncoded = Buffer.from(user.email).toString("base64");
         const registrationLink = `${baseDomain}/register?e=${userEmailEncoded}`;
-        return Emailer.emailer.send({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+        return EMAILER.emailer.send({
             template: "registration_email",
             message: {
                 to: user.email,
@@ -207,7 +210,7 @@ export const Emailer = {
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent registration email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
-                    await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
+                    await EMAILER.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
                 } else {
                     logger.error("No message id found, not saving email to db.");
                 }
@@ -223,22 +226,23 @@ export const Emailer = {
     async sendTradeRequestEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
         logger.debug(`preparing trade req email for tradeId: ${trade.id}.`);
 
-        const acceptUrl = `${baseDomain}/trade/${trade!.id}/accept`;
+        const acceptUrl = `${baseDomain}/trade/${trade.id}/accept`;
         const acceptText = "Accept Trade";
-        const rejectUrl = `${baseDomain}/trade/${trade!.id}/reject`;
+        const rejectUrl = `${baseDomain}/trade/${trade.id}/reject`;
 
         logger.debug(`sending trade request email to=${recipient}, acceptUrl=${acceptUrl}, rejectUrl=${rejectUrl}`);
         rollbar.info("sendTradeRequestEmail", {recipient, id: trade.id});
 
-        return Emailer.emailer.send({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+        return EMAILER.emailer.send({
             template: "trade_request",
             message: {
                 to: recipient,
             },
             locals: {
-                tradeSender: trade!.creator!.name,
-                titleText: getTitleText(trade!),
-                tradesByRecipient: getTradeTextForRequest(trade!),
+                tradeSender: trade.creator!.name,
+                titleText: getTitleText(trade),
+                tradesByRecipient: getTradeTextForRequest(trade),
                 acceptUrl,
                 acceptText,
                 rejectUrl,
@@ -248,7 +252,7 @@ export const Emailer = {
                 logger.info(`Successfully sent trade request email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
                     rollbar.info("sendTradeRequestEmail", {recipient, id: trade.id, messageId: res.messageId});
-                    await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
+                    await EMAILER.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
                 } else {
                     rollbar.error("sendTradeRequestEmail_NoEmailId", {recipient, id: trade.id});
                     logger.error("No message id found, not saving email to db.");
@@ -266,7 +270,8 @@ export const Emailer = {
         logger.debug(`got a trade decline email request for tradeId: ${trade.id}, declined by: ${trade.declinedById}`);
         rollbar.info("sendTradeDeclinedEmail", {recipient, id: trade.id});
 
-        return Emailer.emailer.send({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+        return EMAILER.emailer.send({
             template: "trade_declined",
             message: {
                 to: recipient,
@@ -275,7 +280,7 @@ export const Emailer = {
                 isCreator: emailIsCreatorOfTrade(recipient, trade),
                 reason: trade.declinedReason,
                 decliningTeam: getParticipantById(trade.declinedById || "", trade)?.team.name,
-                tradesByRecipient: getTradeTextForRequest(trade!),
+                tradesByRecipient: getTradeTextForRequest(trade),
             },
         })
             .then(async (res: SendInBlueSendResponse) => {
@@ -283,7 +288,7 @@ export const Emailer = {
                 if (res.messageId) {
                     rollbar.info("sendTradeDeclinedEmail", {recipient, id: trade.id, messageId: res.messageId});
 
-                    await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
+                    await EMAILER.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
                 } else {
                     rollbar.error("sendTradeDeclinedEmail_NoEmailId", {recipient, id: trade.id});
 
@@ -300,13 +305,13 @@ export const Emailer = {
 
     async sendTradeSubmissionEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
         logger.debug(`got a trade submission email request for tradeId: ${trade.id}.`);
-        const emailPrefix = recipient.split("@")[0];
-        const acceptUrl = `${baseDomain}/trade/${trade!.id}/submit`;
+        const acceptUrl = `${baseDomain}/trade/${trade.id}/submit`;
         // const discardUrl = `${baseDomain}/trade/${trade!.id}/discard`
         logger.debug(`sending trade submission email to=${recipient}, acceptUrl=${acceptUrl}, discardUrl=""`);
         rollbar.info("sendTradeSubmissionEmail", {recipient, id: trade.id});
 
-        return Emailer.emailer.send({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+        return EMAILER.emailer.send({
             template: "trade_accepted",
             message: {
                 to: recipient,
@@ -314,14 +319,14 @@ export const Emailer = {
             locals: {
                 acceptUrl,
                 // discardUrl, // TODO: Implement discarding trade
-                tradesByRecipient: getTradeTextForRequest(trade!),
+                tradesByRecipient: getTradeTextForRequest(trade),
             },
         })
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade submission email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
                     rollbar.info("sendTradeSubmissionEmail", {recipient, id: trade.id, messageId: res.messageId});
-                    await Emailer.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
+                    await EMAILER.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
                 } else {
                     rollbar.error("sendTradeSubmissionEmail_NoEmailId", {recipient, id: trade.id});
                     logger.error("No message id found, not saving email to db.");
@@ -336,4 +341,4 @@ export const Emailer = {
     },
 };
 
-Object.freeze(Emailer);
+Object.freeze(EMAILER);

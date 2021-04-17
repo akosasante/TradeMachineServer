@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
 import initializeDb from "../../bootstrap/db";
@@ -104,3 +105,4 @@ run()
         logger.error(inspect(err));
         process.exit(999);
     });
+/* eslint-enable */

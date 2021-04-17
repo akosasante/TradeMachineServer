@@ -1,7 +1,7 @@
 import axios from "axios";
 import { promises } from "fs";
 
-// tslint:disable:no-console
+/* eslint-disable no-console */
 
 async function ensureDirectoryExists(tempPath: string) {
     return promises.mkdir(tempPath, {recursive: true});
