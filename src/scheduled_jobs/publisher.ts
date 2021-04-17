@@ -3,11 +3,12 @@ import { Queue } from "bull";
 export class Publisher {
     protected queue?: Queue;
 
-    // tslint:disable-next-line:no-empty
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     protected constructor() {
     }
 
     public async getJobTotal(): Promise<number> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return Object.values(await this.queue!.getJobCounts())
             .reduce((val1: number, val2: number) => val1 + val2);
     }

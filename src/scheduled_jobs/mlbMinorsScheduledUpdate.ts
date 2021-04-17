@@ -9,18 +9,20 @@ import { cleanJobForLogging } from "./job_utils";
 import { v4 as uuid } from "uuid";
 import { rollbar } from "../bootstrap/rollbar";
 
-export function setupScheduledMlbMinorLeagueUpdates() {
+export function setupScheduledMlbMinorLeagueUpdates(): void {
     const cron = "22 7 * * *"; // daily at 3:22AM ET
     logger.info(`Setting up minor league updates from mlb api to run on schedule ${cron}`);
     const mlbQueue = new Bull("mlb_api_queue", {settings: {maxStalledCount: 0}});
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const JobName = "minor_league_updates";
     const cleanLoggedData = (_data: any) => "";
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     const cleanLoggedReturn = (returnValue: any) => returnValue;
 
-    mlbQueue.process(JobName, async () => {
+    void mlbQueue.process(JobName, async () => {
         return await updateMinorLeaguePlayers({});
     });
-    mlbQueue.add(JobName, uuid(), {repeat: {cron}});
+    void mlbQueue.add(JobName, uuid(), {repeat: {cron}});
 
     mlbQueue.on("error", error => {
         logger.error(`Bull error during mlbMinorsScheduledUpdate: ${inspect(error)}`);
@@ -75,7 +77,7 @@ export async function doUpdate(playerDAO: PlayerDAO) {
     logger.debug(`Got ${allPlayersAllLeagues.length} players from url.`);
     return await insertParsedPlayers(playerDAO, allPlayersAllLeagues);
 }
-
+/* eslint-disable @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-assignment */
 function parseResponse(responses: AxiosResponse[]): any[] {
     // any here is a "player object" form mlb
     return responses.flatMap(response => response.data.ops_team_players.queryResults.row);
@@ -109,7 +111,7 @@ async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO):
         (player1.playerDataId === player2.playerDataId)
     );
 
-    // tslint:disable-next-line:prefer-const
+    // eslint-disable-next-line prefer-const
     let [playersToUpdate, playersToInsert] = partition<Partial<Player>>(dedupedPlayers, player => {
         const existingPlayerSameName = existingPlayers.find(existing => existing.name === player.name);
         return existingPlayerSameName && !existingPlayerSameName.playerDataId;
@@ -122,3 +124,4 @@ async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO):
     }));
     return [playersToUpdate, playersToInsert];
 }
+/* eslint-enable @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-assignment */

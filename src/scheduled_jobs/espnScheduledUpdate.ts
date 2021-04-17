@@ -8,18 +8,20 @@ import { cleanJobForLogging } from "./job_utils";
 import { v4 as uuid } from "uuid";
 import { rollbar } from "../bootstrap/rollbar";
 
-export function setupScheduledEspnUpdates() {
+export function setupScheduledEspnUpdates(): void {
     const cron = "22 6 * * *"; // daily at 2:22AM ET
     logger.info(`Setting up espn updates to run on schedule: ${cron}`);
     const espnQueue = new Bull("espn_queue", {settings: {maxStalledCount: 0}});
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const JobName = "espn_updates";
     const cleanLoggedData = (_data: any) => "";
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     const cleanLoggedReturn = (returnValue: any) => returnValue;
 
-    espnQueue.process(JobName, async () => {
+    void espnQueue.process(JobName, async () => {
         return await updateEspnData({});
     });
-    espnQueue.add(JobName, uuid(), {repeat: {cron}});
+    void espnQueue.add(JobName, uuid(), {repeat: {cron}});
 
     espnQueue.on("error", error => {
         logger.error(`Bull error during setupScheduledEspnUpdates: ${inspect(error)}`);
@@ -52,7 +54,7 @@ export interface EspnUpdateDaos {
     espnApi?: EspnAPI;
 }
 
-export async function updateEspnData(deps: EspnUpdateDaos) {
+export async function updateEspnData(deps: EspnUpdateDaos): Promise<string> {
     const playerDao = deps.playerDao || new PlayerDAO();
     const teamDao = deps.teamDao || new TeamDAO();
     const espnApi = deps.espnApi || new EspnAPI(545);
