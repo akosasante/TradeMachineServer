@@ -1,12 +1,12 @@
-import { IncomingWebhook } from "@slack/webhook";
+import {IncomingWebhook} from "@slack/webhook";
 import Trade from "../models/trade";
 import TradeParticipant from "../models/tradeParticipant";
 import logger from "../bootstrap/logger";
-import { inspect } from "util";
+import {inspect} from "util";
 import TradeFormatter from "./tradeFormatter";
 
 const SlackBlocks = {
-    divider: { type: "divider" },
+    divider: {type: "divider"},
     mrkdwnSection(text: string) {
         return {
             type: "section",
@@ -30,6 +30,10 @@ const SlackBlocks = {
 export class SlackTradeAnnouncer {
     private static url: string = process.env.SLACK_WEBHOOK_URL || "";
     private static webhook = new IncomingWebhook(SlackTradeAnnouncer.url);
+
+    // tslint:disable-next-line:no-empty
+    constructor() {
+    }
 
     public static async buildTradeAnnouncementMsg(trade: Trade) {
         logger.info("building trade announcement mesasge");
@@ -59,7 +63,4 @@ export class SlackTradeAnnouncer {
         logger.debug(inspect(res));
         return await SlackTradeAnnouncer.webhook.send(res);
     }
-
-    // tslint:disable-next-line:no-empty
-    constructor() {}
 }
