@@ -5,10 +5,12 @@ import Team from "./team";
 import Trade from "./trade";
 import { BaseModel } from "./base";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export enum TradeItemType {
     PLAYER = 1,
     PICK,
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export type TradedItem = Player | DraftPick;
 

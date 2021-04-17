@@ -7,10 +7,12 @@ import TradeParticipant from "./tradeParticipant";
 import User from "./user";
 import { EspnFantasyTeam } from "../espn/espnApi";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export enum TeamStatus {
     ACTIVE = 1,
     DISABLED,
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
 @Unique(["espnId"])

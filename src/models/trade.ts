@@ -9,6 +9,7 @@ import logger from "../bootstrap/logger";
 import Email from "./email";
 import { inspect } from "util";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export enum TradeStatus {
     DRAFT = 1,
     REQUESTED,
@@ -17,6 +18,7 @@ export enum TradeStatus {
     REJECTED,
     SUBMITTED,
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
 export default class Trade extends BaseModel {
@@ -91,7 +93,7 @@ export default class Trade extends BaseModel {
         return this.picks.filter(pick => pick.type === LeagueLevel.LOW);
     }
 
-    public static isValid(trade: Partial<Trade>) {
+    public static isValid(trade: Partial<Trade>): boolean {
         return new Trade(trade).isValid();
     }
 
