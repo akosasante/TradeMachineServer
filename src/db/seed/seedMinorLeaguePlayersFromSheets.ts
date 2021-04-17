@@ -32,5 +32,11 @@ async function run() {
 }
 
 run()
-    .then(inserted => { logger.info(`${inserted.length}`); process.exit(0); })
-    .catch(err => { logger.error(err); process.exit(99); });
+    .then(inserted => {
+        logger.info(`${inserted.length}`);
+        process.exit(0);
+    })
+    .catch(err => {
+        logger.error(err);
+        process.exit(99);
+    });

@@ -39,7 +39,11 @@ async function run() {
         participantType: TradeParticipantType.CREATOR,
     });
     const recipients = Array.from(Array(numTeams - 1).keys()).map(index => {
-        return new TradeParticipant({id: uuid(), team: allTeams[index + 1], participantType: TradeParticipantType.RECIPIENT});
+        return new TradeParticipant({
+            id: uuid(),
+            team: allTeams[index + 1],
+            participantType: TradeParticipantType.RECIPIENT,
+        });
     });
 
     const participants = [creator].concat(recipients);
@@ -50,21 +54,39 @@ async function run() {
         logger.debug(inspect(shuffle(participants)));
         const recipient = shuffle(participants).find(p => p.id !== sender.id);
         const player = allMajorPlayers[random(0, allMajorPlayers.length - 1)];
-        return new TradeItem({id: uuid(), tradeItemId: player.id, tradeItemType: TradeItemType.PLAYER, sender: sender.team, recipient: recipient?.team});
+        return new TradeItem({
+            id: uuid(),
+            tradeItemId: player.id,
+            tradeItemType: TradeItemType.PLAYER,
+            sender: sender.team,
+            recipient: recipient?.team,
+        });
     });
 
     const tradedMinors = Array.from(Array(numMinors).keys()).map(() => {
         const sender = participants[random(0, numTeams - 1)];
         const recipient = shuffle(participants).find(p => p.id !== sender.id);
         const player = allMinorPlayers[random(0, allMinorPlayers.length - 1)];
-        return new TradeItem({id: uuid(), tradeItemId: player.id, tradeItemType: TradeItemType.PLAYER, sender: sender.team, recipient: recipient?.team});
+        return new TradeItem({
+            id: uuid(),
+            tradeItemId: player.id,
+            tradeItemType: TradeItemType.PLAYER,
+            sender: sender.team,
+            recipient: recipient?.team,
+        });
     });
 
     const tradedPicks = Array.from(Array(numPicks).keys()).map(() => {
         const sender = participants[random(0, numTeams - 1)];
         const recipient = shuffle(participants).find(p => p.id !== sender.id);
         const pick = allPicks[random(0, allPicks.length - 1)];
-        return new TradeItem({id: uuid(), tradeItemId: pick.id, tradeItemType: TradeItemType.PICK, sender: sender.team, recipient: recipient?.team});
+        return new TradeItem({
+            id: uuid(),
+            tradeItemId: pick.id,
+            tradeItemType: TradeItemType.PICK,
+            sender: sender.team,
+            recipient: recipient?.team,
+        });
     });
 
     const items = [...tradedMajors, ...tradedMinors, ...tradedPicks];
