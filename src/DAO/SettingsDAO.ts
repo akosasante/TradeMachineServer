@@ -34,11 +34,12 @@ export default class SettingsDAO {
         logger.debug(`new settings: ${inspect(settings)}`);
         const mostRecentSettings = await this.getMostRecentSettings();
         logger.debug(`old settings: ${inspect(mostRecentSettings)}`);
-        const newLine = {...(mostRecentSettings || {}),
+        const newLine = {
+            ...(mostRecentSettings || {}),
             ...settings, id: (settings.id || undefined), dateModified: undefined, dateCreated: undefined,
         };
 
-        const result: InsertResult =  await this.settingsDb.insert(newLine);
+        const result: InsertResult = await this.settingsDb.insert(newLine);
 
         return await this.settingsDb.findOneOrFail(result.identifiers[0]);
     }

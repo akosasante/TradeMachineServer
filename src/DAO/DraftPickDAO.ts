@@ -46,7 +46,7 @@ export default class DraftPickDAO {
     }
 
     public async updatePick(id: string, pickObj: Partial<DraftPick>): Promise<DraftPick> {
-        await this.draftPickDb.update({ id }, pickObj);
+        await this.draftPickDb.update({id}, pickObj);
         return await this.getPickById(id);
     }
 

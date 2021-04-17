@@ -43,7 +43,7 @@ export default class TeamDAO {
     }
 
     public async updateTeam(id: string, teamObj: Partial<Team>): Promise<Team> {
-        await this.teamDb.update({ id }, teamObj);
+        await this.teamDb.update({id}, teamObj);
         return await this.getTeamById(id);
     }
 
