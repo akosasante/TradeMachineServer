@@ -39,7 +39,7 @@ function getOwnerNameFromTeam(team?: Team): string {
 }
 
 function generateTradeRow(trade: Trade) {
-    return (trade.tradeParticipants || []).reduce((rowsAcc, recipient, index) => {
+    return (trade.tradeParticipants || []).reduce((rowsAcc, recipient) => {
             const ratingsBlankField = " ";
             const columns = generateColumnsForRecipients(trade.tradeItems || [], recipient.team);
             return rowsAcc.concat(columns).concat([ratingsBlankField]);
@@ -47,7 +47,7 @@ function generateTradeRow(trade: Trade) {
     );
 }
 
-export async function appendNewTrade(trade: Trade) {
+export async function appendNewTrade(trade: Trade): Promise<void> {
     const sheetId = parseInt(process.env.TRADE_WORKSHEET_ID!, 10);
     const STARTING_ROW_INDEX = 1; // Row 2
     const auth = await google.auth.getClient({
@@ -89,7 +89,7 @@ export async function appendNewTrade(trade: Trade) {
         auth,
     };
 
-    return sheets.spreadsheets.batchUpdate(batchUpdateRequest).then(_res => {
+    return sheets.spreadsheets.batchUpdate(batchUpdateRequest).then(() => {
         logger.info(`Successfully inserted new row in trade index: ${trade.id}`);
     }).catch(err => {
         logger.error(`err: ${inspect(err)}`);
