@@ -16,10 +16,10 @@ const storage: multer.DiskStorageOptions = {
 export const fileUploadOptions = {
     storage: multer.diskStorage(storage),
     fileFilter: (req: any, file: any, cb: any) => cb(undefined, file.mimetype === "text/csv"),
-    limits: { fieldNameSize: 255, fileSize: 1024 * 1024 * 2 },
+    limits: {fieldNameSize: 255, fileSize: 1024 * 1024 * 2},
 };
 
-export function cleanupQuery(initQuery: {[key: string]: string}) {
+export function cleanupQuery(initQuery: { [key: string]: string }) {
     /* clone so that we don't cause weird stuff to
     inadvertently happen by mutating the original object */
     const query = {...initQuery};
@@ -31,7 +31,7 @@ export function cleanupQuery(initQuery: {[key: string]: string}) {
 export const UUIDPattern = "/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})";
 
 function coerceStringToNull(kvps: [string, string][]) {
-    return kvps.reduce((updatedQuery: {[key: string]: string|FindOperator<any>}, kvp: [string, string]) => {
+    return kvps.reduce((updatedQuery: { [key: string]: string | FindOperator<any> }, kvp: [string, string]) => {
         updatedQuery[kvp[0]] = isNullString(kvp[1]) ?
             IsNull() : (isNotNullString(kvp[1])) ?
                 Not(IsNull()) : kvp[1];
