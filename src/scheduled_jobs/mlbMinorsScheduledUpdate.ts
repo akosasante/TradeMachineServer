@@ -20,7 +20,7 @@ export function setupScheduledMlbMinorLeagueUpdates() {
     mlbQueue.process(JobName, async () => {
         return await updateMinorLeaguePlayers({});
     });
-    mlbQueue.add(JobName, uuid(), { repeat: { cron } });
+    mlbQueue.add(JobName, uuid(), {repeat: {cron}});
 
     mlbQueue.on("error", error => {
         logger.error(`Bull error during mlbMinorsScheduledUpdate: ${inspect(error)}`);
@@ -88,7 +88,7 @@ function parsePlayerJson(allPlayers: any[]): Player[] {
             name: player.split(",").reverse().join(" ").trim(),
             league: PlayerLeagueType.MINOR,
             playerDataId: rest.player_id,
-            meta: { minorLeaguePlayer: rest },
+            meta: {minorLeaguePlayer: rest},
         });
     });
 }

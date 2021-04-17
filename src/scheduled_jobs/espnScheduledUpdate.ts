@@ -19,7 +19,7 @@ export function setupScheduledEspnUpdates() {
     espnQueue.process(JobName, async () => {
         return await updateEspnData({});
     });
-    espnQueue.add(JobName, uuid(), { repeat: { cron } });
+    espnQueue.add(JobName, uuid(), {repeat: {cron}});
 
     espnQueue.on("error", error => {
         logger.error(`Bull error during setupScheduledEspnUpdates: ${inspect(error)}`);
