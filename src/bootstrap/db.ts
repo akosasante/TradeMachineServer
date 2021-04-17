@@ -5,7 +5,7 @@ import logger from "./logger";
 import { rollbar } from "./rollbar";
 
 export default async function initializeDb(logQueries: boolean = false) {
-    let connection: Connection|undefined;
+    let connection: Connection | undefined;
     try {
         const dbConfigName = process.env.NODE_ENV;
         const connectionConfig = await getConnectionOptions(dbConfigName);
