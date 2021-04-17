@@ -10,7 +10,14 @@ import DraftPick from "../models/draftPick";
 import Player from "../models/player";
 import Email from "../models/email";
 
-export type EmailJobName = "reset_pass" | "registration_email" | "test_email" | "handle_webhook" | "request_trade" | "trade_declined" | "trade_accepted";
+export type EmailJobName =
+    "reset_pass"
+    | "registration_email"
+    | "test_email"
+    | "handle_webhook"
+    | "request_trade"
+    | "trade_declined"
+    | "trade_accepted";
 
 type AuthEmailFunction = (u: User) => Promise<SendInBlueSendResponse>;
 type TradeEmailFunction = (r: string, t: Trade) => Promise<SendInBlueSendResponse>;
