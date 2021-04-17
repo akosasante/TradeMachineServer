@@ -6,10 +6,11 @@ import { inspect } from "util";
 import { cleanJobForLogging } from "../scheduled_jobs/job_utils";
 import { rollbar } from "../bootstrap/rollbar";
 
-export function setupSlackConsumers() {
+export function setupSlackConsumers(): void {
     logger.info("registering slack consumers");
     const slackQueue = new Bull("slack_queue");
     const cleanLoggedData = (data: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         const trade: Trade = JSON.parse(data.trade || "{}");
         return {
             tradeId: trade.id,
@@ -18,9 +19,10 @@ export function setupSlackConsumers() {
             itemIds: trade.tradeItems?.map(ti => ti.tradeItemId),
         };
     };
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     const cleanLoggedReturn = (returnValue: any) => returnValue;
 
-    slackQueue.process("trade_announce", x => processTradeAnnounceJob(x));
+    void slackQueue.process("trade_announce", x => processTradeAnnounceJob(x));
 
     slackQueue.on("error", error => {
         logger.error(`Bull error during Slack Worker job: ${inspect(error)}`);

@@ -31,7 +31,7 @@ export class SlackTradeAnnouncer {
     private static url: string = process.env.SLACK_WEBHOOK_URL || "";
     private static webhook = new IncomingWebhook(SlackTradeAnnouncer.url);
 
-    // tslint:disable-next-line:no-empty
+    // eslint-disable-next-line no-empty,@typescript-eslint/no-empty-function
     constructor() {
     }
 
