@@ -33,7 +33,7 @@ describe("Error handler middleware", () => {
     it("should send to next if the headers have already been sent", async () => {
         const error = new Error("generic error");
         // @ts-ignore
-        const responseWithHeadersSent: Response = { ...response, headersSent: true };
+        const responseWithHeadersSent: Response = {...response, headersSent: true };
 
         errorHandler.error(error, request, responseWithHeadersSent, next);
         expect(next).toBeCalledTimes(1);
