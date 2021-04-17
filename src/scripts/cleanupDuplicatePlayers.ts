@@ -1,3 +1,4 @@
+/* eslint-disable */
 import initializeDb from "../bootstrap/db";
 import { getConnection } from "typeorm";
 import { uniqBy } from "lodash";
@@ -6,8 +7,6 @@ import { processMinorLeagueCsv } from "../csv/PlayerParser";
 import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";
 import Player from "../models/player";
-
-// tslint:disable:no-console
 
 async function run() {
     const args = process.argv.slice(2);
@@ -95,3 +94,4 @@ SELECT * FROM player WHERE name in (SELECT dupes.name FROM dupes) ORDER by name`
 run()
     .then(res => { console.log(res); process.exit(0); })
     .catch(err => { console.error(err); process.exit(99); });
+/* eslint-enable */
