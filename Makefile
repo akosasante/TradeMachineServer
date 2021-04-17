@@ -127,10 +127,10 @@ debug-server: ## Watch for ts file changes, and js file changes, run server with
 	"make watch-ts-files" "make watch-js-debug-server"
 
 lint: ## Run typescript linting
-	npx tslint -c tslint.json -p tsconfig.json -t stylish
+	npx eslint . --ext .ts,.tsx
 
 lint-fix: ## Attempt to fix any typescript lint errors
-	npx tslint -c tslint.json -p tsconfig.json -t stylish --fix
+	npx eslint . --ext .ts,.tsx --fix
 
 # |----------- BUILD AND SERVE SCRIPTS ---------|
 compile-ts: ## Compile typescript
