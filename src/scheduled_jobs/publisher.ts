@@ -4,7 +4,8 @@ export class Publisher {
     protected queue?: Queue;
 
     // tslint:disable-next-line:no-empty
-    protected constructor() { }
+    protected constructor() {
+    }
 
     public async getJobTotal(): Promise<number> {
         return Object.values(await this.queue!.getJobCounts())
