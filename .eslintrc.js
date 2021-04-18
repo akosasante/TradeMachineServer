@@ -169,14 +169,7 @@ module.exports = {
             "error",
             "1tbs"
         ],
-        "comma-dangle": [
-            "error",
-            {
-                "objects": "always-multiline",
-                "arrays": "always-multiline",
-                "functions": "never"
-            }
-        ],
+        "comma-dangle": "off",
         "complexity": "off",
         "constructor-super": "error",
         "eqeqeq": [

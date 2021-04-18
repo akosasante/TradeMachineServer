@@ -22,9 +22,9 @@ const TradeFormatter = {
         logger.info(`Rendering text for ${tradedPlayers.length} players`);
 
         function getMinorLeaguePlayerText(player: Player) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             const playerMetaInfo = player.meta
-                ? `(${player.meta?.minorLeaguePlayerFromSheet?.position} - ${player.meta?.minorLeaguePlayerFromSheet?.leagueLevel} Minors - ${player.meta?.minorLeaguePlayerFromSheet?.mlbTeam})`
+                ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                  `(${player.meta?.minorLeaguePlayerFromSheet?.position} - ${player.meta?.minorLeaguePlayerFromSheet?.leagueLevel} Minors - ${player.meta?.minorLeaguePlayerFromSheet?.mlbTeam})`
                 : "(Minors)";
             const text = `• *${player.name}* ${playerMetaInfo}`;
             if (!twoPlayerTrade) {

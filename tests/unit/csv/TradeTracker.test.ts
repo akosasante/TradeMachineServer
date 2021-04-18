@@ -41,9 +41,9 @@ function getCellValues(mockBatchUpdateMock: jest.MockContext<any, any>) {
     const {
         requestBody: { requests },
     } = mockBatchUpdateMock.calls[0][0];
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const {
         updateCells: { rows },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     } = (requests as any[]).find(obj => obj.hasOwnProperty("updateCells"));
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return rows[0].values;
