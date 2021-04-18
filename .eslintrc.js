@@ -30,7 +30,7 @@ module.exports = {
         "project": "./tsconfig.json",
         "sourceType": "module"
     },
-    "ignorePatterns": ['.eslintrc.js', './declarations/**/*.d.ts', './src/db/seed/**/*.ts', './src/scripts/**/*.ts'],
+    "ignorePatterns": ['.eslintrc.js', '**/*.d.ts', 'src/db/*', './src/scripts/**/*.ts'],
     "plugins": [
         "eslint-plugin-no-null",
         "eslint-plugin-jsdoc",
