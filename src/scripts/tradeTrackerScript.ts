@@ -1,6 +1,6 @@
 /* eslint-disable */
 import TradeDAO from "../DAO/TradeDAO";
-import {appendNewTrade} from "../csv/TradeTracker";
+import { appendNewTrade } from "../csv/TradeTracker";
 import initializeDb from "../bootstrap/db";
 
 async function run() {

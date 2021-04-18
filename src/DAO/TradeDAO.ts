@@ -74,17 +74,17 @@ export default class TradeDAO {
     }
 
     public async updateStatus(id: string, status: TradeStatus): Promise<Trade> {
-        await this.tradeDb.update({id}, {status});
+        await this.tradeDb.update({ id }, { status });
         return await this.getTradeById(id);
     }
 
     public async updateDeclinedBy(id: string, declinedById: string, declinedReason?: string): Promise<Trade> {
-        await this.tradeDb.update({id}, {declinedById, declinedReason});
+        await this.tradeDb.update({ id }, { declinedById, declinedReason });
         return await this.getTradeById(id);
     }
 
     public async updateAcceptedBy(id: string, acceptedBy: string[]): Promise<Trade> {
-        await this.tradeDb.update({id}, {acceptedBy, acceptedOnDate: new Date()});
+        await this.tradeDb.update({ id }, { acceptedBy, acceptedOnDate: new Date() });
         return await this.getTradeById(id);
     }
 }
