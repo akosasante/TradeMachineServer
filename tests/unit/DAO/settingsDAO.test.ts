@@ -17,7 +17,7 @@ describe("SettingsDAO", () => {
         tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
         tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
     });
-    const settingsDAO = new SettingsDAO(mockSettingsDb as unknown as Repository<Settings>);
+    const settingsDAO = new SettingsDAO((mockSettingsDb as unknown) as Repository<Settings>);
 
     afterEach(() => {
         Object.values(mockSettingsDb).forEach(mockFn => mockFn.mockReset());
@@ -32,7 +32,7 @@ describe("SettingsDAO", () => {
 
     it("getAllSettings - should call the db find method", async () => {
         mockSettingsDb.find.mockResolvedValueOnce([testSettings]);
-        const defaultOpts = {order: {dateCreated: "DESC"}};
+        const defaultOpts = { order: { dateCreated: "DESC" } };
         const res = await settingsDAO.getAllSettings();
 
         expect(mockSettingsDb.find).toHaveBeenCalledTimes(1);
@@ -42,7 +42,7 @@ describe("SettingsDAO", () => {
 
     it("getMostRecentSettings - should call the db findOne method", async () => {
         mockSettingsDb.findOne.mockResolvedValueOnce(testSettings);
-        const defaultOpts = {order: {dateCreated: "DESC"}};
+        const defaultOpts = { order: { dateCreated: "DESC" } };
         const res = await settingsDAO.getMostRecentSettings();
 
         expect(mockSettingsDb.findOne).toHaveBeenCalledTimes(1);
@@ -62,19 +62,21 @@ describe("SettingsDAO", () => {
     it("insertNewSettings - should first get most recent settings and then insert and return the new value", async () => {
         mockSettingsDb.findOne.mockResolvedValueOnce(testSettings);
         mockSettingsDb.insert.mockResolvedValueOnce({
-            identifiers: [{id: testSettings.id}],
+            identifiers: [{ id: testSettings.id }],
             generatedMaps: [],
             raw: [],
         });
 
         const newSettings = SettingsFactory.getSettings(undefined, undefined, {
-            scheduled: [{
-                downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START,
-                downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END,
-                downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON,
-            }],
+            scheduled: [
+                {
+                    downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START,
+                    downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END,
+                    downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON,
+                },
+            ],
         });
-        const expectedSettings = {...testSettings, ...newSettings};
+        const expectedSettings = { ...testSettings, ...newSettings };
         mockSettingsDb.findOneOrFail.mockResolvedValueOnce(expectedSettings);
         const res = await settingsDAO.insertNewSettings(newSettings);
 
@@ -87,7 +89,7 @@ describe("SettingsDAO", () => {
             dateModified: undefined,
         });
         expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith({id: testSettings.id});
+        expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith({ id: testSettings.id });
         expect(res).toEqual(expectedSettings);
     });
 });

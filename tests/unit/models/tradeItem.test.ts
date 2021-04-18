@@ -60,7 +60,10 @@ describe("Trade Item Class", () => {
         });
         it("itemsReceivedBy/2 - return only items received by the passed in team", () => {
             expect(TradeItem.itemsReceivedBy(tradedItems, recipient)).toIncludeSameMembers([tradedPlayer]);
-            expect(TradeItem.itemsReceivedBy(tradedItems, sender)).toIncludeSameMembers([tradedMajorPlayer, tradedPick]);
+            expect(TradeItem.itemsReceivedBy(tradedItems, sender)).toIncludeSameMembers([
+                tradedMajorPlayer,
+                tradedPick,
+            ]);
         });
     });
 });

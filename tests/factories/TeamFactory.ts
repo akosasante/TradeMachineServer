@@ -19,7 +19,7 @@ export class TeamFactory {
         let name: string;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         return [...Array(num)].map((_, i) => {
-            if ((i + 1) > names.length) {
+            if (i + 1 > names.length) {
                 name = fakeName.firstName();
             } else {
                 name = names[i];

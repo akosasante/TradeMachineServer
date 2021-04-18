@@ -35,8 +35,9 @@ afterAll(() => {
 });
 afterEach(() => {
     [EMAILER, mockEmailDAO].forEach(mockedThing =>
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
-      Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
+        Object.values(mockedThing).forEach(mockFn => mockFn.mockReset())
+    );
 });
 
 describe("Email queue processors", () => {
@@ -102,7 +103,7 @@ describe("Email queue processors", () => {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             ts_event: 1586556782,
         };
-        await handleWebhookResponse(webhookEvent, mockEmailDAO as unknown as EmailDAO);
+        await handleWebhookResponse(webhookEvent, (mockEmailDAO as unknown) as EmailDAO);
         expect(mockEmailDAO.getEmailByMessageId).toHaveBeenCalledTimes(1);
         expect(mockEmailDAO.getEmailByMessageId).toHaveBeenCalledWith("<5d0e2800bbddbd4ed05cc56a@domain.com>");
     });

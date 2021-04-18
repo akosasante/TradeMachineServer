@@ -56,11 +56,10 @@ describe("ESPN API endpoints", () => {
     });
 
     describe("GET /espn/teams?year (get all ESPN teams)", () => {
-        const getAllRequest = (year?: number, status = 200) =>
-            (agent: request.SuperTest<request.Test>) => {
-                const yearParam = year ? `?year=${year}` : "";
-                return makeGetRequest(agent, `/espn/teams${yearParam}`, status);
-            };
+        const getAllRequest = (year?: number, status = 200) => (agent: request.SuperTest<request.Test>) => {
+            const yearParam = year ? `?year=${year}` : "";
+            return makeGetRequest(agent, `/espn/teams${yearParam}`, status);
+        };
 
         it("should return all teams in the default year", async () => {
             const { body } = await adminLoggedIn(getAllRequest(), app);
@@ -83,11 +82,10 @@ describe("ESPN API endpoints", () => {
     });
 
     describe("GET /espn/members?year (get all ESPN teams)", () => {
-        const getAllRequest = (year?: number, status = 200) =>
-            (agent: request.SuperTest<request.Test>) => {
-                const yearParam = year ? `?year=${year}` : "";
-                return makeGetRequest(agent, `/espn/members${yearParam}`, status);
-            };
+        const getAllRequest = (year?: number, status = 200) => (agent: request.SuperTest<request.Test>) => {
+            const yearParam = year ? `?year=${year}` : "";
+            return makeGetRequest(agent, `/espn/members${yearParam}`, status);
+        };
 
         it("should return all members in the default year", async () => {
             const { body } = await adminLoggedIn(getAllRequest(), app);

@@ -65,7 +65,7 @@ afterAll(async () => {
 });
 
 describe("Messenger API endpoints", () => {
-    const createTradeOfStatus = async (status: TradeStatus, tradeArgs: Partial<Trade> = { }) => {
+    const createTradeOfStatus = async (status: TradeStatus, tradeArgs: Partial<Trade> = {}) => {
         const [player] = await playerDao.createPlayers([PlayerFactory.getPlayer()]);
         let [team1, team2] = await teamDAO.createTeams([
             TeamFactory.getTeamObject("team1", 1),
@@ -94,9 +94,8 @@ describe("Messenger API endpoints", () => {
     });
 
     describe("POST /requestTrade/:id (send trade request email)", () => {
-        const req = (id: string, status = 202) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<undefined>(agent, `/messenger/requestTrade/${id}`, undefined, status);
+        const req = (id: string, status = 202) => (agent: request.SuperTest<request.Test>) =>
+            makePostRequest<undefined>(agent, `/messenger/requestTrade/${id}`, undefined, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -150,9 +149,8 @@ describe("Messenger API endpoints", () => {
     });
 
     describe("POST /declineTrade/:id (send trade declined email)", () => {
-        const req = (id: string, status = 202) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<undefined>(agent, `/messenger/declineTrade/${id}`, undefined, status);
+        const req = (id: string, status = 202) => (agent: request.SuperTest<request.Test>) =>
+            makePostRequest<undefined>(agent, `/messenger/declineTrade/${id}`, undefined, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -216,9 +214,8 @@ describe("Messenger API endpoints", () => {
     });
 
     describe("POST /submitTrade/:id (send trade announcement to slack)", () => {
-        const req = (id: string, status = 202) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<undefined>(agent, `/messenger/submitTrade/${id}`, undefined, status);
+        const req = (id: string, status = 202) => (agent: request.SuperTest<request.Test>) =>
+            makePostRequest<undefined>(agent, `/messenger/submitTrade/${id}`, undefined, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -273,9 +270,8 @@ describe("Messenger API endpoints", () => {
     });
 
     describe("POST /acceptTrade/:id (send trade acceptance email)", () => {
-        const req = (id: string, status = 202) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<undefined>(agent, `/messenger/acceptTrade/${id}`, undefined, status);
+        const req = (id: string, status = 202) => (agent: request.SuperTest<request.Test>) =>
+            makePostRequest<undefined>(agent, `/messenger/acceptTrade/${id}`, undefined, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));

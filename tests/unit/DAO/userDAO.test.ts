@@ -16,7 +16,7 @@ describe("UserDAO", () => {
     };
 
     const testUser = UserFactory.getUser();
-    const userDAO: UserDAO = new UserDAO(mockUserDb as unknown as Repository<User>);
+    const userDAO: UserDAO = new UserDAO((mockUserDb as unknown) as Repository<User>);
 
     afterEach(async () => {
         Object.values(mockUserDb).forEach(mockFn => mockFn.mockReset());
@@ -35,7 +35,7 @@ describe("UserDAO", () => {
         it("should return an array of users as result of db call", async () => {
             mockUserDb.find.mockResolvedValueOnce([testUser]);
             const res = await userDAO.getAllUsers();
-            const defaultOptions = {order: {id: "ASC"}};
+            const defaultOptions = { order: { id: "ASC" } };
 
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
             expect(mockUserDb.find).toHaveBeenCalledWith(defaultOptions);
@@ -48,7 +48,7 @@ describe("UserDAO", () => {
         it("should return an array of users as result of db call with the team relation", async () => {
             mockUserDb.find.mockResolvedValueOnce([testUser]);
             const res = await userDAO.getAllUsersWithTeams();
-            const options = {order: {id: "ASC"}, relations: ["team"]};
+            const options = { order: { id: "ASC" }, relations: ["team"] };
 
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
             expect(mockUserDb.find).toHaveBeenCalledWith(options);
@@ -70,7 +70,7 @@ describe("UserDAO", () => {
     });
 
     describe("findUser", () => {
-        const condition = {email: testUser.email};
+        const condition = { email: testUser.email };
         it("should pass a query object to db and return a single user", async () => {
             mockUserDb.findOneOrFail.mockResolvedValueOnce(testUser);
             const res = await userDAO.findUser(condition);
@@ -95,11 +95,11 @@ describe("UserDAO", () => {
     describe("findUsers", () => {
         it("should pass a query object to the find method and return an array", async () => {
             mockUserDb.find.mockResolvedValueOnce([testUser]);
-            const condition = {email: testUser.email};
+            const condition = { email: testUser.email };
             const res = await userDAO.findUsers(condition);
 
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.find).toHaveBeenCalledWith({where: condition});
+            expect(mockUserDb.find).toHaveBeenCalledWith({ where: condition });
 
             expect(res).toEqual([testUser]);
         });
@@ -133,7 +133,11 @@ describe("UserDAO", () => {
 
     describe("createUsers", () => {
         it("should create users in the db for all the objs passed in", async () => {
-            mockUserDb.insert.mockResolvedValueOnce({identifiers: [{id: testUser.id!}], generatedMaps: [], raw: []});
+            mockUserDb.insert.mockResolvedValueOnce({
+                identifiers: [{ id: testUser.id! }],
+                generatedMaps: [],
+                raw: [],
+            });
             mockUserDb.find.mockResolvedValueOnce([testUser]);
             const res = await userDAO.createUsers([testUser.parse()]);
 
@@ -141,11 +145,11 @@ describe("UserDAO", () => {
             expect(mockUserDb.insert).toHaveBeenCalledWith([testUser.parse()]);
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
             expect(mockUserDb.find).toHaveBeenCalledWith({
-                "id": {
-                    "_multipleParameters": true,
-                    "_type": "in",
-                    "_useParameter": true,
-                    "_value": [testUser.id],
+                id: {
+                    _multipleParameters: true,
+                    _type: "in",
+                    _useParameter: true,
+                    _value: [testUser.id],
                 },
             });
 
@@ -159,7 +163,7 @@ describe("UserDAO", () => {
             const res = await userDAO.updateUser(testUser.id!, testUser.parse());
 
             expect(mockUserDb.update).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.update).toHaveBeenCalledWith({id: testUser.id}, testUser.parse());
+            expect(mockUserDb.update).toHaveBeenCalledWith({ id: testUser.id }, testUser.parse());
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id, {});
 
@@ -171,7 +175,7 @@ describe("UserDAO", () => {
         it("should return a delete result", async () => {
             mockUserDb.findOneOrFail.mockResolvedValueOnce(testUser);
             mockUserDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
-            const deleteResult = {affected: 1, raw: {id: testUser.id!}};
+            const deleteResult = { affected: 1, raw: { id: testUser.id! } };
             mockExecute.mockResolvedValueOnce(deleteResult);
             const res = await userDAO.deleteUser(testUser.id!);
 
@@ -191,7 +195,7 @@ describe("UserDAO", () => {
             const res = await userDAO.setPasswordExpires(testUser.id!);
 
             expect(mockUserDb.update).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.update).toHaveBeenCalledWith({id: testUser.id!}, updatePartial);
+            expect(mockUserDb.update).toHaveBeenCalledWith({ id: testUser.id! }, updatePartial);
 
             expect(res).toBeUndefined();
         });

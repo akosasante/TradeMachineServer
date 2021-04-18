@@ -39,8 +39,6 @@ describe("GET /random-url", () => {
     });
 
     it("should return 404", async () => {
-        await request(app)
-            .get("/blahblah")
-            .expect(404);
+        await request(app).get("/blahblah").expect(404);
     }, 2000);
 });

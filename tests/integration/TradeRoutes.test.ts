@@ -21,14 +21,13 @@ import {
     makePostRequest,
     makePutRequest,
     ownerLoggedIn,
-    setupOwnerAndAdminUsers
+    setupOwnerAndAdminUsers,
 } from "./helpers";
 import { v4 as uuid } from "uuid";
 import * as TradeTracker from "../../src/csv/TradeTracker";
 import { getConnection } from "typeorm";
 import TradeDAO from "../../src/DAO/TradeDAO";
 import TradeItem from "../../src/models/tradeItem";
-
 
 let app: Server;
 let adminUser: User;
@@ -93,11 +92,9 @@ describe("Trade API endpoints", () => {
 
     describe("POST /trades (create new trade)", () => {
         const expectErrorString = expect.stringMatching(/Trade is not valid/);
-        const postRequest = (tradeObj: Partial<Trade>, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<Trade>>(agent, "/trades", tradeObj, status);
-        const getOneRequest = (id: string, status = 200) =>
-            makeGetRequest(request(app), `/trades/${id}`, status);
+        const postRequest = (tradeObj: Partial<Trade>, status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makePostRequest<Partial<Trade>>(agent, "/trades", tradeObj, status);
+        const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/trades/${id}`, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -114,8 +111,12 @@ describe("Trade API endpoints", () => {
                 tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
             };
             expect(body).toMatchObject(expected);
-            expect((body as Trade).tradeItems!.map(ti => ti.id)).toIncludeSameMembers(testTrade.tradeItems!.map(ti => ti.id));
-            expect((body as Trade).tradeParticipants!.map(tp => tp.id)).toIncludeSameMembers(testTrade.tradeParticipants!.map(tp => tp.id));
+            expect((body as Trade).tradeItems!.map(ti => ti.id)).toIncludeSameMembers(
+                testTrade.tradeItems!.map(ti => ti.id)
+            );
+            expect((body as Trade).tradeParticipants!.map(tp => tp.id)).toIncludeSameMembers(
+                testTrade.tradeParticipants!.map(tp => tp.id)
+            );
         });
         it("should ignore any invalid properties from the object passed in", async () => {
             const testTrade = TradeFactory.getTrade();
@@ -134,7 +135,10 @@ describe("Trade API endpoints", () => {
         it("should return a 400 Bad Request error if missing a required property", async () => {
             const testTrade = TradeFactory.getTrade();
 
-            const { body } = await adminLoggedIn(postRequest({ tradeParticipants: testTrade.tradeParticipants }, 400), app);
+            const { body } = await adminLoggedIn(
+                postRequest({ tradeParticipants: testTrade.tradeParticipants }, 400),
+                app
+            );
 
             expect(body.message).toEqual(expectErrorString);
         });
@@ -146,7 +150,8 @@ describe("Trade API endpoints", () => {
     });
 
     describe("GET /trades (get all trades)", () => {
-        const getAllRequest = (hydrated = "", status = 200) => makeGetRequest(request(app), `/trades${hydrated}`, status);
+        const getAllRequest = (hydrated = "", status = 200) =>
+            makeGetRequest(request(app), `/trades${hydrated}`, status);
 
         it("should return an array of all trades in the db", async () => {
             const testTrade = TradeFactory.getTrade();
@@ -181,7 +186,9 @@ describe("Trade API endpoints", () => {
             };
             expect(body).toBeArrayOfSize(1);
             expect(body[0]).toMatchObject(expected);
-            expect(body[0].tradeItems).toSatisfyAll((ti: TradeItem) => pickIds.includes(ti.entity!.id) || playerIds.includes(ti.entity!.id));
+            expect(body[0].tradeItems).toSatisfyAll(
+                (ti: TradeItem) => pickIds.includes(ti.entity!.id) || playerIds.includes(ti.entity!.id)
+            );
         }, 2000);
     });
 
@@ -219,7 +226,9 @@ describe("Trade API endpoints", () => {
                 tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
             };
             expect(body).toMatchObject(expected);
-            expect(body.tradeItems).toSatisfyAll((ti: TradeItem) => pickIds.includes(ti.entity!.id) || playerIds.includes(ti.entity!.id));
+            expect(body.tradeItems).toSatisfyAll(
+                (ti: TradeItem) => pickIds.includes(ti.entity!.id) || playerIds.includes(ti.entity!.id)
+            );
         });
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
             const testTrade = TradeFactory.getTrade();
@@ -230,9 +239,9 @@ describe("Trade API endpoints", () => {
     });
 
     describe("PUT /trades/:id (update one trade)", () => {
-        const putTradeRequest = (id: string, tradeObj: Partial<Trade>, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePutRequest<Partial<Trade>>(agent, `/trades/${id}`, tradeObj, status);
+        const putTradeRequest = (id: string, tradeObj: Partial<Trade>, status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) => makePutRequest<Partial<Trade>>(agent, `/trades/${id}`, tradeObj, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -241,71 +250,117 @@ describe("Trade API endpoints", () => {
         it("should return the updated trade", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
-            const originalCreator = testTrade.tradeParticipants!.find(tp => tp.participantType === TradeParticipantType.CREATOR);
+            const originalCreator = testTrade.tradeParticipants!.find(
+                tp => tp.participantType === TradeParticipantType.CREATOR
+            );
             const updatedParticipants = [originalCreator, TradeFactory.getTradeRecipient(TeamFactory.getTeam())];
             const updatedTradeParticipantIds = updatedParticipants.map(p => p!.id);
-            const newItem = TradeFactory.getTradedMajorPlayer(undefined, originalCreator!.team, updatedParticipants[1]!.team);
+            const newItem = TradeFactory.getTradedMajorPlayer(
+                undefined,
+                originalCreator!.team,
+                updatedParticipants[1]!.team
+            );
 
-
-            const { body } = await adminLoggedIn(putTradeRequest(testTrade.id!, {
-                ...testTrade.parse(),
-                tradeParticipants: updatedParticipants as TradeParticipant[],
-                tradeItems: [newItem],
-            }), app);
+            const { body } = await adminLoggedIn(
+                putTradeRequest(testTrade.id!, {
+                    ...testTrade.parse(),
+                    tradeParticipants: updatedParticipants as TradeParticipant[],
+                    tradeItems: [newItem],
+                }),
+                app
+            );
 
             expect(body).toMatchObject({
                 id: testTrade.id,
-                tradeParticipants: expect.toSatisfyAll(participant => updatedTradeParticipantIds.includes(participant.id)),
+                tradeParticipants: expect.toSatisfyAll(participant =>
+                    updatedTradeParticipantIds.includes(participant.id)
+                ),
                 tradeItems: expect.toSatisfyAll(item => newItem.id === item.id),
             });
         });
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
-            const originalCreator = testTrade.tradeParticipants!.find(tp => tp.participantType === TradeParticipantType.CREATOR);
+            const originalCreator = testTrade.tradeParticipants!.find(
+                tp => tp.participantType === TradeParticipantType.CREATOR
+            );
             const updatedParticipants = [originalCreator, TradeFactory.getTradeRecipient()];
-            const newItem = TradeFactory.getTradedMajorPlayer(undefined, originalCreator!.team, updatedParticipants[1]!.team);
+            const newItem = TradeFactory.getTradedMajorPlayer(
+                undefined,
+                originalCreator!.team,
+                updatedParticipants[1]!.team
+            );
 
-            await adminLoggedIn(putTradeRequest(uuid(), {
-                ...testTrade.parse(),
-                tradeParticipants: updatedParticipants as TradeParticipant[],
-                tradeItems: [newItem],
-            }, 404), app);
+            await adminLoggedIn(
+                putTradeRequest(
+                    uuid(),
+                    {
+                        ...testTrade.parse(),
+                        tradeParticipants: updatedParticipants as TradeParticipant[],
+                        tradeItems: [newItem],
+                    },
+                    404
+                ),
+                app
+            );
         });
         it("should throw a 401 Unauthorized error if a non-admin non-participant tries to update a trade", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
-            const originalCreator = testTrade.tradeParticipants!.find(tp => tp.participantType === TradeParticipantType.CREATOR);
+            const originalCreator = testTrade.tradeParticipants!.find(
+                tp => tp.participantType === TradeParticipantType.CREATOR
+            );
             const updatedParticipants = [originalCreator, TradeFactory.getTradeRecipient()];
-            const newItem = TradeFactory.getTradedMajorPlayer(undefined, originalCreator!.team, updatedParticipants[1]!.team);
+            const newItem = TradeFactory.getTradedMajorPlayer(
+                undefined,
+                originalCreator!.team,
+                updatedParticipants[1]!.team
+            );
 
-            await ownerLoggedIn(putTradeRequest(testTrade.id!, {
-                ...testTrade.parse(),
-                tradeParticipants: updatedParticipants as TradeParticipant[],
-                tradeItems: [newItem],
-            }, 401), app);
+            await ownerLoggedIn(
+                putTradeRequest(
+                    testTrade.id!,
+                    {
+                        ...testTrade.parse(),
+                        tradeParticipants: updatedParticipants as TradeParticipant[],
+                        tradeItems: [newItem],
+                    },
+                    401
+                ),
+                app
+            );
         });
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
-            const originalCreator = testTrade.tradeParticipants!.find(tp => tp.participantType === TradeParticipantType.CREATOR);
+            const originalCreator = testTrade.tradeParticipants!.find(
+                tp => tp.participantType === TradeParticipantType.CREATOR
+            );
             const updatedParticipants = [originalCreator, TradeFactory.getTradeRecipient()];
-            const newItem = TradeFactory.getTradedMajorPlayer(undefined, originalCreator!.team, updatedParticipants[1]!.team);
+            const newItem = TradeFactory.getTradedMajorPlayer(
+                undefined,
+                originalCreator!.team,
+                updatedParticipants[1]!.team
+            );
 
-            await putTradeRequest(testTrade.id!, {
-                ...testTrade.parse(),
-                tradeParticipants: updatedParticipants as TradeParticipant[],
-                tradeItems: [newItem],
-            }, 403)(request(app));
+            await putTradeRequest(
+                testTrade.id!,
+                {
+                    ...testTrade.parse(),
+                    tradeParticipants: updatedParticipants as TradeParticipant[],
+                    tradeItems: [newItem],
+                },
+                403
+            )(request(app));
         });
     });
 
     describe("PUT /trades/:id/:action (accept/reject/submit a trade)", () => {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         type actionBody = { declinedById: string; declinedReason: string } | undefined;
-        const putTradeRequest = (action: string, id: string, actionObj: actionBody, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePutRequest<actionBody>(agent, `/trades/${id}/${action}`, actionObj, status);
+        const putTradeRequest = (action: string, id: string, actionObj: actionBody, status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) => makePutRequest<actionBody>(agent, `/trades/${id}/${action}`, actionObj, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -362,8 +417,8 @@ describe("Trade API endpoints", () => {
     });
 
     describe("DELETE /trades/:id (delete one trade)", () => {
-        const deleteTradeRequest = (id: string, status = 200) =>
-            (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/trades/${id}`, status);
+        const deleteTradeRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makeDeleteRequest(agent, `/trades/${id}`, status);
         afterEach(async () => {
             return await doLogout(request.agent(app));
         });

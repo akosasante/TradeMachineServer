@@ -10,13 +10,23 @@ export class UserFactory {
     public static GENERIC_NAME = "John Smith";
     /* eslint-enable @typescript-eslint/naming-convention */
 
-    public static getUserObject(email = UserFactory.TEST_EMAIL, displayName = UserFactory.GENERIC_NAME,
-                                password = UserFactory.GENERIC_PASSWORD, role = Role.ADMIN, rest = {}) {
+    public static getUserObject(
+        email = UserFactory.TEST_EMAIL,
+        displayName = UserFactory.GENERIC_NAME,
+        password = UserFactory.GENERIC_PASSWORD,
+        role = Role.ADMIN,
+        rest = {}
+    ) {
         return { id: uuid(), email, displayName, password, role, ...rest };
     }
 
-    public static getUser(email = UserFactory.TEST_EMAIL, displayName = UserFactory.GENERIC_NAME,
-                          password = UserFactory.GENERIC_PASSWORD, role = Role.ADMIN, rest = {}) {
+    public static getUser(
+        email = UserFactory.TEST_EMAIL,
+        displayName = UserFactory.GENERIC_NAME,
+        password = UserFactory.GENERIC_PASSWORD,
+        role = Role.ADMIN,
+        rest = {}
+    ) {
         return new User(UserFactory.getUserObject(email, displayName, password, role, rest));
     }
 

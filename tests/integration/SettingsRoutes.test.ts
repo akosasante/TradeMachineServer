@@ -13,7 +13,7 @@ import {
     makeGetRequest,
     makePostRequest,
     ownerLoggedIn,
-    setupOwnerAndAdminUsers
+    setupOwnerAndAdminUsers,
 } from "./helpers";
 import startServer from "../../src/bootstrap/app";
 import { getConnection } from "typeorm";
@@ -25,28 +25,28 @@ let ownerUser: User;
 let testSettings: Settings;
 let testSettings2: Settings;
 let expectedTestSettings: {
-  id: any;
-  modifiedBy: any;
-  tradeWindowStart: string | undefined;
-  tradeWindowEnd: string | undefined;
-  // tslint:disable-next-line:no-null-keyword
-  downtime: null;
+    id: any;
+    modifiedBy: any;
+    tradeWindowStart: string | undefined;
+    tradeWindowEnd: string | undefined;
+    // tslint:disable-next-line:no-null-keyword
+    downtime: null;
 };
 let expectedTestSettings2: {
-  id: any;
-  modifiedBy: any;
-  downtime: any;
-  // tslint:disable-next-line:no-null-keyword
-  tradeWindowStart: null;
-  // tslint:disable-next-line:no-null-keyword
-  tradeWindowEnd: null;
+    id: any;
+    modifiedBy: any;
+    downtime: any;
+    // tslint:disable-next-line:no-null-keyword
+    tradeWindowStart: null;
+    // tslint:disable-next-line:no-null-keyword
+    tradeWindowEnd: null;
 };
 let mergedSettings: {
-  id: any;
-  modifiedBy: any;
-  downtime: any;
-  tradeWindowStart: string | undefined;
-  tradeWindowEnd: string | undefined;
+    id: any;
+    modifiedBy: any;
+    downtime: any;
+    tradeWindowStart: string | undefined;
+    tradeWindowEnd: string | undefined;
 };
 let settingsDAO: SettingsDAO;
 
@@ -94,11 +94,13 @@ describe("Settings API endpoints for general settings", () => {
         });
         delete testSettings.downtime;
         testSettings2 = SettingsFactory.getSettings(adminUser, undefined, {
-            scheduled: [{
-                downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START,
-                downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END,
-                downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON,
-            }],
+            scheduled: [
+                {
+                    downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START,
+                    downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END,
+                    downtimeReason: SettingsFactory.DEFAULT_DOWNTIME_REASON,
+                },
+            ],
         });
         delete testSettings2.tradeWindowEnd;
         delete testSettings2.tradeWindowStart;
@@ -113,11 +115,13 @@ describe("Settings API endpoints for general settings", () => {
         };
 
         const expectedDowntimeObj = {
-            scheduled: [{
-                downtimeStartDate: testSettings2.downtime?.scheduled[0].downtimeStartDate?.toISOString(),
-                downtimeEndDate: testSettings2.downtime?.scheduled[0].downtimeEndDate?.toISOString(),
-                downtimeReason: testSettings2.downtime?.scheduled[0].downtimeReason,
-            }],
+            scheduled: [
+                {
+                    downtimeStartDate: testSettings2.downtime?.scheduled[0].downtimeStartDate?.toISOString(),
+                    downtimeEndDate: testSettings2.downtime?.scheduled[0].downtimeEndDate?.toISOString(),
+                    downtimeReason: testSettings2.downtime?.scheduled[0].downtimeReason,
+                },
+            ],
         };
 
         expectedTestSettings2 = {
@@ -145,8 +149,8 @@ describe("Settings API endpoints for general settings", () => {
     });
 
     describe("GET /settings (get all settings lines)", () => {
-        const getAllRequest = (status = 200) =>
-            (agent: request.SuperTest<request.Test>) => makeGetRequest(agent, "/settings", status);
+        const getAllRequest = (status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makeGetRequest(agent, "/settings", status);
 
         it("should return an array of all settings in the db", async () => {
             // insert some settings rows
@@ -169,8 +173,8 @@ describe("Settings API endpoints for general settings", () => {
     });
 
     describe("GET /settings/current (get most recent settings line)", () => {
-        const getRecentRequest = (status = 200) =>
-            (agent: request.SuperTest<request.Test>) => makeGetRequest(agent, "/settings/current", status);
+        const getRecentRequest = (status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makeGetRequest(agent, "/settings/current", status);
 
         it("should return the most recently inserted settings line", async () => {
             // insert some settings rows
@@ -191,9 +195,8 @@ describe("Settings API endpoints for general settings", () => {
     });
 
     describe("GET /settings/:id (get settings line by ID)", () => {
-        const getOneRequest = (id: string, status = 200) =>
-            (agent: request.SuperTest<request.Test>) => makeGetRequest(agent, `/settings/${id}`, status);
-
+        const getOneRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makeGetRequest(agent, `/settings/${id}`, status);
 
         it("should return the settings line with the given id", async () => {
             // insert some settings rows
@@ -215,12 +218,11 @@ describe("Settings API endpoints for general settings", () => {
 
     describe("POST /settings (insert new settings line)", () => {
         const expectErrorString = expect.stringMatching(/Modifying user must be provided/);
-        const postRequest = (settingsObj: Partial<Settings>, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<Settings>>(agent, "/settings", settingsObj, status);
-        const getOneRequest = (id: string, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makeGetRequest(agent, `/settings/${id}`, status);
+        const postRequest = (settingsObj: Partial<Settings>, status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) => makePostRequest<Partial<Settings>>(agent, "/settings", settingsObj, status);
+        const getOneRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makeGetRequest(agent, `/settings/${id}`, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -231,10 +233,13 @@ describe("Settings API endpoints for general settings", () => {
             expect(body).toMatchObject(expectedTestSettings);
         });
         it("should ignore any invalid properties from the object passed in and include values from previous settings", async () => {
-            const { body: createBody } = await adminLoggedIn(postRequest({
-                ...testSettings2,
-                blah: "bloop",
-            } as Partial<Settings>), app);
+            const { body: createBody } = await adminLoggedIn(
+                postRequest({
+                    ...testSettings2,
+                    blah: "bloop",
+                } as Partial<Settings>),
+                app
+            );
             const { body } = await adminLoggedIn(getOneRequest(createBody.id), app);
 
             expect(body).toMatchObject(expectedTestSettings2);
@@ -256,10 +261,16 @@ describe("Settings API endpoints for general settings", () => {
             expect(body.tradeWindowEnd).toBeNull();
         });
         it("should return a 400 Bad Request error if missing a required property", async () => {
-            const { body } = await adminLoggedIn(postRequest({
-                tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
-                tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
-            }, 400), app);
+            const { body } = await adminLoggedIn(
+                postRequest(
+                    {
+                        tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
+                        tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
+                    },
+                    400
+                ),
+                app
+            );
             expect(body.message).toEqual(expectErrorString);
         });
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {

@@ -17,7 +17,7 @@ import {
     makePutRequest,
     ownerLoggedIn,
     setupOwnerAndAdminUsers,
-    stringifyQuery
+    stringifyQuery,
 } from "./helpers";
 import { v4 as uuid } from "uuid";
 import { getConnection } from "typeorm";
@@ -78,11 +78,9 @@ describe("User API endpoints", () => {
         const jatheeshUser = UserFactory.getUser("jatheesh@example.com");
         const akosUser = UserFactory.getUser("akos@example.com");
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (userObj: Partial<User>, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<User>>(agent, "/users", userObj, status);
+        const postRequest = (userObj: Partial<User>, status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makePostRequest<Partial<User>>(agent, "/users", userObj, status);
         const getOneRequest = (id: string) => makeGetRequest(request(app), `/users/${id}`, 200);
-
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -193,8 +191,7 @@ describe("User API endpoints", () => {
     });
 
     describe("GET /users/:id (get one user)", () => {
-        const getOneRequest = (id: string, status = 200) =>
-            makeGetRequest(request(app), `/users/${id}`, status);
+        const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/users/${id}`, status);
 
         it("should return a single public user if logged in, no matter the role (ADMIN)", async () => {
             const { body } = await getOneRequest(adminUser.id!);
@@ -216,7 +213,7 @@ describe("User API endpoints", () => {
             makeGetRequest(request(app), `/users/search${stringifyQuery(query)}`, status);
 
         it("should return a single public user for the given query", async () => {
-            const { body } = await findRequest({ query: { email: ownerUser.email }});
+            const { body } = await findRequest({ query: { email: ownerUser.email } });
             expect(body).toBeObject();
             expect(body).toMatchObject({
                 ...ownerUser,
@@ -226,7 +223,7 @@ describe("User API endpoints", () => {
             expect(body.password).toBeUndefined();
         });
         it("should throw a 404 error if no user with that query is found", async () => {
-            await findRequest({ query: { email: "nonono@test.com" }}, 404);
+            await findRequest({ query: { email: "nonono@test.com" } }, 404);
         });
         it("should return an array of users if given query includes the key 'multiple'", async () => {
             const { body } = await findRequest({ query: { email: ownerUser.email }, multiple: "true" });
@@ -245,9 +242,9 @@ describe("User API endpoints", () => {
     });
 
     describe("PUT /users/:id (update one user)", () => {
-        const putRequest = (id: string, userObj: Partial<User>, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePutRequest<Partial<User>>(agent, `/users/${id}`, userObj, status);
+        const putRequest = (id: string, userObj: Partial<User>, status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) => makePutRequest<Partial<User>>(agent, `/users/${id}`, userObj, status);
         const getOneRequest = (id: string) => makeGetRequest(request(app), `/users/${id}`, 200);
         const slackUsername = "MrMeSeeks92";
         const updatedAdmin = { ...adminUser, slackUsername };
@@ -276,7 +273,6 @@ describe("User API endpoints", () => {
             };
             delete expected.password;
             expect(getOneBody).toMatchObject(expected);
-
         });
         it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
             const updatedObj = { email: "new@gmail.com", blah: "yo" };
@@ -290,7 +286,6 @@ describe("User API endpoints", () => {
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
-
             };
             delete expected.password;
             expect(getOneRes).toMatchObject(expected);
@@ -311,8 +306,8 @@ describe("User API endpoints", () => {
     });
 
     describe("DELETE /users/:id (delete one user)", () => {
-        const deleteRequest = (id: string, status = 200) =>
-            (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/users/${id}`, status);
+        const deleteRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makeDeleteRequest(agent, `/users/${id}`, status);
         const getAllRequest = () => makeGetRequest(request(app), "/users", 200);
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -323,11 +318,13 @@ describe("User API endpoints", () => {
             await userDao.createUsers([UserFactory.getUser("akos@example.com"), UserFactory.getUser()]);
 
             const { body: getAllBefore } = await getAllRequest();
-            const deletableUser = getAllBefore.filter((user: User) => user.id !== adminUser.id! && user.id !== ownerUser.id!)[0];
+            const deletableUser = getAllBefore.filter(
+                (user: User) => user.id !== adminUser.id! && user.id !== ownerUser.id!
+            )[0];
             expect(getAllBefore).toBeArrayOfSize(4);
 
             const res = await adminLoggedIn(deleteRequest(deletableUser.id!), app);
-            expect(res.body).toEqual({ deleteCount: 1, id: deletableUser.id!});
+            expect(res.body).toEqual({ deleteCount: 1, id: deletableUser.id! });
 
             // Confirm that one was deleted from db
             const { body: getAllRes } = await getAllRequest();

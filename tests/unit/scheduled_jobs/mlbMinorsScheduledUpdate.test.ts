@@ -3,22 +3,24 @@ import { doUpdate } from "../../../src/scheduled_jobs/mlbMinorsScheduledUpdate";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import { AxiosPromise } from "axios";
 
-
 const mockedGet = jest.fn().mockResolvedValue(
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-    {data: {ops_team_players: {queryResults: {row: []}}}}
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    { data: { ops_team_players: { queryResults: { row: [] } } } }
 );
-const mockPlayerDao = {
+const mockPlayerDao = ({
     getAllPlayers: jest.fn(),
     batchUpsertPlayers: jest.fn().mockResolvedValue([]),
-} as unknown as PlayerDAO;
+} as unknown) as PlayerDAO;
 
-jest.mock("axios", () => ({
-    create: jest.fn(() => ({
-        get: mockedGet,
-    })),
-}) as unknown as AxiosPromise);
-
+jest.mock(
+    "axios",
+    () =>
+        (({
+            create: jest.fn(() => ({
+                get: mockedGet,
+            })),
+        } as unknown) as AxiosPromise)
+);
 
 beforeAll(() => {
     logger.debug("~~~~~MINOR LEAGUE PLAYER UPDATER JOB SCHEDULER TESTS BEGIN~~~~~~");

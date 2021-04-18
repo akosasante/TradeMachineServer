@@ -9,38 +9,52 @@ import { v4 as uuid } from "uuid";
 import Team from "../../src/models/team";
 
 export class TradeFactory {
-    public static getTradeObject(tradeItems = TradeFactory.getTradeItems(),
-                                 tradeParticipants: TradeParticipant[] = TradeFactory.getTradeParticipants(), status = TradeStatus.DRAFT,
-                                 rest: Partial<Trade> = {}) {
+    public static getTradeObject(
+        tradeItems = TradeFactory.getTradeItems(),
+        tradeParticipants: TradeParticipant[] = TradeFactory.getTradeParticipants(),
+        status = TradeStatus.DRAFT,
+        rest: Partial<Trade> = {}
+    ) {
         return { tradeItems, tradeParticipants, status, id: uuid(), ...rest };
     }
 
-    public static getTrade(items?: TradeItem[],
-                           participants?: TradeParticipant[],
-                           status = TradeStatus.DRAFT,
-                           rest: Partial<Trade> = {}) {
+    public static getTrade(
+        items?: TradeItem[],
+        participants?: TradeParticipant[],
+        status = TradeStatus.DRAFT,
+        rest: Partial<Trade> = {}
+    ) {
         const tradeParticipants = participants || TradeFactory.getTradeParticipants();
         const tradeItems = items || TradeFactory.getTradeItems(tradeParticipants[0].team, tradeParticipants[1].team);
         return new Trade(TradeFactory.getTradeObject(tradeItems, tradeParticipants, status, rest));
     }
 
     public static getTradeItems(sender?: Team, recipient?: Team) {
-        const majorPlayer = TradeFactory.getTradedMajorPlayer(PlayerFactory.getPlayer("Pete Buttjudge", PlayerLeagueType.MAJOR), sender, recipient);
+        const majorPlayer = TradeFactory.getTradedMajorPlayer(
+            PlayerFactory.getPlayer("Pete Buttjudge", PlayerLeagueType.MAJOR),
+            sender,
+            recipient
+        );
         const minorPlayer = TradeFactory.getTradedMinorPlayer(PlayerFactory.getPlayer(), recipient, sender);
         const pick = TradeFactory.getTradedPick(DraftPickFactory.getPick(), sender, recipient);
         return [majorPlayer, minorPlayer, pick];
     }
 
-    public static getTradeParticipants(teamA = TeamFactory.getTeam("CREATOR_TEAM"), teamB = TeamFactory.getTeam("RECIPIENT_TEAM", 2)) {
+    public static getTradeParticipants(
+        teamA = TeamFactory.getTeam("CREATOR_TEAM"),
+        teamB = TeamFactory.getTeam("RECIPIENT_TEAM", 2)
+    ) {
         const creator = TradeFactory.getTradeCreator(teamA);
         const recipient = TradeFactory.getTradeRecipient(teamB);
         return [creator, recipient];
     }
 
-    public static getTradedMinorPlayer(player = PlayerFactory.getPlayer(),
-                                       sender = TeamFactory.getTeam("CREATOR_TEAM"),
-                                       recipient = TeamFactory.getTeam("RECIPIENT_TEAM"),
-                                       rest = {}) {
+    public static getTradedMinorPlayer(
+        player = PlayerFactory.getPlayer(),
+        sender = TeamFactory.getTeam("CREATOR_TEAM"),
+        recipient = TeamFactory.getTeam("RECIPIENT_TEAM"),
+        rest = {}
+    ) {
         return new TradeItem({
             id: uuid(),
             tradeItemType: TradeItemType.PLAYER,
@@ -52,10 +66,12 @@ export class TradeFactory {
         });
     }
 
-    public static getTradedMajorPlayer(player = PlayerFactory.getPlayer(undefined, PlayerLeagueType.MAJOR),
-                                       sender = TeamFactory.getTeam("CREATOR_TEAM"),
-                                       recipient = TeamFactory.getTeam("RECIPIENT_TEAM"),
-                                       rest = {}) {
+    public static getTradedMajorPlayer(
+        player = PlayerFactory.getPlayer(undefined, PlayerLeagueType.MAJOR),
+        sender = TeamFactory.getTeam("CREATOR_TEAM"),
+        recipient = TeamFactory.getTeam("RECIPIENT_TEAM"),
+        rest = {}
+    ) {
         return new TradeItem({
             id: uuid(),
             tradeItemType: TradeItemType.PLAYER,
@@ -67,10 +83,12 @@ export class TradeFactory {
         });
     }
 
-    public static getTradedPick(pick = DraftPickFactory.getPick(),
-                                sender = TeamFactory.getTeam("RECIPIENT_TEAM"),
-                                recipient = TeamFactory.getTeam("CREATOR_TEAM"),
-                                rest = {}) {
+    public static getTradedPick(
+        pick = DraftPickFactory.getPick(),
+        sender = TeamFactory.getTeam("RECIPIENT_TEAM"),
+        recipient = TeamFactory.getTeam("CREATOR_TEAM"),
+        rest = {}
+    ) {
         return new TradeItem({
             id: uuid(),
             tradeItemType: TradeItemType.PICK,

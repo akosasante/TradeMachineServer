@@ -10,8 +10,8 @@ describe("EmailDAO", () => {
         save: jest.fn(),
     };
 
-    const testEmail = {messageId: "<5d0e2800bbddbd4ed05cc56a@domain.com>", status: "opened"};
-    const emailDAO: EmailDAO = new EmailDAO(mockEmailDb as unknown as Repository<Email>);
+    const testEmail = { messageId: "<5d0e2800bbddbd4ed05cc56a@domain.com>", status: "opened" };
+    const emailDAO: EmailDAO = new EmailDAO((mockEmailDb as unknown) as Repository<Email>);
 
     afterEach(() => {
         Object.values(mockEmailDb).forEach(mockFn => mockFn.mockReset());

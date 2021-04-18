@@ -10,7 +10,7 @@ describe("Team Class", () => {
     afterAll(() => {
         logger.debug("~~~~~~TEAM TESTS COMPLETE~~~~~~");
     });
-    const teamObj = TeamFactory.getTeamObject(undefined, undefined, {id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b"});
+    const teamObj = TeamFactory.getTeamObject(undefined, undefined, { id: "d4e3fe52-1b18-4cb6-96b1-600ed86ec45b" });
     const team = new Team(teamObj);
 
     describe("constructor", () => {
