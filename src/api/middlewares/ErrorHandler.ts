@@ -9,10 +9,10 @@ import { AuthorizationRequiredError } from "routing-controllers/error/Authorizat
 import { rollbar } from "../../bootstrap/rollbar";
 import { inspect } from "util";
 
-@Middleware({type: "after"})
+@Middleware({ type: "after" })
 export default class CustomErrorHandler implements ExpressErrorMiddlewareInterface {
     private static cleanErrorObject(error: Error) {
-        return {message: error.message || "", stack: error.stack || ""};
+        return { message: error.message || "", stack: error.stack || "" };
     }
 
     public error(error: Error, request: Request, response: Response, next: NextFunction): void {

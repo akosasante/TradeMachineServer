@@ -16,24 +16,24 @@ type MemberMapKey = keyof typeof v1MemberMap;
 
 interface V1TradedPlayer {
     player: string;
-    rec: MemberMapKey | {name: string};
+    rec: MemberMapKey | { name: string };
 }
 
 interface V1TradedProspect {
     prospect: string;
-    rec: MemberMapKey | {name: string};
+    rec: MemberMapKey | { name: string };
 }
 
 interface V1TradedPick {
     pick: keyof typeof v1PickMap;
     round: number;
     type: "major" | "high" | "low";
-    rec: MemberMapKey | {name: string};
+    rec: MemberMapKey | { name: string };
 }
 
 interface V1TradedItemSet {
     _id?: string;
-    sender: MemberMapKey | {name: string};
+    sender: MemberMapKey | { name: string };
     players: V1TradedPlayer[];
     prospects: V1TradedProspect[];
     picks: V1TradedPick[];
@@ -44,7 +44,7 @@ interface V1TradeItems extends Array<V1TradedItemSet> {
 }
 
 interface V1Player {
-    "_id": { "$oid": MemberMapKey };
+    _id: { $oid: MemberMapKey };
     name: string;
     email: string;
     userId: string;
@@ -80,7 +80,7 @@ async function getTradeItemPlayersFromSet(teamDao: TeamDAO, playerDao: PlayerDAO
         const recipientTeam = await teamDao.getTeamById(v1MemberMap[p.rec as MemberMapKey].v2TeamId);
         let player = await playerDao.getPlayerByName(p.player);
         if (!player) {
-            player = (await playerDao.batchUpsertPlayers([{name: p.player, league: PlayerLeagueType.MAJOR}]))[0];
+            player = (await playerDao.batchUpsertPlayers([{ name: p.player, league: PlayerLeagueType.MAJOR }]))[0];
         }
         logger.debug(`got player: ${inspect(player)}`);
         return new TradeItem({
@@ -99,7 +99,7 @@ async function getTradeItemProspectsFromSet(teamDao: TeamDAO, playerDao: PlayerD
         const recipientTeam = await teamDao.getTeamById(v1MemberMap[p.rec as MemberMapKey].v2TeamId);
         let prospect = await playerDao.getPlayerByName(p.prospect);
         if (!prospect) {
-            prospect = (await playerDao.batchUpsertPlayers([{name: p.prospect, league: PlayerLeagueType.MINOR}]))[0];
+            prospect = (await playerDao.batchUpsertPlayers([{ name: p.prospect, league: PlayerLeagueType.MINOR }]))[0];
         }
         logger.debug(`got prospect: ${inspect(prospect)}`);
         return new TradeItem({
@@ -111,21 +111,30 @@ async function getTradeItemProspectsFromSet(teamDao: TeamDAO, playerDao: PlayerD
     });
 }
 
-async function getTradeItemPicksFromSet(teamDao: TeamDAO, userDao: UserDAO, pickDao: DraftPickDAO, tradeItemSet: V1TradedItemSet) {
+async function getTradeItemPicksFromSet(
+    teamDao: TeamDAO,
+    userDao: UserDAO,
+    pickDao: DraftPickDAO,
+    tradeItemSet: V1TradedItemSet
+) {
     const senderTeam = await teamDao.getTeamById(v1MemberMap[tradeItemSet.sender as MemberMapKey].v2TeamId);
     const picks = tradeItemSet.picks || [];
     return picks.map(async p => {
         const originalOwner = await userDao.getUserById(v1PickMap[p.pick].v2UserId, true);
         const originalOwnerTeam = originalOwner?.team;
         const recipientTeam = await teamDao.getTeamById(v1MemberMap[p.rec as MemberMapKey].v2TeamId);
-        const v1Pick: Partial<DraftPick> = {round: p.round, type: getPickType(p.type), originalOwner: originalOwnerTeam};
+        const v1Pick: Partial<DraftPick> = {
+            round: p.round,
+            type: getPickType(p.type),
+            originalOwner: originalOwnerTeam,
+        };
         let pick = (await pickDao.findPicks(v1Pick))[0];
         if (pick) {
             logger.debug("updating pick with current owner");
-            pick = (await pickDao.updatePick(pick.id!, {season: 2020, currentOwner: recipientTeam}));
+            pick = await pickDao.updatePick(pick.id!, { season: 2020, currentOwner: recipientTeam });
         } else {
             logger.debug("creating new pick");
-            pick = (await pickDao.createPicks([{...v1Pick, season: 2020, currentOwner: recipientTeam}]))[0];
+            pick = (await pickDao.createPicks([{ ...v1Pick, season: 2020, currentOwner: recipientTeam }]))[0];
         }
         logger.debug(`got pick: ${inspect(pick)}`);
         return new TradeItem({
@@ -159,7 +168,13 @@ function getV1PickType(type: LeagueLevel) {
     }
 }
 
-async function getTradeItems(payload: V1Payload, teamDao: TeamDAO, playerDao: PlayerDAO, userDao: UserDAO, pickDao: DraftPickDAO) {
+async function getTradeItems(
+    payload: V1Payload,
+    teamDao: TeamDAO,
+    playerDao: PlayerDAO,
+    userDao: UserDAO,
+    pickDao: DraftPickDAO
+) {
     const tradeItemsBySender = payload[0] as V1TradeItems;
     let tradeItems: TradeItem[] = [];
     for (const tradeItemSet of tradeItemsBySender) {
@@ -176,7 +191,10 @@ async function getTradeItems(payload: V1Payload, teamDao: TeamDAO, playerDao: Pl
 function getTradeParticipants(payload: V1Payload, teamDao: TeamDAO) {
     const createTradeParticipant = async (player: V1Player, isCreator = false) => {
         const team = await teamDao.getTeamById(v1MemberMap[player._id.$oid].v2TeamId);
-        return new TradeParticipant({team, participantType: isCreator ? TradeParticipantType.CREATOR : TradeParticipantType.RECIPIENT});
+        return new TradeParticipant({
+            team,
+            participantType: isCreator ? TradeParticipantType.CREATOR : TradeParticipantType.RECIPIENT,
+        });
     };
     const participants = payload[1] as V1TradeParticipants;
     const creator = participants[0];
@@ -185,26 +203,28 @@ function getTradeParticipants(payload: V1Payload, teamDao: TeamDAO) {
 }
 
 function getV1PicksFromTrade(trade: Trade, sender: TradeParticipant): V1TradedPick[] {
-    return TradeItem
-        .filterPicks(TradeItem.itemsSentBy(trade.tradeItems!, sender.team))
-        .map(ti => ({pick: ti.entity as DraftPick, rec: ti.recipient}))
-        .map(({pick: p, rec}) => ({ type: getV1PickType(p.type), pick: p.originalOwner!.name as keyof typeof v1PickMap, round: p.round, rec: {name: rec.name}}));
+    return TradeItem.filterPicks(TradeItem.itemsSentBy(trade.tradeItems!, sender.team))
+        .map(ti => ({ pick: ti.entity as DraftPick, rec: ti.recipient }))
+        .map(({ pick: p, rec }) => ({
+            type: getV1PickType(p.type),
+            pick: p.originalOwner!.name as keyof typeof v1PickMap,
+            round: p.round,
+            rec: { name: rec.name },
+        }));
 }
 
 function getV1ProspectsFromTrade(trade: Trade, sender: TradeParticipant): V1TradedProspect[] {
-    return TradeItem
-        .filterPlayers(TradeItem.itemsSentBy(trade.tradeItems!, sender.team))
-        .map(ti => ({prospect: ti.entity as Player, rec: ti.recipient}))
-        .filter(({prospect: p}) => p.league === PlayerLeagueType.MINOR)
-        .map(({prospect, rec}) => ({ prospect: prospect.name, rec: {name: rec.name} }));
+    return TradeItem.filterPlayers(TradeItem.itemsSentBy(trade.tradeItems!, sender.team))
+        .map(ti => ({ prospect: ti.entity as Player, rec: ti.recipient }))
+        .filter(({ prospect: p }) => p.league === PlayerLeagueType.MINOR)
+        .map(({ prospect, rec }) => ({ prospect: prospect.name, rec: { name: rec.name } }));
 }
 
 function getV1PlayersFromTrade(trade: Trade, sender: TradeParticipant): V1TradedPlayer[] {
-    return TradeItem
-        .filterPlayers(TradeItem.itemsSentBy(trade.tradeItems!, sender.team))
-        .map(ti => ({player: ti.entity as Player, rec: ti.recipient}))
-        .filter(({player: p}) => p.league === PlayerLeagueType.MAJOR)
-        .map(({player, rec}) => ({ player: player.name, rec: {name: rec.name} }));
+    return TradeItem.filterPlayers(TradeItem.itemsSentBy(trade.tradeItems!, sender.team))
+        .map(ti => ({ player: ti.entity as Player, rec: ti.recipient }))
+        .filter(({ player: p }) => p.league === PlayerLeagueType.MAJOR)
+        .map(({ player, rec }) => ({ player: player.name, rec: { name: rec.name } }));
 }
 
 export const v1TradeMachineAdaptor: V1TradeMachineAdaptor = {
@@ -228,13 +248,17 @@ export const v1TradeMachineAdaptor: V1TradeMachineAdaptor = {
         const tradeParticipants = await Promise.all(getTradeParticipants(payload, this.teamDao!));
         logger.debug(`trade participants: ${inspect(tradeParticipants)}`);
         logger.debug("returning trade");
-        return new Trade({tradeItems, tradeParticipants});
+        return new Trade({ tradeItems, tradeParticipants });
     },
     convertToV1Trade(trade: Trade): V1SubmitRequest {
         return trade.tradeParticipants!.map(participant => {
             return {
                 _id: participant.id!,
-                sender: { name: `${participant.team.name} (${participant.team.owners!.map(o => (o.displayName || o.email)).join(", ")})` },
+                sender: {
+                    name: `${participant.team.name} (${participant.team
+                        .owners!.map(o => o.displayName || o.email)
+                        .join(", ")})`,
+                },
                 picks: getV1PicksFromTrade(trade, participant),
                 prospects: getV1ProspectsFromTrade(trade, participant),
                 players: getV1PlayersFromTrade(trade, participant),
@@ -242,4 +266,3 @@ export const v1TradeMachineAdaptor: V1TradeMachineAdaptor = {
         });
     },
 };
-

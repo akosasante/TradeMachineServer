@@ -76,7 +76,7 @@ function getPlayerDetails(player: Player) {
         } else if (position && league) {
             return ` (${position} - ${league} Minors)`;
         } else if (team || position || league) {
-            return ` (${team || position || league} - ${league ? (league + " Minors") : "Minors"})`;
+            return ` (${team || position || league} - ${league ? league + " Minors" : "Minors"})`;
         } else {
             return " (Minors)";
         }
@@ -96,14 +96,34 @@ function getPickTypeString(pickType: LeagueLevel) {
 
 function getTradeTextForRequest(trade: Trade) {
     return trade.tradeParticipants?.map(participant => {
-        const receivedPlayers = TradeItem.itemsReceivedBy(TradeItem.filterPlayers(trade.tradeItems), participant.team).map(item => [item.entity as Player, item.sender.name]);
-        const [receivedMajors, receivedMinors] = partition(receivedPlayers, ([player, _sender]) => (player as Player).league === PlayerLeagueType.MAJOR);
-        const receivedPicks = TradeItem.itemsReceivedBy(TradeItem.filterPicks(trade.tradeItems), participant.team).map(item => [item.entity as DraftPick, item.sender.name]);
+        const receivedPlayers = TradeItem.itemsReceivedBy(
+            TradeItem.filterPlayers(trade.tradeItems),
+            participant.team
+        ).map(item => [item.entity as Player, item.sender.name]);
+        const [receivedMajors, receivedMinors] = partition(
+            receivedPlayers,
+            ([player, _sender]) => (player as Player).league === PlayerLeagueType.MAJOR
+        );
+        const receivedPicks = TradeItem.itemsReceivedBy(
+            TradeItem.filterPicks(trade.tradeItems),
+            participant.team
+        ).map(item => [item.entity as DraftPick, item.sender.name]);
         return {
             sender: participant.team.name,
-            majors: receivedMajors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
-            minors: receivedMinors.map(([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`),
-            picks: receivedPicks.map(([pick, sender]) => `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal((pick as DraftPick).round)} round ${getPickTypeString((pick as DraftPick).type)} pick${(pick as DraftPick)?.pickNumber ? ` (#${(pick as DraftPick).pickNumber})` : ""} from ${sender}`),
+            majors: receivedMajors.map(
+                ([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`
+            ),
+            minors: receivedMinors.map(
+                ([player, sender]) => `${(player as Player).name}${getPlayerDetails(player as Player)} from ${sender}`
+            ),
+            picks: receivedPicks.map(
+                ([pick, sender]) =>
+                    `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal(
+                        (pick as DraftPick).round
+                    )} round ${getPickTypeString((pick as DraftPick).type)} pick${
+                        (pick as DraftPick)?.pickNumber ? ` (#${(pick as DraftPick).pickNumber})` : ""
+                    } from ${sender}`
+            ),
         };
     });
 }
@@ -142,16 +162,17 @@ export const EMAILER = {
         const resetPassPage = `${baseDomain}/reset_password?u=${encodeURI(user.passwordResetToken!)}`;
         logger.debug("sending password reset email");
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-        return EMAILER.emailer.send({
-            template: "reset_password",
-            message: {
-                to: user.email,
-            },
-            locals: {
-                name: user.displayName || user.email,
-                url: resetPassPage,
-            },
-        })
+        return EMAILER.emailer
+            .send({
+                template: "reset_password",
+                message: {
+                    to: user.email,
+                },
+                locals: {
+                    name: user.displayName || user.email,
+                    url: resetPassPage,
+                },
+            })
             .then((res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent password reset email: ${inspect(res.messageId)}`);
                 return res;
@@ -166,20 +187,21 @@ export const EMAILER = {
     async sendTestEmail(user: User): Promise<SendInBlueSendResponse> {
         logger.debug(`sending test email to user: ${user}`);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-        return EMAILER.emailer.send({
-            template: "test_email",
-            message: {
-                to: user.email,
-                subject: "Test Email",
-            },
-            locals: {
-                name: user.displayName || user.email,
-            },
-        })
+        return EMAILER.emailer
+            .send({
+                template: "test_email",
+                message: {
+                    to: user.email,
+                    subject: "Test Email",
+                },
+                locals: {
+                    name: user.displayName || user.email,
+                },
+            })
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent test email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
-                    await EMAILER.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
+                    await EMAILER.dao.createEmail(new DbEmail({ messageId: res.messageId || "", status: "sent" }));
                 } else {
                     logger.error("No message id found, not saving email to db.");
                 }
@@ -197,20 +219,21 @@ export const EMAILER = {
         const userEmailEncoded = Buffer.from(user.email).toString("base64");
         const registrationLink = `${baseDomain}/register?e=${userEmailEncoded}`;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-        return EMAILER.emailer.send({
-            template: "registration_email",
-            message: {
-                to: user.email,
-            },
-            locals: {
-                name: user.displayName || user.email,
-                url: registrationLink,
-            },
-        })
+        return EMAILER.emailer
+            .send({
+                template: "registration_email",
+                message: {
+                    to: user.email,
+                },
+                locals: {
+                    name: user.displayName || user.email,
+                    url: registrationLink,
+                },
+            })
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent registration email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
-                    await EMAILER.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent"}));
+                    await EMAILER.dao.createEmail(new DbEmail({ messageId: res.messageId || "", status: "sent" }));
                 } else {
                     logger.error("No message id found, not saving email to db.");
                 }
@@ -231,66 +254,72 @@ export const EMAILER = {
         const rejectUrl = `${baseDomain}/trade/${trade.id}/reject`;
 
         logger.debug(`sending trade request email to=${recipient}, acceptUrl=${acceptUrl}, rejectUrl=${rejectUrl}`);
-        rollbar.info("sendTradeRequestEmail", {recipient, id: trade.id});
+        rollbar.info("sendTradeRequestEmail", { recipient, id: trade.id });
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-        return EMAILER.emailer.send({
-            template: "trade_request",
-            message: {
-                to: recipient,
-            },
-            locals: {
-                tradeSender: trade.creator!.name,
-                titleText: getTitleText(trade),
-                tradesByRecipient: getTradeTextForRequest(trade),
-                acceptUrl,
-                acceptText,
-                rejectUrl,
-            },
-        })
+        return EMAILER.emailer
+            .send({
+                template: "trade_request",
+                message: {
+                    to: recipient,
+                },
+                locals: {
+                    tradeSender: trade.creator!.name,
+                    titleText: getTitleText(trade),
+                    tradesByRecipient: getTradeTextForRequest(trade),
+                    acceptUrl,
+                    acceptText,
+                    rejectUrl,
+                },
+            })
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade request email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
-                    rollbar.info("sendTradeRequestEmail", {recipient, id: trade.id, messageId: res.messageId});
-                    await EMAILER.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
+                    rollbar.info("sendTradeRequestEmail", { recipient, id: trade.id, messageId: res.messageId });
+                    await EMAILER.dao.createEmail(
+                        new DbEmail({ messageId: res.messageId || "", status: "sent", trade })
+                    );
                 } else {
-                    rollbar.error("sendTradeRequestEmail_NoEmailId", {recipient, id: trade.id});
+                    rollbar.error("sendTradeRequestEmail_NoEmailId", { recipient, id: trade.id });
                     logger.error("No message id found, not saving email to db.");
                 }
                 return res;
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade request email: ${inspect(err)}`);
-                rollbar.error(err, {recipient, id: trade.id});
+                rollbar.error(err, { recipient, id: trade.id });
                 return undefined;
             });
     },
 
     async sendTradeDeclinedEmail(recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
         logger.debug(`got a trade decline email request for tradeId: ${trade.id}, declined by: ${trade.declinedById}`);
-        rollbar.info("sendTradeDeclinedEmail", {recipient, id: trade.id});
+        rollbar.info("sendTradeDeclinedEmail", { recipient, id: trade.id });
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-        return EMAILER.emailer.send({
-            template: "trade_declined",
-            message: {
-                to: recipient,
-            },
-            locals: {
-                isCreator: emailIsCreatorOfTrade(recipient, trade),
-                reason: trade.declinedReason,
-                decliningTeam: getParticipantById(trade.declinedById || "", trade)?.team.name,
-                tradesByRecipient: getTradeTextForRequest(trade),
-            },
-        })
+        return EMAILER.emailer
+            .send({
+                template: "trade_declined",
+                message: {
+                    to: recipient,
+                },
+                locals: {
+                    isCreator: emailIsCreatorOfTrade(recipient, trade),
+                    reason: trade.declinedReason,
+                    decliningTeam: getParticipantById(trade.declinedById || "", trade)?.team.name,
+                    tradesByRecipient: getTradeTextForRequest(trade),
+                },
+            })
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade declined email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
-                    rollbar.info("sendTradeDeclinedEmail", {recipient, id: trade.id, messageId: res.messageId});
+                    rollbar.info("sendTradeDeclinedEmail", { recipient, id: trade.id, messageId: res.messageId });
 
-                    await EMAILER.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
+                    await EMAILER.dao.createEmail(
+                        new DbEmail({ messageId: res.messageId || "", status: "sent", trade })
+                    );
                 } else {
-                    rollbar.error("sendTradeDeclinedEmail_NoEmailId", {recipient, id: trade.id});
+                    rollbar.error("sendTradeDeclinedEmail_NoEmailId", { recipient, id: trade.id });
 
                     logger.error("No message id found, not saving email to db.");
                 }
@@ -298,7 +327,7 @@ export const EMAILER = {
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade declined email: ${inspect(err)}`);
-                rollbar.error(err, {recipient, id: trade.id});
+                rollbar.error(err, { recipient, id: trade.id });
                 return undefined;
             });
     },
@@ -308,34 +337,37 @@ export const EMAILER = {
         const acceptUrl = `${baseDomain}/trade/${trade.id}/submit`;
         // const discardUrl = `${baseDomain}/trade/${trade!.id}/discard`
         logger.debug(`sending trade submission email to=${recipient}, acceptUrl=${acceptUrl}, discardUrl=""`);
-        rollbar.info("sendTradeSubmissionEmail", {recipient, id: trade.id});
+        rollbar.info("sendTradeSubmissionEmail", { recipient, id: trade.id });
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-        return EMAILER.emailer.send({
-            template: "trade_accepted",
-            message: {
-                to: recipient,
-            },
-            locals: {
-                acceptUrl,
-                // discardUrl, // TODO: Implement discarding trade
-                tradesByRecipient: getTradeTextForRequest(trade),
-            },
-        })
+        return EMAILER.emailer
+            .send({
+                template: "trade_accepted",
+                message: {
+                    to: recipient,
+                },
+                locals: {
+                    acceptUrl,
+                    // discardUrl, // TODO: Implement discarding trade
+                    tradesByRecipient: getTradeTextForRequest(trade),
+                },
+            })
             .then(async (res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent trade submission email: ${inspect(res.messageId)}`);
                 if (res.messageId) {
-                    rollbar.info("sendTradeSubmissionEmail", {recipient, id: trade.id, messageId: res.messageId});
-                    await EMAILER.dao.createEmail(new DbEmail({messageId: res.messageId || "", status: "sent", trade}));
+                    rollbar.info("sendTradeSubmissionEmail", { recipient, id: trade.id, messageId: res.messageId });
+                    await EMAILER.dao.createEmail(
+                        new DbEmail({ messageId: res.messageId || "", status: "sent", trade })
+                    );
                 } else {
-                    rollbar.error("sendTradeSubmissionEmail_NoEmailId", {recipient, id: trade.id});
+                    rollbar.error("sendTradeSubmissionEmail_NoEmailId", { recipient, id: trade.id });
                     logger.error("No message id found, not saving email to db.");
                 }
                 return res;
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade submission email: ${inspect(err)}`);
-                rollbar.error(err, {recipient, id: trade.id});
+                rollbar.error(err, { recipient, id: trade.id });
                 return undefined;
             });
     },

@@ -18,7 +18,7 @@ async function testTrade() {
     const args = process.argv.slice(2);
     // dynamic import because the EMAILER object immediately instantiates the mailDAO
     // which needs the database to be initialized first.
-    const { EMAILER: mailer } = await import( "../email/mailer");
+    const { EMAILER: mailer } = await import("../email/mailer");
     const tradeDao = new TradeDAO();
     const pickDao = new DraftPickDAO();
     const playerDao = new PlayerDAO();

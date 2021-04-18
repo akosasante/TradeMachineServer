@@ -15,7 +15,7 @@ import TradeDAO from "../../DAO/TradeDAO";
 import logger from "../../bootstrap/logger";
 import { inspect } from "util";
 
-dotenvConfig({path: resolvePath(__dirname, "../../../.env")});
+dotenvConfig({ path: resolvePath(__dirname, "../../../.env") });
 
 async function run() {
     const args = process.argv.slice(2);
@@ -30,8 +30,8 @@ async function run() {
     const pickDao = new DraftPickDAO();
     const tradeDao = new TradeDAO();
     const allTeams = shuffle(await teamDao.getAllTeams());
-    const allMajorPlayers = await playerDao.findPlayers({league: PlayerLeagueType.MAJOR});
-    const allMinorPlayers = await playerDao.findPlayers({league: PlayerLeagueType.MINOR});
+    const allMajorPlayers = await playerDao.findPlayers({ league: PlayerLeagueType.MAJOR });
+    const allMinorPlayers = await playerDao.findPlayers({ league: PlayerLeagueType.MINOR });
     const allPicks = await pickDao.getAllPicks();
 
     const creator = new TradeParticipant({
@@ -92,7 +92,7 @@ async function run() {
 
     const items = [...tradedMajors, ...tradedMinors, ...tradedPicks];
 
-    const trade = new Trade({tradeParticipants: participants, tradeItems: items});
+    const trade = new Trade({ tradeParticipants: participants, tradeItems: items });
     return await tradeDao.createTrade(trade);
 }
 

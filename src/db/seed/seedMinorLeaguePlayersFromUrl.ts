@@ -4,7 +4,6 @@ import PlayerDAO from "../../DAO/PlayerDAO";
 import { doUpdate } from "../../scheduled_jobs/mlbMinorsScheduledUpdate";
 import logger from "../../bootstrap/logger";
 
-
 async function run() {
     await initializeDb(false);
     const playerDAO = new PlayerDAO();

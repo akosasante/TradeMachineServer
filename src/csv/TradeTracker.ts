@@ -14,36 +14,46 @@ import Params$Resource$Spreadsheets$Batchupdate = sheets_v4.Params$Resource$Spre
 function generateColumnsForRecipients(tradeItems: TradeItem[], recipient: Team) {
     const itemsReceivedByOwner = TradeItem.itemsReceivedBy(tradeItems, recipient);
     const picksReceivedByOwner = TradeItem.filterPicks(itemsReceivedByOwner);
-    const picksString = picksReceivedByOwner.map(pickItem => {
-        const pick = pickItem.entity as DraftPick;
-        return `${pick.season} ${DraftPick.leagueLevelToString(pick.type)} - round ${pick.round} - ${getOwnerNameFromTeam(pick.originalOwner)}'s pick FROM ${getOwnerNameFromTeam(pickItem.sender)}`;
-    }).join(",\n");
+    const picksString = picksReceivedByOwner
+        .map(pickItem => {
+            const pick = pickItem.entity as DraftPick;
+            return `${pick.season} ${DraftPick.leagueLevelToString(pick.type)} - round ${
+                pick.round
+            } - ${getOwnerNameFromTeam(pick.originalOwner)}'s pick FROM ${getOwnerNameFromTeam(pickItem.sender)}`;
+        })
+        .join(",\n");
 
     const playersReceivedByOwner = TradeItem.filterPlayers(itemsReceivedByOwner);
-    const majorLeaguersReceivedByOwner = playersReceivedByOwner
-        .filter(player => (player.entity as Player).league === PlayerLeagueType.MAJOR);
-    const playersString = majorLeaguersReceivedByOwner.map(playerItem =>
-        `${(playerItem.entity as Player).name} FROM ${getOwnerNameFromTeam(playerItem.sender)}`
-    ).join(",\n");
-    const prospectsReceivedByOwner = playersReceivedByOwner
-        .filter(player => (player.entity as Player).league === PlayerLeagueType.MINOR);
-    const prospectsString = prospectsReceivedByOwner.map(playerItem =>
-        `${(playerItem.entity as Player).name} FROM ${getOwnerNameFromTeam(playerItem.sender)}`
-    ).join(",\n");
+    const majorLeaguersReceivedByOwner = playersReceivedByOwner.filter(
+        player => (player.entity as Player).league === PlayerLeagueType.MAJOR
+    );
+    const playersString = majorLeaguersReceivedByOwner
+        .map(playerItem => `${(playerItem.entity as Player).name} FROM ${getOwnerNameFromTeam(playerItem.sender)}`)
+        .join(",\n");
+    const prospectsReceivedByOwner = playersReceivedByOwner.filter(
+        player => (player.entity as Player).league === PlayerLeagueType.MINOR
+    );
+    const prospectsString = prospectsReceivedByOwner
+        .map(playerItem => `${(playerItem.entity as Player).name} FROM ${getOwnerNameFromTeam(playerItem.sender)}`)
+        .join(",\n");
 
     return [getOwnerNameFromTeam(recipient), playersString, prospectsString, picksString];
 }
 
 function getOwnerNameFromTeam(team?: Team): string {
-    return (team?.owners && team.owners.length) ? (team.owners.map(o => o.displayName || o.csvName || o.email).join("/")) : (team || {}).name || "";
+    return team?.owners && team.owners.length
+        ? team.owners.map(o => o.displayName || o.csvName || o.email).join("/")
+        : (team || {}).name || "";
 }
 
 function generateTradeRow(trade: Trade) {
-    return (trade.tradeParticipants || []).reduce((rowsAcc, recipient) => {
+    return (trade.tradeParticipants || []).reduce(
+        (rowsAcc, recipient) => {
             const ratingsBlankField = " ";
             const columns = generateColumnsForRecipients(trade.tradeItems || [], recipient.team);
             return rowsAcc.concat(columns).concat([ratingsBlankField]);
-        }, [(trade.dateModified || trade.dateCreated || new Date()).toISOString().substring(0, 10)]
+        },
+        [(trade.dateModified || trade.dateCreated || new Date()).toISOString().substring(0, 10)]
     );
 }
 
@@ -76,7 +86,7 @@ export async function appendNewTrade(trade: Trade): Promise<void> {
         },
         rows: [
             {
-                values: generateTradeRow(trade).map(datum => ({userEnteredValue: {stringValue: datum}})),
+                values: generateTradeRow(trade).map(datum => ({ userEnteredValue: { stringValue: datum } })),
             },
         ],
     };
@@ -84,15 +94,18 @@ export async function appendNewTrade(trade: Trade): Promise<void> {
     const batchUpdateRequest: Params$Resource$Spreadsheets$Batchupdate = {
         spreadsheetId: process.env.TRADE_SPREADSHEET_ID,
         requestBody: {
-            requests: [{insertDimension: insertEmptyRowRequest}, {updateCells: insertTradeDataRequest}],
+            requests: [{ insertDimension: insertEmptyRowRequest }, { updateCells: insertTradeDataRequest }],
         },
         auth,
     };
 
-    return sheets.spreadsheets.batchUpdate(batchUpdateRequest).then(() => {
-        logger.info(`Successfully inserted new row in trade index: ${trade.id}`);
-    }).catch(err => {
-        logger.error(`err: ${inspect(err)}`);
-        rollbar.error(err);
-    });
+    return sheets.spreadsheets
+        .batchUpdate(batchUpdateRequest)
+        .then(() => {
+            logger.info(`Successfully inserted new row in trade index: ${trade.id}`);
+        })
+        .catch(err => {
+            logger.error(`err: ${inspect(err)}`);
+            rollbar.error(err);
+        });
 }

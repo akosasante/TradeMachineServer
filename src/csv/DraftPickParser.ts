@@ -23,8 +23,12 @@ const season = 2021; // TODO: How to get these values from our CSVs. Maybe have 
 
 // TODO: Perhaps csv names should be associated with teams rather than users??
 
-export async function processDraftPickCsv(csvFilePath: string, teams: Team[], dao: DraftPickDAO, mode?: WriteMode): Promise<DraftPick[]> {
-
+export async function processDraftPickCsv(
+    csvFilePath: string,
+    teams: Team[],
+    dao: DraftPickDAO,
+    mode?: WriteMode
+): Promise<DraftPick[]> {
     await maybeDeleteExistingPicks(dao, mode);
 
     logger.debug(`WAITING ON STREAM ${csvFilePath}`);
@@ -32,11 +36,13 @@ export async function processDraftPickCsv(csvFilePath: string, teams: Team[], da
     logger.debug("DONE PARSING");
 
     logger.debug("deduping list of picks");
-  const dedupedPicks = uniqWith(parsedPicks, (pick1: Partial<DraftPick>, pick2: Partial<DraftPick>) =>
-        (pick1.type === pick2.type) &&
-        (pick1.season === pick2.season) &&
-        (pick1.round === pick2.round) &&
-        (pick1.originalOwner === pick2.originalOwner)
+    const dedupedPicks = uniqWith(
+        parsedPicks,
+        (pick1: Partial<DraftPick>, pick2: Partial<DraftPick>) =>
+            pick1.type === pick2.type &&
+            pick1.season === pick2.season &&
+            pick1.round === pick2.round &&
+            pick1.originalOwner === pick2.originalOwner
     );
     logger.debug(`deduped from ${parsedPicks.length} to ${dedupedPicks.length}`);
     return dao.batchUpsertPicks(dedupedPicks.filter(pick => !!pick));
@@ -59,9 +65,9 @@ async function readAndParsePickCsv(path: string, teams: Team[]): Promise<Partial
     const parsedPicks: Partial<DraftPick>[] = [];
     return new Promise((resolve, reject) => {
         logger.debug("----------- starting to read csv ----------");
-        parseFile(path, {headers: true})
+        parseFile(path, { headers: true })
             .on("data", (row: DraftPickCSVRow) => {
-        const parsedPick = parseDraftPick(row, teams);
+                const parsedPick = parseDraftPick(row, teams);
                 if (parsedPick) {
                     parsedPicks.push(parsedPick);
                 }
@@ -94,8 +100,7 @@ function parseDraftPick(row: DraftPickCSVRow, teams: Team[]): Partial<DraftPick>
     }
     const teamsWithOwners = teams.filter(team => team.owners && team.owners.length);
     const currentOwner = teamsWithOwners.find(team => team.owners!.some(owner => owner.csvName === row.Owner));
-    const originalOwner = teamsWithOwners.find(team =>
-        team.owners!.some(owner => owner.csvName === row["Pick Owner"]));
+    const originalOwner = teamsWithOwners.find(team => team.owners!.some(owner => owner.csvName === row["Pick Owner"]));
 
     if (!currentOwner || !originalOwner) {
         logger.error(`No matching owners found while parsing draft pick csv row: ${inspect(row)}`);

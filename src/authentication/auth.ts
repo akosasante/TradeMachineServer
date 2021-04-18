@@ -19,20 +19,24 @@ export async function deserializeUser(id: string, userDAO: UserDAO = new UserDAO
     return await userDAO.getUserById(id);
 }
 
-export async function signUpAuthentication(email: string, password: string, userDAO: UserDAO = new UserDAO(),
-                                           done: (err?: Error, user?: User) => void): Promise<void> {
+export async function signUpAuthentication(
+    email: string,
+    password: string,
+    userDAO: UserDAO = new UserDAO(),
+    done: (err?: Error, user?: User) => void
+): Promise<void> {
     try {
         logger.debug("sign up strategy");
-        const user = await userDAO.findUserWithPassword({email});
+        const user = await userDAO.findUserWithPassword({ email });
         if (!user) {
             logger.debug("no existing user with that email");
             const hashedPass = await generateHashedPassword(password);
-            const [newUser] = await userDAO.createUsers([{email, password: hashedPass, lastLoggedIn: new Date()}]);
+            const [newUser] = await userDAO.createUsers([{ email, password: hashedPass, lastLoggedIn: new Date() }]);
             return done(undefined, newUser);
         } else if (user && !user.password) {
             logger.debug("user found with unset password");
             const hashedPass = await generateHashedPassword(password);
-            const updatedUser = await userDAO.updateUser(user.id!, {password: hashedPass, lastLoggedIn: new Date()});
+            const updatedUser = await userDAO.updateUser(user.id!, { password: hashedPass, lastLoggedIn: new Date() });
             return done(undefined, updatedUser);
         } else {
             return done(new ConflictError("Email already in use and signed up."));
@@ -45,18 +49,22 @@ export async function signUpAuthentication(email: string, password: string, user
     }
 }
 
-export async function signInAuthentication(email: string, password: string, userDAO: UserDAO = new UserDAO(),
-                                           done: (err?: Error, user?: User) => void): Promise<void> {
+export async function signInAuthentication(
+    email: string,
+    password: string,
+    userDAO: UserDAO = new UserDAO(),
+    done: (err?: Error, user?: User) => void
+): Promise<void> {
     try {
         logger.debug("sign in strategy");
         // Will throw EntityNotFoundError if user is not found
-        const user = await userDAO.findUserWithPassword({email});
+        const user = await userDAO.findUserWithPassword({ email });
         if (user) {
             logger.debug("found user with matching email");
-            const validPassword = user.password && await isPasswordMatching(password, user.password);
+            const validPassword = user.password && (await isPasswordMatching(password, user.password));
             if (validPassword) {
                 logger.debug("password matched - updating user last logged in");
-                const returnedUser = await userDAO.updateUser(user.id!, {lastLoggedIn: new Date()});
+                const returnedUser = await userDAO.updateUser(user.id!, { lastLoggedIn: new Date() });
                 return done(undefined, returnedUser);
             } else {
                 return done(new BadRequestError("Incorrect password"));
@@ -67,23 +75,30 @@ export async function signInAuthentication(email: string, password: string, user
             return done(new NotFoundError("Error with sign-in strategy: no user found"));
         }
     } catch (error) {
-        logger.error(`${error instanceof EntityNotFoundError ?
-            "Could not find user with this email when trying to sign in" :
-            "Error with sign-in strategy"}`);
+        logger.error(
+            `${
+                error instanceof EntityNotFoundError
+                    ? "Could not find user with this email when trying to sign in"
+                    : "Error with sign-in strategy"
+            }`
+        );
         logger.error(error);
         rollbar.error(error);
         return done(error);
     }
 }
 
-export async function authorizationChecker(action: Action, allowedRoles: Role[],
-                                           userDAO: UserDAO = new UserDAO()): Promise<boolean> {
+export async function authorizationChecker(
+    action: Action,
+    allowedRoles: Role[],
+    userDAO: UserDAO = new UserDAO()
+): Promise<boolean> {
     logger.debug("checking user roles");
     const user = await getUserFromAction(action, userDAO);
     if (user) {
         const userHasRole = allowedRoles.some(role => user.role === role);
         logger.debug(`user_role=${user.role} allowedRoles=${inspect(allowedRoles)}`);
-        return (!allowedRoles.length || userHasRole || user.isAdmin());
+        return !allowedRoles.length || userHasRole || user.isAdmin();
     } else {
         logger.error("could not find user in action");
         return false;

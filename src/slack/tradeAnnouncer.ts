@@ -1,13 +1,13 @@
-import {IncomingWebhook} from "@slack/webhook";
+import { IncomingWebhook } from "@slack/webhook";
 import Trade from "../models/trade";
 import TradeParticipant from "../models/tradeParticipant";
 import logger from "../bootstrap/logger";
-import {inspect} from "util";
+import { inspect } from "util";
 import TradeFormatter from "./tradeFormatter";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const SlackBlocks = {
-    divider: {type: "divider"},
+    divider: { type: "divider" },
     mrkdwnSection(text: string) {
         return {
             type: "section",
@@ -33,15 +33,16 @@ export class SlackTradeAnnouncer {
     private static webhook = new IncomingWebhook(SlackTradeAnnouncer.url);
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    constructor() {
-    }
+    constructor() {}
 
     public static async buildTradeAnnouncementMsg(trade: Trade) {
         logger.info("building trade announcement mesasge");
         const twoPlayerTrade = trade.tradeParticipants!.length === 2;
-        const tradeText = await Promise.all(trade.tradeParticipants!.map((participant: TradeParticipant) => {
-            return TradeFormatter.getTradeTextForParticipant(twoPlayerTrade, trade, participant);
-        }));
+        const tradeText = await Promise.all(
+            trade.tradeParticipants!.map((participant: TradeParticipant) => {
+                return TradeFormatter.getTradeTextForParticipant(twoPlayerTrade, trade, participant);
+            })
+        );
 
         return {
             text: TradeFormatter.getNotificationText(trade),
@@ -49,10 +50,7 @@ export class SlackTradeAnnouncer {
                 SlackBlocks.mrkdwnSection(TradeFormatter.getTitleText()),
                 SlackBlocks.context([TradeFormatter.getSubtitleText(trade)]),
                 SlackBlocks.divider,
-                ...(tradeText.flatMap((text: string) => [
-                    SlackBlocks.mrkdwnSection(text),
-                    SlackBlocks.divider,
-                ])),
+                ...tradeText.flatMap((text: string) => [SlackBlocks.mrkdwnSection(text), SlackBlocks.divider]),
                 SlackBlocks.context([TradeFormatter.getLinkText()]),
             ],
         };

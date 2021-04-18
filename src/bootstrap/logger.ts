@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import winston from "winston";
 
-const {combine, timestamp, printf, uncolorize} = winston.format;
+const { combine, timestamp, printf, uncolorize } = winston.format;
 const fileLogFormat = printf(info => {
     return `[ ${info.timestamp} ]\t${info.level}: ${info.message}`;
 });
@@ -17,7 +17,9 @@ const consoleLogger = new winston.transports.Console({
     format: combine(winston.format.cli()),
 });
 
-let errorLogger; let combinedLogger; let exceptionHandler;
+let errorLogger;
+let combinedLogger;
+let exceptionHandler;
 
 if (process.env.NODE_ENV !== "test") {
     const logDir = path.resolve(`${process.env.BASE_DIR}/logs`);
@@ -39,7 +41,7 @@ if (process.env.NODE_ENV !== "test") {
         filename: `${logDir}/server-combined.log`,
         level: "info",
         eol: "\r\n",
-        format: combine(timestamp({format: timestampFormat}), uncolorize(), fileLogFormat),
+        format: combine(timestamp({ format: timestampFormat }), uncolorize(), fileLogFormat),
         maxsize: 52428800,
         maxFiles: 10,
         tailable: true,
@@ -54,19 +56,14 @@ if (process.env.NODE_ENV !== "test") {
     });
 }
 // Logger object
-const logger = winston.createLogger(({
+const logger = winston.createLogger({
     level: "debug",
-    format: combine(timestamp({format: timestampFormat}), errorFileLogFormat),
-    transports: errorLogger && combinedLogger ? [
-        errorLogger,
-        combinedLogger,
-    ] : [],
+    format: combine(timestamp({ format: timestampFormat }), errorFileLogFormat),
+    transports: errorLogger && combinedLogger ? [errorLogger, combinedLogger] : [],
     silent: process.env.ENABLE_LOGS === "false",
-    exceptionHandlers: exceptionHandler ? [
-        exceptionHandler,
-    ] : [],
+    exceptionHandlers: exceptionHandler ? [exceptionHandler] : [],
     exitOnError: false,
-}));
+});
 
 if (process.env.ENABLE_LOGS === "true") {
     logger.add(consoleLogger);

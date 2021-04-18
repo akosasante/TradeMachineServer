@@ -72,7 +72,6 @@ interface EspnPlayerInfo {
     injured?: boolean;
     injuryStatus?: string;
     active?: boolean;
-
 }
 
 interface EspnPlayerPoolEntry {
@@ -136,7 +135,6 @@ interface EspnScheduleItem {
 
 type EspnSchedule = EspnScheduleItem[];
 
-
 export default class EspnAPI {
     private readonly leagueId: number;
     private req: AxiosInstance;
@@ -148,7 +146,7 @@ export default class EspnAPI {
         this.req = axios.create({
             withCredentials: true,
             // eslint-disable-next-line @typescript-eslint/naming-convention
-            headers: {Cookie: `espn_s2=${this.espn2Cookie}; SWID=${this.espnSwid};`},
+            headers: { Cookie: `espn_s2=${this.espn2Cookie}; SWID=${this.espnSwid};` },
             timeout: 30000,
         });
     }
@@ -167,17 +165,17 @@ export default class EspnAPI {
 
     /* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access */
     public async getAllLeagueData(year: number): Promise<any> {
-        const {data} = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}`);
+        const { data } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}`);
         return data;
     }
 
     public async getAllMembers(year: number): Promise<EspnLeagueMember[]> {
-        const {data: members} = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/members`);
+        const { data: members } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/members`);
         return members;
     }
 
     public async getAllLeagueTeams(year: number): Promise<EspnFantasyTeam[]> {
-        const {data: teams} = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/teams?view=mTeam`);
+        const { data: teams } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/teams?view=mTeam`);
         return teams;
     }
 
@@ -192,7 +190,11 @@ export default class EspnAPI {
                 data,
                 headers,
                 // eslint-disable-next-line @typescript-eslint/naming-convention
-            } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`, {headers: {"X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`}});
+            } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`, {
+                headers: {
+                    "X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`,
+                },
+            });
             players.push(...data.players);
             total += data.players.length;
             offset += 100;
@@ -204,18 +206,27 @@ export default class EspnAPI {
     }
 
     public async getScheduleForYear(year: number): Promise<EspnSchedule> {
-        const {data: schedule} = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/schedule?view=mScoreboard`);
+        const { data: schedule } = await this.req.get(
+            `${EspnAPI.getBaseUrl(year, this.leagueId)}/schedule?view=mScoreboard`
+        );
         return schedule;
     }
 
     public async getRosterForTeamAndDay(year: number, teamId: number, scoringPeriodId: number): Promise<EspnRoster> {
-        const {data: {teams: teams}} = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?forTeamId=${teamId}&scoringPeriodId=${scoringPeriodId}&view=mRoster`);
+        const {
+            data: { teams: teams },
+        } = await this.req.get(
+            `${EspnAPI.getBaseUrl(
+                year,
+                this.leagueId
+            )}?forTeamId=${teamId}&scoringPeriodId=${scoringPeriodId}&view=mRoster`
+        );
         return teams[0].roster;
     }
 
     public async updateMajorLeaguePlayers(year: number, playerDAO: PlayerDAO, teamDao: TeamDAO): Promise<Player[]> {
         logger.debug("fetching teams with ESPN teams associated");
-        const allLeagueTeamsWithEspn = await teamDao.findTeams(cleanupQuery({espnId: "!null"}));
+        const allLeagueTeamsWithEspn = await teamDao.findTeams(cleanupQuery({ espnId: "!null" }));
         logger.debug(`making espn api call for year: ${year}`);
         const allEspnPlayers = await this.getAllMajorLeaguePlayers(year);
         logger.debug("mapping to player objects");
@@ -225,7 +236,10 @@ export default class EspnAPI {
             return p;
         });
         logger.debug("deduping all players");
-        const dedupedPlayers = uniqWith(allPlayers, (player1, player2) => (player1.name === player2.name) && (player1.playerDataId === player2.playerDataId));
+        const dedupedPlayers = uniqWith(
+            allPlayers,
+            (player1, player2) => player1.name === player2.name && player1.playerDataId === player2.playerDataId
+        );
         logger.debug("batch save to db");
         return await playerDAO.batchUpsertPlayers(dedupedPlayers);
     }
@@ -236,8 +250,8 @@ export default class EspnAPI {
         logger.debug("got all espn fantasy teams");
         const allLeagueTeams = await teamDao.getAllTeams();
         for (const team of allLeagueTeams) {
-            const associatedEspnTeam = allEspnTeams.find((foundEspnTeam: EspnFantasyTeam) =>
-                foundEspnTeam.id === team.espnId
+            const associatedEspnTeam = allEspnTeams.find(
+                (foundEspnTeam: EspnFantasyTeam) => foundEspnTeam.id === team.espnId
             );
 
             if (associatedEspnTeam) {
@@ -250,4 +264,3 @@ export default class EspnAPI {
     }
 }
 /* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access */
-

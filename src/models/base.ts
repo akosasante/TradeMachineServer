@@ -1,7 +1,6 @@
 import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 export class BaseModel {
-
     @PrimaryGeneratedColumn("uuid")
     public readonly id?: string;
 

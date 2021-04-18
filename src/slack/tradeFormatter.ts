@@ -23,7 +23,9 @@ const TradeFormatter = {
 
         function getMinorLeaguePlayerText(player: Player) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            const playerMetaInfo = player.meta ? `(${player.meta?.minorLeaguePlayerFromSheet?.position} - ${player.meta?.minorLeaguePlayerFromSheet?.leagueLevel} Minors - ${player.meta?.minorLeaguePlayerFromSheet?.mlbTeam})` : "(Minors)";
+            const playerMetaInfo = player.meta
+                ? `(${player.meta?.minorLeaguePlayerFromSheet?.position} - ${player.meta?.minorLeaguePlayerFromSheet?.leagueLevel} Minors - ${player.meta?.minorLeaguePlayerFromSheet?.mlbTeam})`
+                : "(Minors)";
             const text = `• *${player.name}* ${playerMetaInfo}`;
             if (!twoPlayerTrade) {
                 const tradedPlayer = tradedPlayers.find(pl => pl.tradeItemId === player.id);
@@ -34,7 +36,9 @@ const TradeFormatter = {
         }
 
         function getMajorLeaguePlayerText(player: Player) {
-            const playerMetaInfo = player.meta ? `(${player.getEspnEligiblePositions()} - Majors - ${player.mlbTeam})` : "(Majors)";
+            const playerMetaInfo = player.meta
+                ? `(${player.getEspnEligiblePositions()} - Majors - ${player.mlbTeam})`
+                : "(Majors)";
             const text = `• *${player.name}* ${playerMetaInfo}`;
             if (!twoPlayerTrade) {
                 const tradedPlayer = tradedPlayers.find(pl => pl.tradeItemId === player.id);
@@ -45,11 +49,16 @@ const TradeFormatter = {
         }
 
         const playerDao = dao || new PlayerDAO();
-        const players = await Promise.all(tradedPlayers.map(async (tradedPlayer: TradeItem) => {
-            return await playerDao.getPlayerById(tradedPlayer.tradeItemId);
-        }));
+        const players = await Promise.all(
+            tradedPlayers.map(async (tradedPlayer: TradeItem) => {
+                return await playerDao.getPlayerById(tradedPlayer.tradeItemId);
+            })
+        );
 
-        const [minorLeaguePlayers, majorLeaguePlayers] = partition(players, player => player.league === PlayerLeagueType.MINOR);
+        const [minorLeaguePlayers, majorLeaguePlayers] = partition(
+            players,
+            player => player.league === PlayerLeagueType.MINOR
+        );
         const minorLeaguePlayersString = minorLeaguePlayers.map(getMinorLeaguePlayerText).join("\n");
         const majorLeaguePlayersString = majorLeaguePlayers.map(getMajorLeaguePlayerText).join("\n");
         return `${majorLeaguePlayersString}\n\n${minorLeaguePlayersString}`.trim();
@@ -61,32 +70,49 @@ const TradeFormatter = {
         if (!twoPlayerTrade) {
             tradedPicks.sort((tp1, tp2) => tp1.id!.localeCompare(tp2.id!));
         }
-        const picks = await Promise.all(tradedPicks.map(async (tradedPick: TradeItem) => {
-            return await pickDao.getPickById(tradedPick.tradeItemId);
-        }));
+        const picks = await Promise.all(
+            tradedPicks.map(async (tradedPick: TradeItem) => {
+                return await pickDao.getPickById(tradedPick.tradeItemId);
+            })
+        );
         if (!twoPlayerTrade) {
             return zip(tradedPicks, picks)
                 .map(([tradedPick, pick]) => {
                     return `• *${pick!.originalOwner?.name}'s* ${pick!.season} \
-${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${pick?.pickNumber ? ` (#${pick.pickNumber})` : ""} from _${tradedPick!.sender.name}_`;
+${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
+                        pick?.pickNumber ? ` (#${pick.pickNumber})` : ""
+                    } from _${tradedPick!.sender.name}_`;
                 })
                 .join("\n")
                 .trim();
         } else {
             return picks
                 .map((pick: DraftPick) => {
-                    return `• *${pick.originalOwner?.name}'s* ${pick.season} ${ordinal(pick.round)} round ${this.getPickTypeString(pick.type)} pick${pick?.pickNumber ? ` (#${pick.pickNumber})` : ""}`;
+                    return `• *${pick.originalOwner?.name}'s* ${pick.season} ${ordinal(
+                        pick.round
+                    )} round ${this.getPickTypeString(pick.type)} pick${
+                        pick?.pickNumber ? ` (#${pick.pickNumber})` : ""
+                    }`;
                 })
                 .join("\n")
                 .trim();
         }
     },
 
-    async getTradeTextForParticipant(twoPlayerTrade: boolean, trade: Trade, participant: TradeParticipant, deps?: TradeFormatterDeps) {
+    async getTradeTextForParticipant(
+        twoPlayerTrade: boolean,
+        trade: Trade,
+        participant: TradeParticipant,
+        deps?: TradeFormatterDeps
+    ) {
         logger.info(`Rendering trade items received by ${participant.team.name} for ${trade}`);
         const header = `*${participant.team.name} receives:*`;
         const receivedItems = TradeItem.itemsReceivedBy(trade.tradeItems!, participant.team);
-        const playerText = await this.prepPlayerText(twoPlayerTrade, TradeItem.filterPlayers(receivedItems), deps?.playerDao);
+        const playerText = await this.prepPlayerText(
+            twoPlayerTrade,
+            TradeItem.filterPlayers(receivedItems),
+            deps?.playerDao
+        );
         const pickText = await this.prepPickText(twoPlayerTrade, TradeItem.filterPicks(receivedItems), deps?.pickDao);
         logger.debug("Header: " + header);
         logger.debug("Players: " + playerText);

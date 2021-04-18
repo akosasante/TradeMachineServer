@@ -11,15 +11,15 @@ export enum TradeParticipantType {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
-@Index(["trade", "team"], {unique: true})
+@Index(["trade", "team"], { unique: true })
 export default class TradeParticipant extends BaseModel {
-    @Column({type: "enum", enum: TradeParticipantType, default: TradeParticipantType.RECIPIENT})
+    @Column({ type: "enum", enum: TradeParticipantType, default: TradeParticipantType.RECIPIENT })
     public participantType!: TradeParticipantType;
 
-    @ManyToOne(type => Trade, trade => trade.tradeParticipants, {onDelete: "CASCADE"})
+    @ManyToOne(type => Trade, trade => trade.tradeParticipants, { onDelete: "CASCADE" })
     public trade!: Trade;
 
-    @ManyToOne(type => Team, team => team.tradeParticipants, {cascade: true, eager: true})
+    @ManyToOne(type => Team, team => team.tradeParticipants, { cascade: true, eager: true })
     public team!: Team;
 
     constructor(props: Partial<TradeParticipant> = {}) {

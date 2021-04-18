@@ -1,6 +1,6 @@
 /* eslint-disable */
 import TradeDAO from "../DAO/TradeDAO";
-import {appendNewTrade} from "../csv/TradeTracker";
+import { appendNewTrade } from "../csv/TradeTracker";
 import initializeDb from "../bootstrap/db";
 
 async function run() {
@@ -13,5 +13,10 @@ async function run() {
     return appendNewTrade(trade);
 }
 
-run().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(99); });
+run()
+    .then(() => process.exit(0))
+    .catch(err => {
+        console.error(err);
+        process.exit(99);
+    });
 /* eslint-enable */

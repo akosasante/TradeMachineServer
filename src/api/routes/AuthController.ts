@@ -9,7 +9,7 @@ import {
     Req,
     Res,
     Session,
-    UseBefore
+    UseBefore,
 } from "routing-controllers";
 import { deserializeUser, generateHashedPassword, passwordResetDateIsValid } from "../../authentication/auth";
 import logger from "../../bootstrap/logger";
@@ -47,8 +47,8 @@ export default class AuthController {
     @Post("/login/sendResetEmail")
     public async sendResetEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
         logger.debug(`Preparing to send reset password email to: ${email}`);
-        rollbar.info("sendResetEmail", {email});
-        const user = await this.userDao.findUser({email});
+        rollbar.info("sendResetEmail", { email });
+        const user = await this.userDao.findUser({ email });
 
         if (!user) {
             throw new NotFoundError("No user found with the given email.");
@@ -58,7 +58,7 @@ export default class AuthController {
 
             // Queue send email with current user
             await this.emailPublisher.queueResetEmail(updatedUser);
-            return response.status(202).json({status: "email queued"});
+            return response.status(202).json({ status: "email queued" });
         }
     }
 
@@ -70,18 +70,20 @@ export default class AuthController {
     }
 
     @Post("/signup/sendEmail")
-    public async sendRegistrationEmail(@BodyParam("email") email: string, @Res() response: Response):
-        Promise<Response> {
+    public async sendRegistrationEmail(
+        @BodyParam("email") email: string,
+        @Res() response: Response
+    ): Promise<Response> {
         logger.debug(`Preparing to send registration email to: ${email}`);
-        rollbar.info("sendRegistrationEmail", {email});
-        const user = await this.userDao.findUser({email});
+        rollbar.info("sendRegistrationEmail", { email });
+        const user = await this.userDao.findUser({ email });
 
         if (!user) {
             throw new NotFoundError("No user found with the given email.");
         } else {
             // Queue send email with current user
             await this.emailPublisher.queueRegistrationEmail(user);
-            return response.status(202).json({status: "email queued"});
+            return response.status(202).json({ status: "email queued" });
         }
     }
 
@@ -112,15 +114,20 @@ export default class AuthController {
     }
 
     @Post("/reset_password")
-    public async resetPassword(@BodyParam("id") userId: string,
-                               @BodyParam("password") newPassword: string,
-                               @BodyParam("token") passwordResetToken: string,
-                               @Res() response: Response): Promise<Response> {
-        rollbar.info("resetPassword", {userId});
+    public async resetPassword(
+        @BodyParam("id") userId: string,
+        @BodyParam("password") newPassword: string,
+        @BodyParam("token") passwordResetToken: string,
+        @Res() response: Response
+    ): Promise<Response> {
+        rollbar.info("resetPassword", { userId });
         const existingUser = await this.userDao.getUserById(userId);
 
-        if (!existingUser || !existingUser.passwordResetToken ||
-            existingUser.passwordResetToken !== passwordResetToken) {
+        if (
+            !existingUser ||
+            !existingUser.passwordResetToken ||
+            existingUser.passwordResetToken !== passwordResetToken
+        ) {
             logger.debug("did not find user for id and matching token");
             return response.status(404).json("user does not exist");
         }
@@ -140,7 +147,7 @@ export default class AuthController {
     }
 
     @Get("/session_check")
-    public async sessionCheck(@CurrentUser({required: true}) user: User): Promise<User> {
+    public async sessionCheck(@CurrentUser({ required: true }) user: User): Promise<User> {
         logger.debug(`session check worked ${user}`);
         // rollbar.info("sessionCheck", { user });
         return user;

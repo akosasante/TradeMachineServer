@@ -11,7 +11,7 @@ import { rollbar } from "../bootstrap/rollbar";
 export function setupScheduledEspnUpdates(): void {
     const cron = "22 6 * * *"; // daily at 2:22AM ET
     logger.info(`Setting up espn updates to run on schedule: ${cron}`);
-    const espnQueue = new Bull("espn_queue", {settings: {maxStalledCount: 0}});
+    const espnQueue = new Bull("espn_queue", { settings: { maxStalledCount: 0 } });
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const JobName = "espn_updates";
     const cleanLoggedData = (_data: any) => "";
@@ -21,7 +21,7 @@ export function setupScheduledEspnUpdates(): void {
     void espnQueue.process(JobName, async () => {
         return await updateEspnData({});
     });
-    void espnQueue.add(JobName, uuid(), {repeat: {cron}});
+    void espnQueue.add(JobName, uuid(), { repeat: { cron } });
 
     espnQueue.on("error", error => {
         logger.error(`Bull error during setupScheduledEspnUpdates: ${inspect(error)}`);
@@ -29,21 +29,40 @@ export function setupScheduledEspnUpdates(): void {
     });
 
     espnQueue.on("stalled", job => {
-        logger.error(`Bull stalled during setupScheduledEspnUpdates: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        logger.error(
+            `Bull stalled during setupScheduledEspnUpdates: ${inspect(
+                cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+            )}`
+        );
         rollbar.error("scheduledEspnUpdate stalled", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
     });
 
     espnQueue.on("active", job => {
-        logger.info(`setupScheduledEspnUpdates Worker job started: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        logger.info(
+            `setupScheduledEspnUpdates Worker job started: ${inspect(
+                cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+            )}`
+        );
     });
 
     espnQueue.on("completed", (job, _result) => {
-        rollbar.info("setupScheduledEspnUpdates Worker completed", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
-        logger.info(`setupScheduledEspnUpdates Worker completed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        rollbar.info(
+            "setupScheduledEspnUpdates Worker completed",
+            cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+        );
+        logger.info(
+            `setupScheduledEspnUpdates Worker completed: ${inspect(
+                cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+            )}`
+        );
     });
 
     espnQueue.on("failed", (job, err) => {
-        logger.error(`"setupScheduledEspnUpdates Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
+        logger.error(
+            `"setupScheduledEspnUpdates Worker failed: ${inspect(
+                cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+            )}, ${inspect(err)}`
+        );
         rollbar.error("scheduledEspnUpdate failed", err);
     });
 }

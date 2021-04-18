@@ -16,5 +16,10 @@ async function run() {
     await espnApi.updateMajorLeaguePlayers(year, playerDao, teamDao);
 }
 
-run().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(99); });
+run()
+    .then(() => process.exit(0))
+    .catch(err => {
+        console.error(err);
+        process.exit(99);
+    });
 /* eslint-enable */
