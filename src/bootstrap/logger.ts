@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import winston from "winston";
 
-const {combine, timestamp, printf, uncolorize} = winston.format;
+const { combine, timestamp, printf, uncolorize } = winston.format;
 const fileLogFormat = printf(info => {
     return `[ ${info.timestamp} ]\t${info.level}: ${info.message}`;
 });
