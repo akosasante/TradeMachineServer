@@ -5,6 +5,7 @@ import { AxiosPromise } from "axios";
 
 
 const mockedGet = jest.fn().mockResolvedValue(
+  // eslint-disable-next-line @typescript-eslint/naming-convention
     {data: {ops_team_players: {queryResults: {row: []}}}}
 );
 const mockPlayerDao = {
@@ -28,6 +29,7 @@ afterAll(() => {
 });
 afterEach(() => {
     mockedGet.mockClear();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
     Object.values(mockPlayerDao).forEach(mockFn => mockFn.mockReset());
 });
 

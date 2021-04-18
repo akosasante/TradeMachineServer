@@ -33,9 +33,9 @@ describe("TradeController", () => {
     const creator = testTrade.tradeParticipants?.find(part => part.participantType === TradeParticipantType.CREATOR);
     const recipient = testTrade.tradeParticipants?.find(part => part.participantType === TradeParticipantType.RECIPIENT);
     const tradeOwner = UserFactory.getOwnerUser();
-    creator!.team!.owners = [tradeOwner];
+    creator!.team.owners = [tradeOwner];
     const tradeRecipient = UserFactory.getOwnerUser();
-    recipient!.team!.owners = [tradeRecipient];
+    recipient!.team.owners = [tradeRecipient];
     const tradeController = new TradeController(mockTradeDAO as unknown as TradeDAO);
 
     beforeAll(() => {
@@ -191,7 +191,9 @@ describe("TradeController", () => {
             expect(mockTradeDAO.updateParticipants).toHaveBeenCalledWith(testTrade.id, [newCreator], [creator]);
             expect(res).toMatchObject({
                 id: updatedTrade.id,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 tradeItems: expect.toIncludeSameMembers(testTrade.tradeItems!),
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 tradeParticipants: expect.toIncludeSameMembers([newCreator, recipient]),
             });
         });
@@ -212,7 +214,9 @@ describe("TradeController", () => {
                 [newPick], [existingPick]);
             expect(res).toMatchObject({
                 id: updatedTrade.id,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 tradeParticipants: expect.toIncludeSameMembers(testTrade.tradeParticipants!),
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 tradeItems: expect.toIncludeSameMembers([newPick, ...existingPlayers]),
             });
         });
@@ -261,13 +265,15 @@ describe("TradeController", () => {
             for (const status of validStatuses) {
                 mockTradeDAO.getTradeById.mockReset();
                 mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status}));
-                await expect(tradeController.acceptTrade(tradeRecipient, testTrade.id!)).resolves;
+                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({...testTrade, status}));
+
+                await expect(tradeController.acceptTrade(tradeRecipient, testTrade.id!)).resolves.toBeDefined();
             }
         });
         it("should updated the acceptedBy field for valid trades by adding the accepting user's id to the acceptedBy field", async () => {
             const additionalRecipient = TradeFactory.getTradeRecipient(TeamFactory.getTeam("RECIPIENT_TEAM_2"), testTrade);
             const additionalRecipientUser = UserFactory.getOwnerUser();
-            additionalRecipient!.team!.owners = [additionalRecipientUser];
+            additionalRecipient.team.owners = [additionalRecipientUser];
             const tradeParticipants = testTrade.tradeParticipants?.concat([additionalRecipient]);
             const status = TradeStatus.REQUESTED;
             const acceptedBy = [additionalRecipient.id!];
@@ -296,7 +302,7 @@ describe("TradeController", () => {
         it("should update the trade status to PENDING if not all recipients have responded yet", async () => {
             const additionalRecipient = TradeFactory.getTradeRecipient(TeamFactory.getTeam("RECIPIENT_TEAM_2"), testTrade);
             const additionalRecipientUser = UserFactory.getOwnerUser();
-            additionalRecipient!.team!.owners = [additionalRecipientUser];
+            additionalRecipient.team.owners = [additionalRecipientUser];
             mockTradeDAO.getTradeById.mockReset();
             mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({
                 ...testTrade,
@@ -336,8 +342,9 @@ describe("TradeController", () => {
             for (const status of validStatuses) {
                 mockTradeDAO.getTradeById.mockReset();
                 mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status}));
+                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({...testTrade, status}));
 
-                await expect(tradeController.rejectTrade(tradeRecipient, testTrade.id!, tradeRecipient.id!, "reason")).resolves;
+                await expect(tradeController.rejectTrade(tradeRecipient, testTrade.id!, tradeRecipient.id!, "reason")).resolves.toBeDefined();
             }
         });
 
@@ -385,8 +392,9 @@ describe("TradeController", () => {
             for (const status of validStatuses) {
                 mockTradeDAO.getTradeById.mockReset();
                 mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({...testTrade, status}));
+                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({...testTrade, status}));
 
-                await expect(tradeController.submitTrade(tradeOwner, testTrade.id!)).resolves;
+                await expect(tradeController.submitTrade(tradeOwner, testTrade.id!)).resolves.toBeDefined();
             }
         });
 

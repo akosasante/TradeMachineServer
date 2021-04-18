@@ -28,6 +28,7 @@ let ownerUser: User;
 let adminUser: User;
 let userDao: UserDAO;
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access */
 async function shutdown() {
     await new Promise<void>((resolve, reject) => {
         redisClient.quit((err, reply) => {
@@ -77,7 +78,7 @@ describe("User API endpoints", () => {
         const jatheeshUser = UserFactory.getUser("jatheesh@example.com");
         const akosUser = UserFactory.getUser("akos@example.com");
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (userObj: Partial<User>, status: number = 200) =>
+        const postRequest = (userObj: Partial<User>, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<Partial<User>>(agent, "/users", userObj, status);
         const getOneRequest = (id: string) => makeGetRequest(request(app), `/users/${id}`, 200);
@@ -137,7 +138,7 @@ describe("User API endpoints", () => {
     });
 
     describe("GET /users (get all users)", () => {
-        const getAllRequest = (status: number = 200) => makeGetRequest(request(app), "/users", status);
+        const getAllRequest = (status = 200) => makeGetRequest(request(app), "/users", status);
 
         it("should return an array of all the users in the db", async () => {
             // admin and owner user are inserted in beforeEach block; here we insert two additional users
@@ -155,7 +156,7 @@ describe("User API endpoints", () => {
     });
 
     describe("GET /users?full= (get all users with teams)", () => {
-        const getAllRequest = (full: boolean = true, status: number = 200) =>
+        const getAllRequest = (full = true, status = 200) =>
             makeGetRequest(request(app), `/users?full=${full}`, status);
 
         it("should return an array of all the users with teams in the db if full=true", async () => {
@@ -192,7 +193,7 @@ describe("User API endpoints", () => {
     });
 
     describe("GET /users/:id (get one user)", () => {
-        const getOneRequest = (id: string, status: number = 200) =>
+        const getOneRequest = (id: string, status = 200) =>
             makeGetRequest(request(app), `/users/${id}`, status);
 
         it("should return a single public user if logged in, no matter the role (ADMIN)", async () => {
@@ -211,7 +212,7 @@ describe("User API endpoints", () => {
     });
 
     describe("GET /users/search?queryOpts (get user by query)", () => {
-        const findRequest = (query: any, status: number = 200) =>
+        const findRequest = (query: any, status = 200) =>
             makeGetRequest(request(app), `/users/search${stringifyQuery(query)}`, status);
 
         it("should return a single public user for the given query", async () => {
@@ -244,7 +245,7 @@ describe("User API endpoints", () => {
     });
 
     describe("PUT /users/:id (update one user)", () => {
-        const putRequest = (id: string, userObj: Partial<User>, status: number = 200) =>
+        const putRequest = (id: string, userObj: Partial<User>, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<User>>(agent, `/users/${id}`, userObj, status);
         const getOneRequest = (id: string) => makeGetRequest(request(app), `/users/${id}`, 200);
@@ -310,7 +311,7 @@ describe("User API endpoints", () => {
     });
 
     describe("DELETE /users/:id (delete one user)", () => {
-        const deleteRequest = (id: string, status: number = 200) =>
+        const deleteRequest = (id: string, status = 200) =>
             (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/users/${id}`, status);
         const getAllRequest = () => makeGetRequest(request(app), "/users", 200);
         afterEach(async () => {
@@ -332,7 +333,7 @@ describe("User API endpoints", () => {
             const { body: getAllRes } = await getAllRequest();
             expect(getAllRes).toBeArrayOfSize(3);
             expect(getAllRes.filter((user: User) => user.id === deletableUser.id!)).toBeEmpty();
-        });
+        }, 2000);
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
             await adminLoggedIn(deleteRequest(uuid(), 404), app);
         });
@@ -344,3 +345,4 @@ describe("User API endpoints", () => {
         });
     });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access */

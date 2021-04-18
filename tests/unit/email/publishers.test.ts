@@ -31,6 +31,7 @@ describe("EmailPublisher", () => {
         date: "2020-04-11 00:13:02",
         ts: 1586556782,
         "message-id": "<5d0e2800bbddbd4ed05cc56a@domain.com>",
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         ts_event: 1586556782,
     };
     const eventJson = JSON.stringify(event);

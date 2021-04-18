@@ -24,6 +24,8 @@ export class LoginHandler implements ExpressMiddlewareInterface {
         const email = request?.body?.email as string;
         const password = request?.body?.password as string;
         /* eslint-enable @typescript-eslint/no-unsafe-member-access */
+
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         return signInAuthentication(email, password, this.userDAO, async (err?: Error, user?: UserDO) => {
             if (err || !user) {
                 const message = `User could not be authenticated. ${err ? err.message : ""}`;
@@ -58,6 +60,7 @@ export class RegisterHandler implements ExpressMiddlewareInterface {
         if (!email || !password) {
             return next(new Error("Some details are missing. Cannot register user."));
         }
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         return signUpAuthentication(email, password, this.userDAO, async (err?: Error, user?: UserDO) => {
             if (err) {
                 return next(err);

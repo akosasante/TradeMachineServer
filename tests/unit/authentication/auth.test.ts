@@ -17,6 +17,7 @@ import { UserFactory } from "../../factories/UserFactory";
 import logger from "../../../src/bootstrap/logger";
 import { MockObj } from "../DAO/daoHelpers";
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, Role.OWNER);
 
 const mockUserDAO: MockObj = {
@@ -71,7 +72,7 @@ describe("Authorization helper methods", () => {
         it("should create and return a new user if none existed before", async () => {
             mockUserDAO.findUserWithPassword.mockResolvedValueOnce(undefined);
             mockUserDAO.createUsers.mockResolvedValueOnce([testUser]);
-            await signUpAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
+            await signUpAuthentication(testUser.email, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
 
             expect(mockUserDAO.findUserWithPassword).toBeCalledTimes(1);
             expect(mockUserDAO.findUserWithPassword).toBeCalledWith({email: testUser.email});
@@ -89,7 +90,7 @@ describe("Authorization helper methods", () => {
             delete passwordlessUser.password;
             mockUserDAO.findUserWithPassword.mockResolvedValueOnce(passwordlessUser);
             mockUserDAO.updateUser.mockResolvedValueOnce(testUser);
-            await signUpAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
+            await signUpAuthentication(testUser.email, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
 
             expect(mockUserDAO.findUserWithPassword).toBeCalledTimes(1);
             expect(mockUserDAO.findUserWithPassword).toBeCalledWith({email: testUser.email});
@@ -103,7 +104,7 @@ describe("Authorization helper methods", () => {
         });
         it("should return a ConflictError if the player is already signed up", async () => {
             mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testUser);
-            await signUpAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
+            await signUpAuthentication(testUser.email, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
 
             expect(mockUserDAO.createUsers).toHaveBeenCalledTimes(0);
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
@@ -126,7 +127,7 @@ describe("Authorization helper methods", () => {
             delete passwordlessUser.password;
             mockUserDAO.updateUser.mockResolvedValueOnce(passwordlessUser);
 
-            await signInAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
+            await signInAuthentication(testUser.email, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
 
             expect(mockUserDAO.findUserWithPassword).toBeCalledTimes(1);
             expect(mockUserDAO.findUserWithPassword).toBeCalledWith({email: testUser.email});
@@ -139,7 +140,7 @@ describe("Authorization helper methods", () => {
         });
         it("should return an error if the password is not matching", async () => {
             mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testUser);
-            await signInAuthentication(testUser.email!, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
+            await signInAuthentication(testUser.email, testUser.password!, mockUserDAO as unknown as UserDAO, cb);
 
             expect(mockUserDAO.findUserWithPassword).toBeCalledTimes(1);
             expect(mockUserDAO.findUserWithPassword).toBeCalledWith({email: testUser.email});
@@ -197,7 +198,7 @@ describe("Authorization helper methods", () => {
             const actionWithoutUser: Action = {request: {session: {}}, response: {}};
 
             const res = await currentUserChecker(actionWithoutUser, mockUserDAO as unknown as UserDAO);
-            await expect(res).toBeUndefined();
+            expect(res).toBeUndefined();
             expect(mockUserDAO.getUserById).toBeCalledTimes(0);
         });
     });
@@ -223,3 +224,4 @@ describe("Authorization helper methods", () => {
         });
     });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-assignment */

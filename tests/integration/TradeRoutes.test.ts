@@ -32,7 +32,6 @@ import TradeItem from "../../src/models/tradeItem";
 
 let app: Server;
 let adminUser: User;
-let ownerUser: User;
 let playerDAO: PlayerDAO;
 let pickDAO: DraftPickDAO;
 let teamDAO: TeamDAO;
@@ -41,7 +40,7 @@ let tradeDAO: TradeDAO;
 // @ts-ignore
 TradeTracker.appendNewTrade = jest.fn();
 
-
+/* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access */
 async function shutdown() {
     await new Promise<void>((resolve, reject) => {
         redisClient.quit((err, reply) => {
@@ -84,7 +83,7 @@ afterAll(async () => {
 describe("Trade API endpoints", () => {
     beforeEach(async () => {
         // Create admin and owner users in db for rest of this suite's use
-        [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+        [adminUser] = await setupOwnerAndAdminUsers();
         return adminUser;
     });
 
@@ -94,10 +93,10 @@ describe("Trade API endpoints", () => {
 
     describe("POST /trades (create new trade)", () => {
         const expectErrorString = expect.stringMatching(/Trade is not valid/);
-        const postRequest = (tradeObj: Partial<Trade>, status: number = 200) =>
+        const postRequest = (tradeObj: Partial<Trade>, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<Partial<Trade>>(agent, "/trades", tradeObj, status);
-        const getOneRequest = (id: string, status: number = 200) =>
+        const getOneRequest = (id: string, status = 200) =>
             makeGetRequest(request(app), `/trades/${id}`, status);
 
         afterEach(async () => {
@@ -147,7 +146,7 @@ describe("Trade API endpoints", () => {
     });
 
     describe("GET /trades (get all trades)", () => {
-        const getAllRequest = (hydrated: string = "", status: number = 200) => makeGetRequest(request(app), `/trades${hydrated}`, status);
+        const getAllRequest = (hydrated = "", status = 200) => makeGetRequest(request(app), `/trades${hydrated}`, status);
 
         it("should return an array of all trades in the db", async () => {
             const testTrade = TradeFactory.getTrade();
@@ -187,7 +186,7 @@ describe("Trade API endpoints", () => {
     });
 
     describe("GET /trades/:id (get one trade)", () => {
-        const getOneRequest = (id: string, hydrated: string = "", status: number = 200) =>
+        const getOneRequest = (id: string, hydrated = "", status = 200) =>
             makeGetRequest(request(app), `/trades/${id}${hydrated}`, status);
 
         it("should return a single trade for the given id", async () => {
@@ -231,7 +230,7 @@ describe("Trade API endpoints", () => {
     });
 
     describe("PUT /trades/:id (update one trade)", () => {
-        const putTradeRequest = (id: string, tradeObj: Partial<Trade>, status: number = 200) =>
+        const putTradeRequest = (id: string, tradeObj: Partial<Trade>, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<Trade>>(agent, `/trades/${id}`, tradeObj, status);
 
@@ -302,8 +301,9 @@ describe("Trade API endpoints", () => {
     });
 
     describe("PUT /trades/:id/:action (accept/reject/submit a trade)", () => {
-        type actionBody = { declinedById: string, declinedReason: string } | undefined;
-        const putTradeRequest = (action: string, id: string, actionObj: actionBody, status: number = 200) =>
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        type actionBody = { declinedById: string; declinedReason: string } | undefined;
+        const putTradeRequest = (action: string, id: string, actionObj: actionBody, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<actionBody>(agent, `/trades/${id}/${action}`, actionObj, status);
 
@@ -362,7 +362,7 @@ describe("Trade API endpoints", () => {
     });
 
     describe("DELETE /trades/:id (delete one trade)", () => {
-        const deleteTradeRequest = (id: string, status: number = 200) =>
+        const deleteTradeRequest = (id: string, status = 200) =>
             (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/trades/${id}`, status);
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -390,3 +390,4 @@ describe("Trade API endpoints", () => {
         });
     });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access */

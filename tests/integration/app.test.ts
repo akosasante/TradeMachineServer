@@ -38,9 +38,9 @@ describe("GET /random-url", () => {
         return shutdownRedis;
     });
 
-    it("should return 404", done => {
-        request(app)
+    it("should return 404", async () => {
+        await request(app)
             .get("/blahblah")
-            .expect(404, done);
+            .expect(404);
     }, 2000);
 });

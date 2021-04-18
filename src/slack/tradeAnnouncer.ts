@@ -5,6 +5,7 @@ import logger from "../bootstrap/logger";
 import {inspect} from "util";
 import TradeFormatter from "./tradeFormatter";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const SlackBlocks = {
     divider: {type: "divider"},
     mrkdwnSection(text: string) {
@@ -31,7 +32,7 @@ export class SlackTradeAnnouncer {
     private static url: string = process.env.SLACK_WEBHOOK_URL || "";
     private static webhook = new IncomingWebhook(SlackTradeAnnouncer.url);
 
-    // eslint-disable-next-line no-empty,@typescript-eslint/no-empty-function
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     constructor() {
     }
 

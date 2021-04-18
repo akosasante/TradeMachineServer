@@ -24,11 +24,33 @@ let adminUser: User;
 let ownerUser: User;
 let testSettings: Settings;
 let testSettings2: Settings;
-let expectedTestSettings: object;
-let expectedTestSettings2: object;
-let mergedSettings: object;
+let expectedTestSettings: {
+  id: any;
+  modifiedBy: any;
+  tradeWindowStart: string | undefined;
+  tradeWindowEnd: string | undefined;
+  // tslint:disable-next-line:no-null-keyword
+  downtime: null;
+};
+let expectedTestSettings2: {
+  id: any;
+  modifiedBy: any;
+  downtime: any;
+  // tslint:disable-next-line:no-null-keyword
+  tradeWindowStart: null;
+  // tslint:disable-next-line:no-null-keyword
+  tradeWindowEnd: null;
+};
+let mergedSettings: {
+  id: any;
+  modifiedBy: any;
+  downtime: any;
+  tradeWindowStart: string | undefined;
+  tradeWindowEnd: string | undefined;
+};
 let settingsDAO: SettingsDAO;
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 async function shutdown() {
     await new Promise<void>((resolve, reject) => {
         redisClient.quit((err, reply) => {
@@ -123,7 +145,7 @@ describe("Settings API endpoints for general settings", () => {
     });
 
     describe("GET /settings (get all settings lines)", () => {
-        const getAllRequest = (status: number = 200) =>
+        const getAllRequest = (status = 200) =>
             (agent: request.SuperTest<request.Test>) => makeGetRequest(agent, "/settings", status);
 
         it("should return an array of all settings in the db", async () => {
@@ -147,7 +169,7 @@ describe("Settings API endpoints for general settings", () => {
     });
 
     describe("GET /settings/current (get most recent settings line)", () => {
-        const getRecentRequest = (status: number = 200) =>
+        const getRecentRequest = (status = 200) =>
             (agent: request.SuperTest<request.Test>) => makeGetRequest(agent, "/settings/current", status);
 
         it("should return the most recently inserted settings line", async () => {
@@ -169,7 +191,7 @@ describe("Settings API endpoints for general settings", () => {
     });
 
     describe("GET /settings/:id (get settings line by ID)", () => {
-        const getOneRequest = (id: string, status: number = 200) =>
+        const getOneRequest = (id: string, status = 200) =>
             (agent: request.SuperTest<request.Test>) => makeGetRequest(agent, `/settings/${id}`, status);
 
 
@@ -193,10 +215,10 @@ describe("Settings API endpoints for general settings", () => {
 
     describe("POST /settings (insert new settings line)", () => {
         const expectErrorString = expect.stringMatching(/Modifying user must be provided/);
-        const postRequest = (settingsObj: Partial<Settings>, status: number = 200) =>
+        const postRequest = (settingsObj: Partial<Settings>, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<Partial<Settings>>(agent, "/settings", settingsObj, status);
-        const getOneRequest = (id: string, status: number = 200) =>
+        const getOneRequest = (id: string, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makeGetRequest(agent, `/settings/${id}`, status);
 
@@ -248,3 +270,4 @@ describe("Settings API endpoints for general settings", () => {
         });
     });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */

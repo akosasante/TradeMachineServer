@@ -28,7 +28,7 @@ describe("Authentication middleware", () => {
             mockUserDAO.updateUser.mockResolvedValueOnce(testUserWithPass);
             const next: NextFunction = jest.fn();
             const request: Request = {
-                body: {email: testUser.email!, password: testUser.password!},
+                body: {email: testUser.email, password: testUser.password!},
                 // @ts-ignore
                 session: {save: jest.fn()},
             };
@@ -37,14 +37,14 @@ describe("Authentication middleware", () => {
             const loginHandler = new LoginHandler(mockUserDAO as unknown as UserDAO);
             await loginHandler.use(request, response, next);
 
-            expect(request.session!.save).toBeCalledTimes(1);
-            expect(request.session!.user).toBeDefined();
-            expect(request.session!.user).toEqual(testUser.id);
+            expect(request.session.save).toBeCalledTimes(1);
+            expect(request.session.user).toBeDefined();
+            expect(request.session.user).toEqual(testUser.id);
         });
         it("should return and call next with an Unauthorized error and not serialize the user if sign in fails", async () => {
             const next: NextFunction = jest.fn();
             const request: Request = {
-                body: {email: testUser.email!, password: testUser.password!},
+                body: {email: testUser.email, password: testUser.password!},
                 // @ts-ignore
                 session: {destroy: jest.fn()},
             };
@@ -55,8 +55,8 @@ describe("Authentication middleware", () => {
 
             expect(next).toBeCalledTimes(1);
             expect(next).toBeCalledWith(new UnauthorizedError("User could not be authenticated. Error with sign-in strategy: no user found"));
-            expect(request.session!.destroy).toBeCalledTimes(1);
-            expect(request.session!.user).toBeUndefined();
+            expect(request.session.destroy).toBeCalledTimes(1);
+            expect(request.session.user).toBeUndefined();
         });
     });
     describe("Register Handler", () => {
@@ -67,7 +67,7 @@ describe("Authentication middleware", () => {
             mockUserDAO.updateUser.mockResolvedValueOnce(testUser);
             const next: NextFunction = jest.fn();
             const request: Request = {
-                body: {email: testUser.email!, password: testUser.password!},
+                body: {email: testUser.email, password: testUser.password!},
                 // @ts-ignore
                 session: {},
             };
@@ -78,14 +78,14 @@ describe("Authentication middleware", () => {
 
             expect(next).toBeCalledTimes(1);
             expect(next).toBeCalledWith();
-            expect(request.session!.user).toBeDefined();
-            expect(request.session!.user).toEqual(testUser.id);
+            expect(request.session.user).toBeDefined();
+            expect(request.session.user).toEqual(testUser.id);
         });
         it("should return the original error if the signup method returns an error", async () => {
             mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testUser);
             const next: NextFunction = jest.fn();
             const request: Request = {
-                body: {email: testUser.email!, password: testUser.password!},
+                body: {email: testUser.email, password: testUser.password!},
                 // @ts-ignore
                 session: {},
             };
@@ -96,7 +96,7 @@ describe("Authentication middleware", () => {
 
             expect(next).toBeCalledTimes(1);
             expect(next).toBeCalledWith(new ConflictError("Email already in use and signed up."));
-            expect(request.session!.user).toBeUndefined();
+            expect(request.session.user).toBeUndefined();
         });
     });
 });

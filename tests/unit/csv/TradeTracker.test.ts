@@ -7,6 +7,7 @@ import { PlayerFactory } from "../../factories/PlayerFactory";
 import { PlayerLeagueType } from "../../../src/models/player";
 import { TeamFactory } from "../../factories/TeamFactory";
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
 jest.mock("googleapis");
 const mockedGoogleSheets = mocked(google);
 const mockBatchUpdate = jest.fn();
@@ -37,7 +38,9 @@ let values: any[];
 
 function getCellValues(mockBatchUpdateMock: jest.MockContext<any, any>) {
     const { requestBody: { requests } } = mockBatchUpdateMock.calls[0][0];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const { updateCells: { rows } } = (requests as any[]).find(obj => obj.hasOwnProperty("updateCells"));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return rows[0].values;
 }
 
@@ -81,6 +84,7 @@ describe("TradeTracker.appendNewTrade/1", () => {
 
     it("should leave a blank cell for ratings", () => {
         const ratingCells = [values[5], values[10]];
+        // eslint-disable-next-line @typescript-eslint/ban-types
         ratingCells.forEach((cell: object) =>
             expect(cell).toEqual(expect.objectContaining({userEnteredValue: {stringValue: " "}}))
         );
@@ -98,6 +102,7 @@ describe("TradeTracker.appendNewTrade/1", () => {
         const creatorReceivedPlayers = values[2];
         const creatorReceivedPicks = values[4];
         const receiverProspects = values[8];
+        // eslint-disable-next-line @typescript-eslint/ban-types
         [creatorReceivedPlayers, creatorReceivedPicks, receiverProspects].forEach((cell: object) =>
             expect(cell).toEqual(expect.objectContaining({userEnteredValue: {stringValue: ""}}))
         );
@@ -149,3 +154,4 @@ describe("TradeTracker.appendNewTrade/1", () => {
     });
 
 });
+/* eslint-enable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */

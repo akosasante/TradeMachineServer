@@ -1,3 +1,4 @@
+import "jest-extended";
 import axios, { AxiosPromise } from "axios";
 import EspnAPI from "../../../src/espn/espnApi";
 import allDataJson from "../../resources/espn-general-resp.json";
@@ -44,10 +45,12 @@ afterAll(() => {
 });
 describe("EspnApi Class", () => {
     const testLeagueId = 545;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const Api = new EspnAPI(testLeagueId);
 
     it("getAllLeagueData/1 - should return general league data", async () => {
         mockedGet.mockResolvedValueOnce({data: allDataJson} as unknown as AxiosPromise);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const res = await Api.getAllLeagueData(2019);
         expect(res).toEqual(allDataJson);
     });
