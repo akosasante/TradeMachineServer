@@ -2,7 +2,7 @@
 .PHONY: help
 .PHONY: test-ci test-unit test-integration test-update-snapshots test-local
 .PHONY: watch-ts-files watch-js-server dev-server watch-js-debug-server debug-server
-.PHONY: lint lint-fix compile-ts copy-email-templates build serve typecheck
+.PHONY: lint lint-fix format compile-ts copy-email-templates build serve typecheck
 .PHONY: generate-migration run-migration revert-migration
 
 help: ## show make commands
@@ -131,6 +131,9 @@ lint: ## Run typescript linting
 
 lint-fix: ## Attempt to fix any typescript lint errors
 	npx eslint . --ext .ts,.tsx --fix
+
+format: ## Reformat all files wih Prettier
+	 npx prettier --write "src/**/*.ts" &&  npx prettier --write "tests/**/*.ts"
 
 # |----------- BUILD AND SERVE SCRIPTS ---------|
 compile-ts: ## Compile typescript

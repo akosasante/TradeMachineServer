@@ -186,15 +186,15 @@ export default class EspnAPI {
         let offset = 0;
 
         do {
-            const {
-                data,
-                headers,
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-            } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`, {
-                headers: {
-                    "X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`,
-                },
-            });
+            const { data, headers } = await this.req.get(
+                `${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`,
+                {
+                    headers: {
+                        // eslint-disable-next-line @typescript-eslint/naming-convention
+                        "X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`,
+                    },
+                }
+            );
             players.push(...data.players);
             total += data.players.length;
             offset += 100;
