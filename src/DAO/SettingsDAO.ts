@@ -12,12 +12,12 @@ export default class SettingsDAO {
     }
 
     public async getAllSettings(): Promise<Settings[]> {
-        const options: FindManyOptions = {order: {dateCreated: "DESC"}};
+        const options: FindManyOptions = { order: { dateCreated: "DESC" } };
         return await this.settingsDb.find(options);
     }
 
     public async getMostRecentSettings(): Promise<Settings | undefined> {
-        const options: FindOneOptions = {order: {dateCreated: "DESC"}};
+        const options: FindOneOptions = { order: { dateCreated: "DESC" } };
         return await this.settingsDb.findOne(options);
     }
 
@@ -36,7 +36,10 @@ export default class SettingsDAO {
         logger.debug(`old settings: ${inspect(mostRecentSettings)}`);
         const newLine = {
             ...(mostRecentSettings || {}),
-            ...settings, id: (settings.id || undefined), dateModified: undefined, dateCreated: undefined,
+            ...settings,
+            id: settings.id || undefined,
+            dateModified: undefined,
+            dateCreated: undefined,
         };
 
         const result: InsertResult = await this.settingsDb.insert(newLine);

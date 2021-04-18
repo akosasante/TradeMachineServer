@@ -3,8 +3,7 @@ import winston from "winston";
 import { rollbar } from "../bootstrap/rollbar";
 
 export default class CustomQueryLogger implements Logger {
-    constructor(private winstonLogger: winston.Logger) {
-    }
+    constructor(private winstonLogger: winston.Logger) {}
 
     public sqlString(query: string, parameters?: any[]) {
         return `${query};
@@ -26,7 +25,7 @@ export default class CustomQueryLogger implements Logger {
         const sql = this.sqlString(query, parameters);
         this.winstonLogger.info(`QUERY FAILED: ${sql}`);
         this.winstonLogger.error(`QUERY ERROR: ${error}`);
-        rollbar.error("Query failed", {sql, error});
+        rollbar.error("Query failed", { sql, error });
     }
 
     /**
@@ -36,7 +35,7 @@ export default class CustomQueryLogger implements Logger {
         const sql = this.sqlString(query, parameters);
         this.winstonLogger.info(`SLOW QUERY: ${sql}`);
         this.winstonLogger.error(`SLOW QUERY EXECUTION TIME: ${time}`);
-        rollbar.error("Slow query", {sql, parameters, time});
+        rollbar.error("Slow query", { sql, parameters, time });
     }
 
     /**

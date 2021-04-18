@@ -45,7 +45,7 @@ export class EmailPublisher extends Publisher {
         const job: EmailJob = {
             event: JSON.stringify(event),
         };
-        const opts: JobOptions = {attempts: 3, backoff: 10000};
+        const opts: JobOptions = { attempts: 3, backoff: 10000 };
         logger.debug(`queuing webhook response: ${inspect(event)}`);
         return await this.queue!.add(jobName, job, opts);
     }
@@ -67,19 +67,23 @@ export class EmailPublisher extends Publisher {
             const job: EmailJob = {
                 user: JSON.stringify(user),
             };
-            const opts: JobOptions = {attempts: 3, backoff: {type: "exponential", delay: 30000}};
+            const opts: JobOptions = { attempts: 3, backoff: { type: "exponential", delay: 30000 } };
             logger.debug(`queuing email job ${jobName}, for entity ${user.id}`);
             return await this.queue!.add(jobName, job, opts);
         }
     }
 
-    private async queueTradeEmail(trade: Trade, email: string, jobName: EmailJobName): Promise<Job<TradeEmail> | undefined> {
+    private async queueTradeEmail(
+        trade: Trade,
+        email: string,
+        jobName: EmailJobName
+    ): Promise<Job<TradeEmail> | undefined> {
         if (EmailPublisher.isValidEmail(email)) {
             const job: TradeEmail = {
                 trade: JSON.stringify(trade),
                 recipient: email,
             };
-            const opts: JobOptions = {attempts: 3, backoff: {type: "exponential", delay: 30000}};
+            const opts: JobOptions = { attempts: 3, backoff: { type: "exponential", delay: 30000 } };
             logger.debug(`queuing email job ${jobName}, for trade ${trade.id} to ${email}`);
             return await this.queue!.add(jobName, job, opts);
         }

@@ -6,7 +6,6 @@ import { BadRequestError } from "routing-controllers";
 import PlayerDAO from "./PlayerDAO";
 import DraftPickDAO from "./DraftPickDAO";
 
-
 export default class TradeDAO {
     private tradeDb: Repository<Trade>;
     private playerDao: PlayerDAO;
@@ -19,7 +18,7 @@ export default class TradeDAO {
     }
 
     public async getAllTrades(): Promise<Trade[]> {
-        const options: FindManyOptions = {order: {id: "ASC"}};
+        const options: FindManyOptions = { order: { id: "ASC" } };
         return await this.tradeDb.find(options);
     }
 
@@ -28,7 +27,7 @@ export default class TradeDAO {
     }
 
     public async hydrateTrade(trade: Trade): Promise<Trade> {
-        for (const item of (trade.tradeItems || [])) {
+        for (const item of trade.tradeItems || []) {
             if (item.tradeItemType === TradeItemType.PICK) {
                 item.entity = await this.pickDao.getPickById(item.tradeItemId);
             }
@@ -51,15 +50,14 @@ export default class TradeDAO {
 
     public async deleteTrade(id: string): Promise<DeleteResult> {
         await this.tradeDb.findOneOrFail(id);
-        return await this.tradeDb.createQueryBuilder()
-            .delete()
-            .whereInIds(id)
-            .returning("id")
-            .execute();
+        return await this.tradeDb.createQueryBuilder().delete().whereInIds(id).returning("id").execute();
     }
 
-    public async updateParticipants(id: string, participantsToAdd: TradeParticipant[],
-                                    participantsToRemove: TradeParticipant[]): Promise<Trade> {
+    public async updateParticipants(
+        id: string,
+        participantsToAdd: TradeParticipant[],
+        participantsToRemove: TradeParticipant[]
+    ): Promise<Trade> {
         await this.tradeDb.findOneOrFail(id);
         await this.tradeDb
             .createQueryBuilder()
@@ -71,26 +69,22 @@ export default class TradeDAO {
 
     public async updateItems(id: string, itemsToAdd: TradeItem[], itemsToRemove: TradeItem[]): Promise<Trade> {
         await this.tradeDb.findOneOrFail(id);
-        await this.tradeDb
-            .createQueryBuilder()
-            .relation("tradeItems")
-            .of(id)
-            .addAndRemove(itemsToAdd, itemsToRemove);
+        await this.tradeDb.createQueryBuilder().relation("tradeItems").of(id).addAndRemove(itemsToAdd, itemsToRemove);
         return await this.tradeDb.findOneOrFail(id);
     }
 
     public async updateStatus(id: string, status: TradeStatus): Promise<Trade> {
-        await this.tradeDb.update({id}, {status});
+        await this.tradeDb.update({ id }, { status });
         return await this.getTradeById(id);
     }
 
     public async updateDeclinedBy(id: string, declinedById: string, declinedReason?: string): Promise<Trade> {
-        await this.tradeDb.update({id}, {declinedById, declinedReason});
+        await this.tradeDb.update({ id }, { declinedById, declinedReason });
         return await this.getTradeById(id);
     }
 
     public async updateAcceptedBy(id: string, acceptedBy: string[]): Promise<Trade> {
-        await this.tradeDb.update({id}, {acceptedBy, acceptedOnDate: new Date()});
+        await this.tradeDb.update({ id }, { acceptedBy, acceptedOnDate: new Date() });
         return await this.getTradeById(id);
     }
 }

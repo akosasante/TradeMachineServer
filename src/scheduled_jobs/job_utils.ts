@@ -1,6 +1,19 @@
 import { Job, JobOptions } from "bull";
 
-export function cleanJobForLogging(job: Job, cleanReturnValue: (arg0: any) => any, cleanData: (arg0: any) => any): { returnValue: any; opts: JobOptions; processedOn: number | undefined; data: any; attemptsMade: number; name: string; id: number | string; finishedOn: number | undefined } {
+export function cleanJobForLogging(
+    job: Job,
+    cleanReturnValue: (arg0: any) => any,
+    cleanData: (arg0: any) => any
+): {
+    returnValue: any;
+    opts: JobOptions;
+    processedOn: number | undefined;
+    data: any;
+    attemptsMade: number;
+    name: string;
+    id: number | string;
+    finishedOn: number | undefined;
+} {
     return {
         opts: job.opts,
         name: job.name,

@@ -25,6 +25,6 @@ export class SlackPublisher extends Publisher {
         const opts: JobOptions = { attempts: 3, backoff: { type: "exponential", delay: 30000 } };
         logger.debug("queuing trade announcement response");
 
-        return await this.queue!.add(jobName, {trade: JSON.stringify(trade)}, opts);
+        return await this.queue!.add(jobName, { trade: JSON.stringify(trade) }, opts);
     }
 }

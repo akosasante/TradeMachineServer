@@ -30,12 +30,18 @@ export function setupSlackConsumers(): void {
     });
 
     slackQueue.on("stalled", job => {
-        logger.error(`Bull stalled during Slack Worker job: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        logger.error(
+            `Bull stalled during Slack Worker job: ${inspect(
+                cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+            )}`
+        );
         rollbar.error("Slack Worker job stalled", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
     });
 
     slackQueue.on("active", job => {
-        logger.info(`Slack Worker job started: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        logger.info(
+            `Slack Worker job started: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`
+        );
     });
 
     slackQueue.on("completed", (job, _result) => {
@@ -44,7 +50,11 @@ export function setupSlackConsumers(): void {
     });
 
     slackQueue.on("failed", (job, err) => {
-        logger.error(`"Slack Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
+        logger.error(
+            `"Slack Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(
+                err
+            )}`
+        );
         rollbar.error("Slack Worker failed", err);
     });
 }

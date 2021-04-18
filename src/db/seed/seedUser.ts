@@ -8,8 +8,7 @@ import User from "../../models/user";
 import logger from "../../bootstrap/logger";
 import { inspect } from "util";
 
-dotenvConfig({path: resolvePath(__dirname, "../../../.env")});
-
+dotenvConfig({ path: resolvePath(__dirname, "../../../.env") });
 
 async function run() {
     const args = process.argv.slice(2);

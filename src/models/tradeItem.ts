@@ -15,18 +15,18 @@ export enum TradeItemType {
 export type TradedItem = Player | DraftPick;
 
 @Entity()
-@Index(["trade", "tradeItemId", "tradeItemType", "sender", "recipient"], {unique: true})
+@Index(["trade", "tradeItemId", "tradeItemType", "sender", "recipient"], { unique: true })
 export default class TradeItem extends BaseModel {
     public entity?: TradedItem;
-    @Column({type: "uuid"})
+    @Column({ type: "uuid" })
     public readonly tradeItemId!: string;
-    @Column({type: "enum", enum: TradeItemType, default: TradeItemType.PLAYER})
+    @Column({ type: "enum", enum: TradeItemType, default: TradeItemType.PLAYER })
     public readonly tradeItemType!: TradeItemType;
-    @ManyToOne(_type => Trade, trade => trade.tradeParticipants, {onDelete: "CASCADE"})
+    @ManyToOne(_type => Trade, trade => trade.tradeParticipants, { onDelete: "CASCADE" })
     public trade!: Trade;
-    @ManyToOne(_type => Team, team => team.tradeItemsSent, {cascade: true, eager: true})
+    @ManyToOne(_type => Team, team => team.tradeItemsSent, { cascade: true, eager: true })
     public sender!: Team;
-    @ManyToOne(_type => Team, team => team.tradeItemsReceived, {cascade: true, eager: true})
+    @ManyToOne(_type => Team, team => team.tradeItemsReceived, { cascade: true, eager: true })
     public recipient!: Team;
 
     constructor(props: Partial<TradeItem>) {
@@ -35,8 +35,7 @@ export default class TradeItem extends BaseModel {
     }
 
     public static filterPlayers(tradeItems?: TradeItem[]): TradeItem[] {
-        return tradeItems ? tradeItems.filter(item =>
-            (item.tradeItemType === TradeItemType.PLAYER)) : [];
+        return tradeItems ? tradeItems.filter(item => item.tradeItemType === TradeItemType.PLAYER) : [];
     }
 
     public static filterPicks(tradeItems?: TradeItem[]): TradeItem[] {

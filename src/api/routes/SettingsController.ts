@@ -38,7 +38,7 @@ export default class SettingsController {
     @Authorized(Role.ADMIN)
     @Get(UUID_PATTERN)
     public async getOneSettingsLine(@Param("id") id: string): Promise<Settings> {
-        rollbar.info("getOneSettingsLine", {id});
+        rollbar.info("getOneSettingsLine", { id });
         logger.debug("get one settings line by id endpoint");
         const settings = await this.dao.getSettingsById(id);
         logger.debug(`got settings: ${settings}`);

@@ -16,8 +16,8 @@ export async function setupExpressApp(): Promise<Express> {
     logger.debug("database setup complete");
 
     logger.debug("setting up consumers");
-    const {setupEmailConsumers} = await import("../email/consumers");
-    const {setupSlackConsumers} = await import("../slack/consumers");
+    const { setupEmailConsumers } = await import("../email/consumers");
+    const { setupSlackConsumers } = await import("../slack/consumers");
     setupEmailConsumers();
     setupSlackConsumers();
     logger.debug("consumer setup complete");
@@ -25,7 +25,13 @@ export async function setupExpressApp(): Promise<Express> {
     // Register routes and some global auth middlewares
     logger.debug("setting up route-controllers");
     const developmentOrigins = [/localhost:3000/, /localhost:8080/, /127\.0\.0\.1/, /ngrok/];
-    const prodOrigins = [/newtrades\.akosua\.xyz/, /staging\.trades\.akosua\.xyz/, /trades\.akosua\.xyz/, /naughty-wozniak-9fc262\.netlify\.app/, /trades\.flexfoxfantasy\.com/];
+    const prodOrigins = [
+        /newtrades\.akosua\.xyz/,
+        /staging\.trades\.akosua\.xyz/,
+        /trades\.akosua\.xyz/,
+        /naughty-wozniak-9fc262\.netlify\.app/,
+        /trades\.flexfoxfantasy\.com/,
+    ];
     const allowedOrigins = prodOrigins.concat(process.env.NODE_ENV === "development" ? developmentOrigins : []);
 
     useExpressServer(expressApp, {

@@ -16,7 +16,7 @@ export default class Email {
     @UpdateDateColumn()
     public dateModified?: Date;
 
-    @ManyToOne(_type => Trade, trade => trade.tradeParticipants, {onDelete: "SET NULL", nullable: true})
+    @ManyToOne(_type => Trade, trade => trade.tradeParticipants, { onDelete: "SET NULL", nullable: true })
     public trade!: Trade;
 
     constructor(props: Partial<Email> & Required<Pick<Email, "messageId">>) {

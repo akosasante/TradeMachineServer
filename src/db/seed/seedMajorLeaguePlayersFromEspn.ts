@@ -7,8 +7,7 @@ import EspnAPI from "../../espn/espnApi";
 import logger from "../../bootstrap/logger";
 import TeamDAO from "../../DAO/TeamDAO";
 
-dotenvConfig({path: resolvePath(__dirname, "../../../tests/.env")});
-
+dotenvConfig({ path: resolvePath(__dirname, "../../../tests/.env") });
 
 async function run() {
     const args = process.argv.slice(2);

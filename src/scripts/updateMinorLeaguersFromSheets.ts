@@ -7,9 +7,15 @@ import { processMinorLeagueCsv } from "../csv/PlayerParser";
 
 async function run() {
     const args = process.argv.slice(2);
-    const MINOR_LEAGUE_SHEETS_URL = args[0] || "https://docs.google.com/spreadsheets/d/e/2PACX-1vRRwHMjBxlsPTO9XPsiwuTroHi93Fijfx8bofQhnlrivopm2F898hqwzyyox5hyKePL3YacBFtbphK_/pub?gid=555552461&single=true&output=csv";
+    const MINOR_LEAGUE_SHEETS_URL =
+        args[0] ||
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vRRwHMjBxlsPTO9XPsiwuTroHi93Fijfx8bofQhnlrivopm2F898hqwzyyox5hyKePL3YacBFtbphK_/pub?gid=555552461&single=true&output=csv";
     const tempPath = "/tmp/trade_machine_2_csvs/";
-    const MinorLeagueCsv = await getCsvFromUrl(MINOR_LEAGUE_SHEETS_URL, tempPath, `downloaded minor league players csv - ${Date.now()}.csv`);
+    const MinorLeagueCsv = await getCsvFromUrl(
+        MINOR_LEAGUE_SHEETS_URL,
+        tempPath,
+        `downloaded minor league players csv - ${Date.now()}.csv`
+    );
 
     await initializeDb(true);
     const teamDAO = new TeamDAO();

@@ -10,7 +10,7 @@ import { rollbar } from "../bootstrap/rollbar";
 /* eslint-disable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
 export function setupEmailConsumers() {
     logger.info("registering email consumers");
-    const emailQueue = new Bull("email_queue", {settings: {maxStalledCount: 0, lockDuration: 60000}});
+    const emailQueue = new Bull("email_queue", { settings: { maxStalledCount: 0, lockDuration: 60000 } });
     const cleanLoggedData = (data: any) => {
         if (data.user) {
             const user: User = JSON.parse(data.user || "{}");
@@ -31,14 +31,16 @@ export function setupEmailConsumers() {
         }
     };
     const cleanLoggedReturn = (returnValue: any) => {
-        return returnValue ? {
-            messageId: returnValue?.messageId,
-            code: returnValue?.code,
-            message: returnValue?.message,
-            to: returnValue?.originalMessage.to,
-            from: returnValue?.originalMessage.from,
-            subject: returnValue?.originalMessage.subject,
-        } : "";
+        return returnValue
+            ? {
+                  messageId: returnValue?.messageId,
+                  code: returnValue?.code,
+                  message: returnValue?.message,
+                  to: returnValue?.originalMessage.to,
+                  from: returnValue?.originalMessage.from,
+                  subject: returnValue?.originalMessage.subject,
+              }
+            : "";
     };
 
     void emailQueue.process("reset_pass", handleEmailJob);
@@ -55,12 +57,18 @@ export function setupEmailConsumers() {
     });
 
     emailQueue.on("stalled", job => {
-        logger.error(`Bull stalled during Email Worker job: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        logger.error(
+            `Bull stalled during Email Worker job: ${inspect(
+                cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+            )}`
+        );
         rollbar.error("Email Worker job stalled", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
     });
 
     emailQueue.on("active", job => {
-        logger.info(`Email Worker job started: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        logger.info(
+            `Email Worker job started: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`
+        );
     });
 
     emailQueue.on("completed", (job, _result) => {
@@ -69,7 +77,11 @@ export function setupEmailConsumers() {
     });
 
     emailQueue.on("failed", (job, err) => {
-        logger.error(`"Email Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
+        logger.error(
+            `"Email Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(
+                err
+            )}`
+        );
         rollbar.error("Email Worker job failed", err);
     });
 }

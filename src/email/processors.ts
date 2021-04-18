@@ -11,7 +11,7 @@ import Player from "../models/player";
 import Email from "../models/email";
 
 export type EmailJobName =
-    "reset_pass"
+    | "reset_pass"
     | "registration_email"
     | "test_email"
     | "handle_webhook"
@@ -77,12 +77,14 @@ export async function handleTradeEmailJob(emailJob: Job<TradeEmail>): Promise<Se
 
     if (emailJob.data.trade && emailJob.data.recipient) {
         const trade = new Trade(JSON.parse(emailJob.data.trade));
-        for (const item of (trade.tradeItems || [])) {
+        for (const item of trade.tradeItems || []) {
             if (item.tradeItemType === TradeItemType.PLAYER) {
                 item.entity = new Player(item.entity as Partial<Player> & Required<Pick<Player, "name">>);
             }
             if (item.tradeItemType === TradeItemType.PICK) {
-                item.entity = new DraftPick(item.entity as Partial<DraftPick> & Required<Pick<DraftPick, "season" | "round" | "type">>);
+                item.entity = new DraftPick(
+                    item.entity as Partial<DraftPick> & Required<Pick<DraftPick, "season" | "round" | "type">>
+                );
             }
         }
         return await emailTask(emailJob.data.recipient, trade);
@@ -91,7 +93,8 @@ export async function handleTradeEmailJob(emailJob: Job<TradeEmail>): Promise<Se
 
 export async function handleWebhookResponse(event: EmailStatusEvent, dao?: EmailDAO): Promise<void> {
     const emailDAO = dao || new EmailDAO();
-    const email = await emailDAO.getEmailByMessageId(event["message-id"]) || new Email({messageId: event["message-id"]});
+    const email =
+        (await emailDAO.getEmailByMessageId(event["message-id"])) || new Email({ messageId: event["message-id"] });
     email.status = event.event;
     await emailDAO.updateEmail(email);
 }
