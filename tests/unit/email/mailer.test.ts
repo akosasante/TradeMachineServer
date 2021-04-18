@@ -1,5 +1,5 @@
 import "jest-extended";
-import { Emailer } from "../../../src/email/mailer";
+import { EMAILER } from "../../../src/email/mailer";
 import { UserFactory } from "../../factories/UserFactory";
 import logger from "../../../src/bootstrap/logger";
 import { TradeFactory } from "../../factories/TradeFactory";
@@ -9,7 +9,7 @@ import { PlayerLeagueType } from "../../../src/models/player";
 
 jest.mock("../../../src/DAO/EmailDAO");
 
-describe("Emailer Class", () => {
+describe("EMAILER Class", () => {
     beforeAll(() => {
         logger.debug("~~~~~~EMAILER TESTS BEGIN~~~~~~");
     });
@@ -41,27 +41,27 @@ describe("Emailer Class", () => {
     describe("email snapshots", () => {
         // each test removes dynamic message/messageId values that we don't want to match on in our snapshots
         it("sendTestEmail", async () => {
-            const {message, messageId, ...res} = await Emailer.sendTestEmail(testUser);
+            const {message, messageId, ...res} = await EMAILER.sendTestEmail(testUser);
             expect(res).toMatchSnapshot();
         });
 
         it("sendRegistrationEmail", async () => {
-            const {message, messageId, ...res} = await Emailer.sendRegistrationEmail(testUser);
+            const {message, messageId, ...res} = await EMAILER.sendRegistrationEmail(testUser);
             expect(res).toMatchSnapshot();
         });
 
         it("sendPasswordResetEmail", async () => {
-            const {message, messageId, ...res} = await Emailer.sendPasswordResetEmail(testUser);
+            const {message, messageId, ...res} = await EMAILER.sendPasswordResetEmail(testUser);
             expect(res).toMatchSnapshot();
         });
 
         it("sendTradeRequestEmail", async () => {
-            const {message, messageId, ...res} = await Emailer.sendTradeRequestEmail(testUser.email, testTrade);
+            const {message, messageId, ...res} = await EMAILER.sendTradeRequestEmail(testUser.email, testTrade);
             expect(res).toMatchSnapshot();
         });
 
         it("sendTradeSubmissionEmail", async () => {
-            const {message, messageId, ...res} = await Emailer.sendTradeSubmissionEmail(testUser.email, testTrade);
+            const {message, messageId, ...res} = await EMAILER.sendTradeSubmissionEmail(testUser.email, testTrade);
             expect(res).toMatchSnapshot();
         });
 
@@ -69,7 +69,7 @@ describe("Emailer Class", () => {
             testTrade.recipients[0].owners = [UserFactory.getOwnerUser()];
             testTrade.declinedById = testTrade.recipients[0].owners?.[0].id;
             testTrade.declinedReason = "horrible mismatch for me";
-            const {message, messageId, ...res} = await Emailer.sendTradeDeclinedEmail(testUser.email, testTrade);
+            const {message, messageId, ...res} = await EMAILER.sendTradeDeclinedEmail(testUser.email, testTrade);
             expect(res).toMatchSnapshot();
         });
     });

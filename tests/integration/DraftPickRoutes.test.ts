@@ -34,6 +34,7 @@ let userDAO: UserDAO;
 let teamDAO: TeamDAO;
 let pickDAO: DraftPickDAO;
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment,  @typescript-eslint/no-unsafe-call */
 async function shutdown() {
     await new Promise<void>((resolve, reject) => {
         redisClient.quit((err, reply) => {
@@ -84,10 +85,10 @@ describe("Pick API endpoints", () => {
 
     describe("POST /picks (create new pick)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (pickObjs: Partial<DraftPick>[], status: number = 200) =>
+        const postRequest = (pickObjs: Partial<DraftPick>[], status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<Partial<DraftPick>[]>(agent, "/picks", pickObjs, status);
-        const getOneRequest = (id: number, status: number = 200) =>
+        const getOneRequest = (id: number, status = 200) =>
             makeGetRequest(request(app), `/picks/${id}`, status);
 
         afterEach(async () => {
@@ -135,7 +136,7 @@ describe("Pick API endpoints", () => {
     });
 
     describe("GET /picks[?include=draftType] (get all picks)", () => {
-        const getAllRequest = (param: string = "", status: number = 200) =>
+        const getAllRequest = (param = "", status = 200) =>
             makeGetRequest(request(app), `/picks${param}`, status);
 
         it("should return an array of all picks in the db", async () => {
@@ -168,7 +169,7 @@ describe("Pick API endpoints", () => {
     });
 
     describe("GET /picks/:id (get one pick)", () => {
-        const getOneRequest = (id: string, status: number = 200) =>
+        const getOneRequest = (id: string, status = 200) =>
             makeGetRequest(request(app), `/picks/${id}`, status);
 
         it("should return a single pick for the given id", async () => {
@@ -187,7 +188,7 @@ describe("Pick API endpoints", () => {
     });
 
     describe("GET /picks/search?queryOpts (get picks by query)", () => {
-        const findRequest = (query: Partial<DraftPick>, status: number = 200) =>
+        const findRequest = (query: Partial<DraftPick>, status = 200) =>
             makeGetRequest(request(app), `/picks/search${stringifyQuery(query as { [key: string]: string })}`, status);
 
         it("should return picks for the given query", async () => {
@@ -206,7 +207,7 @@ describe("Pick API endpoints", () => {
     });
 
     describe("PUT /picks/:id (update one pick)", () => {
-        const putRequest = (id: string, pickObj: Partial<DraftPick>, status: number = 200) =>
+        const putRequest = (id: string, pickObj: Partial<DraftPick>, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<DraftPick>>(agent, `/picks/${id}`, pickObj, status);
         const updatedPickObj = { season: 2018 };
@@ -249,7 +250,7 @@ describe("Pick API endpoints", () => {
     });
 
     describe("DELETE /picks/:id (delete one pick)", () => {
-        const deleteRequest = (id: string, status: number = 200) =>
+        const deleteRequest = (id: string, status = 200) =>
             (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/picks/${id}`, status);
 
         afterEach(async () => {
@@ -303,14 +304,14 @@ describe("Pick API endpoints", () => {
     describe("POST /batch (batch add new draft picks via csv file)", () => {
         const csv1 = `${process.env.BASE_DIR}/tests/resources/three-player-25-picks-1.csv`;
         const csv2 = `${process.env.BASE_DIR}/tests/resources/three-player-25-picks-2.csv`;
-        const postFileRequest = (filePath: string, mode?: WriteMode, status: number = 200) =>
+        const postFileRequest = (filePath: string, mode?: WriteMode, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 agent
                     .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
                     .attach("picks", filePath)
                     .expect("Content-Type", /json/)
                     .expect(status);
-        const requestWithoutFile = (mode?: WriteMode, status: number = 200) =>
+        const requestWithoutFile = (mode?: WriteMode, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 agent
                     .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
@@ -391,3 +392,4 @@ describe("Pick API endpoints", () => {
         });
     });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */

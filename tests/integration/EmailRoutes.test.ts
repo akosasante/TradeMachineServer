@@ -52,12 +52,12 @@ describe("Email API endpoints", () => {
         return await clearDb(getConnection(process.env.NODE_ENV));
     });
 
-    const emailPostRequest = (email: string, url: string, status: number = 202) =>
+    const emailPostRequest = (email: string, url: string, status = 202) =>
         (agent: request.SuperTest<request.Test>) =>
             makePostRequest<{ email: string }>(agent, `/email/${url}`, { email }, status);
-    const webhookPostRequest = (event: object, status: number = 200) =>
+    const webhookPostRequest = (event: {[key: string]: string | number}, status = 200) =>
         (agent: request.SuperTest<request.Test>) =>
-            makePostRequest<object>(agent, "/email/sendInMailWebhook", event, status);
+            makePostRequest<{[key: string]: string | number}>(agent, "/email/sendInMailWebhook", event, status);
 
     describe("POST /testEmail (send a test notification email)", () => {
         it("should return a 202 message if the email is successfully queued", async () => {
@@ -78,6 +78,7 @@ describe("Email API endpoints", () => {
                 date: "2020-04-11 00:13:02",
                 ts: 1586556782,
                 "message-id": "<5d0e2800bbddbd4ed05cc56a@domain.com>",
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 ts_event: 1586556782,
             };
             await webhookPostRequest(webhookEvent)(request(app));

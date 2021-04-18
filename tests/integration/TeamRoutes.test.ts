@@ -34,6 +34,7 @@ let otherUser: User;
 let userDAO: UserDAO;
 let teamDAO: TeamDAO;
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access */
 async function shutdown() {
     await new Promise<void>((resolve, reject) => {
         redisClient.quit((err, reply) => {
@@ -84,10 +85,10 @@ describe("Team API endpoints", () => {
 
     describe("POST /teams (create new team)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (teamObjs: Partial<Team>[], status: number = 200) =>
+        const postRequest = (teamObjs: Partial<Team>[], status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<Partial<Team>[]>(agent, "/teams", teamObjs, status);
-        const getOneRequest = (id: string, status: number = 200) =>
+        const getOneRequest = (id: string, status = 200) =>
             makeGetRequest(request(app), `/teams/${id}`, status);
 
         afterEach(async () => {
@@ -131,8 +132,8 @@ describe("Team API endpoints", () => {
     });
 
     describe("GET /teams (get all teams)", () => {
-        const getAllRequest = (status: number = 200) => makeGetRequest(request(app), "/teams", status);
-        const getAllOwnerRequest = (condition: string, status: number = 200) =>
+        const getAllRequest = (status = 200) => makeGetRequest(request(app), "/teams", status);
+        const getAllOwnerRequest = (condition: string, status = 200) =>
             makeGetRequest(request(app), `/teams?hasOwners=${condition}`, status);
 
         it("should return an array of all teams (public vers.) in the db", async () => {
@@ -173,7 +174,7 @@ describe("Team API endpoints", () => {
     });
 
     describe("GET /teams/:id (get one team)", () => {
-        const getOneRequest = (id: string, status: number = 200) =>
+        const getOneRequest = (id: string, status = 200) =>
             makeGetRequest(request(app), `/teams/${id}`, status);
 
         it("should return a single team (public vers.) for the given id", async () => {
@@ -191,8 +192,8 @@ describe("Team API endpoints", () => {
     });
 
     describe("GET /teams/search?queryOpts (get team by query)", () => {
-        const findRequest = (query: Partial<Team>, status: number = 200) =>
-            makeGetRequest(request(app), `/teams/search${stringifyQuery(query as { [key: string]: string; })}`, status);
+        const findRequest = (query: Partial<Team>, status = 200) =>
+            makeGetRequest(request(app), `/teams/search${stringifyQuery(query as { [key: string]: string })}`, status);
 
         it("should return teams (public vers.) for the given query", async () => {
             const teams = [TeamFactory.getTeam(), TeamFactory.getTeam("Team Two", 2)];
@@ -209,7 +210,7 @@ describe("Team API endpoints", () => {
     });
 
     describe("PUT /teams/:id (update one team)", () => {
-        const putTeamRequest = (id: string, teamObj: Partial<Team>, status: number = 200) =>
+        const putTeamRequest = (id: string, teamObj: Partial<Team>, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePutRequest<Partial<Team>>(agent, `/teams/${id}`, teamObj, status);
         const updatedTeamObj = { name: "Hello darkness my old friend" };
@@ -250,7 +251,7 @@ describe("Team API endpoints", () => {
     });
 
     describe("PATCH /teams/:id (edit a team's owners)", () => {
-        const patchTeamRequest = (id: string, ownersToAdd: User[], ownersToRemove: User[], status: number = 200) =>
+        const patchTeamRequest = (id: string, ownersToAdd: User[], ownersToRemove: User[], status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePatchRequest(agent, `/teams/${id}`, { add: ownersToAdd, remove: ownersToRemove }, status);
         afterEach(async () => {
@@ -288,7 +289,7 @@ describe("Team API endpoints", () => {
     });
 
     describe("DELETE /teams/:id (delete one team)", () => {
-        const deleteTeamRequest = (id: string, status: number = 200) =>
+        const deleteTeamRequest = (id: string, status = 200) =>
             (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/teams/${id}`, status);
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -335,3 +336,4 @@ describe("Team API endpoints", () => {
         });
     });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access */

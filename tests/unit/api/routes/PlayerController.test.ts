@@ -180,7 +180,7 @@ describe("PlayerController", () => {
 
     describe("batchUploadMinorLeaguePlayers method", () => {
         const overwriteMode = "overwrite";
-        const testFile = {path: "/test/path/to.csv"};
+        const testFile = {path: "/test/path/to.csv"} as Express.Multer.File;
 
         it("should get all existing teams from the db", async () => {
             await playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode);

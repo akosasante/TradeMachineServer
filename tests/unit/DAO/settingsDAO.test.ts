@@ -52,7 +52,7 @@ describe("SettingsDAO", () => {
 
     it("getSettingsById - should call the db findOneOrFail method", async () => {
         mockSettingsDb.findOneOrFail.mockResolvedValueOnce(testSettings);
-        const res = await settingsDAO.getSettingsById(testSettings.id!);
+        const res = await settingsDAO.getSettingsById(testSettings.id);
 
         expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith(testSettings.id);
@@ -62,7 +62,7 @@ describe("SettingsDAO", () => {
     it("insertNewSettings - should first get most recent settings and then insert and return the new value", async () => {
         mockSettingsDb.findOne.mockResolvedValueOnce(testSettings);
         mockSettingsDb.insert.mockResolvedValueOnce({
-            identifiers: [{id: testSettings.id!}],
+            identifiers: [{id: testSettings.id}],
             generatedMaps: [],
             raw: [],
         });
@@ -87,7 +87,7 @@ describe("SettingsDAO", () => {
             dateModified: undefined,
         });
         expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith({id: testSettings.id!});
+        expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith({id: testSettings.id});
         expect(res).toEqual(expectedSettings);
     });
 });

@@ -5,7 +5,7 @@ import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
 import { EmailPublisher } from "../../src/email/publishers";
-import { adminLoggedIn, clearDb, makePostRequest, ownerLoggedIn, setupOwnerAndAdminUsers } from "./helpers";
+import { adminLoggedIn, clearDb, doLogout, makePostRequest, ownerLoggedIn, setupOwnerAndAdminUsers } from "./helpers";
 import { TradeFactory } from "../factories/TradeFactory";
 import User from "../../src/models/user";
 import TradeDAO from "../../src/DAO/TradeDAO";
@@ -27,6 +27,7 @@ let teamDAO: TeamDAO;
 const emailPublisher = EmailPublisher.getInstance();
 const slackPublisher = SlackPublisher.getInstance();
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 async function shutdown() {
     await new Promise<void>((resolve, reject) => {
         redisClient.quit((err, reply) => {
@@ -93,9 +94,13 @@ describe("Messenger API endpoints", () => {
     });
 
     describe("POST /requestTrade/:id (send trade request email)", () => {
-        const req = (id: string, status: number = 202) =>
+        const req = (id: string, status = 202) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<undefined>(agent, `/messenger/requestTrade/${id}`, undefined, status);
+
+        afterEach(async () => {
+            return await doLogout(request.agent(app));
+        });
 
         it("should queue a trade request email job and return 202", async () => {
             const requestedTrade = await createTradeOfStatus(TradeStatus.REQUESTED);
@@ -134,10 +139,10 @@ describe("Messenger API endpoints", () => {
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
-        it("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
+        it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const requestedTrade = await createTradeOfStatus(TradeStatus.REQUESTED);
             const queueLengthBefore = await emailPublisher.getJobTotal();
-            await req(requestedTrade.id!, 403);
+            req(requestedTrade.id!, 403);
             const queueLengthAfter = await emailPublisher.getJobTotal();
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
@@ -145,9 +150,13 @@ describe("Messenger API endpoints", () => {
     });
 
     describe("POST /declineTrade/:id (send trade declined email)", () => {
-        const req = (id: string, status: number = 202) =>
+        const req = (id: string, status = 202) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<undefined>(agent, `/messenger/declineTrade/${id}`, undefined, status);
+
+        afterEach(async () => {
+            return await doLogout(request.agent(app));
+        });
 
         it("should queue a trade decline email job and return 202", async () => {
             const declinedTrade = await createTradeOfStatus(TradeStatus.REJECTED, {
@@ -192,14 +201,14 @@ describe("Messenger API endpoints", () => {
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
-        it("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
+        it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const declinedTrade = await createTradeOfStatus(TradeStatus.REJECTED, {
                 declinedById: ownerUser.id,
                 declinedReason: "because I say so",
             });
 
             const queueLengthBefore = await emailPublisher.getJobTotal();
-            await req(declinedTrade.id!, 403);
+            await req(declinedTrade.id!, 403)(request(app));
             const queueLengthAfter = await emailPublisher.getJobTotal();
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
@@ -207,9 +216,13 @@ describe("Messenger API endpoints", () => {
     });
 
     describe("POST /submitTrade/:id (send trade announcement to slack)", () => {
-        const req = (id: string, status: number = 202) =>
+        const req = (id: string, status = 202) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<undefined>(agent, `/messenger/submitTrade/${id}`, undefined, status);
+
+        afterEach(async () => {
+            return await doLogout(request.agent(app));
+        });
 
         it("should queue a trade announcement job and return 202", async () => {
             const submittedTrade = await createTradeOfStatus(TradeStatus.SUBMITTED);
@@ -248,21 +261,25 @@ describe("Messenger API endpoints", () => {
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
-        it("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
+        it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const submittedTrade = await createTradeOfStatus(TradeStatus.SUBMITTED);
 
             const queueLengthBefore = await emailPublisher.getJobTotal();
-            await req(submittedTrade.id!, 403);
+            await req(submittedTrade.id!, 403)(request(app));
             const queueLengthAfter = await emailPublisher.getJobTotal();
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
     });
 
-    describe("POST /acceptTrade/;id (send trade acceptance email)", () => {
-        const req = (id: string, status: number = 202) =>
+    describe("POST /acceptTrade/:id (send trade acceptance email)", () => {
+        const req = (id: string, status = 202) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<undefined>(agent, `/messenger/acceptTrade/${id}`, undefined, status);
+
+        afterEach(async () => {
+            return await doLogout(request.agent(app));
+        });
 
         it("should queue a trade acceptance email job and return 202", async () => {
             const acceptedTrade = await createTradeOfStatus(TradeStatus.ACCEPTED);
@@ -301,14 +318,15 @@ describe("Messenger API endpoints", () => {
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
-        it("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
+        it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const acceptedTrade = await createTradeOfStatus(TradeStatus.ACCEPTED);
 
             const queueLengthBefore = await emailPublisher.getJobTotal();
-            await req(acceptedTrade.id!, 403);
+            await req(acceptedTrade.id!, 403)(request(app));
             const queueLengthAfter = await emailPublisher.getJobTotal();
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
     });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */

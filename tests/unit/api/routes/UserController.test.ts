@@ -69,7 +69,7 @@ describe("UserController", () => {
     });
 
     describe("findUser method", () => {
-        const query: string = "name=Jatheesh";
+        const query = "name=Jatheesh";
         const expectedQuery = {name: "Jatheesh"};
         it("should find a user by the given query options", async () => {
             mockUserDAO.findUser.mockResolvedValueOnce(testUser);

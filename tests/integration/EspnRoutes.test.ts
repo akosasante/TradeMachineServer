@@ -12,6 +12,7 @@ let app: Server;
 let adminUser: User;
 let ownerUser: User;
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 async function shutdown() {
     await new Promise<void>((resolve, reject) => {
         redisClient.quit((err, reply) => {
@@ -55,7 +56,7 @@ describe("ESPN API endpoints", () => {
     });
 
     describe("GET /espn/teams?year (get all ESPN teams)", () => {
-        const getAllRequest = (year?: number, status: number = 200) =>
+        const getAllRequest = (year?: number, status = 200) =>
             (agent: request.SuperTest<request.Test>) => {
                 const yearParam = year ? `?year=${year}` : "";
                 return makeGetRequest(agent, `/espn/teams${yearParam}`, status);
@@ -82,7 +83,7 @@ describe("ESPN API endpoints", () => {
     });
 
     describe("GET /espn/members?year (get all ESPN teams)", () => {
-        const getAllRequest = (year?: number, status: number = 200) =>
+        const getAllRequest = (year?: number, status = 200) =>
             (agent: request.SuperTest<request.Test>) => {
                 const yearParam = year ? `?year=${year}` : "";
                 return makeGetRequest(agent, `/espn/members${yearParam}`, status);
@@ -107,3 +108,4 @@ describe("ESPN API endpoints", () => {
         });
     });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */

@@ -11,6 +11,7 @@ export async function makeLoggedInRequest(agent: request.SuperTest<request.Test>
         .post("/auth/login")
         .send({ email, password })
         .expect(200);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return req(agent);
 }
 
@@ -25,7 +26,7 @@ export async function makePostRequest<T>(agent: request.SuperTest<request.Test>,
                                          url: string, obj: T, expectedStatus: number) {
     return agent
         .post(url)
-        .send(obj as unknown as object)
+        .send(obj as unknown as {[key: string]: string | number | undefined | null})
         .expect("Content-Type", /json/)
         .expect(expectedStatus);
 }
@@ -41,7 +42,7 @@ export async function makePutRequest<T>(agent: request.SuperTest<request.Test>, 
                                         obj: T, expectedStatus: number) {
     return agent
         .put(url)
-        .send(obj as unknown as object)
+        .send(obj as unknown as {[key: string]: string | number | undefined | null})
         .expect("Content-Type", /json/)
         .expect(expectedStatus);
 }
@@ -57,7 +58,7 @@ export async function makePatchRequest<T>(agent: request.SuperTest<request.Test>
                                           obj: T, expectedStatus: number) {
     return agent
         .patch(url)
-        .send(obj as unknown as object)
+        .send(obj as unknown as {[key: string]: string | number | undefined | null})
         .expect("Content-Type", /json/)
         .expect(expectedStatus);
 }
@@ -86,15 +87,18 @@ export const adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) =
 export const ownerLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any, app: Server) =>
     makeLoggedInRequest(request.agent(app), UserFactory.OWNER_EMAIL, UserFactory.GENERIC_PASSWORD, requestFn);
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const DatePatternRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const UUIDPatternRegex = /([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/;
 
 export const clearDb = async (connection: Connection) => {
     const entities = connection.entityMetadatas;
 
     for (const entity of entities) {
-        const repository = await connection.getRepository(entity.name);
+        const repository = connection.getRepository(entity.name);
         await repository.query(`DELETE
                                 FROM ${entity.schema}.${entity.tableName}`);
     }
+    return entities;
 };

@@ -59,10 +59,10 @@ describe("SettingsController", () => {
     describe("getOneSettingsLine method", () => {
         it("should return a settings line by id", async () => {
             mockSettingsDAO.getSettingsById.mockResolvedValueOnce(testSettings);
-            const res = await settingsController.getOneSettingsLine(testSettings.id!);
+            const res = await settingsController.getOneSettingsLine(testSettings.id);
 
             expect(mockSettingsDAO.getSettingsById).toHaveBeenCalledTimes(1);
-            expect(mockSettingsDAO.getSettingsById).toHaveBeenCalledWith(testSettings.id!);
+            expect(mockSettingsDAO.getSettingsById).toHaveBeenCalledWith(testSettings.id);
             expect(res).toEqual(testSettings);
         });
     });

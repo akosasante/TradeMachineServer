@@ -8,12 +8,12 @@ import startServer from "../../src/bootstrap/app";
 import { clearDb, makeLoggedInRequest, makePostRequest } from "./helpers";
 import { getConnection } from "typeorm";
 import { generateHashedPassword } from "../../src/authentication/auth";
-import "jest-date-mock";
 import { advanceBy } from "jest-date-mock";
+
 
 let app: Server;
 let userDAO: UserDAO;
-
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 async function shutdown() {
     await new Promise<void>((resolve, reject) => {
         redisClient.quit((err, reply) => {
@@ -55,7 +55,7 @@ describe("Auth API endpoints", () => {
     });
 
     describe("POST /auth/signup", () => {
-        const signupRequest = (email: string, password: string, status: number = 200) =>
+        const signupRequest = (email: string, password: string, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<Partial<User>>(agent, "/auth/signup", { email, password }, status);
 
@@ -239,3 +239,4 @@ describe("Auth API endpoints", () => {
         });
     });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */

@@ -7,6 +7,7 @@ import { cleanJobForLogging } from "../scheduled_jobs/job_utils";
 import User from "../models/user";
 import { rollbar } from "../bootstrap/rollbar";
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
 export function setupEmailConsumers() {
     logger.info("registering email consumers");
     const emailQueue = new Bull("email_queue", {settings: {maxStalledCount: 0, lockDuration: 60000}});
@@ -40,13 +41,13 @@ export function setupEmailConsumers() {
         } : "";
     };
 
-    emailQueue.process("reset_pass", handleEmailJob);
-    emailQueue.process("registration_email", handleEmailJob);
-    emailQueue.process("test_email", handleEmailJob);
-    emailQueue.process("handle_webhook", handleEmailJob);
-    emailQueue.process("request_trade", handleTradeEmailJob);
-    emailQueue.process("trade_declined", handleTradeEmailJob);
-    emailQueue.process("trade_accepted", handleTradeEmailJob);
+    void emailQueue.process("reset_pass", handleEmailJob);
+    void emailQueue.process("registration_email", handleEmailJob);
+    void emailQueue.process("test_email", handleEmailJob);
+    void emailQueue.process("handle_webhook", handleEmailJob);
+    void emailQueue.process("request_trade", handleTradeEmailJob);
+    void emailQueue.process("trade_declined", handleTradeEmailJob);
+    void emailQueue.process("trade_accepted", handleTradeEmailJob);
 
     emailQueue.on("error", error => {
         logger.error(`Bull error during Email Worker job: ${inspect(error)}`);
@@ -72,3 +73,4 @@ export function setupEmailConsumers() {
         rollbar.error("Email Worker job failed", err);
     });
 }
+/* eslint-enable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */

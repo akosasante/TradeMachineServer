@@ -55,10 +55,10 @@ describe("PlayerDAO", () => {
 
     it("getPlayerByName - should call the db findOne once with name", async () => {
         mockPlayerDb.findOne.mockResolvedValueOnce(testPlayer1);
-        const res = await playerDAO.getPlayerByName(testPlayer1.name!);
+        const res = await playerDAO.getPlayerByName(testPlayer1.name);
 
         expect(mockPlayerDb.findOne).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.findOne).toHaveBeenCalledWith({name: testPlayer1.name!});
+        expect(mockPlayerDb.findOne).toHaveBeenCalledWith({name: testPlayer1.name});
         expect(res).toEqual(testPlayer1);
     });
 
@@ -181,8 +181,10 @@ describe("PlayerDAO", () => {
         const defaultCacheTimeout = 60000;
         const leagueId = 1;
         const order = { name: "ASC" };
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const expectedWhere = { name: expect.objectContaining({ "_value": `%${queryName}%` }), league: leagueId };
         const expectedOptions = {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             where: expect.objectContaining(expectedWhere),
             take: defaultLimit,
             cache: defaultCacheTimeout,

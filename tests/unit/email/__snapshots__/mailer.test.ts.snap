@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Emailer Class email snapshots sendPasswordResetEmail 1`] = `
+exports[`EMAILER Class email snapshots sendPasswordResetEmail 1`] = `
 Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
@@ -95,7 +95,7 @@ Reset Password [http://localhost:8080/reset_password?u=random-token]",
 }
 `;
 
-exports[`Emailer Class email snapshots sendRegistrationEmail 1`] = `
+exports[`EMAILER Class email snapshots sendRegistrationEmail 1`] = `
 Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
@@ -188,7 +188,7 @@ Register [http://localhost:8080/register?e=dGVzdEBleGFtcGxlLmNvbQ==]",
 }
 `;
 
-exports[`Emailer Class email snapshots sendTestEmail 1`] = `
+exports[`EMAILER Class email snapshots sendTestEmail 1`] = `
 Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
@@ -273,7 +273,7 @@ Hi Jatheesh, this is a test email from the Flex Fox Fantasy Trade Machine.",
 }
 `;
 
-exports[`Emailer Class email snapshots sendTradeDeclinedEmail 1`] = `
+exports[`EMAILER Class email snapshots sendTradeDeclinedEmail 1`] = `
 Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
@@ -382,7 +382,7 @@ MiniMe (Jays - P - Low Minors) from CREATOR_TEAM",
 }
 `;
 
-exports[`Emailer Class email snapshots sendTradeRequestEmail 1`] = `
+exports[`EMAILER Class email snapshots sendTradeRequestEmail 1`] = `
 Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
@@ -496,7 +496,7 @@ Accept Trade [http://localhost:8080/trade/test-uuid/accept]Reject Trade
 }
 `;
 
-exports[`Emailer Class email snapshots sendTradeSubmissionEmail 1`] = `
+exports[`EMAILER Class email snapshots sendTradeSubmissionEmail 1`] = `
 Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",

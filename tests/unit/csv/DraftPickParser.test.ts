@@ -83,6 +83,7 @@ describe("DraftPickParser", () => {
         expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledTimes(1);
         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledWith(expect.toBeArrayOfSize(6));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         expect(mockDAO.batchUpsertPicks.mock.calls[0][0]).toSatisfyAll(pickPredicate);
     });
     it("should call DAO.batchUpsertPicks once even if more than 50 rows", async () => {
@@ -91,35 +92,36 @@ describe("DraftPickParser", () => {
         expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledTimes(1);
         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledWith(expect.toBeArrayOfSize(50));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         expect(mockDAO.batchUpsertPicks.mock.calls[0][0]).toSatisfyAll(pickPredicate);
     });
 
     it("should return all the rows from the csv as draft picks", async () => {
         const res = await processDraftPickCsv(threePlayerCsv, [testTeam1, testTeam2, testTeam3],
             mockDAO as unknown as DraftPickDAO);
-        await expect(res).toBeArrayOfSize(50);
+        expect(res).toBeArrayOfSize(50);
         expect(res).toSatisfyAll(p => p instanceof DraftPick);
         expect(res).toSatisfyAll(pickPredicate);
     });
     it("should skip any rows from the csv that don't have a user in the db", async () => {
         const res = await processDraftPickCsv(threePlayerCsv, [testTeam1, testTeam2],
             mockDAO as unknown as DraftPickDAO);
-        await expect(res).toBeArrayOfSize(32);
+        expect(res).toBeArrayOfSize(32);
     });
     it("should include pick numbers if they're included", async () => {
         const res = await processDraftPickCsv(threePlayerCsvWithPickNumbers, [testTeam1, testTeam2, testTeam3],
             mockDAO as unknown as DraftPickDAO);
-        await expect(res).toBeArrayOfSize(50);
-        await expect(res.filter(pick => !!pick.pickNumber)).toBeArrayOfSize(25);
+        expect(res).toBeArrayOfSize(50);
+        expect(res.filter(pick => !!pick.pickNumber)).toBeArrayOfSize(25);
     });
     it("should skip any rows from the csv that don't have required props", async () => {
         const res1 = await processDraftPickCsv(invalidRowCsv, [testTeam1, testTeam2, testTeam3],
             mockDAO as unknown as DraftPickDAO);
-        await expect(res1).toBeArrayOfSize(46);
+        expect(res1).toBeArrayOfSize(46);
 
         const res2 = await processDraftPickCsv(invalidHeadersCsv, [testTeam1, testTeam2, testTeam3],
             mockDAO as unknown as DraftPickDAO);
-        await expect(res2).toEqual([]);
+        expect(res2).toEqual([]);
     });
 
     it("should filter out duplicate picks - picks with the same pick owner, league level, and round", async () => {

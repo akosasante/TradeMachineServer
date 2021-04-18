@@ -39,7 +39,7 @@ describe("EmailController", () => {
         it("should find a user and call mailQueue", async () => {
             mockUserDAO.findUser.mockResolvedValueOnce(testUser);
 
-            await emailController.sendTestEmail(testUser.email!, mockRes as unknown as Response);
+            await emailController.sendTestEmail(testUser.email, mockRes as unknown as Response);
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.findUser).toHaveBeenCalledWith({email: testUser.email});
@@ -53,7 +53,7 @@ describe("EmailController", () => {
         });
 
         it("should throw an error if there's something wrong inside", async () => {
-            await expect(emailController.sendTestEmail(testUser.email!, mockRes as unknown as Response))
+            await expect(emailController.sendTestEmail(testUser.email, mockRes as unknown as Response))
                 .rejects.toThrow(NotFoundError);
             expect(mockRes.status).toHaveBeenCalledTimes(0);
             expect(mockRes.json).toHaveBeenCalledTimes(0);
@@ -69,6 +69,7 @@ describe("EmailController", () => {
                 date: "2020-04-11 00:13:02",
                 ts: 1586556782,
                 "message-id": "<5d0e2800bbddbd4ed05cc56a@domain.com>",
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 ts_event: 1586556782,
             };
 

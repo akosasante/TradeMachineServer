@@ -17,7 +17,7 @@ afterAll(() => {
 
 const trade = TradeFactory.getTrade();
 trade.creator!.owners = [UserFactory.getUser(undefined, undefined, undefined, undefined, {slackUsername: "U12345"})];
-trade.recipients![0].owners = [UserFactory.getUser(undefined, undefined, undefined, undefined, {slackUsername: "U98765"})];
+trade.recipients[0].owners = [UserFactory.getUser(undefined, undefined, undefined, undefined, {slackUsername: "U98765"})];
 const tradedPick = trade.picks[0];
 tradedPick.originalOwner = TeamFactory.getTeam();
 const tradedMajorPlayer = trade.majorPlayers[0];
@@ -36,6 +36,7 @@ const mockPlayerDao = {
 
 afterEach(() => {
     mockGetPlayerById.mockClear();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
     [mockPickDao, mockPlayerDao].forEach(mockedThing => Object.values(mockedThing).forEach(mockFn => mockFn.mockClear()));
 });
 
@@ -62,24 +63,24 @@ describe("Trade Formatter methods", () => {
         expect(text).toMatch("Trade requested by");
         expect(text).toMatch("Trading with: ");
         expect(text).toMatch(`<@${trade.creator!.owners![0].slackUsername}>`);
-        expect(text).toMatch(`<@${trade.recipients![0].owners![0].slackUsername}>`);
+        expect(text).toMatch(`<@${trade.recipients[0].owners![0].slackUsername}>`);
         expect(text).toMatch("Trading with: ");
     });
     it("prepPickText/3 should format a bullet point list of picks", async () => {
         const text = await TradeFormatter.prepPickText(true, TradeItem.filterPicks(trade.tradeItems), mockPickDao);
         expect(text).toMatch("'s");
         // expect(text).toMatch("round pick");
-        expect(text).toMatch(tradedPick.originalOwner?.name!);
-        expect(text).toMatch(tradedPick.season!.toString());
-        expect(text).toMatch(tradedPick.round!.toString());
+        expect(text).toMatch(tradedPick.originalOwner!.name);
+        expect(text).toMatch(tradedPick.season.toString());
+        expect(text).toMatch(tradedPick.round.toString());
         expect(text).not.toMatch("from");
     });
     it("prepPickText/3 should include the sender if more than 2-team trade", async () => {
         const text = await TradeFormatter.prepPickText(false, TradeItem.filterPicks(trade.tradeItems), mockPickDao);
         // expect(text).toMatch("round pick");
-        expect(text).toMatch(tradedPick.originalOwner?.name!);
-        expect(text).toMatch(tradedPick.season!.toString());
-        expect(text).toMatch(tradedPick.round!.toString());
+        expect(text).toMatch(tradedPick.originalOwner!.name);
+        expect(text).toMatch(tradedPick.season.toString());
+        expect(text).toMatch(tradedPick.round.toString());
         expect(text).toMatch("from");
     });
     it("prepPlayerText/3 should format a bullet point list of players", async () => {
@@ -87,8 +88,8 @@ describe("Trade Formatter methods", () => {
             .mockReturnValueOnce(tradedMinorPlayer)
             .mockReturnValueOnce(tradedMajorPlayer);
         const text = await TradeFormatter.prepPlayerText(true, TradeItem.filterPlayers(trade.tradeItems), mockPlayerDao);
-        expect(text).toMatch(tradedMajorPlayer.name!);
-        expect(text).toMatch(tradedMinorPlayer.name!);
+        expect(text).toMatch(tradedMajorPlayer.name);
+        expect(text).toMatch(tradedMinorPlayer.name);
         expect(text).toMatch("Majors");
         expect(text).not.toMatch("from");
     });
@@ -97,8 +98,8 @@ describe("Trade Formatter methods", () => {
             .mockResolvedValueOnce(tradedMajorPlayer)
             .mockResolvedValueOnce(tradedMinorPlayer);
         const text = await TradeFormatter.prepPlayerText(false, TradeItem.filterPlayers(trade.tradeItems), mockPlayerDao);
-        expect(text).toMatch(tradedMajorPlayer.name!);
-        expect(text).toMatch(tradedMinorPlayer.name!);
+        expect(text).toMatch(tradedMajorPlayer.name);
+        expect(text).toMatch(tradedMinorPlayer.name);
         expect(text).toMatch("Majors");
         expect(text).toMatch("from");
     });
@@ -111,7 +112,7 @@ describe("Trade Formatter methods", () => {
             pickDao: mockPickDao,
         });
         expect(text).toMatch("receives:*");
-        expect(text).toMatch(trade.tradeParticipants![0].team!.name!);
+        expect(text).toMatch(trade.tradeParticipants![0].team.name);
         expect(text).toMatch("Majors");
         expect(text).toMatch("Minors");
         // expect(text).toMatch("round pick");

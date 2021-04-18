@@ -2,6 +2,7 @@ import { IsNull, Not } from "typeorm";
 import { cleanupQuery } from "../../../../src/api/helpers/ApiHelpers";
 import logger from "../../../../src/bootstrap/logger";
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
 describe("ApiHelpers utility functions", () => {
     beforeAll(() => {
         logger.debug("~~~~~~API HELPERS TESTS BEGIN~~~~~~");
@@ -31,3 +32,4 @@ describe("ApiHelpers utility functions", () => {
         });
     });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */

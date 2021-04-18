@@ -3,6 +3,7 @@ import Team from "../../src/models/team";
 import { v4 as uuid } from "uuid";
 
 export class TeamFactory {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public static NAME = "Squirtle Squad";
 
     public static getTeamObject(name = TeamFactory.NAME, espnId = 1, rest = {}) {
@@ -16,6 +17,7 @@ export class TeamFactory {
     public static getTeams(num: number) {
         const names = ["Squirtle Squad", "Mr. Mime Mob"];
         let name: string;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         return [...Array(num)].map((_, i) => {
             if ((i + 1) > names.length) {
                 name = fakeName.firstName();
