@@ -23,12 +23,12 @@ module.exports = {
         "plugin:node/recommended",
         "plugin:import/errors",
         "plugin:import/warnings",
-        "plugin:jest/recommended"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "project": "./tsconfig.json",
-        "sourceType": "module"
+        "project": "./tsconfig.eslint.json",
+        "sourceType": "module",
+        "debugLevel": "true"
     },
     "ignorePatterns": ['.eslintrc.js', '**/*.d.ts', 'src/db/*', './src/scripts/**/*.ts'],
     "plugins": [
@@ -36,7 +36,6 @@ module.exports = {
         "eslint-plugin-jsdoc",
         "@typescript-eslint",
         "@typescript-eslint/tslint",
-        "jest"
     ],
     "rules": {
         "@typescript-eslint/adjacent-overload-signatures": "error",
