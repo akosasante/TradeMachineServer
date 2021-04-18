@@ -14,33 +14,33 @@ describe("Player Class", () => {
     const playerObj = PlayerFactory.getPlayerObject();
     const player = new Player(playerObj);
     const espnPlayer = {
-        "id": 2966,
-        "lineupLocked": true,
-        "onTeamId": 0,
-        "player": {
-            "active": true,
-            "defaultPositionId": 1,
-            "droppable": true,
-            "eligibleSlots": [12, 9, 13, 14, 16, 17],
-            "firstName": "Luis",
-            "fullName": "Luis Ortiz",
-            "gamesPlayedByPosition": {"1": 1},
-            "id": 2966,
-            "injured": false,
-            "injuryStatus": "ACTIVE",
-            "jersey": "59",
-            "lastName": "Ortiz",
-            "proTeamId": 1,
+        id: 2966,
+        lineupLocked: true,
+        onTeamId: 0,
+        player: {
+            active: true,
+            defaultPositionId: 1,
+            droppable: true,
+            eligibleSlots: [12, 9, 13, 14, 16, 17],
+            firstName: "Luis",
+            fullName: "Luis Ortiz",
+            gamesPlayedByPosition: { "1": 1 },
+            id: 2966,
+            injured: false,
+            injuryStatus: "ACTIVE",
+            jersey: "59",
+            lastName: "Ortiz",
+            proTeamId: 1,
         },
-        "ratings": {
-            "0": {"positionalRanking": 326, "totalRanking": 1353, "totalRating": -3.5},
-            "1": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0},
-            "2": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0},
-            "3": {"positionalRanking": 0, "totalRanking": 0, "totalRating": 0.0},
+        ratings: {
+            "0": { positionalRanking: 326, totalRanking: 1353, totalRating: -3.5 },
+            "1": { positionalRanking: 0, totalRanking: 0, totalRating: 0.0 },
+            "2": { positionalRanking: 0, totalRanking: 0, totalRating: 0.0 },
+            "3": { positionalRanking: 0, totalRanking: 0, totalRating: 0.0 },
         },
-        "rosterLocked": true,
-        "status": "FREEAGENT",
-        "tradeLocked": false,
+        rosterLocked: true,
+        status: "FREEAGENT",
+        tradeLocked: false,
     };
 
     describe("constructor", () => {
@@ -75,7 +75,10 @@ describe("Player Class", () => {
 
     describe("static methods", () => {
         const convertedPlayer = Player.convertEspnMajorLeaguerToPlayer(espnPlayer);
-        const {player: {fullName: ignoreFullName}, ...noNamePlayer} = clone(espnPlayer);
+        const {
+            player: { fullName: ignoreFullName },
+            ...noNamePlayer
+        } = clone(espnPlayer);
 
         it("convertEspnMajorLeaguerToPlayer/1 - should always assume major league players", () => {
             expect(convertedPlayer.league).toEqual(PlayerLeagueType.MAJOR);
@@ -88,8 +91,8 @@ describe("Player Class", () => {
             expect(convertedPlayer.mlbTeam).toEqual("BAL");
         });
         it("convertEspnMajorLeaguerToPlayer/1 - should pass along the espn player id and other info", () => {
-            expect(convertedPlayer.meta).toMatchObject({espnPlayer});
-            expect(convertedPlayer.meta).toMatchObject({position: "SP"});
+            expect(convertedPlayer.meta).toMatchObject({ espnPlayer });
+            expect(convertedPlayer.meta).toMatchObject({ position: "SP" });
         });
     });
 });

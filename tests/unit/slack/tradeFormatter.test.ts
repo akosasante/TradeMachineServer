@@ -16,8 +16,10 @@ afterAll(() => {
 });
 
 const trade = TradeFactory.getTrade();
-trade.creator!.owners = [UserFactory.getUser(undefined, undefined, undefined, undefined, {slackUsername: "U12345"})];
-trade.recipients[0].owners = [UserFactory.getUser(undefined, undefined, undefined, undefined, {slackUsername: "U98765"})];
+trade.creator!.owners = [UserFactory.getUser(undefined, undefined, undefined, undefined, { slackUsername: "U12345" })];
+trade.recipients[0].owners = [
+    UserFactory.getUser(undefined, undefined, undefined, undefined, { slackUsername: "U98765" }),
+];
 const tradedPick = trade.picks[0];
 tradedPick.originalOwner = TeamFactory.getTeam();
 const tradedMajorPlayer = trade.majorPlayers[0];
@@ -27,26 +29,29 @@ trade.tradeItems?.forEach(it => {
 });
 const mockGetPlayerById = jest.fn();
 
-const mockPickDao = {
+const mockPickDao = ({
     getPickById: jest.fn().mockResolvedValue(tradedPick),
-} as unknown as DraftPickDAO;
-const mockPlayerDao = {
+} as unknown) as DraftPickDAO;
+const mockPlayerDao = ({
     getPlayerById: mockGetPlayerById,
-} as unknown as PlayerDAO;
+} as unknown) as PlayerDAO;
 
 afterEach(() => {
     mockGetPlayerById.mockClear();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
-    [mockPickDao, mockPlayerDao].forEach(mockedThing => Object.values(mockedThing).forEach(mockFn => mockFn.mockClear()));
+    [mockPickDao, mockPlayerDao].forEach(mockedThing =>
+        Object.values(mockedThing).forEach(mockFn => mockFn.mockClear())
+    );
 });
-
 
 describe("Trade Formatter methods", () => {
     it("getTitleText/0 should return the expected title text", () => {
         expect(TradeFormatter.getTitleText()).toEqual(":loud_sound:  *A Trade Has Been Submitted*  :loud_sound:");
     });
     it("getLinkText/0 should return the expected link text", () => {
-        expect(TradeFormatter.getLinkText()).toEqual(":link: Submit trades on the <https://trades.flexfoxfantasy.com|FlexFoxFantasy TradeMachine> by 11:00PM ET");
+        expect(TradeFormatter.getLinkText()).toEqual(
+            ":link: Submit trades on the <https://trades.flexfoxfantasy.com|FlexFoxFantasy TradeMachine> by 11:00PM ET"
+        );
     });
     it("getPickTypeString/1 should return the appropriate pick type text", () => {
         expect(TradeFormatter.getPickTypeString(LeagueLevel.MAJORS)).toEqual("Major League");
@@ -84,29 +89,31 @@ describe("Trade Formatter methods", () => {
         expect(text).toMatch("from");
     });
     it("prepPlayerText/3 should format a bullet point list of players", async () => {
-        mockGetPlayerById
-            .mockReturnValueOnce(tradedMinorPlayer)
-            .mockReturnValueOnce(tradedMajorPlayer);
-        const text = await TradeFormatter.prepPlayerText(true, TradeItem.filterPlayers(trade.tradeItems), mockPlayerDao);
+        mockGetPlayerById.mockReturnValueOnce(tradedMinorPlayer).mockReturnValueOnce(tradedMajorPlayer);
+        const text = await TradeFormatter.prepPlayerText(
+            true,
+            TradeItem.filterPlayers(trade.tradeItems),
+            mockPlayerDao
+        );
         expect(text).toMatch(tradedMajorPlayer.name);
         expect(text).toMatch(tradedMinorPlayer.name);
         expect(text).toMatch("Majors");
         expect(text).not.toMatch("from");
     });
     it("prepPlayerText/3 should include the sender if more than 2-team trade", async () => {
-        mockGetPlayerById
-            .mockResolvedValueOnce(tradedMajorPlayer)
-            .mockResolvedValueOnce(tradedMinorPlayer);
-        const text = await TradeFormatter.prepPlayerText(false, TradeItem.filterPlayers(trade.tradeItems), mockPlayerDao);
+        mockGetPlayerById.mockResolvedValueOnce(tradedMajorPlayer).mockResolvedValueOnce(tradedMinorPlayer);
+        const text = await TradeFormatter.prepPlayerText(
+            false,
+            TradeItem.filterPlayers(trade.tradeItems),
+            mockPlayerDao
+        );
         expect(text).toMatch(tradedMajorPlayer.name);
         expect(text).toMatch(tradedMinorPlayer.name);
         expect(text).toMatch("Majors");
         expect(text).toMatch("from");
     });
     it("getTradeTextForParticipant/3 - should render the items received by trade participant and format correctly", async () => {
-        mockGetPlayerById
-            .mockResolvedValueOnce(tradedMajorPlayer)
-            .mockResolvedValueOnce(tradedMinorPlayer);
+        mockGetPlayerById.mockResolvedValueOnce(tradedMajorPlayer).mockResolvedValueOnce(tradedMinorPlayer);
         const text = await TradeFormatter.getTradeTextForParticipant(true, trade, trade.tradeParticipants![0], {
             playerDao: mockPlayerDao,
             pickDao: mockPickDao,

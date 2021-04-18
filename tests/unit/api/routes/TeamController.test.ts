@@ -18,7 +18,7 @@ describe("TeamController", () => {
         updateTeamOwners: jest.fn(),
     };
     const testTeam = TeamFactory.getTeam();
-    const teamController = new TeamController(mockTeamDAO as unknown as TeamDAO);
+    const teamController = new TeamController((mockTeamDAO as unknown) as TeamDAO);
 
     beforeAll(() => {
         logger.debug("~~~~~~TEAM CONTROLLER TESTS BEGIN~~~~~~");
@@ -73,7 +73,7 @@ describe("TeamController", () => {
     });
 
     describe("findTeamsByQuery method", () => {
-        const query = {espnId: 1};
+        const query = { espnId: 1 };
         it("should find teams by the given query options", async () => {
             mockTeamDAO.findTeams.mockReturnValue([testTeam]);
             const res = await teamController.findTeamsByQuery(query);
@@ -120,13 +120,13 @@ describe("TeamController", () => {
 
             expect(mockTeamDAO.deleteTeam).toHaveBeenCalledTimes(1);
             expect(mockTeamDAO.deleteTeam).toHaveBeenCalledWith(testTeam.id);
-            expect(res).toEqual({deleteCount: 1, id: testTeam.id});
+            expect(res).toEqual({ deleteCount: 1, id: testTeam.id });
         });
     });
 
     describe("updateTeamOwners method", () => {
-        const user1 = new User({email: "usr1@test.com"});
-        const user2 = new User({email: "usr2@test.com"});
+        const user1 = new User({ email: "usr1@test.com" });
+        const user2 = new User({ email: "usr2@test.com" });
 
         it("should update a teams owners as provided", async () => {
             mockTeamDAO.updateTeamOwners.mockReturnValue(testTeam);

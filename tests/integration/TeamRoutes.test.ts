@@ -20,7 +20,7 @@ import {
     makePutRequest,
     ownerLoggedIn,
     setupOwnerAndAdminUsers,
-    stringifyQuery
+    stringifyQuery,
 } from "./helpers";
 import startServer from "../../src/bootstrap/app";
 import User from "../../src/models/user";
@@ -85,11 +85,9 @@ describe("Team API endpoints", () => {
 
     describe("POST /teams (create new team)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (teamObjs: Partial<Team>[], status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<Team>[]>(agent, "/teams", teamObjs, status);
-        const getOneRequest = (id: string, status = 200) =>
-            makeGetRequest(request(app), `/teams/${id}`, status);
+        const postRequest = (teamObjs: Partial<Team>[], status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makePostRequest<Partial<Team>[]>(agent, "/teams", teamObjs, status);
+        const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/teams/${id}`, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -105,10 +103,15 @@ describe("Team API endpoints", () => {
         it("should ignore any invalid properties from the object passed in", async () => {
             const testTeam1 = TeamFactory.getTeam();
 
-            const { body: createBody } = await adminLoggedIn(postRequest([{
-                ...testTeam1.parse(),
-                blah: "bloop",
-            } as Partial<Team>]), app);
+            const { body: createBody } = await adminLoggedIn(
+                postRequest([
+                    {
+                        ...testTeam1.parse(),
+                        blah: "bloop",
+                    } as Partial<Team>,
+                ]),
+                app
+            );
             const { body } = await getOneRequest(createBody[0].id);
 
             expect(body).toMatchObject({ ...testTeam1.parse(), owners: expect.any(Array) });
@@ -174,8 +177,7 @@ describe("Team API endpoints", () => {
     });
 
     describe("GET /teams/:id (get one team)", () => {
-        const getOneRequest = (id: string, status = 200) =>
-            makeGetRequest(request(app), `/teams/${id}`, status);
+        const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/teams/${id}`, status);
 
         it("should return a single team (public vers.) for the given id", async () => {
             const testTeam1 = TeamFactory.getTeam();
@@ -210,9 +212,9 @@ describe("Team API endpoints", () => {
     });
 
     describe("PUT /teams/:id (update one team)", () => {
-        const putTeamRequest = (id: string, teamObj: Partial<Team>, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePutRequest<Partial<Team>>(agent, `/teams/${id}`, teamObj, status);
+        const putTeamRequest = (id: string, teamObj: Partial<Team>, status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) => makePutRequest<Partial<Team>>(agent, `/teams/${id}`, teamObj, status);
         const updatedTeamObj = { name: "Hello darkness my old friend" };
 
         afterEach(async () => {
@@ -251,9 +253,9 @@ describe("Team API endpoints", () => {
     });
 
     describe("PATCH /teams/:id (edit a team's owners)", () => {
-        const patchTeamRequest = (id: string, ownersToAdd: User[], ownersToRemove: User[], status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePatchRequest(agent, `/teams/${id}`, { add: ownersToAdd, remove: ownersToRemove }, status);
+        const patchTeamRequest = (id: string, ownersToAdd: User[], ownersToRemove: User[], status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) => makePatchRequest(agent, `/teams/${id}`, { add: ownersToAdd, remove: ownersToRemove }, status);
         afterEach(async () => {
             return await doLogout(request.agent(app));
         });
@@ -289,8 +291,8 @@ describe("Team API endpoints", () => {
     });
 
     describe("DELETE /teams/:id (delete one team)", () => {
-        const deleteTeamRequest = (id: string, status = 200) =>
-            (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/teams/${id}`, status);
+        const deleteTeamRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makeDeleteRequest(agent, `/teams/${id}`, status);
         afterEach(async () => {
             return await doLogout(request.agent(app));
         });

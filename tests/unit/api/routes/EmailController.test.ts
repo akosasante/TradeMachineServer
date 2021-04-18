@@ -21,7 +21,10 @@ describe("EmailController", () => {
         json: jest.fn().mockReturnThis(),
     };
     const testUser = UserFactory.getUser();
-    const emailController = new EmailController(mockUserDAO as unknown as UserDAO, mockMailPublisher as unknown as EmailPublisher);
+    const emailController = new EmailController(
+        (mockUserDAO as unknown) as UserDAO,
+        (mockMailPublisher as unknown) as EmailPublisher
+    );
 
     beforeAll(() => {
         logger.debug("~~~~~~EMAIL CONTROLLER TESTS BEGIN~~~~~~");
@@ -31,7 +34,8 @@ describe("EmailController", () => {
     });
     afterEach(() => {
         [mockUserDAO, mockMailPublisher].forEach(mockedThing =>
-            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
+            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset())
+        );
         Object.values(mockRes).forEach(mockFn => mockFn.mockClear());
     });
 
@@ -39,22 +43,23 @@ describe("EmailController", () => {
         it("should find a user and call mailQueue", async () => {
             mockUserDAO.findUser.mockResolvedValueOnce(testUser);
 
-            await emailController.sendTestEmail(testUser.email, mockRes as unknown as Response);
+            await emailController.sendTestEmail(testUser.email, (mockRes as unknown) as Response);
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
-            expect(mockUserDAO.findUser).toHaveBeenCalledWith({email: testUser.email});
+            expect(mockUserDAO.findUser).toHaveBeenCalledWith({ email: testUser.email });
             expect(mockUserDAO.setPasswordExpires).toHaveBeenCalledTimes(0);
             expect(mockMailPublisher.queueTestEmail).toHaveBeenCalledTimes(1);
             expect(mockMailPublisher.queueTestEmail).toHaveBeenCalledWith(testUser);
             expect(mockRes.status).toHaveBeenCalledTimes(1);
             expect(mockRes.status).toHaveBeenCalledWith(202);
             expect(mockRes.json).toHaveBeenCalledTimes(1);
-            expect(mockRes.json).toHaveBeenCalledWith({status: "email queued"});
+            expect(mockRes.json).toHaveBeenCalledWith({ status: "email queued" });
         });
 
         it("should throw an error if there's something wrong inside", async () => {
-            await expect(emailController.sendTestEmail(testUser.email, mockRes as unknown as Response))
-                .rejects.toThrow(NotFoundError);
+            await expect(
+                emailController.sendTestEmail(testUser.email, (mockRes as unknown) as Response)
+            ).rejects.toThrow(NotFoundError);
             expect(mockRes.status).toHaveBeenCalledTimes(0);
             expect(mockRes.json).toHaveBeenCalledTimes(0);
         });
@@ -73,7 +78,7 @@ describe("EmailController", () => {
                 ts_event: 1586556782,
             };
 
-            await emailController.receiveSendInMailWebhook(webhookEvent, mockRes as unknown as Response);
+            await emailController.receiveSendInMailWebhook(webhookEvent, (mockRes as unknown) as Response);
 
             expect(mockMailPublisher.queueWebhookResponse).toHaveBeenCalledTimes(1);
             expect(mockMailPublisher.queueWebhookResponse).toHaveBeenCalledWith(webhookEvent);

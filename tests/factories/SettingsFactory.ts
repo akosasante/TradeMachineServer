@@ -12,9 +12,11 @@ export class SettingsFactory {
     public static DEFAULT_DOWNTIME_REASON = "off-season";
     /* eslint-enable @typescript-eslint/naming-convention */
 
-    public static getSettingsObject(modifiedBy: User = UserFactory.getUser(),
-                                    tradeWindow?: TradeWindowSettings,
-                                    downtimeWindows?: DowntimeSettings) {
+    public static getSettingsObject(
+        modifiedBy: User = UserFactory.getUser(),
+        tradeWindow?: TradeWindowSettings,
+        downtimeWindows?: DowntimeSettings
+    ) {
         return {
             id: uuid(),
             modifiedBy,
@@ -24,9 +26,11 @@ export class SettingsFactory {
         };
     }
 
-    public static getSettings(modifiedBy: User = UserFactory.getUser(),
-                              tradeWindow?: TradeWindowSettings,
-                              downtimeWindows?: DowntimeSettings): Settings {
+    public static getSettings(
+        modifiedBy: User = UserFactory.getUser(),
+        tradeWindow?: TradeWindowSettings,
+        downtimeWindows?: DowntimeSettings
+    ): Settings {
         return new Settings(SettingsFactory.getSettingsObject(modifiedBy, tradeWindow, downtimeWindows));
     }
 }

@@ -16,7 +16,7 @@ describe("UserController", () => {
         updateUser: jest.fn(),
         deleteUser: jest.fn(),
     };
-    const userController = new UserController(mockUserDAO as unknown as UserDAO);
+    const userController = new UserController((mockUserDAO as unknown) as UserDAO);
     const testUser = UserFactory.getUser("j@gm.com", "Jatheesh");
 
     beforeAll(() => {
@@ -70,7 +70,7 @@ describe("UserController", () => {
 
     describe("findUser method", () => {
         const query = "name=Jatheesh";
-        const expectedQuery = {name: "Jatheesh"};
+        const expectedQuery = { name: "Jatheesh" };
         it("should find a user by the given query options", async () => {
             mockUserDAO.findUser.mockResolvedValueOnce(testUser);
             const res = await userController.findUser(query);
@@ -126,13 +126,13 @@ describe("UserController", () => {
 
     describe("deleteUser method", () => {
         it("should delete a user by id", async () => {
-            mockUserDAO.deleteUser.mockReturnValue({raw: [{id: testUser.id!}], affected: 1});
+            mockUserDAO.deleteUser.mockReturnValue({ raw: [{ id: testUser.id! }], affected: 1 });
             const res = await userController.deleteUser(testUser.id!);
 
             expect(mockUserDAO.deleteUser).toBeCalledTimes(1);
             expect(mockUserDAO.deleteUser).toBeCalledWith(testUser.id!);
 
-            expect(res).toEqual({deleteCount: 1, id: testUser.id});
+            expect(res).toEqual({ deleteCount: 1, id: testUser.id });
         });
     });
 });

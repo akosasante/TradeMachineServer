@@ -26,14 +26,14 @@ describe("Error handler middleware", () => {
     afterEach(() => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
         Object.values(response).forEach(mockFn => mockFn.mockClear());
-        (next as unknown as jest.Mock).mockReset();
+        ((next as unknown) as jest.Mock).mockReset();
     });
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const errorObjectExpect = expect.objectContaining({message: expect.any(String), stack: expect.any(String)});
+    const errorObjectExpect = expect.objectContaining({ message: expect.any(String), stack: expect.any(String) });
     it("should send to next if the headers have already been sent", async () => {
         const error = new Error("generic error");
         // @ts-ignore
-        const responseWithHeadersSent: Response = {...response, headersSent: true };
+        const responseWithHeadersSent: Response = { ...response, headersSent: true };
 
         errorHandler.error(error, request, responseWithHeadersSent, next);
         expect(next).toBeCalledTimes(1);

@@ -20,7 +20,7 @@ import {
     makePutRequest,
     ownerLoggedIn,
     setupOwnerAndAdminUsers,
-    stringifyQuery
+    stringifyQuery,
 } from "./helpers";
 import { v4 as uuid } from "uuid";
 import startServer from "../../src/bootstrap/app";
@@ -85,11 +85,10 @@ describe("Pick API endpoints", () => {
 
     describe("POST /picks (create new pick)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (pickObjs: Partial<DraftPick>[], status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<DraftPick>[]>(agent, "/picks", pickObjs, status);
-        const getOneRequest = (id: number, status = 200) =>
-            makeGetRequest(request(app), `/picks/${id}`, status);
+        const postRequest = (pickObjs: Partial<DraftPick>[], status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) => makePostRequest<Partial<DraftPick>[]>(agent, "/picks", pickObjs, status);
+        const getOneRequest = (id: number, status = 200) => makeGetRequest(request(app), `/picks/${id}`, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -107,10 +106,15 @@ describe("Pick API endpoints", () => {
             const testPick1 = DraftPickFactory.getPick();
             await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
 
-            const { body } = await adminLoggedIn(postRequest([{
-                ...testPick1.parse(),
-                blah: "Hello",
-            } as Partial<DraftPick>]), app);
+            const { body } = await adminLoggedIn(
+                postRequest([
+                    {
+                        ...testPick1.parse(),
+                        blah: "Hello",
+                    } as Partial<DraftPick>,
+                ]),
+                app
+            );
             const { body: getBody } = await getOneRequest(body[0].id);
 
             expect(getBody).toMatchObject(testPick1);
@@ -136,8 +140,7 @@ describe("Pick API endpoints", () => {
     });
 
     describe("GET /picks[?include=draftType] (get all picks)", () => {
-        const getAllRequest = (param = "", status = 200) =>
-            makeGetRequest(request(app), `/picks${param}`, status);
+        const getAllRequest = (param = "", status = 200) => makeGetRequest(request(app), `/picks${param}`, status);
 
         it("should return an array of all picks in the db", async () => {
             const picks = [DraftPickFactory.getPick(), DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS)];
@@ -164,13 +167,14 @@ describe("Pick API endpoints", () => {
             expect(highPicks).toBeArrayOfSize(1);
             expect(highMajorPicks).toBeArrayOfSize(2);
             expect(highPicks[0].id).toEqual(picks[2].id);
-            expect(highMajorPicks.map((returnedPick: DraftPick) => returnedPick.id)).toIncludeSameMembers(picks.slice(1).map(p => p.id));
+            expect(highMajorPicks.map((returnedPick: DraftPick) => returnedPick.id)).toIncludeSameMembers(
+                picks.slice(1).map(p => p.id)
+            );
         });
     });
 
     describe("GET /picks/:id (get one pick)", () => {
-        const getOneRequest = (id: string, status = 200) =>
-            makeGetRequest(request(app), `/picks/${id}`, status);
+        const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/picks/${id}`, status);
 
         it("should return a single pick for the given id", async () => {
             const picks = [DraftPickFactory.getPick(), DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS)];
@@ -207,9 +211,9 @@ describe("Pick API endpoints", () => {
     });
 
     describe("PUT /picks/:id (update one pick)", () => {
-        const putRequest = (id: string, pickObj: Partial<DraftPick>, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePutRequest<Partial<DraftPick>>(agent, `/picks/${id}`, pickObj, status);
+        const putRequest = (id: string, pickObj: Partial<DraftPick>, status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) => makePutRequest<Partial<DraftPick>>(agent, `/picks/${id}`, pickObj, status);
         const updatedPickObj = { season: 2018 };
 
         afterEach(async () => {
@@ -250,8 +254,8 @@ describe("Pick API endpoints", () => {
     });
 
     describe("DELETE /picks/:id (delete one pick)", () => {
-        const deleteRequest = (id: string, status = 200) =>
-            (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/picks/${id}`, status);
+        const deleteRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makeDeleteRequest(agent, `/picks/${id}`, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -304,32 +308,34 @@ describe("Pick API endpoints", () => {
     describe("POST /batch (batch add new draft picks via csv file)", () => {
         const csv1 = `${process.env.BASE_DIR}/tests/resources/three-player-25-picks-1.csv`;
         const csv2 = `${process.env.BASE_DIR}/tests/resources/three-player-25-picks-2.csv`;
-        const postFileRequest = (filePath: string, mode?: WriteMode, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                agent
-                    .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
-                    .attach("picks", filePath)
-                    .expect("Content-Type", /json/)
-                    .expect(status);
-        const requestWithoutFile = (mode?: WriteMode, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                agent
-                    .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
-                    .expect("Content-Type", /json/)
-                    .expect(status);
+        const postFileRequest = (filePath: string, mode?: WriteMode, status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) =>
+            agent
+                .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
+                .attach("picks", filePath)
+                .expect("Content-Type", /json/)
+                .expect(status);
+        const requestWithoutFile = (mode?: WriteMode, status = 200) => (agent: request.SuperTest<request.Test>) =>
+            agent
+                .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
+                .expect("Content-Type", /json/)
+                .expect(status);
 
         beforeEach(async () => {
             // Updating + adding users for each of the owners in the test CSV file
             await userDAO.updateUser(adminUser.id!, { displayName: "Cam", csvName: "Cam" });
             await userDAO.updateUser(ownerUser.id!, { displayName: "A", csvName: "Akos" });
 
-            const [kwasi] = await userDAO.createUsers([{
-                email: "kwasi@example.com",
-                password: "lol",
-                displayName: "K",
-                role: Role.OWNER,
-                csvName: "Kwasi",
-            }]);
+            const [kwasi] = await userDAO.createUsers([
+                {
+                    email: "kwasi@example.com",
+                    password: "lol",
+                    displayName: "K",
+                    role: Role.OWNER,
+                    csvName: "Kwasi",
+                },
+            ]);
             const [team1, team2, team3] = await teamDAO.createTeams([
                 TeamFactory.getTeamObject("Camtastic", 2),
                 TeamFactory.getTeamObject("Squad", 3),
@@ -382,7 +388,7 @@ describe("Pick API endpoints", () => {
             expect(afterGetAllRes).toBeArrayOfSize(33);
         });
         it("should return a 400 Bad Request if no file is passed in", async () => {
-            await (adminLoggedIn(requestWithoutFile("overwrite", 400), app));
+            await adminLoggedIn(requestWithoutFile("overwrite", 400), app);
         });
         it("should return a 403 Forbidden error if a non-admin tries to upload new picks", async () => {
             await ownerLoggedIn(postFileRequest(csv1, "overwrite", 403), app);

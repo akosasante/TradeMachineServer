@@ -15,7 +15,7 @@ describe("SettingsController", () => {
         tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
         tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
     });
-    const settingsController = new SettingsController(mockSettingsDAO as unknown as SettingsDAO);
+    const settingsController = new SettingsController((mockSettingsDAO as unknown) as SettingsDAO);
 
     beforeAll(() => {
         logger.debug("~~~~~~SETTINGS CONTROLLER TESTS BEGIN~~~~~~");
@@ -40,8 +40,7 @@ describe("SettingsController", () => {
             mockSettingsDAO.getAllSettings.mockImplementation(() => {
                 throw new Error("Generic Error");
             });
-            await expect(settingsController.getAllSettings())
-                .rejects.toThrow(Error);
+            await expect(settingsController.getAllSettings()).rejects.toThrow(Error);
         });
     });
 
@@ -72,11 +71,13 @@ describe("SettingsController", () => {
             mockSettingsDAO.insertNewSettings.mockResolvedValueOnce(testSettings);
             const downtimeObj = {
                 downtime: {
-                    scheduled: [{
-                        downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START,
-                        downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END,
-                        downtimeReason: "hello",
-                    }],
+                    scheduled: [
+                        {
+                            downtimeStartDate: SettingsFactory.DEFAULT_DOWNTIME_START,
+                            downtimeEndDate: SettingsFactory.DEFAULT_DOWNTIME_END,
+                            downtimeReason: "hello",
+                        },
+                    ],
                 },
             };
             const res = await settingsController.appendNewSettingsLine(downtimeObj);

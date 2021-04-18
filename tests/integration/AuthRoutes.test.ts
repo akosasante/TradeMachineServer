@@ -10,7 +10,6 @@ import { getConnection } from "typeorm";
 import { generateHashedPassword } from "../../src/authentication/auth";
 import { advanceBy } from "jest-date-mock";
 
-
 let app: Server;
 let userDAO: UserDAO;
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
@@ -48,16 +47,16 @@ afterAll(async () => {
 });
 
 describe("Auth API endpoints", () => {
-    const testUser = { email: "test@example.com", password: "lol"};
+    const testUser = { email: "test@example.com", password: "lol" };
 
     afterEach(async () => {
         return await clearDb(getConnection(process.env.NODE_ENV));
     });
 
     describe("POST /auth/signup", () => {
-        const signupRequest = (email: string, password: string, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<User>>(agent, "/auth/signup", { email, password }, status);
+        const signupRequest = (email: string, password: string, status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) => makePostRequest<Partial<User>>(agent, "/auth/signup", { email, password }, status);
 
         it("should successfully signup the user, set up the session, and return the public user", async () => {
             const { body } = await signupRequest(testUser.email, testUser.password)(request(app));
@@ -101,10 +100,13 @@ describe("Auth API endpoints", () => {
 
         beforeEach(async () => {
             const hashedPass = await generateHashedPassword(testUser.password);
-            return await userDAO.createUsers([{ email: testUser.email, password: hashedPass }, {
-                email: testUser2.email,
-                password: hashedPass,
-            }]);
+            return await userDAO.createUsers([
+                { email: testUser.email, password: hashedPass },
+                {
+                    email: testUser2.email,
+                    password: hashedPass,
+                },
+            ]);
         });
 
         it("should successfully login the user, set up the session, and return the public user", async () => {
@@ -118,14 +120,25 @@ describe("Auth API endpoints", () => {
         });
 
         it("should use the most recently logged in user credentials in the session (if somehow someone logs into a new user from an existing session", async () => {
-            const sessionCheckFn = (agent: request.SuperTest<request.Test>) => agent.get("/auth/session_check").expect(200);
+            const sessionCheckFn = (agent: request.SuperTest<request.Test>) =>
+                agent.get("/auth/session_check").expect(200);
 
-            const { body: user1 } = await makeLoggedInRequest(request.agent(app), testUser.email, testUser.password, sessionCheckFn);
+            const { body: user1 } = await makeLoggedInRequest(
+                request.agent(app),
+                testUser.email,
+                testUser.password,
+                sessionCheckFn
+            );
             expect(user1.email).toEqual(testUser.email);
             expect(user1).not.toHaveProperty("password");
             expect(user1.lastLoggedIn).toBeDefined();
 
-            const { body: user2 } = await makeLoggedInRequest(request.agent(app), testUser2.email, testUser2.password, sessionCheckFn);
+            const { body: user2 } = await makeLoggedInRequest(
+                request.agent(app),
+                testUser2.email,
+                testUser2.password,
+                sessionCheckFn
+            );
             expect(user2.email).toEqual(testUser2.email);
             expect(user2).not.toHaveProperty("password");
             expect(user2.lastLoggedIn).toBeDefined();
@@ -141,9 +154,7 @@ describe("Auth API endpoints", () => {
         });
 
         it("should successfully 'logout' a non-initialized session", async () => {
-            await request(app)
-                .post("/auth/logout")
-                .expect(200);
+            await request(app).post("/auth/logout").expect(200);
         });
         it("should successfully logout the user and/ destroy session data", async () => {
             await makeLoggedInRequest(request.agent(app), testUser.email, testUser.password, logoutFunc);
@@ -157,38 +168,29 @@ describe("Auth API endpoints", () => {
         });
 
         it("should successfully update the user with the hashed password", async () => {
-            const { id } = await userDAO.findUser({ email: testUser.email }, true) as User;
+            const { id } = (await userDAO.findUser({ email: testUser.email }, true)) as User;
             const { passwordResetToken } = await userDAO.setPasswordExpires(id!);
-            const resetPasswordObj = { id, token: passwordResetToken, password: "newPass"};
+            const resetPasswordObj = { id, token: passwordResetToken, password: "newPass" };
 
-            const res = await request(app)
-                .post("/auth/reset_password")
-                .send(resetPasswordObj)
-                .expect(200);
+            const res = await request(app).post("/auth/reset_password").send(resetPasswordObj).expect(200);
             expect(res.body).toEqual("success");
         });
 
         it("should return a 404 if there's no user with that passwordResetToken", async () => {
-            const { id } = await userDAO.findUser({ email: testUser.email }, true) as User;
-            const resetPasswordObj = { id, token: "xyz-uuid", password: "newPass"};
+            const { id } = (await userDAO.findUser({ email: testUser.email }, true)) as User;
+            const resetPasswordObj = { id, token: "xyz-uuid", password: "newPass" };
 
-            await request(app)
-                .post("/auth/reset_password")
-                .send(resetPasswordObj)
-                .expect(404);
+            await request(app).post("/auth/reset_password").send(resetPasswordObj).expect(404);
         });
 
         it("should return a 403 if there's trying to reset a password past the expiry time", async () => {
-            const { id } = await userDAO.findUser({ email: testUser.email }, true) as User;
+            const { id } = (await userDAO.findUser({ email: testUser.email }, true)) as User;
             const { passwordResetToken } = await userDAO.setPasswordExpires(id!);
-            const resetPasswordObj = { id, token: passwordResetToken, password: "newPass"};
+            const resetPasswordObj = { id, token: passwordResetToken, password: "newPass" };
 
             advanceBy(TIME_TO_EXPIRE_USER_PASSWORD_IN_MS + 1000);
 
-            await request(app)
-                .post("/auth/reset_password")
-                .send(resetPasswordObj)
-                .expect(403);
+            await request(app).post("/auth/reset_password").send(resetPasswordObj).expect(403);
         });
     });
 
@@ -199,10 +201,7 @@ describe("Auth API endpoints", () => {
         });
 
         it("should return a 202 message if the email is successfully queued", async () => {
-            await request(app)
-                .post("/auth/login/sendResetEmail")
-                .send({ email: testUser.email })
-                .expect(202);
+            await request(app).post("/auth/login/sendResetEmail").send({ email: testUser.email }).expect(202);
         });
     });
 
@@ -213,10 +212,7 @@ describe("Auth API endpoints", () => {
         });
 
         it("should return a 202 message if the email is successfully queued", async () => {
-            await request(app)
-                .post("/auth/signup/sendEmail")
-                .send({ email: testUser.email })
-                .expect(202);
+            await request(app).post("/auth/signup/sendEmail").send({ email: testUser.email }).expect(202);
         });
     });
 
@@ -233,9 +229,7 @@ describe("Auth API endpoints", () => {
         });
 
         it("should return a 403 error if a non-logged in user calls the endpoint", async () => {
-            await request(app)
-                .get("/auth/session_check")
-                .expect(403);
+            await request(app).get("/auth/session_check").expect(403);
         });
     });
 });

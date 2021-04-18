@@ -22,7 +22,7 @@ afterEach(() => {
 describe("Slack queue processors", () => {
     it("processTradeAnnounceJob - should pass the trade into the slack announcer", async () => {
         // @ts-ignore
-        await processTradeAnnounceJob({name: "trade_announce", data: { trade: tradeJson }}, mockSlackAnnouncer);
+        await processTradeAnnounceJob({ name: "trade_announce", data: { trade: tradeJson } }, mockSlackAnnouncer);
         expect(mockSlackAnnouncer.sendTradeAnnouncement).toHaveBeenCalledTimes(1);
         expect(mockSlackAnnouncer.sendTradeAnnouncement).toHaveBeenCalledWith(trade);
     });

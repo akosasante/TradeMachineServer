@@ -112,7 +112,6 @@ describe("Trade Class", () => {
                 const invalidTrade = clone(testTrade);
                 invalidTrade.tradeParticipants = [sender];
                 expect(invalidTrade.isValid()).toEqual(false);
-
             });
             it("should fail if there are no participants (empty array)", () => {
                 const invalidTrade = clone(testTrade);
@@ -124,7 +123,6 @@ describe("Trade Class", () => {
                 // @ts-ignore
                 invalidTrade.tradeParticipants = undefined;
                 expect(invalidTrade.isValid()).toEqual(false);
-
             });
             it("should fail if there is no creator", () => {
                 const invalidTrade = clone(testTrade);
@@ -132,7 +130,6 @@ describe("Trade Class", () => {
                 secondRecipient.team = creatorTeam;
                 invalidTrade.tradeParticipants = [recipient, secondRecipient];
                 expect(invalidTrade.isValid()).toEqual(false);
-
             });
             it("should fail if there is more than one creator", () => {
                 const invalidTrade = clone(testTrade);

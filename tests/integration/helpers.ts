@@ -5,69 +5,77 @@ import { UserFactory } from "../factories/UserFactory";
 import { generateHashedPassword } from "../../src/authentication/auth";
 import { Connection } from "typeorm";
 
-export async function makeLoggedInRequest(agent: request.SuperTest<request.Test>, email: string, password: string,
-                                          req: (ag: request.SuperTest<request.Test>) => any) {
-    await agent
-        .post("/auth/login")
-        .send({ email, password })
-        .expect(200);
+export async function makeLoggedInRequest(
+    agent: request.SuperTest<request.Test>,
+    email: string,
+    password: string,
+    req: (ag: request.SuperTest<request.Test>) => any
+) {
+    await agent.post("/auth/login").send({ email, password }).expect(200);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return req(agent);
 }
 
 export async function doLogout(agent: request.SuperTest<request.Test>) {
-    await agent
-        .post("/auth/logout")
-        .send({})
-        .expect(200);
+    await agent.post("/auth/logout").send({}).expect(200);
 }
 
-export async function makePostRequest<T>(agent: request.SuperTest<request.Test>,
-                                         url: string, obj: T, expectedStatus: number) {
+export async function makePostRequest<T>(
+    agent: request.SuperTest<request.Test>,
+    url: string,
+    obj: T,
+    expectedStatus: number
+) {
     return agent
         .post(url)
-        .send(obj as unknown as {[key: string]: string | number | undefined | null})
+        .send((obj as unknown) as { [key: string]: string | number | undefined | null })
         .expect("Content-Type", /json/)
         .expect(expectedStatus);
 }
 
 export async function makeGetRequest(agent: request.SuperTest<request.Test>, url: string, expectedStatus: number) {
-    return agent
-        .get(url)
-        .expect("Content-Type", /json/)
-        .expect(expectedStatus);
+    return agent.get(url).expect("Content-Type", /json/).expect(expectedStatus);
 }
 
-export async function makePutRequest<T>(agent: request.SuperTest<request.Test>, url: string,
-                                        obj: T, expectedStatus: number) {
+export async function makePutRequest<T>(
+    agent: request.SuperTest<request.Test>,
+    url: string,
+    obj: T,
+    expectedStatus: number
+) {
     return agent
         .put(url)
-        .send(obj as unknown as {[key: string]: string | number | undefined | null})
+        .send((obj as unknown) as { [key: string]: string | number | undefined | null })
         .expect("Content-Type", /json/)
         .expect(expectedStatus);
 }
 
 export async function makeDeleteRequest(agent: request.SuperTest<request.Test>, url: string, expectedStatus: number) {
-    return agent
-        .delete(url)
-        .expect("Content-Type", /json/)
-        .expect(expectedStatus);
+    return agent.delete(url).expect("Content-Type", /json/).expect(expectedStatus);
 }
 
-export async function makePatchRequest<T>(agent: request.SuperTest<request.Test>, url: string,
-                                          obj: T, expectedStatus: number) {
+export async function makePatchRequest<T>(
+    agent: request.SuperTest<request.Test>,
+    url: string,
+    obj: T,
+    expectedStatus: number
+) {
     return agent
         .patch(url)
-        .send(obj as unknown as {[key: string]: string | number | undefined | null})
+        .send((obj as unknown) as { [key: string]: string | number | undefined | null })
         .expect("Content-Type", /json/)
         .expect(expectedStatus);
 }
 
 export function stringifyQuery(query: { [key: string]: string }) {
-    return "?".concat(Object.entries(query).map(([key, val]) => {
-        if (typeof val === "object") val = stringifyQuery(val);
-        return `${key}=${encodeURIComponent(val)}`;
-    }).join("&"));
+    return "?".concat(
+        Object.entries(query)
+            .map(([key, val]) => {
+                if (typeof val === "object") val = stringifyQuery(val);
+                return `${key}=${encodeURIComponent(val)}`;
+            })
+            .join("&")
+    );
 }
 
 export async function setupOwnerAndAdminUsers() {
@@ -75,10 +83,13 @@ export async function setupOwnerAndAdminUsers() {
     const ownerUser = UserFactory.getOwnerUser();
     const adminUser = UserFactory.getAdminUser();
     const password = await generateHashedPassword(UserFactory.GENERIC_PASSWORD);
-    const [savedAdmin, savedOwner] = await userDAO.createUsers([{ ...adminUser.parse(), password }, {
-        ...ownerUser.parse(),
-        password,
-    }]);
+    const [savedAdmin, savedOwner] = await userDAO.createUsers([
+        { ...adminUser.parse(), password },
+        {
+            ...ownerUser.parse(),
+            password,
+        },
+    ]);
     return [savedAdmin, savedOwner];
 }
 

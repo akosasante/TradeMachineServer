@@ -11,7 +11,6 @@ import TradeParticipant from "../../../src/models/tradeParticipant";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 
-
 describe("TradeDAO", () => {
     const mockTradeDb: MockObj = {
         find: jest.fn(),
@@ -28,12 +27,16 @@ describe("TradeDAO", () => {
     };
 
     const testTrade = TradeFactory.getTrade();
-    const tradeDAO = new TradeDAO(mockTradeDb as unknown as Repository<Trade>, mockPlayerDao as unknown as PlayerDAO, mockPickDao as unknown as DraftPickDAO);
+    const tradeDAO = new TradeDAO(
+        (mockTradeDb as unknown) as Repository<Trade>,
+        (mockPlayerDao as unknown) as PlayerDAO,
+        (mockPickDao as unknown) as DraftPickDAO
+    );
 
     afterEach(() => {
-        [mockTradeDb, mockPlayerDao, mockPickDao]
-            .forEach(mockedThing => Object.values(mockedThing)
-                .forEach(mockFn => mockFn.mockReset()));
+        [mockTradeDb, mockPlayerDao, mockPickDao].forEach(mockedThing =>
+            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset())
+        );
         mockWhereInIds.mockClear();
         mockExecute.mockClear();
     });
@@ -44,7 +47,6 @@ describe("TradeDAO", () => {
     afterAll(() => {
         logger.debug("~~~~~~TRADE DAO TESTS COMPLETE~~~~~~");
     });
-
 
     it("getAllTrades - should call the db find method once with option args", async () => {
         mockTradeDb.find.mockResolvedValueOnce([testTrade]);
@@ -95,10 +97,13 @@ describe("TradeDAO", () => {
         const res = await tradeDAO.updateDeclinedBy(testTrade.id!, participant!, "reason");
 
         expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.update).toHaveBeenCalledWith({ id: testTrade.id! }, {
-            declinedById: participant,
-            declinedReason: "reason",
-        });
+        expect(mockTradeDb.update).toHaveBeenCalledWith(
+            { id: testTrade.id! },
+            {
+                declinedById: participant,
+                declinedReason: "reason",
+            }
+        );
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
         expect(res).toEqual(testTrade);
@@ -110,11 +115,14 @@ describe("TradeDAO", () => {
         const res = await tradeDAO.updateAcceptedBy(testTrade.id!, [participant!]);
 
         expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.update).toHaveBeenCalledWith({ id: testTrade.id! }, {
-            acceptedBy: [participant],
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            acceptedOnDate: expect.any(Date),
-        });
+        expect(mockTradeDb.update).toHaveBeenCalledWith(
+            { id: testTrade.id! },
+            {
+                acceptedBy: [participant],
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                acceptedOnDate: expect.any(Date),
+            }
+        );
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
         expect(res).toEqual(testTrade);
@@ -122,14 +130,16 @@ describe("TradeDAO", () => {
 
     it("updateParticipants - should call createQueryBuilder and findOneOrFail with id and participants", async () => {
         const addAndRemove = jest.fn();
-        const of = jest.fn(() => ({addAndRemove}));
-        const relation = jest.fn(() => ({of}));
+        const of = jest.fn(() => ({ addAndRemove }));
+        const relation = jest.fn(() => ({ of }));
         mockTradeDb.createQueryBuilder.mockImplementationOnce(() => ({ relation }));
         mockTradeDb.findOneOrFail.mockReturnValue(testTrade);
-        const otherParticipant = new TradeParticipant({...testTrade.tradeParticipants![0].parse(), id: uuid()});
+        const otherParticipant = new TradeParticipant({ ...testTrade.tradeParticipants![0].parse(), id: uuid() });
         const res = await tradeDAO.updateParticipants(
             testTrade.id!,
-            [otherParticipant], [testTrade.tradeParticipants![0]]);
+            [otherParticipant],
+            [testTrade.tradeParticipants![0]]
+        );
 
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledWith();
@@ -140,14 +150,12 @@ describe("TradeDAO", () => {
 
     it("updateItems - should call createQueryBuilder and findOneOrFail with id and items", async () => {
         const addAndRemove = jest.fn();
-        const of = jest.fn(() => ({addAndRemove}));
-        const relation = jest.fn(() => ({of}));
+        const of = jest.fn(() => ({ addAndRemove }));
+        const relation = jest.fn(() => ({ of }));
         mockTradeDb.createQueryBuilder.mockImplementationOnce(() => ({ relation }));
         mockTradeDb.findOneOrFail.mockReturnValue(testTrade);
-        const otherPlayer = new TradeItem({...testTrade.tradeItems![0].parse(), id: uuid()});
-        const res = await tradeDAO.updateItems(
-            testTrade.id!,
-            [otherPlayer], [testTrade.tradeItems![0]]);
+        const otherPlayer = new TradeItem({ ...testTrade.tradeItems![0].parse(), id: uuid() });
+        const res = await tradeDAO.updateItems(testTrade.id!, [otherPlayer], [testTrade.tradeItems![0]]);
 
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledWith();
