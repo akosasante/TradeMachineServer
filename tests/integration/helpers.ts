@@ -83,13 +83,15 @@ export async function setupOwnerAndAdminUsers() {
     const ownerUser = UserFactory.getOwnerUser();
     const adminUser = UserFactory.getAdminUser();
     const password = await generateHashedPassword(UserFactory.GENERIC_PASSWORD);
-    const [savedAdmin, savedOwner] = await userDAO.createUsers([
+    await userDAO.createUsers([
         { ...adminUser.parse(), password },
         {
             ...ownerUser.parse(),
             password,
         },
     ]);
+    const savedAdmin = await userDAO.findUser({ email: adminUser.email });
+    const savedOwner = await userDAO.findUser({ email: ownerUser.email });
     return [savedAdmin, savedOwner];
 }
 
@@ -109,7 +111,7 @@ export const clearDb = async (connection: Connection) => {
     for (const entity of entities) {
         const repository = connection.getRepository(entity.name);
         await repository.query(`DELETE
-                                FROM ${entity.schema}.${entity.tableName}`);
+                            FROM ${entity.schema}.${entity.tableName}`);
     }
     return entities;
 };
