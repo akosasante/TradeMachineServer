@@ -51,7 +51,7 @@ beforeAll(async () => {
     userDao = new UserDAO();
 
     return app;
-});
+}, 5000);
 
 afterAll(async () => {
     logger.debug("~~~~~~USER ROUTES AFTER ALL~~~~~~");
