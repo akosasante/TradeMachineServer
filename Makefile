@@ -13,7 +13,7 @@ help: ## show make commands
 
 # |----------- TESTING SCRIPTS ---------|
 test-ci: ## run tests using CI config, and no logging
-	NODE_ENV=test ENABLE_LOGS=false \
+	NODE_ENV=test ENABLE_LOGS=true \
 	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci
 
