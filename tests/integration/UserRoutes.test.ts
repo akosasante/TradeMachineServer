@@ -22,6 +22,7 @@ import {
 import { v4 as uuid } from "uuid";
 import { getConnection } from "typeorm";
 import UserDAO from "../../src/DAO/UserDAO";
+import { inspect } from "util";
 
 let app: Server;
 let ownerUser: User;
@@ -254,7 +255,9 @@ describe("User API endpoints", () => {
         });
 
         it("should return the updated user", async () => {
+            logger.warn("TEST OF INTEREST");
             const { body } = await adminLoggedIn(putRequest(adminUser.id!, { slackUsername }), app);
+            logger.warn(inspect(body));
             expect(body).toMatchObject({
                 ...updatedAdmin,
                 dateCreated: expect.stringMatching(DatePatternRegex),
@@ -264,6 +267,7 @@ describe("User API endpoints", () => {
 
             // Confirm db was actually updated:
             const { body: getOneBody } = await getOneRequest(adminUser.id!);
+            logger.warn(inspect(getOneBody));
             const expected = {
                 ...updatedAdmin,
                 password: expect.any(String),
