@@ -256,6 +256,10 @@ describe("User API endpoints", () => {
 
         it("should return the updated user", async () => {
             logger.warn("TEST OF INTEREST");
+            logger.warn(inspect(adminUser));
+            logger.warn(inspect(updatedAdmin));
+            const all = await userDao.getAllUsers();
+            logger.warn(inspect(all));
             const { body } = await adminLoggedIn(putRequest(adminUser.id!, { slackUsername }), app);
             logger.warn(inspect(body));
             expect(body).toMatchObject({
