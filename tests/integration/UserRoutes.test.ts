@@ -22,7 +22,6 @@ import {
 import { v4 as uuid } from "uuid";
 import { getConnection } from "typeorm";
 import UserDAO from "../../src/DAO/UserDAO";
-import { inspect } from "util";
 
 let app: Server;
 let ownerUser: User;
@@ -248,22 +247,16 @@ describe("User API endpoints", () => {
         ) => makePutRequest<Partial<User>>(agent, `/users/${id}`, userObj, status);
         const getOneRequest = (id: string) => makeGetRequest(request(app), `/users/${id}`, 200);
         const slackUsername = "MrMeSeeks92";
-        const updatedAdmin = { ...adminUser, slackUsername };
+        const updatedAdmin = (admin: User) => ({ ...admin, slackUsername });
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
         });
 
         it("should return the updated user", async () => {
-            logger.warn("TEST OF INTEREST");
-            logger.warn(inspect(adminUser));
-            logger.warn(inspect(updatedAdmin));
-            const all = await userDao.getAllUsers();
-            logger.warn(inspect(all));
             const { body } = await adminLoggedIn(putRequest(adminUser.id!, { slackUsername }), app);
-            logger.warn(inspect(body));
             expect(body).toMatchObject({
-                ...updatedAdmin,
+                ...updatedAdmin(adminUser),
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
                 lastLoggedIn: expect.stringMatching(DatePatternRegex),
@@ -271,9 +264,8 @@ describe("User API endpoints", () => {
 
             // Confirm db was actually updated:
             const { body: getOneBody } = await getOneRequest(adminUser.id!);
-            logger.warn(inspect(getOneBody));
             const expected = {
-                ...updatedAdmin,
+                ...updatedAdmin(adminUser),
                 password: expect.any(String),
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
