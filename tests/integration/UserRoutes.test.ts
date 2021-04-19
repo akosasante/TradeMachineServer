@@ -69,6 +69,7 @@ describe("User API endpoints", () => {
     beforeEach(async () => {
         // Create admin and owner users in db for rest of this suite's use
         [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+        logger.warn(`in befeeach: ${inspect(adminUser)} and ${inspect(ownerUser)}`);
         return [adminUser, ownerUser];
     });
     afterEach(async () => {
@@ -249,6 +250,7 @@ describe("User API endpoints", () => {
         const getOneRequest = (id: string) => makeGetRequest(request(app), `/users/${id}`, 200);
         const slackUsername = "MrMeSeeks92";
         const updatedAdmin = (admin: User) => ({ ...admin, slackUsername });
+        logger.warn(`in descr: ${inspect(adminUser)}`);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -256,8 +258,8 @@ describe("User API endpoints", () => {
 
         it("should return the updated user", async () => {
             logger.warn("TEST OF INTEREST");
-            logger.warn(inspect(adminUser));
-            logger.warn(inspect(updatedAdmin(adminUser)));
+            logger.warn(`in test admin: ${inspect(adminUser)}`);
+            logger.warn(`in test updated: ${inspect(updatedAdmin(adminUser))}`);
             const all = await userDao.getAllUsers();
             logger.warn(inspect(all));
             const { body } = await adminLoggedIn(putRequest(adminUser.id!, { slackUsername }), app);
