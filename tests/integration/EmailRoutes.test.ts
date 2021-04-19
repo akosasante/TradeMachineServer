@@ -30,7 +30,7 @@ beforeAll(async () => {
     logger.debug("~~~~~~EMAIL ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
     return app;
-});
+}, 5000);
 
 afterAll(async () => {
     logger.debug("~~~~~~EMAIL ROUTES AFTER ALL~~~~~~");
