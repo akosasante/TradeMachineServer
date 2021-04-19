@@ -4,6 +4,7 @@ import UserDAO from "../../src/DAO/UserDAO";
 import { UserFactory } from "../factories/UserFactory";
 import { generateHashedPassword } from "../../src/authentication/auth";
 import { Connection } from "typeorm";
+import User from "../../src/models/user";
 
 export async function makeLoggedInRequest(
     agent: request.SuperTest<request.Test>,
