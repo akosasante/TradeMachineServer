@@ -78,7 +78,7 @@ export function stringifyQuery(query: { [key: string]: string }) {
     );
 }
 
-export async function setupOwnerAndAdminUsers() {
+export async function setupOwnerAndAdminUsers(): Promise<User[]> {
     const userDAO = new UserDAO();
     const ownerUser = UserFactory.getOwnerUser();
     const adminUser = UserFactory.getAdminUser();
@@ -92,7 +92,7 @@ export async function setupOwnerAndAdminUsers() {
     ]);
     const savedAdmin = await userDAO.findUser({ email: adminUser.email });
     const savedOwner = await userDAO.findUser({ email: ownerUser.email });
-    return [savedAdmin, savedOwner];
+    return [savedAdmin!, savedOwner!];
 }
 
 export const adminLoggedIn = (requestFn: (ag: request.SuperTest<request.Test>) => any, app: Server) =>
