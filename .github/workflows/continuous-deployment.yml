@@ -47,6 +47,7 @@ jobs:
             ./package.json
             ./package-lock.json
             ./check_migrations.sh
+            ./replace-migration-schema.sh
           outPath: out.tar.gz
 
       - name: Upload built folders to artifacts
@@ -89,6 +90,7 @@ jobs:
             tar -xzf out.tar.gz --overwrite
             /home/dev_deployer/.asdf/shims/npm install --production
             /home/dev_deployer/.asdf/shims/npx pm2 restart trademachine
+            sh replace-migration-schema.sh dev public
             rm out.tar.gz
 
 #      - name: Check if we need to do migrations
