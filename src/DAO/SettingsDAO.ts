@@ -8,7 +8,7 @@ export default class SettingsDAO {
     private settingsDb: Repository<Settings>;
 
     constructor(repo?: Repository<Settings>) {
-        this.settingsDb = repo || getConnection(process.env.NODE_ENV).getRepository("Settings");
+        this.settingsDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("Settings");
     }
 
     public async getAllSettings(): Promise<Settings[]> {
