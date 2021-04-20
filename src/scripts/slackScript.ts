@@ -1,3 +1,4 @@
+/* eslint-disable */
 import initializeDb from "../bootstrap/db";
 import TradeDAO from "../DAO/TradeDAO";
 import { SlackTradeAnnouncer } from "../slack/tradeAnnouncer";
@@ -11,5 +12,10 @@ async function run() {
     return SlackTradeAnnouncer.sendTradeAnnouncement(trade);
 }
 
-// tslint:disable-next-line:no-console
-run().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(99); });
+run()
+    .then(() => process.exit(0))
+    .catch(err => {
+        console.error(err);
+        process.exit(99);
+    });
+/* eslint-enable */

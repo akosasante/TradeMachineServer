@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import { NextFunction, Request, Response } from "express";
 import { ExpressErrorMiddlewareInterface, HttpError, Middleware } from "routing-controllers";
 import { QueryFailedError } from "typeorm";
@@ -6,14 +7,15 @@ import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import logger from "../../bootstrap/logger";
 import { AuthorizationRequiredError } from "routing-controllers/error/AuthorizationRequiredError";
 import { rollbar } from "../../bootstrap/rollbar";
-// tslint:disable:max-classes-per-file
+import { inspect } from "util";
 
-@Middleware({type: "after"})
+@Middleware({ type: "after" })
 export default class CustomErrorHandler implements ExpressErrorMiddlewareInterface {
     private static cleanErrorObject(error: Error) {
-        return {message: error.message || "", stack: error.stack || ""};
+        return { message: error.message || "", stack: error.stack || "" };
     }
-    public error(error: Error, request: Request, response: Response, next: NextFunction) {
+
+    public error(error: Error, request: Request, response: Response, next: NextFunction): void {
         logger.error(`Handling error: ${error.stack}`);
         rollbar.error(error);
         if (response.headersSent) {
@@ -26,10 +28,10 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
             logger.error(`HTTP Error: ${error.message}`);
             response.status(error.httpCode).json(CustomErrorHandler.cleanErrorObject(error));
         } else if (error instanceof EntityNotFoundError) {
-             logger.error(`Database Error: ${error.message}`);
-             response.status(404).json(CustomErrorHandler.cleanErrorObject(error));
+            logger.error(`Database Error: ${error.message}`);
+            response.status(404).json(CustomErrorHandler.cleanErrorObject(error));
         } else if (error instanceof QueryFailedError || error instanceof EntityColumnNotFound) {
-            logger.error(`Database/Entity Error: ${error.message}`);
+            logger.error(`Database/Entity Error: ${inspect(error.message)}`);
             response.status(400).json(CustomErrorHandler.cleanErrorObject(error));
         } else {
             logger.error(`Unknown Error: ${JSON.stringify(Object.getPrototypeOf(error))}`);
@@ -43,3 +45,4 @@ export class ConflictError extends HttpError {
         super(409, msg || "Conflict Found In Request");
     }
 }
+/* eslint-enable max-classes-per-file */

@@ -8,20 +8,27 @@ import { validateRow, WriteMode } from "./CsvUtils";
 import { uniqWith } from "lodash";
 import { rollbar } from "../bootstrap/rollbar";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 interface DraftPickCSVRow {
     Owner: string;
     Round: string;
     "Pick Owner": string;
-    Type: "Major"|"High"|"Low";
+    Type: "Major" | "High" | "Low";
     "Pick Number": string | undefined;
+    [key: string]: string | undefined;
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
-let i = 0;
 const season = 2021; // TODO: How to get these values from our CSVs. Maybe have some set aside cells; or force this as an attribute of the api call
 
-export async function processDraftPickCsv(csvFilePath: string, teams: Team[], dao: DraftPickDAO, mode?: WriteMode)
-    : Promise<DraftPick[]> {
+// TODO: Perhaps csv names should be associated with teams rather than users??
 
+export async function processDraftPickCsv(
+    csvFilePath: string,
+    teams: Team[],
+    dao: DraftPickDAO,
+    mode?: WriteMode
+): Promise<DraftPick[]> {
     await maybeDeleteExistingPicks(dao, mode);
 
     logger.debug(`WAITING ON STREAM ${csvFilePath}`);
@@ -29,11 +36,13 @@ export async function processDraftPickCsv(csvFilePath: string, teams: Team[], da
     logger.debug("DONE PARSING");
 
     logger.debug("deduping list of picks");
-    const dedupedPicks = uniqWith(parsedPicks, (pick1, pick2) =>
-        (pick1.type === pick2.type) &&
-        (pick1.season === pick2.season) &&
-        (pick1.round === pick2.round) &&
-        (pick1.originalOwner === pick2.originalOwner)
+    const dedupedPicks = uniqWith(
+        parsedPicks,
+        (pick1: Partial<DraftPick>, pick2: Partial<DraftPick>) =>
+            pick1.type === pick2.type &&
+            pick1.season === pick2.season &&
+            pick1.round === pick2.round &&
+            pick1.originalOwner === pick2.originalOwner
     );
     logger.debug(`deduped from ${parsedPicks.length} to ${dedupedPicks.length}`);
     return dao.batchUpsertPicks(dedupedPicks.filter(pick => !!pick));
@@ -56,9 +65,9 @@ async function readAndParsePickCsv(path: string, teams: Team[]): Promise<Partial
     const parsedPicks: Partial<DraftPick>[] = [];
     return new Promise((resolve, reject) => {
         logger.debug("----------- starting to read csv ----------");
-        parseFile(path, {headers: true})
+        parseFile(path, { headers: true })
             .on("data", (row: DraftPickCSVRow) => {
-                const parsedPick = parseDraftPick(row, teams, i);
+                const parsedPick = parseDraftPick(row, teams);
                 if (parsedPick) {
                     parsedPicks.push(parsedPick);
                 }
@@ -72,14 +81,16 @@ async function readAndParsePickCsv(path: string, teams: Team[]): Promise<Partial
     });
 }
 
-function parseDraftPick(row: DraftPickCSVRow, teams: Team[], index: number): Partial<DraftPick>|undefined {
+function parseDraftPick(row: DraftPickCSVRow, teams: Team[]): Partial<DraftPick> | undefined {
     // logger.debug(`INDEX=${index}`);
     const DRAFT_PICK_REQUIRED_PROPS = ["Round", "Pick Owner", "Type", "Owner"];
-    const KEYWORD_TO_LEVEL: {[key: string]: LeagueLevel} = {
+    /* eslint-disable @typescript-eslint/naming-convention */
+    const KEYWORD_TO_LEVEL: { [key: string]: LeagueLevel } = {
         High: LeagueLevel.HIGH,
         Low: LeagueLevel.LOW,
         Major: LeagueLevel.MAJORS,
     };
+    /* eslint-enable @typescript-eslint/naming-convention */
 
     const validRow = validateRow(row, DRAFT_PICK_REQUIRED_PROPS);
     if (!validRow) {
@@ -89,15 +100,13 @@ function parseDraftPick(row: DraftPickCSVRow, teams: Team[], index: number): Par
     }
     const teamsWithOwners = teams.filter(team => team.owners && team.owners.length);
     const currentOwner = teamsWithOwners.find(team => team.owners!.some(owner => owner.csvName === row.Owner));
-    const originalOwner = teamsWithOwners.find(team =>
-        team.owners!.some(owner => owner.csvName === row["Pick Owner"]));
+    const originalOwner = teamsWithOwners.find(team => team.owners!.some(owner => owner.csvName === row["Pick Owner"]));
 
     if (!currentOwner || !originalOwner) {
         logger.error(`No matching owners found while parsing draft pick csv row: ${inspect(row)}`);
         rollbar.error(`No matching owners found while parsing draft pick csv row: ${inspect(row)}`);
         return undefined;
     }
-    i += 1;
 
     return {
         round: Number(row.Round),

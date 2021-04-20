@@ -1,6 +1,6 @@
+/* eslint-disable */
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
-dotenvConfig({path: resolvePath(__dirname, "../../../.env")});
 import initializeDb from "../../bootstrap/db";
 import { registerUser } from "./helpers/authHelper";
 import { createAdminUser, createGenericUser, createInactiveUser, saveUser } from "./helpers/userCreator";
@@ -8,6 +8,7 @@ import User from "../../models/user";
 import logger from "../../bootstrap/logger";
 import { inspect } from "util";
 
+dotenvConfig({ path: resolvePath(__dirname, "../../../.env") });
 
 async function run() {
     const args = process.argv.slice(2);
@@ -45,5 +46,12 @@ function getUserObj(args: any[]) {
 }
 
 run()
-    .then(user => { logger.info(inspect(user)); process.exit(0); })
-    .catch(err => { logger.error(err); process.exit(999); });
+    .then(user => {
+        logger.info(inspect(user));
+        process.exit(0);
+    })
+    .catch(err => {
+        logger.error(err);
+        process.exit(999);
+    });
+/* eslint-enable */

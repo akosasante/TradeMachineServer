@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import Settings from "../../../src/models/settings";
 import { SettingsFactory } from "../../factories/SettingsFactory";
 import logger from "../../../src/bootstrap/logger";
@@ -12,7 +10,10 @@ describe("GeneralSettings Class", () => {
         logger.debug("~~~~~~SETTINGS TESTS COMPLETE~~~~~~");
     });
 
-    const settingsObj = SettingsFactory.getSettingsObject(undefined, {tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START, tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END});
+    const settingsObj = SettingsFactory.getSettingsObject(undefined, {
+        tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
+        tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
+    });
     const settings = new Settings(settingsObj);
 
     describe("constructor", () => {

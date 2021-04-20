@@ -22,16 +22,16 @@ export interface DowntimeSetting {
 @Index(["downtime", "modifiedBy"])
 @Index(["modifiedBy"])
 export default class Settings extends BaseModel {
-    @Column({type: "time", nullable: true})
+    @Column({ type: "time", nullable: true })
     public tradeWindowStart?: string;
 
-    @Column({type: "time", nullable: true})
+    @Column({ type: "time", nullable: true })
     public tradeWindowEnd?: string;
 
-    @Column({nullable: true, type: "jsonb"})
+    @Column({ nullable: true, type: "jsonb" })
     public downtime?: DowntimeSettings;
 
-    @ManyToOne(type => User, user => user.updatedSettings, {onDelete: "SET NULL", eager: true})
+    @ManyToOne(type => User, user => user.updatedSettings, { onDelete: "SET NULL", eager: true })
     public modifiedBy!: User;
 
     constructor(props: Partial<Settings> & Required<Pick<Settings, "modifiedBy">>) {

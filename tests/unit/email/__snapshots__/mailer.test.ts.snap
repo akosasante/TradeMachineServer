@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Emailer Class email snapshots sendPasswordResetEmail 1`] = `
+exports[`EMAILER Class email snapshots sendPasswordResetEmail 1`] = `
 Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
@@ -79,7 +79,7 @@ a.button-link {
     <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
   </body>
 </html>",
-    "subject": "FlexFoxFantasy TradeMachine - Password reset for Flex Fox Fantasy League TradeMachine",
+    "subject": "FlexFoxFantasy TradeMachine - Password reset requested",
     "text": " TRADEMACHINE
 FORGOT YOUR PASSWORD?
 Hi Jatheesh, you are receiving this email because you have requested a password
@@ -95,7 +95,7 @@ Reset Password [http://localhost:8080/reset_password?u=random-token]",
 }
 `;
 
-exports[`Emailer Class email snapshots sendRegistrationEmail 1`] = `
+exports[`EMAILER Class email snapshots sendRegistrationEmail 1`] = `
 Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
@@ -188,7 +188,7 @@ Register [http://localhost:8080/register?e=dGVzdEBleGFtcGxlLmNvbQ==]",
 }
 `;
 
-exports[`Emailer Class email snapshots sendTestEmail 1`] = `
+exports[`EMAILER Class email snapshots sendTestEmail 1`] = `
 Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
@@ -258,7 +258,7 @@ a.button-link {
       <div class=\\"container\\" style=\\"width: 70%; margin-left: 10%; padding: 5% 0;\\">
         <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
         <h2>Testing... Testing...</h2>
-        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Hi Jatheesh, this is a test email.</p>
+        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Hi Jatheesh, this is a test email from the Flex Fox Fantasy Trade Machine.</p>
       </div>
     </div>
     <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
@@ -267,13 +267,122 @@ a.button-link {
     "subject": "FlexFoxFantasy TradeMachine - Test Email",
     "text": " TRADEMACHINE
 TESTING... TESTING...
-Hi Jatheesh, this is a test email.",
+Hi Jatheesh, this is a test email from the Flex Fox Fantasy Trade Machine.",
     "to": "test@example.com",
   },
 }
 `;
 
-exports[`Emailer Class email snapshots sendTradeRequestEmail 1`] = `
+exports[`EMAILER Class email snapshots sendTradeDeclinedEmail 1`] = `
+Object {
+  "envelope": Object {
+    "from": "tradebot@flexfoxfantasy.com",
+    "to": Array [
+      "test@example.com",
+    ],
+  },
+  "originalMessage": Object {
+    "attachments": Array [],
+    "from": "tradebot@flexfoxfantasy.com",
+    "html": "<!DOCTYPE html PUBLIC \\"-//W3C//DTD XHTML 1.0 Strict//EN\\" \\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\\">
+<html xmlns=\\"http://www.w3.org/1999/xhtml\\" style=\\"height: 100%; background: #f7f7f7;\\">
+  <head>
+    <meta charset=\\"utf-8\\">
+    <meta name=\\"viewport\\" content=\\"width=device-width; initial-scale=1.0;\\">
+    <meta http-equiv=\\"X-UA-Compatible\\" content=\\"IE=edge\\">
+    <meta name=\\"x-apple-disable-message-reformatting\\">
+    
+    <style>
+@media screen and (max-width: 600px) {
+  u + .body {
+    width: 100vw !important;
+  }
+}
+</style>
+    <style>
+a.button-link {
+  background-color: #3b459a;
+  display: inline-block;
+  border: 2px solid transparent;
+  color: #fafafa;
+  padding: calc(.375em - 1px) .75em;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  font-size: 1rem;
+  text-decoration: none;
+  white-space: nowrap;
+  height: 1.5em;
+  vertical-align: top;
+  line-height: 1.5;
+}
+@media only screen and (max-width:700px) {
+  .main,
+.header,
+.footer {
+    width: 100% !important;
+  }
+
+  .main .container h1 {
+    font-size: 1.8rem !important;
+  }
+
+  a.button-link {
+    margin: 1rem 0 !important;
+    text-decoration: underline !important;
+  }
+}
+</style>
+    <link href=\\"./trade_declined/styles.css\\" rel=\\"stylesheet\\">
+    <title></title>
+  </head>
+  <body style=\\"font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;\\">
+    <header class=\\"title\\" style=\\"height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;\\"></header>
+    <div class=\\"main\\" style=\\"height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;\\">
+      <div class=\\"container\\" style=\\"width: 70%; margin-left: 10%; padding: 5% 0;\\">
+        <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
+        <h2>RECIPIENT_TEAM has declined a trade offer involving you:</h2>
+        <div class=\\"divider\\"></div>
+        <div>
+          <p style=\\"line-height: 1.6em; margin: 1em 0;\\"><strong>Reason:</strong> horrible mismatch for me</p>
+        </div>
+        <div>
+          <h2>Declined trade was:</h2>
+          <h3>CREATOR_TEAM would have received:</h3>
+          <ul class=\\"picks\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
+          <li>Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM</li>
+          <h3>RECIPIENT_TEAM would have received:</h3>
+          <ul class=\\"majors\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
+          <li>Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM</li>
+          <ul class=\\"minors\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
+          <li>MiniMe (Jays - P - Low Minors) from CREATOR_TEAM</li>
+        </div>
+      </div>
+    </div>
+    <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
+  </body>
+</html>",
+    "subject": "FlexFoxFantasy TradeMachine - Trade declined by RECIPIENT_TEAM",
+    "text": " TRADEMACHINE
+RECIPIENT_TEAM HAS DECLINED A TRADE OFFER INVOLVING YOU:
+Reason: horrible mismatch for me
+
+DECLINED TRADE WAS:
+CREATOR_TEAM WOULD HAVE RECEIVED:
+
+Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM 
+RECIPIENT_TEAM WOULD HAVE RECEIVED:
+
+Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM 
+MiniMe (Jays - P - Low Minors) from CREATOR_TEAM",
+    "to": "test@example.com",
+  },
+}
+`;
+
+exports[`EMAILER Class email snapshots sendTradeRequestEmail 1`] = `
 Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
@@ -366,7 +475,7 @@ a.button-link {
     <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
   </body>
 </html>",
-    "subject": "FlexFoxFantasy TradeMachine - Fantasy Baseball Trade Proposal from CREATOR_TEAM",
+    "subject": "FlexFoxFantasy TradeMachine - Trade Proposal from CREATOR_TEAM",
     "text": " TRADEMACHINE
 CREATOR_TEAM REQUESTED A TRADE WITH YOU:
 CREATOR_TEAM WOULD RECEIVE:
@@ -387,7 +496,7 @@ Accept Trade [http://localhost:8080/trade/test-uuid/accept]Reject Trade
 }
 `;
 
-exports[`Emailer Class email snapshots sendTradeSubmissionEmail 1`] = `
+exports[`EMAILER Class email snapshots sendTradeSubmissionEmail 1`] = `
 Object {
   "envelope": Object {
     "from": "tradebot@flexfoxfantasy.com",
@@ -479,7 +588,7 @@ a.button-link {
     <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
   </body>
 </html>",
-    "subject": "FlexFoxFantasy TradeMachine - Your Fantasy Baseball Trade Has Been Accepted!",
+    "subject": "FlexFoxFantasy TradeMachine - Your Trade Has Been Accepted!",
     "text": " TRADEMACHINE
 YOUR TRADE OFFER HAS BEEN ACCEPTED BY ALL RECIPIENTS:
 CREATOR_TEAM WILL RECEIVE:

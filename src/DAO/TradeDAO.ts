@@ -6,7 +6,6 @@ import { BadRequestError } from "routing-controllers";
 import PlayerDAO from "./PlayerDAO";
 import DraftPickDAO from "./DraftPickDAO";
 
-
 export default class TradeDAO {
     private tradeDb: Repository<Trade>;
     private playerDao: PlayerDAO;
@@ -19,7 +18,7 @@ export default class TradeDAO {
     }
 
     public async getAllTrades(): Promise<Trade[]> {
-        const options: FindManyOptions = {order: {id: "ASC"}};
+        const options: FindManyOptions = { order: { id: "ASC" } };
         return await this.tradeDb.find(options);
     }
 
@@ -28,7 +27,7 @@ export default class TradeDAO {
     }
 
     public async hydrateTrade(trade: Trade): Promise<Trade> {
-        for (const item of (trade.tradeItems || [])) {
+        for (const item of trade.tradeItems || []) {
             if (item.tradeItemType === TradeItemType.PICK) {
                 item.entity = await this.pickDao.getPickById(item.tradeItemId);
             }
@@ -39,7 +38,7 @@ export default class TradeDAO {
         return trade;
     }
 
-public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
+    public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
         if (!Trade.isValid(tradeObj)) {
             throw new BadRequestError("Trade is not valid");
         }
@@ -51,15 +50,14 @@ public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
 
     public async deleteTrade(id: string): Promise<DeleteResult> {
         await this.tradeDb.findOneOrFail(id);
-        return await this.tradeDb.createQueryBuilder()
-            .delete()
-            .whereInIds(id)
-            .returning("id")
-            .execute();
+        return await this.tradeDb.createQueryBuilder().delete().whereInIds(id).returning("id").execute();
     }
 
-    public async updateParticipants(id: string, participantsToAdd: TradeParticipant[],
-                                    participantsToRemove: TradeParticipant[]): Promise<Trade> {
+    public async updateParticipants(
+        id: string,
+        participantsToAdd: TradeParticipant[],
+        participantsToRemove: TradeParticipant[]
+    ): Promise<Trade> {
         await this.tradeDb.findOneOrFail(id);
         await this.tradeDb
             .createQueryBuilder()
@@ -71,11 +69,7 @@ public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
 
     public async updateItems(id: string, itemsToAdd: TradeItem[], itemsToRemove: TradeItem[]): Promise<Trade> {
         await this.tradeDb.findOneOrFail(id);
-        await this.tradeDb
-            .createQueryBuilder()
-            .relation("tradeItems")
-            .of(id)
-            .addAndRemove(itemsToAdd, itemsToRemove);
+        await this.tradeDb.createQueryBuilder().relation("tradeItems").of(id).addAndRemove(itemsToAdd, itemsToRemove);
         return await this.tradeDb.findOneOrFail(id);
     }
 

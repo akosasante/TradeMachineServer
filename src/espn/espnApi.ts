@@ -6,6 +6,7 @@ import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";
 import { cleanupQuery } from "../api/helpers/ApiHelpers";
 
+/* eslint-disable @typescript-eslint/ban-types */
 export interface EspnLeagueMember {
     id: string;
     isLeagueManager: boolean;
@@ -19,7 +20,7 @@ interface EspnRecord {
     pointsAgainst: number;
     pointsFor: number;
     streakLength: number;
-    streakType: "WIN"|"LOSS"|string;
+    streakType: "WIN" | "LOSS" | string;
     ties: number;
     wins: number;
 }
@@ -71,7 +72,6 @@ interface EspnPlayerInfo {
     injured?: boolean;
     injuryStatus?: string;
     active?: boolean;
-
 }
 
 interface EspnPlayerPoolEntry {
@@ -126,21 +126,32 @@ interface EspnScoreObj {
 
 interface EspnScheduleItem {
     id: number;
-    winner?: "HOME"|"AWAY"|"UNDECIDED";
+    winner?: "HOME" | "AWAY" | "UNDECIDED";
     home?: EspnScoreObj;
     away?: EspnScoreObj;
     playoffTierType?: string;
 }
+/* eslint-enable @typescript-eslint/ban-types */
 
 type EspnSchedule = EspnScheduleItem[];
 
-
 export default class EspnAPI {
-    private leagueId: number;
+    private readonly leagueId: number;
     private req: AxiosInstance;
-    private ESPNS2_COOKIE = process.env.ESPN_COOKIE;
-    private ESPN_SWID = process.env.ESPN_SWID;
-    private static getBaseUrl(season: number = 2021, leagueId: number): string {
+    private espn2Cookie = process.env.ESPN_COOKIE;
+    private espnSwid = process.env.ESPN_SWID;
+
+    constructor(leagueId: number) {
+        this.leagueId = leagueId;
+        this.req = axios.create({
+            withCredentials: true,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            headers: { Cookie: `espn_s2=${this.espn2Cookie}; SWID=${this.espnSwid};` },
+            timeout: 30000,
+        });
+    }
+
+    private static getBaseUrl(season = 2021, leagueId: number): string {
         if (season >= 2017) {
             return `https://fantasy.espn.com/apis/v3/games/flb/seasons/${season}/segments/0/leagues/${leagueId}`;
         } else {
@@ -152,16 +163,8 @@ export default class EspnAPI {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    constructor(leagueId: number) {
-        this.leagueId = leagueId;
-        this.req = axios.create({
-            withCredentials: true,
-            headers: {Cookie: `espn_s2=${this.ESPNS2_COOKIE}; SWID=${this.ESPN_SWID};`},
-            timeout: 30000,
-        });
-    }
-
-    public async getAllLeagueData(year: number) {
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access */
+    public async getAllLeagueData(year: number): Promise<any> {
         const { data } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}`);
         return data;
     }
@@ -183,7 +186,15 @@ export default class EspnAPI {
         let offset = 0;
 
         do {
-            const { data, headers } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`, { headers: {"X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`}});
+            const { data, headers } = await this.req.get(
+                `${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`,
+                {
+                    headers: {
+                        // eslint-disable-next-line @typescript-eslint/naming-convention
+                        "X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`,
+                    },
+                }
+            );
             players.push(...data.players);
             total += data.players.length;
             offset += 100;
@@ -195,18 +206,27 @@ export default class EspnAPI {
     }
 
     public async getScheduleForYear(year: number): Promise<EspnSchedule> {
-        const { data: schedule } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}/schedule?view=mScoreboard`);
+        const { data: schedule } = await this.req.get(
+            `${EspnAPI.getBaseUrl(year, this.leagueId)}/schedule?view=mScoreboard`
+        );
         return schedule;
     }
 
     public async getRosterForTeamAndDay(year: number, teamId: number, scoringPeriodId: number): Promise<EspnRoster> {
-        const { data: {teams: teams} } = await this.req.get(`${EspnAPI.getBaseUrl(year, this.leagueId)}?forTeamId=${teamId}&scoringPeriodId=${scoringPeriodId}&view=mRoster`);
+        const {
+            data: { teams: teams },
+        } = await this.req.get(
+            `${EspnAPI.getBaseUrl(
+                year,
+                this.leagueId
+            )}?forTeamId=${teamId}&scoringPeriodId=${scoringPeriodId}&view=mRoster`
+        );
         return teams[0].roster;
     }
 
-    public async updateMajorLeaguePlayers(year: number, playerDAO: PlayerDAO, teamDao: TeamDAO) {
+    public async updateMajorLeaguePlayers(year: number, playerDAO: PlayerDAO, teamDao: TeamDAO): Promise<Player[]> {
         logger.debug("fetching teams with ESPN teams associated");
-        const allLeagueTeamsWithEspn = await teamDao.findTeams(cleanupQuery({espnId: "!null"}));
+        const allLeagueTeamsWithEspn = await teamDao.findTeams(cleanupQuery({ espnId: "!null" }));
         logger.debug(`making espn api call for year: ${year}`);
         const allEspnPlayers = await this.getAllMajorLeaguePlayers(year);
         logger.debug("mapping to player objects");
@@ -216,25 +236,31 @@ export default class EspnAPI {
             return p;
         });
         logger.debug("deduping all players");
-        const dedupedPlayers = uniqWith(allPlayers, (player1, player2) => (player1.name === player2.name) && (player1.playerDataId === player2.playerDataId));
+        const dedupedPlayers = uniqWith(
+            allPlayers,
+            (player1, player2) => player1.name === player2.name && player1.playerDataId === player2.playerDataId
+        );
         logger.debug("batch save to db");
         return await playerDAO.batchUpsertPlayers(dedupedPlayers);
     }
 
-    public async updateEspnTeamInfo(year: number, teamDao: TeamDAO) {
+    public async updateEspnTeamInfo(year: number, teamDao: TeamDAO): Promise<void> {
         logger.debug("reloading ESPN league team objects");
         const allEspnTeams = await this.getAllLeagueTeams(year);
         logger.debug("got all espn fantasy teams");
         const allLeagueTeams = await teamDao.getAllTeams();
         for (const team of allLeagueTeams) {
-            const associatedEspnTeam = allEspnTeams.find((foundEspnTeam: EspnFantasyTeam) =>
-                foundEspnTeam.id === team.espnId
+            const associatedEspnTeam = allEspnTeams.find(
+                (foundEspnTeam: EspnFantasyTeam) => foundEspnTeam.id === team.espnId
             );
 
             if (associatedEspnTeam) {
-                await teamDao.updateTeam(team.id!, {espnTeam: associatedEspnTeam, name: `${associatedEspnTeam.location} ${associatedEspnTeam.nickname}` || team.name});
+                await teamDao.updateTeam(team.id!, {
+                    espnTeam: associatedEspnTeam,
+                    name: `${associatedEspnTeam.location} ${associatedEspnTeam.nickname}` || team.name,
+                });
             }
         }
     }
 }
-
+/* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access */

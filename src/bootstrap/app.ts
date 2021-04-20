@@ -7,6 +7,7 @@ import expressApp, { redisClient } from "./express";
 import logger from "./logger";
 import { inspect } from "util";
 import { rollbar } from "./rollbar";
+import { Server } from "http";
 
 export async function setupExpressApp(): Promise<Express> {
     // Set up db
@@ -15,8 +16,8 @@ export async function setupExpressApp(): Promise<Express> {
     logger.debug("database setup complete");
 
     logger.debug("setting up consumers");
-    const {setupEmailConsumers} = await import("../email/consumers");
-    const {setupSlackConsumers} = await import("../slack/consumers");
+    const { setupEmailConsumers } = await import("../email/consumers");
+    const { setupSlackConsumers } = await import("../slack/consumers");
     setupEmailConsumers();
     setupSlackConsumers();
     logger.debug("consumer setup complete");
@@ -24,7 +25,13 @@ export async function setupExpressApp(): Promise<Express> {
     // Register routes and some global auth middlewares
     logger.debug("setting up route-controllers");
     const developmentOrigins = [/localhost:3000/, /localhost:8080/, /127\.0\.0\.1/, /ngrok/];
-    const prodOrigins = [/newtrades\.akosua\.xyz/, /staging\.trades\.akosua\.xyz/, /trades\.akosua\.xyz/, /naughty-wozniak-9fc262\.netlify\.app/, /trades\.flexfoxfantasy\.com/];
+    const prodOrigins = [
+        /newtrades\.akosua\.xyz/,
+        /staging\.trades\.akosua\.xyz/,
+        /trades\.akosua\.xyz/,
+        /naughty-wozniak-9fc262\.netlify\.app/,
+        /trades\.flexfoxfantasy\.com/,
+    ];
     const allowedOrigins = prodOrigins.concat(process.env.NODE_ENV === "development" ? developmentOrigins : []);
 
     useExpressServer(expressApp, {
@@ -43,7 +50,7 @@ export async function setupExpressApp(): Promise<Express> {
     return expressApp;
 }
 
-export default async function startServer() {
+export default async function startServer(): Promise<Server> {
     try {
         const app = await setupExpressApp();
         const srv = app.listen(app.get("port"), app.get("ip"), () => {

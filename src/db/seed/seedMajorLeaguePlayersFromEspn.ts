@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
 import initializeDb from "../../bootstrap/db";
@@ -6,8 +7,7 @@ import EspnAPI from "../../espn/espnApi";
 import logger from "../../bootstrap/logger";
 import TeamDAO from "../../DAO/TeamDAO";
 
-dotenvConfig({path: resolvePath(__dirname, "../../../tests/.env")});
-
+dotenvConfig({ path: resolvePath(__dirname, "../../../tests/.env") });
 
 async function run() {
     const args = process.argv.slice(2);
@@ -24,5 +24,12 @@ async function run() {
 }
 
 run()
-    .then(inserted => { logger.info(`${inserted.length}`); process.exit(0); })
-    .catch(err => { logger.error(err); process.exit(99); });
+    .then(inserted => {
+        logger.info(`${inserted.length}`);
+        process.exit(0);
+    })
+    .catch(err => {
+        logger.error(err);
+        process.exit(99);
+    });
+/* eslint-enable */

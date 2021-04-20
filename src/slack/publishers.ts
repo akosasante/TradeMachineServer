@@ -20,11 +20,11 @@ export class SlackPublisher extends Publisher {
         return SlackPublisher.instance;
     }
 
-    public async queueTradeAnnouncement(trade: Trade) {
+    public async queueTradeAnnouncement(trade: Trade): Promise<Bull.Job> {
         const jobName = "trade_announce";
-        const opts: JobOptions = { attempts: 3, backoff: {type: "exponential", delay: 30000}};
+        const opts: JobOptions = { attempts: 3, backoff: { type: "exponential", delay: 30000 } };
         logger.debug("queuing trade announcement response");
 
-        return await this.queue!.add(jobName, {trade: JSON.stringify(trade)}, opts);
+        return await this.queue!.add(jobName, { trade: JSON.stringify(trade) }, opts);
     }
 }

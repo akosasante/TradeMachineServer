@@ -9,18 +9,20 @@ import { cleanJobForLogging } from "./job_utils";
 import { v4 as uuid } from "uuid";
 import { rollbar } from "../bootstrap/rollbar";
 
-export function setupScheduledMlbMinorLeagueUpdates() {
+export function setupScheduledMlbMinorLeagueUpdates(): void {
     const cron = "22 7 * * *"; // daily at 3:22AM ET
     logger.info(`Setting up minor league updates from mlb api to run on schedule ${cron}`);
-    const mlbQueue = new Bull("mlb_api_queue", {settings: {maxStalledCount: 0}});
+    const mlbQueue = new Bull("mlb_api_queue", { settings: { maxStalledCount: 0 } });
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const JobName = "minor_league_updates";
     const cleanLoggedData = (_data: any) => "";
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     const cleanLoggedReturn = (returnValue: any) => returnValue;
 
-    mlbQueue.process(JobName, async () => {
+    void mlbQueue.process(JobName, async () => {
         return await updateMinorLeaguePlayers({});
     });
-    mlbQueue.add(JobName, uuid(), { repeat: { cron } });
+    void mlbQueue.add(JobName, uuid(), { repeat: { cron } });
 
     mlbQueue.on("error", error => {
         logger.error(`Bull error during mlbMinorsScheduledUpdate: ${inspect(error)}`);
@@ -28,21 +30,40 @@ export function setupScheduledMlbMinorLeagueUpdates() {
     });
 
     mlbQueue.on("stalled", job => {
-        logger.error(`Bull stalled during mlbMinorsScheduledUpdate: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        logger.error(
+            `Bull stalled during mlbMinorsScheduledUpdate: ${inspect(
+                cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+            )}`
+        );
         rollbar.error("mlbMinorsScheduledUpdate stalled", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
     });
 
     mlbQueue.on("active", job => {
-        logger.info(`mlbMinorsScheduledUpdate Worker job started: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        logger.info(
+            `mlbMinorsScheduledUpdate Worker job started: ${inspect(
+                cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+            )}`
+        );
     });
 
     mlbQueue.on("completed", (job, _result) => {
-        rollbar.info("mlbMinorsScheduledUpdate Worker completed", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
-        logger.info(`mlbMinorsScheduledUpdate Worker completed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
+        rollbar.info(
+            "mlbMinorsScheduledUpdate Worker completed",
+            cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+        );
+        logger.info(
+            `mlbMinorsScheduledUpdate Worker completed: ${inspect(
+                cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+            )}`
+        );
     });
 
     mlbQueue.on("failed", (job, err) => {
-        logger.error(`"mlbMinorsScheduledUpdate Worker failed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}, ${inspect(err)}`);
+        logger.error(
+            `"mlbMinorsScheduledUpdate Worker failed: ${inspect(
+                cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData)
+            )}, ${inspect(err)}`
+        );
         rollbar.error(err);
     });
 }
@@ -65,7 +86,9 @@ export async function doUpdate(playerDAO: PlayerDAO) {
     const endpoint = "http://mlb.mlb.com/lookup/json/named.ops_team_players.bam";
     const leagueLevelIds = [11, 12, 13];
 
-    const allPlayersAllLeagues = await Promise.all(leagueLevelIds.map(id => axiosInst.get(`${endpoint}?sport_id=${id}`)))
+    const allPlayersAllLeagues = await Promise.all(
+        leagueLevelIds.map(id => axiosInst.get(`${endpoint}?sport_id=${id}`))
+    )
         .then(parseResponse)
         .then(parsePlayerJson)
         .catch(err => {
@@ -75,7 +98,7 @@ export async function doUpdate(playerDAO: PlayerDAO) {
     logger.debug(`Got ${allPlayersAllLeagues.length} players from url.`);
     return await insertParsedPlayers(playerDAO, allPlayersAllLeagues);
 }
-
+/* eslint-disable @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-assignment */
 function parseResponse(responses: AxiosResponse[]): any[] {
     // any here is a "player object" form mlb
     return responses.flatMap(response => response.data.ops_team_players.queryResults.row);
@@ -83,7 +106,7 @@ function parseResponse(responses: AxiosResponse[]): any[] {
 
 function parsePlayerJson(allPlayers: any[]): Player[] {
     return allPlayers.map(playerObj => {
-        const {player, ...rest} = playerObj;
+        const { player, ...rest } = playerObj;
         return new Player({
             name: player.split(",").reverse().join(" ").trim(),
             league: PlayerLeagueType.MINOR,
@@ -101,15 +124,18 @@ async function insertParsedPlayers(dao: PlayerDAO, parsedPlayers: Player[]) {
     return insertedPlayers.concat(updatedPlayers);
 }
 
-async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO): Promise<[Partial<Player>[], Partial<Player>[]]> {
+async function formatForDb(
+    csvPlayers: Partial<Player>[],
+    playerDAO: PlayerDAO
+): Promise<[Partial<Player>[], Partial<Player>[]]> {
     const existingPlayers = await playerDAO.getAllPlayers();
 
-    const dedupedPlayers = uniqWith(csvPlayers.filter(player => !!player), (player1, player2) =>
-        (player1.name === player2.name) &&
-        (player1.playerDataId === player2.playerDataId)
+    const dedupedPlayers = uniqWith(
+        csvPlayers.filter(player => !!player),
+        (player1, player2) => player1.name === player2.name && player1.playerDataId === player2.playerDataId
     );
 
-    // tslint:disable-next-line:prefer-const
+    // eslint-disable-next-line prefer-const
     let [playersToUpdate, playersToInsert] = partition<Partial<Player>>(dedupedPlayers, player => {
         const existingPlayerSameName = existingPlayers.find(existing => existing.name === player.name);
         return existingPlayerSameName && !existingPlayerSameName.playerDataId;
@@ -117,8 +143,9 @@ async function formatForDb(csvPlayers: Partial<Player>[], playerDAO: PlayerDAO):
 
     playersToUpdate = playersToUpdate.map(player => ({
         ...player,
-        id: (existingPlayers.find(existing => existing.name === player.name))?.id,
-        meta: merge((existingPlayers.find(existing => existing.name === player.name))?.meta, player.meta),
+        id: existingPlayers.find(existing => existing.name === player.name)?.id,
+        meta: merge(existingPlayers.find(existing => existing.name === player.name)?.meta, player.meta),
     }));
     return [playersToUpdate, playersToInsert];
 }
+/* eslint-enable @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-assignment */

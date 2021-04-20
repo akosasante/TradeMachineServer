@@ -1,4 +1,4 @@
-import { JsonController, Authorized, Get, QueryParam } from "routing-controllers";
+import { Authorized, Get, JsonController, QueryParam } from "routing-controllers";
 import logger from "../../bootstrap/logger";
 import EspnAPI, { EspnFantasyTeam, EspnLeagueMember } from "../../espn/espnApi";
 import { Role } from "../../models/user";
@@ -7,10 +7,10 @@ import { rollbar } from "../../bootstrap/rollbar";
 @JsonController("/espn")
 export default class EspnController {
     private readonly api: EspnAPI;
-    private FFLeagueId: number = 545;
+    private ffLeagueId = 545;
 
     constructor(api?: EspnAPI) {
-        this.api = api || new EspnAPI(this.FFLeagueId);
+        this.api = api || new EspnAPI(this.ffLeagueId);
     }
 
     @Authorized(Role.ADMIN)

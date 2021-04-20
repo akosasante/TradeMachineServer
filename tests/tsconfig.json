@@ -15,7 +15,7 @@
     "sourceMap": true,                     /* Generates corresponding '.map' file. */
     // "outFile": "./",                       /* Concatenate and emit output to single file. */
 //    "outDir": "./dist",                        /* Redirect output structure to the directory. */
-//    "rootDir": "./src",                       /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
+    "rootDir": "./tests",                       /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
     // "composite": true,            "resolveJsonModule": true         /* Enable project compilation */
     // "removeComments": true,                /* Do not emit comments to output. */
     // "noEmit": true,                        /* Do not emit outputs. */
@@ -65,5 +65,6 @@
     "experimentalDecorators": true,        /* Enables experimental support for ES7 decorators. */
     "emitDecoratorMetadata": true         /* Enables experimental support for emitting type metadata for decorators. */
   },
-  "exclude": ["./dist", "./node_modules"]
+  "exclude": ["./dist", "./node_modules", "./src"],
+  "include": ["./tests"]
 }

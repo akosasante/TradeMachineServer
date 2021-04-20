@@ -1,25 +1,26 @@
-import "jest";
-import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import { doUpdate } from "../../../src/scheduled_jobs/mlbMinorsScheduledUpdate";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import { AxiosPromise } from "axios";
 
-
 const mockedGet = jest.fn().mockResolvedValue(
-    {data: {ops_team_players: {queryResults: {row: []}}}}
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    { data: { ops_team_players: { queryResults: { row: [] } } } }
 );
-const mockPlayerDao = {
+const mockPlayerDao = ({
     getAllPlayers: jest.fn(),
     batchUpsertPlayers: jest.fn().mockResolvedValue([]),
-} as unknown as PlayerDAO;
+} as unknown) as PlayerDAO;
 
-jest.mock("axios", () => ({
-    create: jest.fn(() => ({
-        get: mockedGet,
-    })),
-}) as unknown as AxiosPromise);
-
+jest.mock(
+    "axios",
+    () =>
+        (({
+            create: jest.fn(() => ({
+                get: mockedGet,
+            })),
+        } as unknown) as AxiosPromise)
+);
 
 beforeAll(() => {
     logger.debug("~~~~~MINOR LEAGUE PLAYER UPDATER JOB SCHEDULER TESTS BEGIN~~~~~~");
@@ -30,8 +31,9 @@ afterAll(() => {
 });
 afterEach(() => {
     mockedGet.mockClear();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
     Object.values(mockPlayerDao).forEach(mockFn => mockFn.mockReset());
-})
+});
 
 describe("Minor League Scheduled Jobs", () => {
     test("doUpdate/1 - should make an axios call and then insert into the db", async () => {

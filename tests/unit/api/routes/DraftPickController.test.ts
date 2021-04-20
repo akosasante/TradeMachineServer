@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { mocked } from "ts-jest/utils";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import DraftPickController from "../../../../src/api/routes/DraftPickController";
@@ -29,11 +27,14 @@ describe("DraftPickController", () => {
     };
     const testDraftPick = DraftPickFactory.getPick();
     const draftPickController = new DraftPickController(
-        mockDraftPickDAO as unknown as DraftPickDAO, mockTeamDAO as unknown as TeamDAO);
+        (mockDraftPickDAO as unknown) as DraftPickDAO,
+        (mockTeamDAO as unknown) as TeamDAO
+    );
 
     afterEach(() => {
         [mockDraftPickDAO, mockTeamDAO].map(mockedThing =>
-            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
+            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset())
+        );
         mockedCsvParser.mockClear();
     });
 
@@ -61,16 +62,16 @@ describe("DraftPickController", () => {
             expect(mockDraftPickDAO.getAllPicks).toHaveBeenCalledTimes(0);
             expect(mockDraftPickDAO.findPicks).toHaveBeenCalledTimes(1);
             expect(mockDraftPickDAO.findPicks).toHaveBeenCalledWith([
-                {type: LeagueLevel.HIGH},
-                {type: LeagueLevel.MAJORS}]);
+                { type: LeagueLevel.HIGH },
+                { type: LeagueLevel.MAJORS },
+            ]);
             expect(res).toEqual([testDraftPick]);
         });
         it("should bubble up any errors from the DAO", async () => {
             mockDraftPickDAO.getAllPicks.mockImplementation(() => {
                 throw new Error("Generic Error");
             });
-            await expect(draftPickController.getAllDraftPicks())
-                .rejects.toThrow(Error);
+            await expect(draftPickController.getAllDraftPicks()).rejects.toThrow(Error);
         });
     });
 
@@ -87,13 +88,12 @@ describe("DraftPickController", () => {
             mockDraftPickDAO.getPickById.mockImplementation(() => {
                 throw new EntityNotFoundError(DraftPick, "ID not found.");
             });
-            await expect(draftPickController.getOneDraftPick(uuid()))
-                .rejects.toThrow(EntityNotFoundError);
+            await expect(draftPickController.getOneDraftPick(uuid())).rejects.toThrow(EntityNotFoundError);
         });
     });
 
     describe("findDraftPicksByQuery method", () => {
-        const query = {season: 2018};
+        const query = { season: 2018 };
         it("should find draftPicks by the given query options", async () => {
             mockDraftPickDAO.findPicks.mockReturnValue([testDraftPick]);
             const res = await draftPickController.findDraftPicksByQuery(query);
@@ -123,8 +123,7 @@ describe("DraftPickController", () => {
             mockDraftPickDAO.createPicks.mockImplementation(() => {
                 throw new Error("Generic Error");
             });
-            await expect(draftPickController.createDraftPicks([testDraftPick.parse()]))
-                .rejects.toThrow(Error);
+            await expect(draftPickController.createDraftPicks([testDraftPick.parse()])).rejects.toThrow(Error);
         });
     });
 
@@ -141,32 +140,32 @@ describe("DraftPickController", () => {
             mockDraftPickDAO.updatePick.mockImplementation(() => {
                 throw new EntityNotFoundError(DraftPick, "ID not found.");
             });
-            await expect(draftPickController.updateDraftPick(uuid(), testDraftPick.parse()))
-                .rejects.toThrow(EntityNotFoundError);
+            await expect(draftPickController.updateDraftPick(uuid(), testDraftPick.parse())).rejects.toThrow(
+                EntityNotFoundError
+            );
         });
     });
 
     describe("deleteDraftPick method", () => {
         it("should delete a draftPick by id from the db", async () => {
-            mockDraftPickDAO.deletePick.mockReturnValue({raw: [ {id: testDraftPick.id} ], affected: 1});
+            mockDraftPickDAO.deletePick.mockReturnValue({ raw: [{ id: testDraftPick.id }], affected: 1 });
             const res = await draftPickController.deleteDraftPick(testDraftPick.id!);
 
             expect(mockDraftPickDAO.deletePick).toHaveBeenCalledTimes(1);
             expect(mockDraftPickDAO.deletePick).toHaveBeenCalledWith(testDraftPick.id);
-            expect(res).toEqual({deleteCount: 1, id: testDraftPick.id});
+            expect(res).toEqual({ deleteCount: 1, id: testDraftPick.id });
         });
         it("should throw an error if entity is not found in db", async () => {
             mockDraftPickDAO.deletePick.mockImplementation(() => {
                 throw new EntityNotFoundError(DraftPick, "ID not found.");
             });
-            await expect(draftPickController.deleteDraftPick(uuid()))
-                .rejects.toThrow(EntityNotFoundError);
+            await expect(draftPickController.deleteDraftPick(uuid())).rejects.toThrow(EntityNotFoundError);
         });
     });
 
     describe("batchUploadDraftPicks method", () => {
         const overwriteMode = "overwrite";
-        const testFile = {path: "/test/path/to.csv"};
+        const testFile = { path: "/test/path/to.csv" } as Express.Multer.File;
 
         it("should get all existing users from the db", async () => {
             await draftPickController.batchUploadDraftPicks(testFile, overwriteMode);
