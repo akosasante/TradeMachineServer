@@ -138,7 +138,7 @@ function getParticipantById(id: string, trade: Trade) {
 }
 
 function replaceToEmailIfStaging(email: string) {
-    if (process.env.ORM_CONFIG === 'staging') {
+    if (process.env.ORM_CONFIG === "staging") {
         const emailPrefix = email.split("@")[0];
         return `tripleabatt+${emailPrefix}@gmail.com`;
     } else {

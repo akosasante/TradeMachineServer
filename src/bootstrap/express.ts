@@ -36,7 +36,7 @@ const REDIS_OPTS = {
     logErrors: true,
     ttl: COOKIE_MAX_AGE_SECONDS,
     client: redisClient,
-    prefix: "stg_sess"
+    prefix: "stg_sess",
 };
 
 app.use(
