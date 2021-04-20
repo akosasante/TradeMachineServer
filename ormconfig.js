@@ -47,4 +47,14 @@ module.exports = [
             subscribersDir: "dist/db/subscribers",
         }
     },
+    {
+        ...commonOpts,
+        name: "staging",
+        schema: "staging",
+        cli: {
+            entitiesDir: "dist/models",
+            migrationsDir: "dist/db/migrations",
+            subscribersDir: "dist/db/subscribers",
+        }
+    },
 ];

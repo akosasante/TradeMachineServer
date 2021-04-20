@@ -137,6 +137,15 @@ function getParticipantById(id: string, trade: Trade) {
     return trade.tradeParticipants?.find(tp => tp.team.owners?.find(u => u.id === id));
 }
 
+function replaceToEmailIfStaging(email: string) {
+    if (process.env.ORM_CONFIG === 'staging') {
+        const emailPrefix = email.split("@")[0];
+        return `tripleabatt+${emailPrefix}@gmail.com`;
+    } else {
+        return email;
+    }
+}
+
 export const EMAILER = {
     emailer: new Email({
         juice: true,

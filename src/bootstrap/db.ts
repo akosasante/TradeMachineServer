@@ -7,7 +7,7 @@ import { rollbar } from "./rollbar";
 export default async function initializeDb(logQueries = false): Promise<Connection> {
     let connection: Connection | undefined;
     try {
-        const dbConfigName = process.env.NODE_ENV;
+        const dbConfigName = process.env.ORM_CONFIG;
         const connectionConfig = await getConnectionOptions(dbConfigName);
         connection = await createConnection({
             ...connectionConfig,

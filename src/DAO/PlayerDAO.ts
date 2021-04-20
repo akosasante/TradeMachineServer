@@ -14,7 +14,7 @@ export default class PlayerDAO {
     private playerDb: Repository<Player>;
 
     constructor(repo?: Repository<Player>) {
-        this.playerDb = repo || getConnection(process.env.NODE_ENV).getRepository("Player");
+        this.playerDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("Player");
     }
 
     public async getAllPlayers(): Promise<Player[]> {

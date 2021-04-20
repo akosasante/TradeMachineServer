@@ -12,7 +12,7 @@ export default class TradeDAO {
     private pickDao: DraftPickDAO;
 
     constructor(repo?: Repository<Trade>, playerDao?: PlayerDAO, pickDao?: DraftPickDAO) {
-        this.tradeDb = repo || getConnection(process.env.NODE_ENV).getRepository("Trade");
+        this.tradeDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("Trade");
         this.playerDao = playerDao || new PlayerDAO();
         this.pickDao = pickDao || new DraftPickDAO();
     }

@@ -36,6 +36,7 @@ const REDIS_OPTS = {
     logErrors: true,
     ttl: COOKIE_MAX_AGE_SECONDS,
     client: redisClient,
+    prefix: "stg_sess"
 };
 
 app.use(
@@ -45,7 +46,7 @@ app.use(
         secret: process.env.SESSION_SECRET || "test",
         store: new redisStore(REDIS_OPTS),
         unset: "destroy",
-        name: "trades.sid",
+        name: process.env.ORM_CONFIG === "staging" ? "staging_trades.sid" : "trades.sid",
         cookie: {
             secure: process.env.NODE_ENV !== "test",
             httpOnly: true,
