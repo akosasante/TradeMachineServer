@@ -6,7 +6,7 @@ export default class TeamDAO {
     private teamDb: Repository<Team>;
 
     constructor(repo?: Repository<Team>) {
-        this.teamDb = repo || getConnection(process.env.NODE_ENV).getRepository("Team");
+        this.teamDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("Team");
     }
 
     public async getAllTeams(): Promise<Team[]> {

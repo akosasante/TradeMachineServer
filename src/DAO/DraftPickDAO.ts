@@ -5,7 +5,7 @@ export default class DraftPickDAO {
     private draftPickDb: Repository<DraftPick>;
 
     constructor(repo?: Repository<DraftPick>) {
-        this.draftPickDb = repo || getConnection(process.env.NODE_ENV).getRepository("DraftPick");
+        this.draftPickDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("DraftPick");
     }
 
     public async getAllPicks(): Promise<DraftPick[]> {

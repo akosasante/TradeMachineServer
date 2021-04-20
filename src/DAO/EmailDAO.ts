@@ -5,7 +5,7 @@ export default class EmailDAO {
     private emailDb: Repository<Email>;
 
     constructor(repo?: Repository<Email>) {
-        this.emailDb = repo || getConnection(process.env.NODE_ENV).getRepository("Email");
+        this.emailDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("Email");
     }
 
     public async createEmail(email: Email): Promise<Email> {
