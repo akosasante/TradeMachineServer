@@ -12,7 +12,8 @@ import { rollbar } from "../bootstrap/rollbar";
 export function setupScheduledMlbMinorLeagueUpdates(): void {
     const cron = "22 7 * * *"; // daily at 3:22AM ET
     logger.info(`Setting up minor league updates from mlb api to run on schedule ${cron}`);
-    const mlbQueue = new Bull("mlb_api_queue", { settings: { maxStalledCount: 0 } });
+    const queueName = process.env.ORM_CONFIG === "staging" ? "stg_mlb_api_queue" : "mlb_api_queue"; // TODO: Should this also have a conditional for test env?
+    const mlbQueue = new Bull(queueName, { settings: { maxStalledCount: 0 } });
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const JobName = "minor_league_updates";
     const cleanLoggedData = (_data: any) => "";

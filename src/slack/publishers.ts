@@ -13,7 +13,14 @@ export class SlackPublisher extends Publisher {
 
     public static getInstance(queue?: Queue): SlackPublisher {
         if (!SlackPublisher.instance) {
-            const queueName = process.env.NODE_ENV === "test" ? "test_slack_queue" : "slack_queue";
+            let queueName;
+            if (process.env.NODE_ENV === "test") {
+                queueName = "test_slack_queue"
+            } else if (process.env.ORM_CONFIG === "staging") {
+                queueName = "stg_slack_queue"
+            } else {
+                queueName = "slack_queue"
+            }
             SlackPublisher.instance = new SlackPublisher(queue || new Bull(queueName));
         }
 
