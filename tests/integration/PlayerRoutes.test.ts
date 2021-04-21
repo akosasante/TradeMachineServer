@@ -1,5 +1,6 @@
 import { Server } from "http";
 import "jest-extended";
+// @ts-ignore
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
@@ -62,7 +63,8 @@ beforeAll(async () => {
     playerDAO = new PlayerDAO();
 
     return app;
-});
+}, 5000);
+
 afterAll(async () => {
     logger.debug("~~~~~~PLAYER ROUTES AFTER ALL~~~~~~");
     const shutdownRedis = await shutdown();

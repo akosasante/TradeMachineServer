@@ -1,5 +1,6 @@
 import { Server } from "http";
 import "jest-extended";
+// @ts-ignore
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
@@ -33,7 +34,7 @@ beforeAll(async () => {
     logger.debug("~~~~~~ESPN ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
     return app;
-});
+}, 5000);
 
 afterAll(async () => {
     logger.debug("~~~~~~ESPN ROUTES AFTER ALL~~~~~~");

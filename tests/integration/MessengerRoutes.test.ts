@@ -54,6 +54,7 @@ beforeAll(async () => {
 
     return app;
 }, 5000);
+
 afterAll(async () => {
     logger.debug("~~~~~~MESSENGER ROUTES AFTER ALL~~~~~~");
     const shutdownRedis = await shutdown();

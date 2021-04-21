@@ -1,4 +1,5 @@
 import { Server } from "http";
+// @ts-ignore
 import request from "supertest";
 import UserDAO from "../../src/DAO/UserDAO";
 import { UserFactory } from "../factories/UserFactory";

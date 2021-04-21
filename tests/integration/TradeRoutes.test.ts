@@ -66,7 +66,7 @@ beforeAll(async () => {
     tradeDAO = new TradeDAO();
 
     return app;
-});
+}, 5000);
 
 afterAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES AFTER ALL~~~~~~");
