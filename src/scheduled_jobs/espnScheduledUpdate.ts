@@ -11,7 +11,8 @@ import { rollbar } from "../bootstrap/rollbar";
 export function setupScheduledEspnUpdates(): void {
     const cron = "22 6 * * *"; // daily at 2:22AM ET
     logger.info(`Setting up espn updates to run on schedule: ${cron}`);
-    const espnQueue = new Bull("espn_queue", { settings: { maxStalledCount: 0 } });
+    const queueName = process.env.ORM_CONFIG === "staging" ? "stg_espn_queue" : "espn_queue"; // TODO: Should this also have a conditional for test env?
+    const espnQueue = new Bull(queueName, { settings: { maxStalledCount: 0 } });
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const JobName = "espn_updates";
     const cleanLoggedData = (_data: any) => "";
