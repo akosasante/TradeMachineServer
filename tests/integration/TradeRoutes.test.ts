@@ -1,234 +1,439 @@
 import { Server } from "http";
-import "jest";
 import "jest-extended";
+// @ts-ignore
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import DraftPickDAO from "../../src/DAO/DraftPickDAO";
 import PlayerDAO from "../../src/DAO/PlayerDAO";
 import TeamDAO from "../../src/DAO/TeamDAO";
-import { PlayerLeagueType } from "../../src/models/player";
-import Trade from "../../src/models/trade";
-import TradeItem from "../../src/models/tradeItem";
-import TradeParticipant from "../../src/models/tradeParticipant";
+import Trade, { TradeStatus } from "../../src/models/trade";
+import TradeParticipant, { TradeParticipantType } from "../../src/models/tradeParticipant";
 import User from "../../src/models/user";
 import startServer from "../../src/bootstrap/app";
-import { DraftPickFactory } from "../factories/DraftPickFactory";
-import { PlayerFactory } from "../factories/PlayerFactory";
 import { TeamFactory } from "../factories/TeamFactory";
 import { TradeFactory } from "../factories/TradeFactory";
-import { adminLoggedIn, doLogout, makeDeleteRequest, makeGetRequest,
-    makePostRequest, makePutRequest, ownerLoggedIn, setupOwnerAndAdminUsers, UUIDPatternRegex } from "./helpers";
+import {
+    adminLoggedIn,
+    clearDb,
+    doLogout,
+    makeDeleteRequest,
+    makeGetRequest,
+    makePostRequest,
+    makePutRequest,
+    ownerLoggedIn,
+    setupOwnerAndAdminUsers,
+} from "./helpers";
 import { v4 as uuid } from "uuid";
 import * as TradeTracker from "../../src/csv/TradeTracker";
-
+import { getConnection } from "typeorm";
+import TradeDAO from "../../src/DAO/TradeDAO";
+import TradeItem from "../../src/models/tradeItem";
 
 let app: Server;
 let adminUser: User;
-let ownerUser: User;
-let minorPlayer = PlayerFactory.getPlayer();
-let majorPlayer = PlayerFactory.getPlayer("Pete Buttjudge", PlayerLeagueType.MAJOR);
-let majorPlayer2 = PlayerFactory.getPlayer("Feelda Bern", PlayerLeagueType.MAJOR);
-let pick = DraftPickFactory.getPick();
-delete pick.originalOwner;
-let [creatorTeam, recipientTeam, recipientTeam2] = TeamFactory.getTeams(3);
+let playerDAO: PlayerDAO;
+let pickDAO: DraftPickDAO;
+let teamDAO: TeamDAO;
+let tradeDAO: TradeDAO;
+
 // @ts-ignore
 TradeTracker.appendNewTrade = jest.fn();
 
-
+/* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access */
 async function shutdown() {
-    await new Promise(resolve => {
-        redisClient.quit(() => {
-            resolve();
+    await new Promise<void>((resolve, reject) => {
+        redisClient.quit((err, reply) => {
+            if (err) {
+                reject(err);
+            } else {
+                logger.debug(`Redis quit successfully with reply ${reply}`);
+                resolve();
+            }
         });
     });
     // redis.quit() creates a thread to close the connection.
     // We wait until all threads have been run once to ensure the connection closes.
-    await new Promise(resolve => setImmediate(resolve));
+    return await new Promise(resolve => setImmediate(resolve));
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~TRADE ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
 
-    // Create admin and owner users in db for rest of this suite's use
-    [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+    playerDAO = new PlayerDAO();
+    pickDAO = new DraftPickDAO();
+    teamDAO = new TeamDAO();
+    tradeDAO = new TradeDAO();
 
-    const playerDAO = new PlayerDAO();
-    const pickDAO = new DraftPickDAO();
-    const teamDAO = new TeamDAO();
-    const [player1, player2, player3] = await playerDAO.createPlayers([minorPlayer, majorPlayer, majorPlayer2]);
-    const [draftPick] = await pickDAO.createPicks([pick]);
-    const [creator, recipient1, recipient2] = await teamDAO.createTeams([creatorTeam, recipientTeam, recipientTeam2]);
-    minorPlayer = await playerDAO.getPlayerById(player1.id!);
-    majorPlayer = await playerDAO.getPlayerById(player2.id!);
-    majorPlayer2 = await playerDAO.getPlayerById(player3.id!);
-    pick = await pickDAO.getPickById(draftPick.id!);
-    creatorTeam = await teamDAO.getTeamById(creator.id!);
-    recipientTeam = await teamDAO.getTeamById(recipient1.id!);
-    recipientTeam2 = await teamDAO.getTeamById(recipient2.id!);
-});
+    return app;
+}, 5000);
 
 afterAll(async () => {
-    logger.debug("~~~~~~TRADE ROUTES AFTER ALL~~~~~~");
-    await shutdown();
+    logger.debug("~~~~~~TEAM ROUTES AFTER ALL~~~~~~");
+    const shutdownRedis = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
+    return shutdownRedis;
 });
 
 describe("Trade API endpoints", () => {
-    let testTrade: Trade;
-    let creator: TradeParticipant;
-    let recipient: TradeParticipant;
-    let tradedMajorPlayer: TradeItem;
-    let tradedMinorPlayer: TradeItem;
-    let tradedPick: TradeItem;
-    let testTradeParticipantIds: (string | undefined)[];
-    let testTradeItemsIds: (string | undefined)[];
+    beforeEach(async () => {
+        // Create admin and owner users in db for rest of this suite's use
+        [adminUser] = await setupOwnerAndAdminUsers();
+        return adminUser;
+    });
 
-    beforeAll(() => {
-        creator = TradeFactory.getTradeCreator(creatorTeam);
-        recipient = TradeFactory.getTradeRecipient(recipientTeam);
-        tradedMajorPlayer = TradeFactory.getTradedMajorPlayer(majorPlayer, creatorTeam, recipientTeam);
-        tradedMinorPlayer = TradeFactory.getTradedMinorPlayer(minorPlayer, creatorTeam, recipientTeam);
-        tradedPick = TradeFactory.getTradedPick(pick, recipientTeam, creatorTeam);
-        const tradeItems = [tradedMajorPlayer, tradedMinorPlayer, tradedPick];
-        testTrade = TradeFactory.getTrade(tradeItems, [creator, recipient]);
-        testTradeParticipantIds = testTrade.tradeParticipants!.map(p => p.id);
-        testTradeItemsIds = testTrade.tradeItems!.map(i => i.id);
+    afterEach(async () => {
+        return await clearDb(getConnection(process.env.NODE_ENV));
     });
 
     describe("POST /trades (create new trade)", () => {
         const expectErrorString = expect.stringMatching(/Trade is not valid/);
-        const postRequest = (tradeObj: Partial<Trade>, status: number = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<Trade>>(agent, "/trades", tradeObj, status);
-        const getOneRequest = (id: string, status: number = 200) =>
-            makeGetRequest(request(app), `/trades/${id}`, status);
+        const postRequest = (tradeObj: Partial<Trade>, status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makePostRequest<Partial<Trade>>(agent, "/trades", tradeObj, status);
+        const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/trades/${id}`, status);
 
         afterEach(async () => {
-            await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return a single trade object based on the object passed in", async () => {
-            const {body} = await adminLoggedIn(postRequest(testTrade.parse()), app);
-            expect(body).toMatchObject({
-                id: testTrade.id,
-                tradeParticipants: expect.toSatisfyAll(participant => testTradeParticipantIds.includes(participant.id)),
-                tradeItems: expect.toSatisfyAll(item => testTradeItemsIds.includes(item.id)),
-            });
+            const testTrade = TradeFactory.getTrade();
+
+            const { body } = await adminLoggedIn(postRequest(testTrade.parse()), app);
+
+            const expected = {
+                ...testTrade,
+                tradeItems: expect.toBeArrayOfSize(testTrade.tradeItems!.length),
+                tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
+            };
+            expect(body).toMatchObject(expected);
+            expect((body as Trade).tradeItems!.map(ti => ti.id)).toIncludeSameMembers(
+                testTrade.tradeItems!.map(ti => ti.id)
+            );
+            expect((body as Trade).tradeParticipants!.map(tp => tp.id)).toIncludeSameMembers(
+                testTrade.tradeParticipants!.map(tp => tp.id)
+            );
         });
         it("should ignore any invalid properties from the object passed in", async () => {
+            const testTrade = TradeFactory.getTrade();
             // @ts-ignore
-            const {body: createBody} = await adminLoggedIn(postRequest({...testTrade.parse(), id: undefined, blah: "boop"}), app);
-            const {body} = await getOneRequest(createBody.id);
+            await adminLoggedIn(postRequest({ ...testTrade.parse(), blah: "boop" }), app);
+            const { body } = await getOneRequest(testTrade.id!);
 
-            expect(body).toMatchObject({
-                id: expect.stringMatching(UUIDPatternRegex),
-                tradeParticipants: expect.toSatisfyAll(participant => testTradeParticipantIds.includes(participant.id)),
-                tradeItems: expect.toSatisfyAll(item => testTradeItemsIds.includes(item.id)),
-            });
+            const expected = {
+                ...testTrade,
+                tradeItems: expect.toBeArrayOfSize(testTrade.tradeItems!.length),
+                tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
+            };
+            expect(body).toMatchObject(expected);
             expect(body.blah).toBeUndefined();
         });
         it("should return a 400 Bad Request error if missing a required property", async () => {
-            const {body} = await adminLoggedIn(postRequest({tradeParticipants: testTrade.tradeParticipants}, 400), app);
+            const testTrade = TradeFactory.getTrade();
+
+            const { body } = await adminLoggedIn(
+                postRequest({ tradeParticipants: testTrade.tradeParticipants }, 400),
+                app
+            );
+
             expect(body.message).toEqual(expectErrorString);
         });
         it("should return a 401 Unauthorized error if a non-logged in request is used", async () => {
+            const testTrade = TradeFactory.getTrade();
+
             await postRequest(testTrade.parse(), 403)(request(app));
         });
     });
 
     describe("GET /trades (get all trades)", () => {
-        const getAllRequest = (status: number = 200) => makeGetRequest(request(app), "/trades", status);
+        const getAllRequest = (hydrated = "", status = 200) =>
+            makeGetRequest(request(app), `/trades${hydrated}`, status);
 
         it("should return an array of all trades in the db", async () => {
-            const {body} = await getAllRequest();
-            expect(body).toBeArrayOfSize(2);
-            const returnedTrade = body.find((trade: Trade) => trade.id === testTrade.id);
-            expect(returnedTrade).toMatchObject({
-                id: testTrade.id,
-                tradeParticipants: expect.toSatisfyAll(participant => testTradeParticipantIds.includes(participant.id)),
-                tradeItems: expect.toSatisfyAll(item => testTradeItemsIds.includes(item.id)),
-            });
+            const testTrade = TradeFactory.getTrade();
+            await tradeDAO.createTrade(testTrade.parse());
+
+            const { body } = await getAllRequest();
+
+            const expected = {
+                ...testTrade,
+                tradeItems: expect.toBeArrayOfSize(testTrade.tradeItems!.length),
+                tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
+            };
+            expect(body).toBeArrayOfSize(1);
+            expect(body[0]).toMatchObject(expected);
         });
+
+        it("should return a list of hydrated trades if the hydrated param is passed in", async () => {
+            const testTrade = TradeFactory.getTrade();
+            await tradeDAO.createTrade(testTrade.parse());
+            await teamDAO.createTeams(testTrade.picks.map((p, i) => ({ ...p.originalOwner!.parse(), espnId: i })));
+            await pickDAO.createPicks(testTrade.picks.map(p => p.parse()));
+            await playerDAO.createPlayers(testTrade.players.map(p => p.parse()));
+            const pickIds = testTrade.picks.map(p => p.id);
+            const playerIds = testTrade.players.map(p => p.id);
+
+            const { body } = await getAllRequest("?hydrated=true");
+
+            const expected = {
+                ...testTrade,
+                tradeItems: expect.toBeArrayOfSize(testTrade.tradeItems!.length),
+                tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
+            };
+            expect(body).toBeArrayOfSize(1);
+            expect(body[0]).toMatchObject(expected);
+            expect(body[0].tradeItems).toSatisfyAll(
+                (ti: TradeItem) => pickIds.includes(ti.entity!.id) || playerIds.includes(ti.entity!.id)
+            );
+        }, 2000);
     });
 
     describe("GET /trades/:id (get one trade)", () => {
-        const getOneRequest = (id: string, status: number = 200) =>
-            makeGetRequest(request(app), `/trades/${id}`, status);
+        const getOneRequest = (id: string, hydrated = "", status = 200) =>
+            makeGetRequest(request(app), `/trades/${id}${hydrated}`, status);
 
         it("should return a single trade for the given id", async () => {
-            const {body} = await getOneRequest(testTrade.id!);
-            expect(body).toMatchObject({
-                id: testTrade.id,
-                tradeParticipants: expect.toSatisfyAll(participant => testTradeParticipantIds.includes(participant.id)),
-                tradeItems: expect.toSatisfyAll(item => testTradeItemsIds.includes(item.id)),
-            });
+            const testTrade = TradeFactory.getTrade();
+            await tradeDAO.createTrade(testTrade.parse());
+
+            const { body } = await getOneRequest(testTrade.id!);
+
+            const expected = {
+                ...testTrade,
+                tradeItems: expect.toBeArrayOfSize(testTrade.tradeItems!.length),
+                tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
+            };
+            expect(body).toMatchObject(expected);
+        });
+        it("should return a hydrated trade if the param is passed in", async () => {
+            const testTrade = TradeFactory.getTrade();
+            await tradeDAO.createTrade(testTrade.parse());
+            await teamDAO.createTeams(testTrade.picks.map((p, i) => ({ ...p.originalOwner!.parse(), espnId: i })));
+            await pickDAO.createPicks(testTrade.picks.map(p => p.parse()));
+            await playerDAO.createPlayers(testTrade.players.map(p => p.parse()));
+            const pickIds = testTrade.picks.map(p => p.id);
+            const playerIds = testTrade.players.map(p => p.id);
+
+            const { body } = await getOneRequest(testTrade.id!, "?hydrated=true");
+
+            const expected = {
+                ...testTrade,
+                tradeItems: expect.toBeArrayOfSize(testTrade.tradeItems!.length),
+                tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
+            };
+            expect(body).toMatchObject(expected);
+            expect(body.tradeItems).toSatisfyAll(
+                (ti: TradeItem) => pickIds.includes(ti.entity!.id) || playerIds.includes(ti.entity!.id)
+            );
         });
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
-            await getOneRequest(uuid(), 404);
+            const testTrade = TradeFactory.getTrade();
+            await tradeDAO.createTrade(testTrade.parse());
+
+            await getOneRequest(uuid(), "", 404);
         });
     });
 
     describe("PUT /trades/:id (update one trade)", () => {
-        const putTradeRequest = (id: string, tradeObj: Partial<Trade>, status: number = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePutRequest<Partial<Trade>>(agent, `/trades/${id}`, tradeObj, status);
-        let updatedTrade: Trade;
-        let updatedTradeParticipantIds: (string | undefined)[];
-        let updatedTradeItemsIds: (string | undefined)[];
-
-        beforeAll(() => {
-            const recipient2 = TradeFactory.getTradeRecipient(recipientTeam2);
-            const major2 = TradeFactory.getTradedMajorPlayer(majorPlayer2, creatorTeam, recipientTeam);
-            const newParticipants = [creator, recipient2];
-            const newItems = [major2, tradedMinorPlayer, tradedPick];
-            updatedTrade = new Trade({...testTrade.parse(), tradeParticipants: newParticipants, tradeItems: newItems});
-            updatedTradeParticipantIds = testTrade.tradeParticipants!.map(p => p.id);
-            updatedTradeItemsIds = testTrade.tradeItems!.map(i => i.id);
-        });
+        const putTradeRequest = (id: string, tradeObj: Partial<Trade>, status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) => makePutRequest<Partial<Trade>>(agent, `/trades/${id}`, tradeObj, status);
 
         afterEach(async () => {
-            await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return the updated trade", async () => {
-            const {body} = await adminLoggedIn(putTradeRequest(updatedTrade.id!, updatedTrade.parse()), app);
+            const testTrade = TradeFactory.getTrade();
+            await tradeDAO.createTrade(testTrade.parse());
+            const originalCreator = testTrade.tradeParticipants!.find(
+                tp => tp.participantType === TradeParticipantType.CREATOR
+            );
+            const updatedParticipants = [originalCreator, TradeFactory.getTradeRecipient(TeamFactory.getTeam())];
+            const updatedTradeParticipantIds = updatedParticipants.map(p => p!.id);
+            const newItem = TradeFactory.getTradedMajorPlayer(
+                undefined,
+                originalCreator!.team,
+                updatedParticipants[1]!.team
+            );
+
+            const { body } = await adminLoggedIn(
+                putTradeRequest(testTrade.id!, {
+                    ...testTrade.parse(),
+                    tradeParticipants: updatedParticipants as TradeParticipant[],
+                    tradeItems: [newItem],
+                }),
+                app
+            );
+
             expect(body).toMatchObject({
-                id: updatedTrade.id,
-                tradeParticipants: expect.toSatisfyAll(participant => updatedTradeParticipantIds.includes(participant.id)),
-                tradeItems: expect.toSatisfyAll(item => updatedTradeItemsIds.includes(item.id)),
+                id: testTrade.id,
+                tradeParticipants: expect.toSatisfyAll(participant =>
+                    updatedTradeParticipantIds.includes(participant.id)
+                ),
+                tradeItems: expect.toSatisfyAll(item => newItem.id === item.id),
             });
         });
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
-            await adminLoggedIn(putTradeRequest(uuid(), updatedTrade.parse(), 404), app);
+            const testTrade = TradeFactory.getTrade();
+            await tradeDAO.createTrade(testTrade.parse());
+            const originalCreator = testTrade.tradeParticipants!.find(
+                tp => tp.participantType === TradeParticipantType.CREATOR
+            );
+            const updatedParticipants = [originalCreator, TradeFactory.getTradeRecipient()];
+            const newItem = TradeFactory.getTradedMajorPlayer(
+                undefined,
+                originalCreator!.team,
+                updatedParticipants[1]!.team
+            );
+
+            await adminLoggedIn(
+                putTradeRequest(
+                    uuid(),
+                    {
+                        ...testTrade.parse(),
+                        tradeParticipants: updatedParticipants as TradeParticipant[],
+                        tradeItems: [newItem],
+                    },
+                    404
+                ),
+                app
+            );
         });
         it("should throw a 401 Unauthorized error if a non-admin non-participant tries to update a trade", async () => {
-            await ownerLoggedIn(putTradeRequest(updatedTrade.id!, updatedTrade.parse(), 401), app);
+            const testTrade = TradeFactory.getTrade();
+            await tradeDAO.createTrade(testTrade.parse());
+            const originalCreator = testTrade.tradeParticipants!.find(
+                tp => tp.participantType === TradeParticipantType.CREATOR
+            );
+            const updatedParticipants = [originalCreator, TradeFactory.getTradeRecipient()];
+            const newItem = TradeFactory.getTradedMajorPlayer(
+                undefined,
+                originalCreator!.team,
+                updatedParticipants[1]!.team
+            );
+
+            await ownerLoggedIn(
+                putTradeRequest(
+                    testTrade.id!,
+                    {
+                        ...testTrade.parse(),
+                        tradeParticipants: updatedParticipants as TradeParticipant[],
+                        tradeItems: [newItem],
+                    },
+                    401
+                ),
+                app
+            );
         });
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
-            await putTradeRequest(updatedTrade.id!, updatedTrade.parse(), 403)(request(app));
+            const testTrade = TradeFactory.getTrade();
+            await tradeDAO.createTrade(testTrade.parse());
+            const originalCreator = testTrade.tradeParticipants!.find(
+                tp => tp.participantType === TradeParticipantType.CREATOR
+            );
+            const updatedParticipants = [originalCreator, TradeFactory.getTradeRecipient()];
+            const newItem = TradeFactory.getTradedMajorPlayer(
+                undefined,
+                originalCreator!.team,
+                updatedParticipants[1]!.team
+            );
+
+            await putTradeRequest(
+                testTrade.id!,
+                {
+                    ...testTrade.parse(),
+                    tradeParticipants: updatedParticipants as TradeParticipant[],
+                    tradeItems: [newItem],
+                },
+                403
+            )(request(app));
+        });
+    });
+
+    describe("PUT /trades/:id/:action (accept/reject/submit a trade)", () => {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        type actionBody = { declinedById: string; declinedReason: string } | undefined;
+        const putTradeRequest = (action: string, id: string, actionObj: actionBody, status = 200) => (
+            agent: request.SuperTest<request.Test>
+        ) => makePutRequest<actionBody>(agent, `/trades/${id}/${action}`, actionObj, status);
+
+        afterEach(async () => {
+            return await doLogout(request.agent(app));
+        });
+
+        it(":action = accept - should return the trade with an updated status", async () => {
+            const testTrade = TradeFactory.getTrade();
+            testTrade.status = TradeStatus.REQUESTED;
+            await tradeDAO.createTrade(testTrade.parse());
+
+            const { body } = await adminLoggedIn(putTradeRequest("accept", testTrade.id!, undefined), app);
+
+            const expected = {
+                ...testTrade,
+                status: TradeStatus.ACCEPTED,
+                tradeItems: expect.toBeArrayOfSize(testTrade.tradeItems!.length),
+                tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
+            };
+            expect(body).toMatchObject(expected);
+        });
+        it(":action = reject - should return the trade with an updated status", async () => {
+            const testTrade = TradeFactory.getTrade();
+            testTrade.status = TradeStatus.REQUESTED;
+            await tradeDAO.createTrade(testTrade.parse());
+
+            const { body } = await adminLoggedIn(putTradeRequest("reject", testTrade.id!, undefined), app);
+
+            const expected = {
+                ...testTrade,
+                status: TradeStatus.REJECTED,
+                tradeItems: expect.toBeArrayOfSize(testTrade.tradeItems!.length),
+                tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
+            };
+            expect(body).toMatchObject(expected);
+        });
+        it(":action = submit - should return the trade with an updated status", async () => {
+            const testTrade = TradeFactory.getTrade();
+            testTrade.status = TradeStatus.ACCEPTED;
+            await tradeDAO.createTrade(testTrade.parse());
+            await teamDAO.createTeams(testTrade.picks.map((p, i) => ({ ...p.originalOwner!.parse(), espnId: i })));
+            await pickDAO.createPicks(testTrade.picks.map(p => p.parse()));
+            await playerDAO.createPlayers(testTrade.players.map(p => p.parse()));
+
+            const { body } = await adminLoggedIn(putTradeRequest("submit", testTrade.id!, undefined), app);
+
+            const expected = {
+                ...testTrade,
+                status: TradeStatus.SUBMITTED,
+                tradeItems: expect.toBeArrayOfSize(testTrade.tradeItems!.length),
+                tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
+            };
+            expect(body).toMatchObject(expected);
         });
     });
 
     describe("DELETE /trades/:id (delete one trade)", () => {
-        const deleteTradeRequest = (id: string, status: number = 200) =>
-            (agent: request.SuperTest<request.Test>) => makeDeleteRequest(agent, `/trades/${id}`, status);
+        const deleteTradeRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
+            makeDeleteRequest(agent, `/trades/${id}`, status);
         afterEach(async () => {
-            await doLogout(request.agent(app));
+            return await doLogout(request.agent(app));
         });
 
         it("should return a delete result if successful", async () => {
-            const {body} = await adminLoggedIn(deleteTradeRequest(testTrade.id!), app);
+            const testTrade = TradeFactory.getTrade();
+            await tradeDAO.createTrade(testTrade.parse());
+
+            const { body } = await adminLoggedIn(deleteTradeRequest(testTrade.id!), app);
             expect(body).toEqual({ deleteCount: 1, id: testTrade.id });
 
             // Confirm that it was deleted from the db:
-            const {body: getAllRes} = await request(app).get("/trades").expect(200);
-            expect(getAllRes).toBeArrayOfSize(1);
+            const { body: getAllRes } = await request(app).get("/trades").expect(200);
+            expect(getAllRes).toBeArrayOfSize(0);
         });
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
             await adminLoggedIn(deleteTradeRequest(uuid(), 404), app);
@@ -241,3 +446,4 @@ describe("Trade API endpoints", () => {
         });
     });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access */

@@ -12,8 +12,10 @@ export interface EmailStatusEvent {
     email: string;
     date: string;
     "message-id": string;
+    /* eslint-disable @typescript-eslint/naming-convention */
     ts_epoch?: number;
     ts_event?: number;
+    /* eslint-enable @typescript-eslint/naming-convention */
     ts?: number;
     subject?: string;
     tag?: string;
@@ -32,7 +34,10 @@ export default class EmailController {
     }
 
     @Post("/sendInMailWebhook")
-    public async receiveSendInMailWebhook(@Body() event: EmailStatusEvent, @Res() response: Response): Promise<Response> {
+    public async receiveSendInMailWebhook(
+        @Body() event: EmailStatusEvent,
+        @Res() response: Response
+    ): Promise<Response> {
         rollbar.info("receiveSendInMailWebhook", { event });
         logger.debug(`Received email webhook: ${inspect(event)}`);
         await this.emailPublisher.queueWebhookResponse(event);
@@ -43,14 +48,14 @@ export default class EmailController {
     public async sendTestEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
         rollbar.info("sendTestEmail", { email });
         logger.debug(`Preparing to send test email to: ${email}`);
-        const user = await this.userDao.findUser({email});
+        const user = await this.userDao.findUser({ email });
 
         if (!user) {
             throw new NotFoundError("No user found with the given email.");
         } else {
             // Queue send email with current user
             await this.emailPublisher.queueTestEmail(user);
-            return response.status(202).json({status: "email queued"});
+            return response.status(202).json({ status: "email queued" });
         }
     }
 }

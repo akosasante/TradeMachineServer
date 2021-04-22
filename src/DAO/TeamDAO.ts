@@ -10,15 +10,12 @@ export default class TeamDAO {
     }
 
     public async getAllTeams(): Promise<Team[]> {
-        const options: FindManyOptions = {order: {id: "ASC"}};
+        const options: FindManyOptions = { order: { id: "ASC" } };
         return await this.teamDb.find(options);
     }
 
     public async getTeamsWithOwners(): Promise<Team[]> {
-        return await this.teamDb
-            .createQueryBuilder("team")
-            .innerJoinAndSelect("team.owners", "owners")
-            .getMany();
+        return await this.teamDb.createQueryBuilder("team").innerJoinAndSelect("team.owners", "owners").getMany();
     }
 
     public async getTeamsWithNoOwners(): Promise<Team[]> {
@@ -34,12 +31,12 @@ export default class TeamDAO {
     }
 
     public async findTeams(query: Partial<Team>): Promise<Team[]> {
-        return await this.teamDb.find({where: query});
+        return await this.teamDb.find({ where: query });
     }
 
     public async createTeams(teamObjs: Partial<Team>[]): Promise<Team[]> {
         const result: InsertResult = await this.teamDb.insert(teamObjs);
-        return await this.teamDb.find({id: In(result.identifiers.map(({id}) => id))});
+        return await this.teamDb.find({ id: In(result.identifiers.map(({ id }) => id as string)) });
     }
 
     public async updateTeam(id: string, teamObj: Partial<Team>): Promise<Team> {
@@ -49,20 +46,12 @@ export default class TeamDAO {
 
     public async deleteTeam(id: string): Promise<DeleteResult> {
         await this.teamDb.findOneOrFail(id);
-        return await this.teamDb.createQueryBuilder()
-            .delete()
-            .whereInIds(id)
-            .returning("id")
-            .execute();
+        return await this.teamDb.createQueryBuilder().delete().whereInIds(id).returning("id").execute();
     }
 
     public async updateTeamOwners(id: string, ownersToAdd: User[], ownersToRemove: User[]): Promise<Team> {
         await this.teamDb.findOneOrFail(id);
-        await this.teamDb
-            .createQueryBuilder()
-            .relation("owners")
-            .of(id)
-            .addAndRemove(ownersToAdd, ownersToRemove);
+        await this.teamDb.createQueryBuilder().relation("owners").of(id).addAndRemove(ownersToAdd, ownersToRemove);
         return await this.getTeamById(id);
     }
 }

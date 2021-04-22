@@ -8,7 +8,7 @@ export default class EmailDAO {
         this.emailDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("Email");
     }
 
-    public async createEmail(email: Email): Promise<Email> {
+    public async createEmail(email: Partial<Email>): Promise<Email> {
         return await this.emailDb.save(email);
     }
 
@@ -16,7 +16,7 @@ export default class EmailDAO {
         return await this.emailDb.findOne(id);
     }
 
-    public async updateEmail(email: Email): Promise<Email> {
+    public async updateEmail(email: Partial<Email>): Promise<Email> {
         return await this.emailDb.save(email);
     }
 }

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - staging
+      - main
 
 jobs:
   build:
@@ -31,7 +32,7 @@ jobs:
         run: npm install
 
       - name: Transpile typescript code
-        run: npm run build
+        run: make build
 
       - name: Compress built folders
         uses:  master-atul/tar-action@v1.0.2

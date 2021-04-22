@@ -1,4 +1,3 @@
-import "jest";
 import "jest-extended";
 import DraftPick from "../../../src/models/draftPick";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";

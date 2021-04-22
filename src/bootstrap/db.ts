@@ -4,8 +4,8 @@ import CustomQueryLogger from "../db/QueryLogger";
 import logger from "./logger";
 import { rollbar } from "./rollbar";
 
-export default async function initializeDb(logQueries: boolean = false) {
-    let connection: Connection|undefined;
+export default async function initializeDb(logQueries = false): Promise<Connection> {
+    let connection: Connection | undefined;
     try {
         const dbConfigName = process.env.ORM_CONFIG;
         const connectionConfig = await getConnectionOptions(dbConfigName);
@@ -13,11 +13,14 @@ export default async function initializeDb(logQueries: boolean = false) {
             ...connectionConfig,
             logger: logQueries ? new CustomQueryLogger(logger) : undefined,
         });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         const pgClient = (await connection.driver.obtainMasterConnection())[0];
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
         pgClient.on("error", (dbErr: any) => {
             logger.error(`DBERROR: ${inspect(dbErr)}`);
             rollbar.error(`DBERROR: ${inspect(dbErr)}`);
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             setTimeout(async () => {
                 try {
                     logger.error("Reconnecting to database...");
@@ -33,6 +36,7 @@ export default async function initializeDb(logQueries: boolean = false) {
             }, 5000);
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
         pgClient.on("end", () => {
             logger.debug("PgClient ended");
         });

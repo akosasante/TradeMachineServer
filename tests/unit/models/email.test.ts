@@ -1,9 +1,7 @@
-import "jest";
-import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import Email from "../../../src/models/email";
 
-const emailObj = {messageId: "<5d0e2800bbddbd4ed05cc56a@domain.com>"};
+const emailObj = { messageId: "<5d0e2800bbddbd4ed05cc56a@domain.com>" };
 const email = new Email(emailObj);
 
 describe("Email model class", () => {

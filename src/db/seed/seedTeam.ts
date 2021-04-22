@@ -1,4 +1,4 @@
-
+/* eslint-disable */
 import initializeDb from "../../bootstrap/db";
 import { createGenericTeam, createInactiveTeam, saveOwners, saveTeam } from "./helpers/teamCreator";
 import Team from "../../models/team";
@@ -68,5 +68,12 @@ function getTeamObj(args: any[]) {
 }
 
 run()
-    .then(user => { logger.info(inspect(user)); process.exit(0); })
-    .catch(err => { logger.error(err); process.exit(999); });
+    .then(user => {
+        logger.info(inspect(user));
+        process.exit(0);
+    })
+    .catch(err => {
+        logger.error(err);
+        process.exit(999);
+    });
+/* eslint-enable */

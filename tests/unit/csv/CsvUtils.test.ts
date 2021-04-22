@@ -1,4 +1,3 @@
-import "jest";
 import "jest-extended";
 import { validateRow } from "../../../src/csv/CsvUtils";
 import logger from "../../../src/bootstrap/logger";
@@ -11,10 +10,13 @@ describe("CSV Util Functions", () => {
         logger.debug("~~~~~~CSV UTIL TESTS COMPLETE~~~~~~");
     });
     describe("validateRow/2", () => {
-        const row = {keyA: 1, keyB: 2, "Complex Key C": 3};
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const row = { keyA: 1, keyB: 2, "Complex Key C": 3 };
         // tslint:disable-next-line:no-null-keyword
-        const rowWithNull = {keyA: null, keyB: 2, "Complex Key C": 3};
-        const rowWithUndefined = {keyA: 1, keyB: undefined, "Complex Key C": 3};
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const rowWithNull = { keyA: null, keyB: 2, "Complex Key C": 3 };
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const rowWithUndefined = { keyA: 1, keyB: undefined, "Complex Key C": 3 };
 
         it("should return true if all required props are in the row obj", () => {
             const requiredProps = ["keyB", "keyA", "Complex Key C"];

@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToMany, OneToOne } from "typeorm";
+import { Column, Entity, OneToMany } from "typeorm";
 import { BaseModel } from "./base";
 import DraftPick, { LeagueLevel, MinorLeagueLevels } from "./draftPick";
 import Player, { PlayerLeagueType } from "./player";
@@ -7,7 +7,9 @@ import TradeItem from "./tradeItem";
 import TradeParticipant, { TradeParticipantType } from "./tradeParticipant";
 import logger from "../bootstrap/logger";
 import Email from "./email";
+import { inspect } from "util";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export enum TradeStatus {
     DRAFT = 1,
     REQUESTED,
@@ -16,28 +18,49 @@ export enum TradeStatus {
     REJECTED,
     SUBMITTED,
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
 export default class Trade extends BaseModel {
-    public static isValid(trade: Partial<Trade>) {
-        return new Trade(trade).isValid();
+    @Column({ type: "enum", enum: TradeStatus, default: TradeStatus.DRAFT })
+    public status?: TradeStatus;
+    @Column({ nullable: true })
+    public declinedReason?: string;
+    @Column({ nullable: true, type: "uuid" })
+    public declinedById?: string;
+    @Column({ nullable: true, type: "jsonb" })
+    public acceptedBy?: string[];
+    @Column({ nullable: true })
+    public acceptedOnDate?: Date;
+    @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade, { cascade: true, eager: true })
+    public tradeParticipants?: TradeParticipant[];
+    @OneToMany(type => TradeItem, tradeItem => tradeItem.trade, { cascade: true, eager: true })
+    public tradeItems?: TradeItem[];
+    @OneToMany(_type => Email, email => email.trade, { eager: true })
+    public emails?: Email[];
+
+    constructor(props: Partial<Trade>) {
+        super();
+        Object.assign(this, props);
     }
 
-    public get creator(): Team|undefined {
-        const creator = (this.tradeParticipants || []).find(part =>
-            part.participantType === TradeParticipantType.CREATOR);
+    public get creator(): Team | undefined {
+        const creator = (this.tradeParticipants || []).find(
+            part => part.participantType === TradeParticipantType.CREATOR
+        );
         return creator ? creator.team : undefined;
     }
 
     public get recipients(): Team[] {
+        logger.debug(`this: ${inspect(this)}`);
+        logger.debug(`this.tp: ${inspect(this.tradeParticipants)}`);
         return (this.tradeParticipants || [])
             .filter(part => part.participantType === TradeParticipantType.RECIPIENT)
             .map(part => part.team);
     }
 
     public get players(): Player[] {
-        return TradeItem.filterPlayers(this.tradeItems)
-            .map(item => item.entity as Player);
+        return TradeItem.filterPlayers(this.tradeItems).map(item => item.entity as Player);
     }
 
     public get majorPlayers(): Player[] {
@@ -49,8 +72,7 @@ export default class Trade extends BaseModel {
     }
 
     public get picks(): DraftPick[] {
-        return TradeItem.filterPicks(this.tradeItems)
-            .map(item => item.entity as DraftPick);
+        return TradeItem.filterPicks(this.tradeItems).map(item => item.entity as DraftPick);
     }
 
     public get majorPicks(): DraftPick[] {
@@ -69,34 +91,8 @@ export default class Trade extends BaseModel {
         return this.picks.filter(pick => pick.type === LeagueLevel.LOW);
     }
 
-    @Column({type: "enum", enum: TradeStatus, default: TradeStatus.DRAFT})
-    public status?: TradeStatus;
-
-    @Column({nullable: true})
-    public declinedReason?: string;
-
-    @Column({nullable: true, type: "uuid"})
-    public declinedById?: string;
-
-    @Column({nullable: true, type: "jsonb"})
-    public acceptedBy?: string[];
-
-    @Column({nullable: true})
-    public acceptedOnDate?: Date;
-
-    @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade,
-        {cascade: true, eager: true})
-    public tradeParticipants?: TradeParticipant[];
-
-    @OneToMany(type => TradeItem, tradeItem => tradeItem.trade, {cascade: true, eager: true})
-    public tradeItems?: TradeItem[];
-
-    @OneToMany(_type => Email, email => email.trade, {eager: true})
-    public emails?: Email[];
-
-    constructor(props: Partial<Trade>) {
-        super();
-        Object.assign(this, props);
+    public static isValid(trade: Partial<Trade>): boolean {
+        return new Trade(trade).isValid();
     }
 
     public isValid(): boolean {
@@ -107,10 +103,19 @@ export default class Trade extends BaseModel {
         const participantsAndItemsLength = !!this.tradeItems!.length && !!this.tradeParticipants!.length;
         const recipientExists = !!this.recipients.length;
         const creatorExists = !!this.creator;
-        const onlyOneCreator = this.tradeParticipants!.filter(part =>
-            part.participantType === TradeParticipantType.CREATOR).length === 1;
-        logger.debug(`Result of isTradeValid? hasParticipantsAndItems=${participantsAndItemsExist && participantsAndItemsLength} | hasRecipients=${recipientExists} | hasCreator=${creatorExists && onlyOneCreator}`);
-        return participantsAndItemsExist && participantsAndItemsLength &&
-            recipientExists && creatorExists && onlyOneCreator;
+        const onlyOneCreator =
+            this.tradeParticipants!.filter(part => part.participantType === TradeParticipantType.CREATOR).length === 1;
+        logger.debug(
+            `Result of isTradeValid? hasParticipantsAndItems=${
+                participantsAndItemsExist && participantsAndItemsLength
+            } | hasRecipients=${recipientExists} | hasCreator=${creatorExists && onlyOneCreator}`
+        );
+        return (
+            participantsAndItemsExist &&
+            participantsAndItemsLength &&
+            recipientExists &&
+            creatorExists &&
+            onlyOneCreator
+        );
     }
 }

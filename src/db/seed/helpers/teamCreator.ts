@@ -29,7 +29,6 @@ export function createInactiveTeam() {
     return team;
 }
 
-
 export async function saveTeam(team: Team) {
     const teamDAO = await init();
     return await teamDAO.createTeams([team]);

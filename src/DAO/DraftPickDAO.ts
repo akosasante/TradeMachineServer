@@ -9,7 +9,7 @@ export default class DraftPickDAO {
     }
 
     public async getAllPicks(): Promise<DraftPick[]> {
-        const options: FindManyOptions = {order: {id: "ASC"}};
+        const options: FindManyOptions = { order: { id: "ASC" } };
         return await this.draftPickDb.find(options);
     }
 
@@ -18,16 +18,16 @@ export default class DraftPickDAO {
     }
 
     public async findPicks(query: Partial<DraftPick>): Promise<DraftPick[]> {
-        return await this.draftPickDb.find({where: query});
+        return await this.draftPickDb.find({ where: query });
     }
 
     public async createPicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
         const result: InsertResult = await this.draftPickDb.insert(pickObjs);
-        return await this.draftPickDb.find({id: In(result.identifiers.map(({id}) => id))});
+        return await this.draftPickDb.find({ id: In(result.identifiers.map(({ id }) => id as string)) });
     }
 
     public async batchCreatePicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
-        return await this.draftPickDb.save(pickObjs, {chunk: 10});
+        return await this.draftPickDb.save(pickObjs, { chunk: 10 });
     }
 
     public async batchUpsertPicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
@@ -36,10 +36,14 @@ export default class DraftPickDAO {
                 .createQueryBuilder()
                 .insert()
                 .values(pickObjs)
-                .onConflict('("type", "season", "round", "originalOwnerId") DO UPDATE SET "currentOwnerId" = EXCLUDED."currentOwnerId", "pickNumber" = EXCLUDED."pickNumber"')
+                .onConflict(
+                    '("type", "season", "round", "originalOwnerId") DO UPDATE SET "currentOwnerId" = EXCLUDED."currentOwnerId", "pickNumber" = EXCLUDED."pickNumber"'
+                )
                 .execute();
 
-            return await this.draftPickDb.find({id: In(result.identifiers.filter(res => !!res).map(({id}) => id))});
+            return await this.draftPickDb.find({
+                id: In(result.identifiers.filter(res => !!res).map(({ id }) => id as string)),
+            });
         } else {
             return [];
         }
@@ -52,11 +56,7 @@ export default class DraftPickDAO {
 
     public async deletePick(id: string): Promise<DeleteResult> {
         await this.getPickById(id);
-        return await this.draftPickDb.createQueryBuilder()
-            .delete()
-            .whereInIds(id)
-            .returning("id")
-            .execute();
+        return await this.draftPickDb.createQueryBuilder().delete().whereInIds(id).returning("id").execute();
     }
 
     public async deleteAllPicks(query?: Partial<DraftPick>): Promise<void> {
@@ -66,6 +66,6 @@ export default class DraftPickDAO {
         } else {
             allPicks = await this.getAllPicks();
         }
-        await this.draftPickDb.remove(allPicks, {chunk: 10});
+        await this.draftPickDb.remove(allPicks, { chunk: 10 });
     }
 }

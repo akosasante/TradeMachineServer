@@ -1,7 +1,6 @@
-import {TradeFactory} from "../../factories/TradeFactory";
+import { TradeFactory } from "../../factories/TradeFactory";
 import logger from "../../../src/bootstrap/logger";
-import {Emailer} from "../../../src/email/mailer";
-import {processTradeAnnounceJob} from "../../../src/slack/processors";
+import { processTradeAnnounceJob } from "../../../src/slack/processors";
 
 const mockSlackAnnouncer = {
     sendTradeAnnouncement: jest.fn(),
@@ -23,7 +22,7 @@ afterEach(() => {
 describe("Slack queue processors", () => {
     it("processTradeAnnounceJob - should pass the trade into the slack announcer", async () => {
         // @ts-ignore
-        await processTradeAnnounceJob({name: "trade_announce", data: { trade: tradeJson }}, mockSlackAnnouncer);
+        await processTradeAnnounceJob({ name: "trade_announce", data: { trade: tradeJson } }, mockSlackAnnouncer);
         expect(mockSlackAnnouncer.sendTradeAnnouncement).toHaveBeenCalledTimes(1);
         expect(mockSlackAnnouncer.sendTradeAnnouncement).toHaveBeenCalledWith(trade);
     });

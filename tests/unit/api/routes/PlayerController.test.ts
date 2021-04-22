@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { mocked } from "ts-jest/utils";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import PlayerController from "../../../../src/api/routes/PlayerController";
@@ -30,8 +28,10 @@ describe("PlayerController", () => {
     };
 
     const testPlayer = PlayerFactory.getPlayer();
-    const playerController = new PlayerController(mockPlayerDAO as unknown as PlayerDAO,
-        mockTeamDAO as unknown as TeamDAO);
+    const playerController = new PlayerController(
+        (mockPlayerDAO as unknown) as PlayerDAO,
+        (mockTeamDAO as unknown) as TeamDAO
+    );
 
     beforeAll(() => {
         logger.debug("~~~~~~PLAYER CONTROLLER TESTS BEGIN~~~~~~");
@@ -41,7 +41,8 @@ describe("PlayerController", () => {
     });
     afterEach(() => {
         [mockPlayerDAO, mockTeamDAO].forEach(mockedThing =>
-            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
+            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset())
+        );
         mockedCsvParser.mockClear();
     });
 
@@ -62,16 +63,16 @@ describe("PlayerController", () => {
             expect(mockPlayerDAO.getAllPlayers).toHaveBeenCalledTimes(0);
             expect(mockPlayerDAO.findPlayers).toHaveBeenCalledTimes(1);
             expect(mockPlayerDAO.findPlayers).toHaveBeenCalledWith([
-                {league: PlayerLeagueType.MINOR},
-                {league: PlayerLeagueType.MAJOR}]);
+                { league: PlayerLeagueType.MINOR },
+                { league: PlayerLeagueType.MAJOR },
+            ]);
             expect(res).toEqual([testPlayer]);
         });
         it("should bubble up any errors from the DAO", async () => {
             mockPlayerDAO.getAllPlayers.mockImplementation(() => {
                 throw new Error("Generic Error");
             });
-            await expect(playerController.getAllPlayers())
-                .rejects.toThrow(Error);
+            await expect(playerController.getAllPlayers()).rejects.toThrow(Error);
         });
     });
 
@@ -88,13 +89,12 @@ describe("PlayerController", () => {
             mockPlayerDAO.getPlayerById.mockImplementation(() => {
                 throw new EntityNotFoundError(Player, "ID not found.");
             });
-            await expect(playerController.getOnePlayer(uuid()))
-                .rejects.toThrow(EntityNotFoundError);
+            await expect(playerController.getOnePlayer(uuid())).rejects.toThrow(EntityNotFoundError);
         });
     });
 
     describe("findPlayersByQuery method", () => {
-        const query = {mlbTeam: "Boston Red Sox"};
+        const query = { mlbTeam: "Boston Red Sox" };
         it("should find players by the given query options", async () => {
             mockPlayerDAO.findPlayers.mockReturnValue([testPlayer]);
             const res = await playerController.findPlayersByQuery(query);
@@ -139,8 +139,7 @@ describe("PlayerController", () => {
             mockPlayerDAO.createPlayers.mockImplementation(() => {
                 throw new Error("Generic Error");
             });
-            await expect(playerController.createPlayers([testPlayer.parse()]))
-                .rejects.toThrow(Error);
+            await expect(playerController.createPlayers([testPlayer.parse()])).rejects.toThrow(Error);
         });
     });
 
@@ -157,32 +156,32 @@ describe("PlayerController", () => {
             mockPlayerDAO.updatePlayer.mockImplementation(() => {
                 throw new EntityNotFoundError(Player, "ID not found.");
             });
-            await expect(playerController.updatePlayer(uuid(), testPlayer.parse()))
-                .rejects.toThrow(EntityNotFoundError);
+            await expect(playerController.updatePlayer(uuid(), testPlayer.parse())).rejects.toThrow(
+                EntityNotFoundError
+            );
         });
     });
 
     describe("deletePlayer method", () => {
         it("should delete a player by id from the db", async () => {
-            mockPlayerDAO.deletePlayer.mockReturnValue({raw: [ {id: testPlayer.id} ], affected: 1});
+            mockPlayerDAO.deletePlayer.mockReturnValue({ raw: [{ id: testPlayer.id }], affected: 1 });
             const res = await playerController.deletePlayer(testPlayer.id!);
 
             expect(mockPlayerDAO.deletePlayer).toHaveBeenCalledTimes(1);
             expect(mockPlayerDAO.deletePlayer).toHaveBeenCalledWith(testPlayer.id);
-            expect(res).toEqual({deleteCount: 1, id: testPlayer.id});
+            expect(res).toEqual({ deleteCount: 1, id: testPlayer.id });
         });
         it("should throw an error if entity is not found in db", async () => {
             mockPlayerDAO.deletePlayer.mockImplementation(() => {
                 throw new EntityNotFoundError(Player, "ID not found.");
             });
-            await expect(playerController.deletePlayer(uuid()))
-                .rejects.toThrow(EntityNotFoundError);
+            await expect(playerController.deletePlayer(uuid())).rejects.toThrow(EntityNotFoundError);
         });
     });
 
     describe("batchUploadMinorLeaguePlayers method", () => {
         const overwriteMode = "overwrite";
-        const testFile = {path: "/test/path/to.csv"};
+        const testFile = { path: "/test/path/to.csv" } as Express.Multer.File;
 
         it("should get all existing teams from the db", async () => {
             await playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode);
@@ -204,15 +203,17 @@ describe("PlayerController", () => {
             mockTeamDAO.getAllTeams.mockImplementationOnce(() => {
                 throw new Error();
             });
-            await expect(playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode))
-                .rejects.toThrow(Error);
+            await expect(playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode)).rejects.toThrow(
+                Error
+            );
         });
         it("should reject if processMinorLeagueCsv throws an error", async () => {
             mockedCsvParser.mockImplementationOnce(() => {
                 throw new Error();
             });
-            await expect(playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode))
-                .rejects.toThrow(Error);
+            await expect(playerController.batchUploadMinorLeaguePlayers(testFile, overwriteMode)).rejects.toThrow(
+                Error
+            );
         });
     });
 });

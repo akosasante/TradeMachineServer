@@ -7,32 +7,33 @@ import TradeParticipant from "./tradeParticipant";
 import User from "./user";
 import { EspnFantasyTeam } from "../espn/espnApi";
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export enum TeamStatus {
     ACTIVE = 1,
     DISABLED,
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
 @Unique(["espnId"])
 export default class Team extends BaseModel {
-
     @Column()
     public name!: string;
 
-    @Column({nullable: true})
+    @Column({ nullable: true })
     public espnId?: number;
     // TODO: Consider enforcing uniqueness on this column? Or name column? Maybe not necessary for now.
 
-    @Column({type: "enum", enum: TeamStatus, default: TeamStatus.DISABLED})
+    @Column({ type: "enum", enum: TeamStatus, default: TeamStatus.DISABLED })
     public status?: TeamStatus;
 
-    @Column({type: "jsonb", nullable: true})
+    @Column({ type: "jsonb", nullable: true })
     public espnTeam?: EspnFantasyTeam;
 
-    @OneToMany(_type => User, user => user.team, { eager: true, onDelete: "SET NULL"})
+    @OneToMany(_type => User, user => user.team, { eager: true, onDelete: "SET NULL" })
     public owners?: User[];
 
-    @OneToMany(_type => Player, player => player.leagueTeam, { onDelete: "SET NULL"})
+    @OneToMany(_type => Player, player => player.leagueTeam, { onDelete: "SET NULL" })
     public players?: Player[];
 
     @OneToMany(_type => TradeParticipant, tradeParticipant => tradeParticipant.team)
@@ -54,5 +55,4 @@ export default class Team extends BaseModel {
         super();
         Object.assign(this, props);
     }
-
 }
