@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { clone } from "lodash";
 import { PlayerLeagueType } from "../../../src/models/player";
 import Trade, { TradeStatus } from "../../../src/models/trade";
@@ -23,11 +21,11 @@ describe("Trade Class", () => {
     const [minorPlayer, majorPlayer] = [
         PlayerFactory.getPlayer(),
         PlayerFactory.getPlayer("Pete Buttjudge", PlayerLeagueType.MAJOR),
-        ];
+    ];
     const [tradedMajorPlayer, tradedMinorPlayer] = [
         TradeFactory.getTradedMajorPlayer(majorPlayer, creatorTeam, recipientTeam),
         TradeFactory.getTradedMinorPlayer(minorPlayer, creatorTeam, recipientTeam),
-        ];
+    ];
 
     const [lowPick, highPick, majorPick] = [
         DraftPickFactory.getPick(),
@@ -46,9 +44,14 @@ describe("Trade Class", () => {
     const [sender, recipient] = [
         TradeFactory.getTradeCreator(creatorTeam, testTrade),
         TradeFactory.getTradeRecipient(recipientTeam, testTrade),
-        ];
+    ];
     testTrade.tradeParticipants = [sender, recipient];
-    const testTradeObj = { id: testTrade.id, status: TradeStatus.DRAFT, tradeItems, tradeParticipants: [sender, recipient] };
+    const testTradeObj = {
+        id: testTrade.id,
+        status: TradeStatus.DRAFT,
+        tradeItems,
+        tradeParticipants: [sender, recipient],
+    };
 
     describe("constructor", () => {
         it("should construct the obj as expected", () => {
@@ -108,62 +111,59 @@ describe("Trade Class", () => {
             it("should fail if there is only one participant", () => {
                 const invalidTrade = clone(testTrade);
                 invalidTrade.tradeParticipants = [sender];
-                expect(invalidTrade.isValid()).toBeFalse();
-
+                expect(invalidTrade.isValid()).toEqual(false);
             });
             it("should fail if there are no participants (empty array)", () => {
                 const invalidTrade = clone(testTrade);
                 invalidTrade.tradeParticipants = [];
-                expect(invalidTrade.isValid()).toBeFalse();
+                expect(invalidTrade.isValid()).toEqual(false);
             });
             it("should fail if there are no participants (undefined)", () => {
                 const invalidTrade = clone(testTrade);
                 // @ts-ignore
                 invalidTrade.tradeParticipants = undefined;
-                expect(invalidTrade.isValid()).toBeFalse();
-
+                expect(invalidTrade.isValid()).toEqual(false);
             });
             it("should fail if there is no creator", () => {
                 const invalidTrade = clone(testTrade);
                 const secondRecipient = clone(recipient);
                 secondRecipient.team = creatorTeam;
                 invalidTrade.tradeParticipants = [recipient, secondRecipient];
-                expect(invalidTrade.isValid()).toBeFalse();
-
+                expect(invalidTrade.isValid()).toEqual(false);
             });
             it("should fail if there is more than one creator", () => {
                 const invalidTrade = clone(testTrade);
                 const secondSender = clone(sender);
                 secondSender.team = recipientTeam;
                 invalidTrade.tradeParticipants = [sender, secondSender];
-                expect(invalidTrade.isValid()).toBeFalse();
+                expect(invalidTrade.isValid()).toEqual(false);
             });
 
             it("should fail if items is undefined", () => {
                 const invalidTrade = clone(testTrade);
                 // @ts-ignore
                 invalidTrade.tradeItems = undefined;
-                expect(invalidTrade.isValid()).toBeFalse();
+                expect(invalidTrade.isValid()).toEqual(false);
             });
             it("should fail if items is empty", () => {
                 const invalidTrade = clone(testTrade);
                 invalidTrade.tradeItems = [];
-                expect(invalidTrade.isValid()).toBeFalse();
+                expect(invalidTrade.isValid()).toEqual(false);
             });
             it("should return true if valid trade", () => {
-                expect(testTrade.isValid()).toBeTrue();
+                expect(testTrade.isValid()).toEqual(true);
             });
         });
     });
 
     describe("static methods", () => {
         it("Trade.isValid/1 should return true if a valid trade by passing to instance method", () => {
-            expect(Trade.isValid(testTrade)).toBeTrue();
+            expect(Trade.isValid(testTrade)).toEqual(true);
         });
         it("Trade.isValid/1 should return false if an invalid trade by passing to instance method", () => {
             const invalidTrade = clone(testTrade);
             invalidTrade.tradeParticipants = [sender];
-            expect(Trade.isValid(invalidTrade)).toBeFalse();
+            expect(Trade.isValid(invalidTrade)).toEqual(false);
         });
     });
 });

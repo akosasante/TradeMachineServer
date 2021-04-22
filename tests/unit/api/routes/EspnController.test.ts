@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import { MockObj } from "../../DAO/daoHelpers";
 import EspnController from "../../../../src/api/routes/EspnController";
 import EspnAPI from "../../../../src/espn/espnApi";
@@ -11,7 +9,7 @@ describe("EspnController", () => {
         getAllMembers: jest.fn(),
         getAllLeagueTeams: jest.fn(),
     };
-    const espnController = new EspnController(mockEspnApi as unknown as EspnAPI);
+    const espnController = new EspnController((mockEspnApi as unknown) as EspnAPI);
     const member = EspnFactory.getMember();
     const team = EspnFactory.getTeam();
 
@@ -22,7 +20,7 @@ describe("EspnController", () => {
         logger.debug("~~~~~~ESPN CONTROLLER TESTS COMPLETE~~~~~~");
     });
     afterEach(() => {
-        Object.values(mockEspnApi).forEach(mockFn =>  mockFn.mockReset());
+        Object.values(mockEspnApi).forEach(mockFn => mockFn.mockReset());
     });
 
     describe("getAllEspnMembers method", () => {

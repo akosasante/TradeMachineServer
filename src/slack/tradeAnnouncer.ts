@@ -5,6 +5,7 @@ import logger from "../bootstrap/logger";
 import { inspect } from "util";
 import TradeFormatter from "./tradeFormatter";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const SlackBlocks = {
     divider: { type: "divider" },
     mrkdwnSection(text: string) {
@@ -31,12 +32,17 @@ export class SlackTradeAnnouncer {
     private static url: string = process.env.SLACK_WEBHOOK_URL || "";
     private static webhook = new IncomingWebhook(SlackTradeAnnouncer.url);
 
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    constructor() {}
+
     public static async buildTradeAnnouncementMsg(trade: Trade) {
         logger.info("building trade announcement mesasge");
         const twoPlayerTrade = trade.tradeParticipants!.length === 2;
-        const tradeText = await Promise.all(trade.tradeParticipants!.map((participant: TradeParticipant) => {
-            return TradeFormatter.getTradeTextForParticipant(twoPlayerTrade, trade, participant);
-        }));
+        const tradeText = await Promise.all(
+            trade.tradeParticipants!.map((participant: TradeParticipant) => {
+                return TradeFormatter.getTradeTextForParticipant(twoPlayerTrade, trade, participant);
+            })
+        );
 
         return {
             text: TradeFormatter.getNotificationText(trade),
@@ -44,10 +50,7 @@ export class SlackTradeAnnouncer {
                 SlackBlocks.mrkdwnSection(TradeFormatter.getTitleText()),
                 SlackBlocks.context([TradeFormatter.getSubtitleText(trade)]),
                 SlackBlocks.divider,
-                ...(tradeText.flatMap((text: string) => [
-                    SlackBlocks.mrkdwnSection(text),
-                    SlackBlocks.divider,
-                ])),
+                ...tradeText.flatMap((text: string) => [SlackBlocks.mrkdwnSection(text), SlackBlocks.divider]),
                 SlackBlocks.context([TradeFormatter.getLinkText()]),
             ],
         };
@@ -59,7 +62,4 @@ export class SlackTradeAnnouncer {
         logger.debug(inspect(res));
         return await SlackTradeAnnouncer.webhook.send(res);
     }
-
-    // tslint:disable-next-line:no-empty
-    constructor() {}
 }

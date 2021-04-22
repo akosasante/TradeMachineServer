@@ -1,12 +1,12 @@
+/* eslint-disable */
 import initializeDb from "../bootstrap/db";
 import { getConnection } from "typeorm";
 import { uniqBy } from "lodash";
-import {getCsvFromUrl} from "../db/seed/helpers/csvHelper";
-import {processMinorLeagueCsv} from "../csv/PlayerParser";
+import { getCsvFromUrl } from "../db/seed/helpers/csvHelper";
+import { processMinorLeagueCsv } from "../csv/PlayerParser";
 import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";
 import Player from "../models/player";
-// tslint:disable:no-console
 
 async function run() {
     const args = process.argv.slice(2);
@@ -26,9 +26,15 @@ SELECT * FROM player WHERE name in (SELECT dupes.name FROM dupes) ORDER by name`
     const teamDAO = new TeamDAO();
     const allTeams = await teamDAO.getAllTeams();
     const playerDAO = new PlayerDAO();
-    const MINOR_LEAGUE_SHEETS_URL = args[0] || "https://docs.google.com/spreadsheets/d/e/2PACX-1vRRwHMjBxlsPTO9XPsiwuTroHi93Fijfx8bofQhnlrivopm2F898hqwzyyox5hyKePL3YacBFtbphK_/pub?gid=555552461&single=true&output=csv";
+    const MINOR_LEAGUE_SHEETS_URL =
+        args[0] ||
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vRRwHMjBxlsPTO9XPsiwuTroHi93Fijfx8bofQhnlrivopm2F898hqwzyyox5hyKePL3YacBFtbphK_/pub?gid=555552461&single=true&output=csv";
     const tempPath = "/tmp/trade_machine_2_csvs/";
-    const MinorLeagueCsv = await getCsvFromUrl(MINOR_LEAGUE_SHEETS_URL, tempPath, `downloaded minor league players csv - ${Date.now()}.csv`);
+    const MinorLeagueCsv = await getCsvFromUrl(
+        MINOR_LEAGUE_SHEETS_URL,
+        tempPath,
+        `downloaded minor league players csv - ${Date.now()}.csv`
+    );
     const sheetPlayers = await processMinorLeagueCsv(MinorLeagueCsv, allTeams, playerDAO, "return");
 
     const uniqueNamedPlayers = uniqBy(players, "name");
@@ -36,6 +42,7 @@ SELECT * FROM player WHERE name in (SELECT dupes.name FROM dupes) ORDER by name`
     function hasAMinorLeaguer(playerList: any[]) {
         return playerList.some(p => p.league === "2");
     }
+
     function hasAMajorLeaguer(playerList: any[]) {
         return playerList.some(p => p.league === "1");
     }
@@ -51,7 +58,7 @@ SELECT * FROM player WHERE name in (SELECT dupes.name FROM dupes) ORDER by name`
 
     for (const pl of uniqueNamedPlayers) {
         // @ts-ignore
-        const {name} = pl;
+        const { name } = pl;
         // @ts-ignore
         const dupePlayers = players.filter(p => p.name === name);
         console.log("dupe players: ", dupePlayers.length);
@@ -63,22 +70,41 @@ SELECT * FROM player WHERE name in (SELECT dupes.name FROM dupes) ORDER by name`
             if (!majorLeaguer.leagueTeamId && !!minorLeaguer.leagueTeamId) {
                 // We have a major leaguer that's not owned and a minor leaguer that _is_ owned. Let's delete the major leaguer and give the minor leaguer it's playerDataId
                 const playerDataIdToCopyOver = majorLeaguer.playerDataId;
-                console.log("deleting major league player because it doesnt have a team and the dupe minor leaguer does", majorLeaguer);
+                console.log(
+                    "deleting major league player because it doesnt have a team and the dupe minor leaguer does",
+                    majorLeaguer
+                );
                 await dbConn.query(`DELETE FROM player WHERE id = '${majorLeaguer.id}'`);
                 console.log("updating minor league player", minorLeaguer, playerDataIdToCopyOver);
-                await dbConn.query(`UPDATE player SET "playerDataId" = ${playerDataIdToCopyOver} WHERE id = '${minorLeaguer.id}'`);
-            } else if (!!majorLeaguer.leagueTeamId && !!minorLeaguer.leagueTeamId && minorLeaguer.leagueTeamId === majorLeaguer.leagueTeamId) {
+                await dbConn.query(
+                    `UPDATE player SET "playerDataId" = ${playerDataIdToCopyOver} WHERE id = '${minorLeaguer.id}'`
+                );
+            } else if (
+                !!majorLeaguer.leagueTeamId &&
+                !!minorLeaguer.leagueTeamId &&
+                minorLeaguer.leagueTeamId === majorLeaguer.leagueTeamId
+            ) {
                 if (!existsInCurrentMinorsSheet(minorLeaguer)) {
-                    console.log("deleting minor league player because it duplicates a major league player with a team", minorLeaguer);
+                    console.log(
+                        "deleting minor league player because it duplicates a major league player with a team",
+                        minorLeaguer
+                    );
                     await dbConn.query(`DELETE FROM player WHERE id = '${minorLeaguer.id}'`);
                 }
             } else if (!!majorLeaguer.leagueTeamId && !minorLeaguer.leagueTeamId) {
                 if (existsInCurrentMinorsSheet(minorLeaguer)) {
                     const playerDataIdToCopyOver = majorLeaguer.playerDataId;
-                    const {owner: ownerId, meta} = getMetaFromSheet(minorLeaguer);
-                    console.log("deleting major league player because it duplicates a minor leaguer that exists in the sheets", majorLeaguer);
+                    const { owner: ownerId, meta } = getMetaFromSheet(minorLeaguer);
+                    console.log(
+                        "deleting major league player because it duplicates a minor leaguer that exists in the sheets",
+                        majorLeaguer
+                    );
                     await dbConn.query(`DELETE FROM player WHERE id = '${majorLeaguer.id}'`);
-                    await dbConn.query(`UPDATE player SET "playerDataId" = ${playerDataIdToCopyOver}, "leagueTeamId" = '${ownerId}', "meta" = '${JSON.stringify(meta)}'::json  WHERE id = '${minorLeaguer.id}'`);
+                    await dbConn.query(
+                        `UPDATE player SET "playerDataId" = ${playerDataIdToCopyOver}, "leagueTeamId" = '${ownerId}', "meta" = '${JSON.stringify(
+                            meta
+                        )}'::json  WHERE id = '${minorLeaguer.id}'`
+                    );
                 }
             }
         }
@@ -86,11 +112,16 @@ SELECT * FROM player WHERE name in (SELECT dupes.name FROM dupes) ORDER by name`
 
     console.log(`found ${uniqueNamedPlayers.length} unique names`);
 
-
-
     return true;
 }
 
 run()
-    .then(res => { console.log(res); process.exit(0); })
-    .catch(err => { console.error(err); process.exit(99); });
+    .then(res => {
+        console.log(res);
+        process.exit(0);
+    })
+    .catch(err => {
+        console.error(err);
+        process.exit(99);
+    });
+/* eslint-enable */

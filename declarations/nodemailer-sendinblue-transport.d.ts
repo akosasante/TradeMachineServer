@@ -3,8 +3,8 @@
 // Definitions by: [YOUR_NAME_HERE] <[YOUR_URL_HERE]>
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
 // prefixedErr.!0
-// tslint:disable:jsdoc-format
-// tslint:disable-next-line
+/* eslint-disable jsdoc/check-alignment, jsdoc/check-indentation, jsdoc/newline-after-description */
+// eslint-disable-next-line
 // import * as nodemaile_sendinblue from "/Users/aasante/h-dev/TradeMachine/trade-machine-server/node_modules/nodemailer-sendinblue-transport/lib/nodemailer-sendinblue-transport.js"
 declare module "nodemailer-sendinblue-transport" {
 /**
@@ -205,7 +205,7 @@ class SendinBlueTransport {
 	 * @param mail
 	 * @param callback
 	 */
-    // tslint:disable-next-line:ban-types
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public send(mail: any, callback: Function): Promise<any>;
 
     /**

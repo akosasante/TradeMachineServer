@@ -1,22 +1,20 @@
-import "jest";
-import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import TeamDAO from "../../../src/DAO/TeamDAO";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import EspnAPI from "../../../src/espn/espnApi";
 import { EspnUpdateDaos, updateEspnData } from "../../../src/scheduled_jobs/espnScheduledUpdate";
 
-const mockPlayerDao = {} as unknown as PlayerDAO;
-const mockTeamDao = {} as unknown as TeamDAO;
-const mockEspnApi = {
+const mockPlayerDao = ({} as unknown) as PlayerDAO;
+const mockTeamDao = ({} as unknown) as TeamDAO;
+const mockEspnApi = ({
     updateEspnTeamInfo: jest.fn(),
     updateMajorLeaguePlayers: jest.fn(),
-} as unknown as EspnAPI;
-const mockDeps = {
+} as unknown) as EspnAPI;
+const mockDeps = ({
     playerDao: mockPlayerDao,
     teamDao: mockTeamDao,
     espnApi: mockEspnApi,
-} as unknown as EspnUpdateDaos;
+} as unknown) as EspnUpdateDaos;
 
 describe("Espn Scheduled Update Jobs", () => {
     beforeAll(() => {
@@ -28,7 +26,9 @@ describe("Espn Scheduled Update Jobs", () => {
     });
     afterEach(() => {
         [mockTeamDao, mockEspnApi, mockPlayerDao].forEach(mockedThing =>
-            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
+            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset())
+        );
     });
 
     test("updateEspnData - should call the correct DAO methods to update ESPN data", async () => {

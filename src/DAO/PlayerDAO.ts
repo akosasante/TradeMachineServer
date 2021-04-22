@@ -1,4 +1,13 @@
-import { DeleteResult, FindManyOptions, FindConditions, getConnection, ILike, In, InsertResult, Repository } from "typeorm";
+import {
+    DeleteResult,
+    FindConditions,
+    FindManyOptions,
+    getConnection,
+    ILike,
+    In,
+    InsertResult,
+    Repository,
+} from "typeorm";
 import Player from "../models/player";
 
 export default class PlayerDAO {
@@ -9,7 +18,7 @@ export default class PlayerDAO {
     }
 
     public async getAllPlayers(): Promise<Player[]> {
-        const options: FindManyOptions = {order: {id: "ASC"}};
+        const options: FindManyOptions = { order: { id: "ASC" } };
         return await this.playerDb.find(options);
     }
 
@@ -17,8 +26,8 @@ export default class PlayerDAO {
         return await this.playerDb.findOneOrFail(id);
     }
 
-    public async getPlayerByName(name: string): Promise<Player|undefined> {
-        return await this.playerDb.findOne({name});
+    public async getPlayerByName(name: string): Promise<Player | undefined> {
+        return await this.playerDb.findOne({ name });
     }
 
     public async findPlayers(query: Partial<Player>, limit?: number): Promise<Player[]> {
@@ -33,16 +42,16 @@ export default class PlayerDAO {
         if (league) {
             where.league = league;
         }
-        return await this.playerDb.find({ where, take: defaultLimit, cache: cacheOptions, order: {name: "ASC"} });
+        return await this.playerDb.find({ where, take: defaultLimit, cache: cacheOptions, order: { name: "ASC" } });
     }
 
     public async createPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
         const result: InsertResult = await this.playerDb.insert(playerObjs);
-        return await this.playerDb.find({id: In(result.identifiers.map(({id}) => id))});
+        return await this.playerDb.find({ id: In(result.identifiers.map(({ id }) => id as string)) });
     }
 
     public async batchCreatePlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
-        return await this.playerDb.save(playerObjs, {chunk: 10});
+        return await this.playerDb.save(playerObjs, { chunk: 10 });
     }
 
     public async batchUpsertPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
@@ -51,10 +60,14 @@ export default class PlayerDAO {
                 .createQueryBuilder()
                 .insert()
                 .values(playerObjs)
-                .onConflict('("name", "playerDataId") DO UPDATE SET "meta" = player.meta || EXCLUDED.meta, "leagueTeamId" = EXCLUDED."leagueTeamId", "mlbTeam" = EXCLUDED."mlbTeam"')
+                .onConflict(
+                    '("name", "playerDataId") DO UPDATE SET "meta" = player.meta || EXCLUDED.meta, "leagueTeamId" = EXCLUDED."leagueTeamId", "mlbTeam" = EXCLUDED."mlbTeam"'
+                )
                 .execute();
 
-            return await this.playerDb.find({id: In(result.identifiers.filter(res => !!res).map(({id}) => id))});
+            return await this.playerDb.find({
+                id: In(result.identifiers.filter(res => !!res).map(({ id }) => id as string)),
+            });
         } else {
             return [];
         }
@@ -67,11 +80,7 @@ export default class PlayerDAO {
 
     public async deletePlayer(id: string): Promise<DeleteResult> {
         await this.getPlayerById(id);
-        return await this.playerDb.createQueryBuilder()
-            .delete()
-            .whereInIds(id)
-            .returning("id")
-            .execute();
+        return await this.playerDb.createQueryBuilder().delete().whereInIds(id).returning("id").execute();
     }
 
     public async deleteAllPlayers(query?: Partial<Player>): Promise<void> {
@@ -81,6 +90,6 @@ export default class PlayerDAO {
         } else {
             allPlayers = await this.getAllPlayers();
         }
-        await this.playerDb.remove(allPlayers, {chunk: 10});
+        await this.playerDb.remove(allPlayers, { chunk: 10 });
     }
 }

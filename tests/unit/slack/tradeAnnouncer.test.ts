@@ -1,5 +1,3 @@
-import "jest";
-import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import TradeFormatter from "../../../src/slack/tradeFormatter";
 import { mocked } from "ts-jest/utils";
@@ -19,7 +17,6 @@ mockedTradeFormatter.getTitleText.mockReturnValue("title text");
 mockedTradeFormatter.getSubtitleText.mockReturnValue("subtitle text");
 mockedTradeFormatter.getLinkText.mockReturnValue("link text");
 
-
 beforeAll(() => {
     logger.debug("~~~~~~SLACK TRADE ANNOUNCER TESTS BEGIN~~~~~~");
 });
@@ -38,22 +35,30 @@ describe("SlackTradeAnnouncer class", () => {
     const expected = {
         text: "notification text",
         blocks: [
-            {type: "section", text: {type: "mrkdwn", text: "title text"}},
-            {type: "context", elements: [{type: "mrkdwn", text: "subtitle text"}]},
-            {type: "divider"},
-            {type: "section", text: {type: "mrkdwn", text: "trade participant text"}},
-            {type: "divider"},
-            {type: "section", text: {type: "mrkdwn", text: "trade participant text"}},
-            {type: "divider"},
-            {type: "context", elements: [{type: "mrkdwn", text: "link text"}]},
+            { type: "section", text: { type: "mrkdwn", text: "title text" } },
+            { type: "context", elements: [{ type: "mrkdwn", text: "subtitle text" }] },
+            { type: "divider" },
+            { type: "section", text: { type: "mrkdwn", text: "trade participant text" } },
+            { type: "divider" },
+            { type: "section", text: { type: "mrkdwn", text: "trade participant text" } },
+            { type: "divider" },
+            { type: "context", elements: [{ type: "mrkdwn", text: "link text" }] },
         ],
     };
 
     it("buildTradeAnnouncementMsg/1 - should call the appropriate formatting methods", async () => {
         await SlackTradeAnnouncer.buildTradeAnnouncementMsg(trade);
         expect(mockedTradeFormatter.getTradeTextForParticipant).toBeCalledTimes(2);
-        expect(mockedTradeFormatter.getTradeTextForParticipant).toBeCalledWith(true, trade, trade.tradeParticipants![0]);
-        expect(mockedTradeFormatter.getTradeTextForParticipant).toBeCalledWith(true, trade, trade.tradeParticipants![1]);
+        expect(mockedTradeFormatter.getTradeTextForParticipant).toBeCalledWith(
+            true,
+            trade,
+            trade.tradeParticipants![0]
+        );
+        expect(mockedTradeFormatter.getTradeTextForParticipant).toBeCalledWith(
+            true,
+            trade,
+            trade.tradeParticipants![1]
+        );
 
         expect(mockedTradeFormatter.getNotificationText).toBeCalledTimes(1);
         expect(mockedTradeFormatter.getNotificationText).toBeCalledWith(trade);
