@@ -2,19 +2,23 @@ import fs from "fs";
 import path from "path";
 import winston from "winston";
 
-const { combine, timestamp, printf, uncolorize } = winston.format;
-const fileLogFormat = printf(info => {
-    return `[ ${info.timestamp} ]\t${info.level}: ${info.message}`;
-});
+const { combine, timestamp, printf, json, colorize, align } = winston.format;
 // No need to write error if we're only printing that level here anyway
 const errorFileLogFormat = printf(info => {
     return `[ ${info.timestamp} ]:\t${info.message}`;
 });
 const timestampFormat = "YYYY-MM-DD hh:mm:ss A";
 
+const alignedWithColorsAndTime = combine(
+  colorize(),
+  timestamp(),
+  align(),
+  printf(info => `[ ${info.timestamp}] ${info.level}: ${info.message}`)
+);
+
 // Transport objects
 const consoleLogger = new winston.transports.Console({
-    format: combine(winston.format.cli()),
+    format: alignedWithColorsAndTime,
 });
 
 let errorLogger;
@@ -41,7 +45,7 @@ if (process.env.NODE_ENV !== "test") {
         filename: `${logDir}/server-combined.log`,
         level: "info",
         eol: "\r\n",
-        format: combine(timestamp({ format: timestampFormat }), uncolorize(), fileLogFormat),
+        format: json(),
         maxsize: 52428800,
         maxFiles: 10,
         tailable: true,
