@@ -1,4 +1,5 @@
 import { Server } from "http";
+// @ts-ignore
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
@@ -64,7 +65,7 @@ describe("Auth API endpoints", () => {
             expect(body.email).toEqual(testUser.email);
             expect(body).not.toHaveProperty("password");
             expect(body.lastLoggedIn).toBeDefined();
-        });
+        }, 2500);
         it("should have created a new user upon signing up if the email wasn't in before", async () => {
             await signupRequest(testUser.email, testUser.password)(request(app));
 
