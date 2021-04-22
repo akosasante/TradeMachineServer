@@ -175,7 +175,7 @@ export const EMAILER = {
             .send({
                 template: "reset_password",
                 message: {
-                    to: user.email,
+                    to: replaceToEmailIfStaging(user.email),
                 },
                 locals: {
                     name: user.displayName || user.email,
@@ -200,7 +200,7 @@ export const EMAILER = {
             .send({
                 template: "test_email",
                 message: {
-                    to: user.email,
+                    to: replaceToEmailIfStaging(user.email),
                     subject: "Test Email",
                 },
                 locals: {
@@ -232,7 +232,7 @@ export const EMAILER = {
             .send({
                 template: "registration_email",
                 message: {
-                    to: user.email,
+                    to: replaceToEmailIfStaging(user.email),
                 },
                 locals: {
                     name: user.displayName || user.email,
@@ -270,7 +270,7 @@ export const EMAILER = {
             .send({
                 template: "trade_request",
                 message: {
-                    to: recipient,
+                    to: replaceToEmailIfStaging(recipient),
                 },
                 locals: {
                     tradeSender: trade.creator!.name,
@@ -310,7 +310,7 @@ export const EMAILER = {
             .send({
                 template: "trade_declined",
                 message: {
-                    to: recipient,
+                    to: replaceToEmailIfStaging(recipient),
                 },
                 locals: {
                     isCreator: emailIsCreatorOfTrade(recipient, trade),
@@ -353,7 +353,7 @@ export const EMAILER = {
             .send({
                 template: "trade_accepted",
                 message: {
-                    to: recipient,
+                    to: replaceToEmailIfStaging(recipient),
                 },
                 locals: {
                     acceptUrl,

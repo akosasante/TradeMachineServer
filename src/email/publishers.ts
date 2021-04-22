@@ -17,7 +17,14 @@ export class EmailPublisher extends Publisher {
 
     public static getInstance(queue?: Bull.Queue): EmailPublisher {
         if (!EmailPublisher.instance) {
-            const queueName = process.env.NODE_ENV === "test" ? "test_email_queue" : "email_queue";
+            let queueName;
+            if (process.env.NODE_ENV === "test") {
+                queueName = "test_email_queue";
+            } else if (process.env.ORM_CONFIG === "staging") {
+                queueName = "stg_email_queue";
+            } else {
+                queueName = "email_queue";
+            }
             EmailPublisher.instance = new EmailPublisher(queue || new Bull(queueName));
         }
 

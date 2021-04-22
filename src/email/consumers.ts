@@ -10,7 +10,8 @@ import { rollbar } from "../bootstrap/rollbar";
 /* eslint-disable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
 export function setupEmailConsumers() {
     logger.info("registering email consumers");
-    const emailQueue = new Bull("email_queue", { settings: { maxStalledCount: 0, lockDuration: 60000 } });
+    const queueName = process.env.ORM_CONFIG === "staging" ? "stg_email_queue" : "email_queue"; // TODO: Should this also have a conditional for test env queue?
+    const emailQueue = new Bull(queueName, { settings: { maxStalledCount: 0, lockDuration: 60000 } });
     const cleanLoggedData = (data: any) => {
         if (data.user) {
             const user: User = JSON.parse(data.user || "{}");
