@@ -18,6 +18,7 @@ describe("DraftPickDAO", () => {
 
     const testPick1 = DraftPickFactory.getPick();
     const draftPickDAO = new DraftPickDAO((mockPickDb as unknown) as Repository<DraftPick>);
+    const defaultCacheTimeout = 60000;
 
     afterEach(() => {
         Object.values(mockPickDb).forEach(mockFn => mockFn.mockReset());
@@ -35,7 +36,7 @@ describe("DraftPickDAO", () => {
 
     it("getAllPicks - should call the db find method once with option args", async () => {
         mockPickDb.find.mockResolvedValueOnce([testPick1]);
-        const defaultOpts = { order: { id: "ASC" } };
+        const defaultOpts = { order: { id: "ASC" }, cache: defaultCacheTimeout };
         const res = await draftPickDAO.getAllPicks();
 
         expect(mockPickDb.find).toHaveBeenCalledTimes(1);
@@ -48,7 +49,7 @@ describe("DraftPickDAO", () => {
         const res = await draftPickDAO.getPickById(testPick1.id!);
 
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id);
+        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id, { cache: defaultCacheTimeout });
         expect(res).toEqual(testPick1);
     });
 
@@ -58,7 +59,7 @@ describe("DraftPickDAO", () => {
         const res = await draftPickDAO.findPicks(query);
 
         expect(mockPickDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.find).toHaveBeenCalledWith({ where: query });
+        expect(mockPickDb.find).toHaveBeenCalledWith({ where: query, cache: defaultCacheTimeout });
         expect(res).toEqual([testPick1]);
     });
 
