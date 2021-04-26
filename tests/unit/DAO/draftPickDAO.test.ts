@@ -90,7 +90,7 @@ describe("DraftPickDAO", () => {
         expect(mockPickDb.update).toHaveBeenCalledTimes(1);
         expect(mockPickDb.update).toHaveBeenCalledWith({ id: testPick1.id }, testPick1.parse());
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id);
+        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id, { cache: defaultCacheTimeout });
         expect(res).toEqual(testPick1);
     });
 
@@ -102,7 +102,7 @@ describe("DraftPickDAO", () => {
         const res = await draftPickDAO.deletePick(testPick1.id!);
 
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id!);
+        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id!, { cache: defaultCacheTimeout });
         expect(mockPickDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockWhereInIds).toHaveBeenCalledWith(testPick1.id!);
 
@@ -116,7 +116,7 @@ describe("DraftPickDAO", () => {
             await draftPickDAO.deleteAllPicks(query);
 
             expect(mockPickDb.find).toHaveBeenCalledTimes(1);
-            expect(mockPickDb.find).toHaveBeenCalledWith({ where: query });
+            expect(mockPickDb.find).toHaveBeenCalledWith({ where: query, cache: defaultCacheTimeout });
             expect(mockPickDb.remove).toHaveBeenCalledTimes(1);
             expect(mockPickDb.remove).toHaveBeenCalledWith([testPick1], { chunk: 10 });
         });
@@ -125,7 +125,7 @@ describe("DraftPickDAO", () => {
             await draftPickDAO.deleteAllPicks();
 
             expect(mockPickDb.find).toHaveBeenCalledTimes(1);
-            expect(mockPickDb.find).toHaveBeenCalledWith({ order: { id: "ASC" } });
+            expect(mockPickDb.find).toHaveBeenCalledWith({ order: { id: "ASC" }, cache: defaultCacheTimeout });
             expect(mockPickDb.remove).toHaveBeenCalledTimes(1);
             expect(mockPickDb.remove).toHaveBeenCalledWith([testPick1], { chunk: 10 });
         });

@@ -6,6 +6,7 @@ import { UserFactory } from "../factories/UserFactory";
 import { generateHashedPassword } from "../../src/authentication/auth";
 import { Connection } from "typeorm";
 import User from "../../src/models/user";
+import logger from "../../src/bootstrap/logger";
 
 export async function makeLoggedInRequest(
     agent: request.SuperTest<request.Test>,
@@ -115,5 +116,6 @@ export const clearDb = async (connection: Connection) => {
         await repository.query(`DELETE
                             FROM ${entity.schema}.${entity.tableName}`);
     }
-    return entities;
+
+    return connection.queryResultCache?.clear();
 };
