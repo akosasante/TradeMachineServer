@@ -27,7 +27,7 @@ export default class Team extends BaseModel {
     @Column({ type: "enum", enum: TeamStatus, default: TeamStatus.DISABLED })
     public status?: TeamStatus;
 
-    @Column({ type: "jsonb", nullable: true })
+    @Column({ type: "jsonb", nullable: true, select: false })
     public espnTeam?: EspnFantasyTeam;
 
     @OneToMany(_type => User, user => user.team, { eager: true, onDelete: "SET NULL" })
