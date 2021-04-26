@@ -3,22 +3,23 @@ import DraftPick from "../models/draftPick";
 
 export default class DraftPickDAO {
     private draftPickDb: Repository<DraftPick>;
+    private cacheExpiryMilliseconds = 60000;
 
     constructor(repo?: Repository<DraftPick>) {
         this.draftPickDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("DraftPick");
     }
 
     public async getAllPicks(): Promise<DraftPick[]> {
-        const options: FindManyOptions = { order: { id: "ASC" } };
+        const options: FindManyOptions = { order: { id: "ASC" }, cache: this.cacheExpiryMilliseconds };
         return await this.draftPickDb.find(options);
     }
 
     public async getPickById(id: string): Promise<DraftPick> {
-        return await this.draftPickDb.findOneOrFail(id);
+        return await this.draftPickDb.findOneOrFail(id, { cache: this.cacheExpiryMilliseconds });
     }
 
     public async findPicks(query: Partial<DraftPick>): Promise<DraftPick[]> {
-        return await this.draftPickDb.find({ where: query });
+        return await this.draftPickDb.find({ where: query, cache: this.cacheExpiryMilliseconds });
     }
 
     public async createPicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
