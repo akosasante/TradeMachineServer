@@ -67,6 +67,29 @@ describe("DraftPickController", () => {
             ]);
             expect(res).toEqual([testDraftPick]);
         });
+        it("should return an array of draftPicks if a param is passed and call the find method with season and league", async () => {
+            mockDraftPickDAO.findPicks.mockResolvedValueOnce([testDraftPick]);
+            const res = await draftPickController.getAllDraftPicks(["high", "majors"], "2020");
+
+            expect(mockDraftPickDAO.getAllPicks).toHaveBeenCalledTimes(0);
+            expect(mockDraftPickDAO.findPicks).toHaveBeenCalledTimes(1);
+            expect(mockDraftPickDAO.findPicks).toHaveBeenCalledWith([
+                { type: LeagueLevel.HIGH, season: 2020 },
+                { type: LeagueLevel.MAJORS, season: 2020 },
+            ]);
+            expect(res).toEqual([testDraftPick]);
+        });
+        it("should return an array of draftPicks if a param is passed and call the find method with season only", async () => {
+            mockDraftPickDAO.findPicks.mockResolvedValueOnce([testDraftPick]);
+            const res = await draftPickController.getAllDraftPicks(undefined, "2020");
+
+            expect(mockDraftPickDAO.getAllPicks).toHaveBeenCalledTimes(0);
+            expect(mockDraftPickDAO.findPicks).toHaveBeenCalledTimes(1);
+            expect(mockDraftPickDAO.findPicks).toHaveBeenCalledWith({
+                season: 2020
+            });
+            expect(res).toEqual([testDraftPick]);
+        });
         it("should bubble up any errors from the DAO", async () => {
             mockDraftPickDAO.getAllPicks.mockImplementation(() => {
                 throw new Error("Generic Error");

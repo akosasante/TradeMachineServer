@@ -34,12 +34,15 @@ export default class DraftPickController {
     }
 
     @Get("/")
-    public async getAllDraftPicks(@QueryParam("include") include?: string[]): Promise<DraftPick[]> {
+    public async getAllDraftPicks(
+        @QueryParam("include") include?: string[],
+        @QueryParam("season") season?: string
+    ): Promise<DraftPick[]> {
         logger.debug("get all draftPicks endpoint" + `${include ? ` with params: ${include}` : ""}`);
         rollbar.info("getAllDraftPicks", { include });
         let draftPicks: DraftPick[] = [];
-        if (include) {
-            const params = getAllDraftPicksQuery(include);
+        if (include || season) {
+            const params = getAllDraftPicksQuery(include, season);
             draftPicks = (await this.dao.findPicks(params)) || draftPicks;
         } else {
             draftPicks = (await this.dao.getAllPicks()) || draftPicks;
@@ -112,11 +115,24 @@ export default class DraftPickController {
     }
 }
 
-function getAllDraftPicksQuery(includes: string[]) {
-    const keywordToLevelMap: { [key: string]: LeagueLevel } = {
-        high: LeagueLevel.HIGH,
-        low: LeagueLevel.LOW,
-        majors: LeagueLevel.MAJORS,
-    };
-    return includes.map(include => ({ type: keywordToLevelMap[include] }));
+function getAllDraftPicksQuery(includes?: string[], season?: string) {
+    if (includes) {
+        const keywordToLevelMap: { [key: string]: LeagueLevel } = {
+            high: LeagueLevel.HIGH,
+            low: LeagueLevel.LOW,
+            majors: LeagueLevel.MAJORS,
+        };
+        return includes.map(include =>
+            season
+                ? {
+                      type: keywordToLevelMap[include],
+                      season: parseInt(season, 10),
+                  }
+                : { type: keywordToLevelMap[include] }
+        );
+    } else if (season) {
+        return { season: parseInt(season, 10) };
+    } else {
+        return {};
+    }
 }
