@@ -6,7 +6,6 @@ import { UserFactory } from "../factories/UserFactory";
 import { generateHashedPassword } from "../../src/authentication/auth";
 import { Connection } from "typeorm";
 import User from "../../src/models/user";
-import logger from "../../src/bootstrap/logger";
 
 export async function makeLoggedInRequest(
     agent: request.SuperTest<request.Test>,
@@ -108,14 +107,6 @@ export const DatePatternRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const UUIDPatternRegex = /([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/;
 
-export const clearDb = async (connection: Connection) => {
-    const entities = connection.entityMetadatas;
-
-    for (const entity of entities) {
-        const repository = connection.getRepository(entity.name);
-        await repository.query(`DELETE
-                            FROM ${entity.schema}.${entity.tableName}`);
-    }
-
-    return connection.queryResultCache?.clear();
+export const clearDb: (connection: Connection) => Promise<void> = async (connection: Connection) => {
+    return await connection.synchronize(true);
 };
