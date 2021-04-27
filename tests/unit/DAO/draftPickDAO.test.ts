@@ -36,11 +36,21 @@ describe("DraftPickDAO", () => {
 
     it("getAllPicks - should call the db find method once with option args", async () => {
         mockPickDb.find.mockResolvedValueOnce([testPick1]);
-        const defaultOpts = { order: { id: "ASC" }, cache: defaultCacheTimeout };
+        const opts = { order: { id: "ASC" }, cache: defaultCacheTimeout };
         const res = await draftPickDAO.getAllPicks();
 
         expect(mockPickDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.find).toHaveBeenCalledWith(defaultOpts);
+        expect(mockPickDb.find).toHaveBeenCalledWith(opts);
+        expect(res).toEqual([testPick1]);
+    });
+
+    it("getAllPicks - should call the db find method once with option args and skip cache if arg is passed in", async () => {
+        mockPickDb.find.mockResolvedValueOnce([testPick1]);
+        const opts = { order: { id: "ASC" }, cache: false };
+        const res = await draftPickDAO.getAllPicks(true);
+
+        expect(mockPickDb.find).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.find).toHaveBeenCalledWith(opts);
         expect(res).toEqual([testPick1]);
     });
 
