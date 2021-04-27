@@ -84,7 +84,7 @@ describe("Player API endpoints", () => {
     });
 
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.NODE_ENV));
+        return await clearDb(getConnection(process.env.ORM_CONFIG));
     });
 
     describe("POST /players (create new player)", () => {

@@ -72,7 +72,7 @@ describe("User API endpoints", () => {
         return [adminUser, ownerUser];
     });
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.NODE_ENV));
+        return await clearDb(getConnection(process.env.ORM_CONFIG));
     });
 
     describe("POST /users (create new user)", () => {

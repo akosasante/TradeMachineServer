@@ -51,7 +51,7 @@ describe("Auth API endpoints", () => {
     const testUser = { email: "test@example.com", password: "lol" };
 
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.NODE_ENV));
+        return await clearDb(getConnection(process.env.ORM_CONFIG));
     });
 
     describe("POST /auth/signup", () => {
