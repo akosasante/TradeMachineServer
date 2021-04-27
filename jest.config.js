@@ -64,14 +64,15 @@ module.exports = {
     // globalTeardown: null,
 
     // A set of global variables that need to be available in all test environments
-    // globals: {
-    //     "ts-jest": {
-    //         diagnostics: {
-    //             warnOnly: true,
-    //             pathRegex: /\.test\.ts/
-    //         }
-    //     }
-    // },
+    globals: {
+        "ts-jest": {
+            tsconfig: 'tests/tsconfig.json'
+            // diagnostics: {
+            //     warnOnly: true,
+            //     pathRegex: /\.test\.ts/
+            // }
+        }
+    },
 
     // An array of directory names to be searched recursively up from the requiring module's location
     // modulePaths: [
