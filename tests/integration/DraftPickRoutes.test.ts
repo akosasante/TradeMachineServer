@@ -81,7 +81,7 @@ describe("Pick API endpoints", () => {
     });
 
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.NODE_ENV));
+        return await clearDb(getConnection(process.env.ORM_CONFIG));
     });
 
     describe("POST /picks (create new pick)", () => {
@@ -140,7 +140,7 @@ describe("Pick API endpoints", () => {
         });
     });
 
-    describe("GET /picks[?include=draftType] (get all picks)", () => {
+    describe("GET /picks[?include=draftType]&season (get all picks)", () => {
         const getAllRequest = (param = "", status = 200) => makeGetRequest(request(app), `/picks${param}`, status);
 
         it("should return an array of all picks in the db", async () => {
@@ -170,6 +170,45 @@ describe("Pick API endpoints", () => {
             expect(highPicks[0].id).toEqual(picks[2].id);
             expect(highMajorPicks.map((returnedPick: DraftPick) => returnedPick.id)).toIncludeSameMembers(
                 picks.slice(1).map(p => p.id)
+            );
+        });
+        it("should return an array of all picks in a given season", async () => {
+            const picks = [
+                DraftPickFactory.getPick(),
+                DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS),
+                DraftPickFactory.getPick(1, 1, LeagueLevel.HIGH),
+                DraftPickFactory.getPick(3, 6, LeagueLevel.MAJORS, 2021),
+                DraftPickFactory.getPick(3, 1, LeagueLevel.HIGH, 2021),
+            ];
+            await teamDAO.createTeams(picks.map((p, i) => ({ ...p.originalOwner!.parse(), espnId: i })));
+            await pickDAO.createPicks(picks.map(p => p.parse()));
+
+            const { body: picksFrom2020 } = await getAllRequest("?season=2021");
+
+            expect(picksFrom2020).toBeArrayOfSize(2);
+            expect(picksFrom2020.map((returnedPick: DraftPick) => returnedPick.id)).toIncludeSameMembers(
+              picks.slice(3).map(p => p.id)
+            );
+        });
+        it("should return an array of all picks in a given league or leagues and season", async () => {
+            const picks = [
+                DraftPickFactory.getPick(),
+                DraftPickFactory.getPick(2, 6, LeagueLevel.MAJORS),
+                DraftPickFactory.getPick(1, 1, LeagueLevel.HIGH),
+                DraftPickFactory.getPick(3, 6, LeagueLevel.MAJORS, 2021),
+                DraftPickFactory.getPick(3, 1, LeagueLevel.HIGH, 2021),
+            ];
+            await teamDAO.createTeams(picks.map((p, i) => ({ ...p.originalOwner!.parse(), espnId: i })));
+            await pickDAO.createPicks(picks.map(p => p.parse()));
+
+            const { body: highPicks } = await getAllRequest("?include[]=high&season=2021");
+            const { body: highMajorPicks } = await getAllRequest("?include[]=high&include[]=majors&season=2021");
+
+            expect(highPicks).toBeArrayOfSize(1);
+            expect(highMajorPicks).toBeArrayOfSize(2);
+            expect(highPicks[0].id).toEqual(picks[4].id);
+            expect(highMajorPicks.map((returnedPick: DraftPick) => returnedPick.id)).toIncludeSameMembers(
+                picks.slice(3).map(p => p.id)
             );
         });
     });
@@ -356,37 +395,43 @@ describe("Pick API endpoints", () => {
             const initialPick = DraftPickFactory.getPick();
             await teamDAO.createTeams([initialPick.originalOwner!.parse()]);
             await pickDAO.createPicks([initialPick.parse()]);
-            const { body: getAllRes } = await request(app).get("/picks").expect(200);
-            expect(getAllRes).toBeArrayOfSize(1);
+
+            const allPicksBefore = await pickDAO.getAllPicks(true);
+            expect(allPicksBefore).toBeArrayOfSize(1);
 
             const { body: batchPutRes } = await adminLoggedIn(postFileRequest(csv1), app);
             expect(batchPutRes).toBeArrayOfSize(33);
-            const { body: afterGetAllRes } = await request(app).get("/picks").expect(200);
-            expect(afterGetAllRes).toBeArrayOfSize(34);
+
+            const allPicksAfter = await pickDAO.getAllPicks(true);
+            expect(allPicksAfter).toBeArrayOfSize(34);
         });
         it("should append with the given mode passed in", async () => {
             const initialPick = DraftPickFactory.getPick();
             await teamDAO.createTeams([initialPick.originalOwner!.parse()]);
             await pickDAO.createPicks([initialPick.parse()]);
-            const { body: getAllRes } = await request(app).get("/picks").expect(200);
-            expect(getAllRes).toBeArrayOfSize(1);
+
+            const allPicksBefore = await pickDAO.getAllPicks(true);
+            expect(allPicksBefore).toBeArrayOfSize(1);
 
             const { body: batchPutRes } = await adminLoggedIn(postFileRequest(csv2, "append"), app);
             expect(batchPutRes).toBeArrayOfSize(17);
-            const { body: afterGetAllRes } = await request(app).get("/picks").expect(200);
-            expect(afterGetAllRes).toBeArrayOfSize(18);
+
+            const allPicksAfter = await pickDAO.getAllPicks(true);
+            expect(allPicksAfter).toBeArrayOfSize(18);
         });
         it("should overwrite with the given mode passed in", async () => {
             const initialPick = DraftPickFactory.getPick();
             await teamDAO.createTeams([initialPick.originalOwner!.parse()]);
             await pickDAO.createPicks([initialPick.parse()]);
-            const { body: getAllRes } = await request(app).get("/picks").expect(200);
-            expect(getAllRes).toBeArrayOfSize(1);
+
+            const allPicksBefore = await pickDAO.getAllPicks(true);
+            expect(allPicksBefore).toBeArrayOfSize(1);
 
             const { body: batchPutRes } = await adminLoggedIn(postFileRequest(csv1, "overwrite"), app);
             expect(batchPutRes).toBeArrayOfSize(33);
-            const { body: afterGetAllRes } = await request(app).get("/picks").expect(200);
-            expect(afterGetAllRes).toBeArrayOfSize(33);
+
+            const allPicksAfter = await pickDAO.getAllPicks(true);
+            expect(allPicksAfter).toBeArrayOfSize(33);
         });
         it("should return a 400 Bad Request if no file is passed in", async () => {
             await adminLoggedIn(requestWithoutFile("overwrite", 400), app);
