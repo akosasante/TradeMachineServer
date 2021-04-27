@@ -1,4 +1,12 @@
-import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
+import {
+    DeleteResult,
+    FindConditions,
+    FindManyOptions,
+    getConnection,
+    In,
+    InsertResult,
+    Repository
+} from "typeorm";
 import DraftPick from "../models/draftPick";
 
 export default class DraftPickDAO {
@@ -9,8 +17,8 @@ export default class DraftPickDAO {
         this.draftPickDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("DraftPick");
     }
 
-    public async getAllPicks(): Promise<DraftPick[]> {
-        const options: FindManyOptions = { order: { id: "ASC" }, cache: this.cacheExpiryMilliseconds };
+    public async getAllPicks(skipCache = false): Promise<DraftPick[]> {
+        const options: FindManyOptions = { order: { id: "ASC" }, cache: skipCache ? false : this.cacheExpiryMilliseconds };
         return await this.draftPickDb.find(options);
     }
 
@@ -18,7 +26,7 @@ export default class DraftPickDAO {
         return await this.draftPickDb.findOneOrFail(id, { cache: this.cacheExpiryMilliseconds });
     }
 
-    public async findPicks(query: Partial<DraftPick>): Promise<DraftPick[]> {
+    public async findPicks(query: FindConditions<DraftPick>): Promise<DraftPick[]> {
         return await this.draftPickDb.find({ where: query, cache: this.cacheExpiryMilliseconds });
     }
 
