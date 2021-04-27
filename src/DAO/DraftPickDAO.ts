@@ -1,12 +1,4 @@
-import {
-    DeleteResult,
-    FindConditions,
-    FindManyOptions,
-    getConnection,
-    In,
-    InsertResult,
-    Repository
-} from "typeorm";
+import { DeleteResult, FindConditions, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
 import DraftPick from "../models/draftPick";
 
 export default class DraftPickDAO {
@@ -18,7 +10,10 @@ export default class DraftPickDAO {
     }
 
     public async getAllPicks(skipCache = false): Promise<DraftPick[]> {
-        const options: FindManyOptions = { order: { id: "ASC" }, cache: skipCache ? false : this.cacheExpiryMilliseconds };
+        const options: FindManyOptions = {
+            order: { id: "ASC" },
+            cache: skipCache ? false : this.cacheExpiryMilliseconds,
+        };
         return await this.draftPickDb.find(options);
     }
 

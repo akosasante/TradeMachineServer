@@ -187,7 +187,7 @@ describe("Pick API endpoints", () => {
 
             expect(picksFrom2020).toBeArrayOfSize(2);
             expect(picksFrom2020.map((returnedPick: DraftPick) => returnedPick.id)).toIncludeSameMembers(
-              picks.slice(3).map(p => p.id)
+                picks.slice(3).map(p => p.id)
             );
         });
         it("should return an array of all picks in a given league or leagues and season", async () => {
