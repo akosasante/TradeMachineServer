@@ -10,10 +10,10 @@ const errorFileLogFormat = printf(info => {
 const timestampFormat = "YYYY-MM-DD hh:mm:ss A";
 
 const alignedWithColorsAndTime = combine(
-  colorize(),
-  timestamp(),
-  align(),
-  printf(info => `[ ${info.timestamp}] ${info.level}: ${info.message}`)
+    colorize(),
+    timestamp(),
+    align(),
+    printf(info => `[ ${info.timestamp}] ${info.level}: ${info.message}`)
 );
 
 // Transport objects

@@ -34,7 +34,7 @@ export default class CustomQueryLogger implements Logger {
     public logQuerySlow(time: number, query: string, parameters?: any[], queryRunner?: QueryRunner): void {
         const sql = this.sqlString(query, parameters);
         this.winstonLogger.info(`SLOW QUERY: ${sql}`);
-        this.winstonLogger.error(`SLOW QUERY EXECUTION TIME: ${time}`);
+        this.winstonLogger.warn(`SLOW QUERY EXECUTION TIME: ${time}`);
         rollbar.error("Slow query", { sql, parameters, time });
     }
 

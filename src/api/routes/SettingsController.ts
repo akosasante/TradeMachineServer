@@ -1,5 +1,4 @@
-import { Body, Get, JsonController, Param, Post } from "routing-controllers";
-import { Authorized } from "routing-controllers/decorator/Authorized";
+import { Authorized, Body, Get, JsonController, Param, Post } from "routing-controllers";
 import logger from "../../bootstrap/logger";
 import SettingsDAO from "../../DAO/SettingsDAO";
 import Settings from "../../models/settings";

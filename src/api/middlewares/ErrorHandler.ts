@@ -5,7 +5,6 @@ import { QueryFailedError } from "typeorm";
 import { EntityColumnNotFound } from "typeorm/error/EntityColumnNotFound";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import logger from "../../bootstrap/logger";
-import { AuthorizationRequiredError } from "routing-controllers/error/AuthorizationRequiredError";
 import { rollbar } from "../../bootstrap/rollbar";
 import { inspect } from "util";
 
@@ -21,12 +20,14 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
         if (response.headersSent) {
             logger.error("headers already sent, passing to next");
             return next(error);
-        } else if (error instanceof AuthorizationRequiredError) {
-            logger.error("User not logged in, converting AuthorizationRequiredError to 403 Forbidden");
-            response.status(403).json(CustomErrorHandler.cleanErrorObject(error));
         } else if (error instanceof HttpError) {
-            logger.error(`HTTP Error: ${error.message}`);
-            response.status(error.httpCode).json(CustomErrorHandler.cleanErrorObject(error));
+            if (error.name === "AuthorizationRequiredError") {
+                logger.error("User not logged in, converting AuthorizationRequiredError to 403 Forbidden");
+                response.status(403).json(CustomErrorHandler.cleanErrorObject(error));
+            } else {
+                logger.error(`HTTP Error: ${error.message}`);
+                response.status(error.httpCode).json(CustomErrorHandler.cleanErrorObject(error));
+            }
         } else if (error instanceof EntityNotFoundError) {
             logger.error(`Database Error: ${error.message}`);
             response.status(404).json(CustomErrorHandler.cleanErrorObject(error));
