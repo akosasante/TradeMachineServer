@@ -86,7 +86,7 @@ describe("DraftPickController", () => {
             expect(mockDraftPickDAO.getAllPicks).toHaveBeenCalledTimes(0);
             expect(mockDraftPickDAO.findPicks).toHaveBeenCalledTimes(1);
             expect(mockDraftPickDAO.findPicks).toHaveBeenCalledWith({
-                season: 2020
+                season: 2020,
             });
             expect(res).toEqual([testDraftPick]);
         });
