@@ -80,16 +80,21 @@ a.button-link {
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - Password reset requested",
-    "text": " TRADEMACHINE
+    "text": "TRADEMACHINE
+
+
 FORGOT YOUR PASSWORD?
+
 Hi Jatheesh, you are receiving this email because you have requested a password
-reset for your account. 
+reset for your account.
 
 
 
 Please click on the following link to complete the process:
 
-Reset Password [http://localhost:8080/reset_password?u=random-token]",
+Reset Password [http://localhost:8080/reset_password?u=random-token]
+
+",
     "to": "test@example.com",
   },
 }
@@ -175,14 +180,19 @@ a.button-link {
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - You have been invited to register on FFF Trade Machine",
-    "text": " TRADEMACHINE
+    "text": "TRADEMACHINE
+
+
 INVITATION TO REGISTER
+
 Hi Jatheesh, you have been invited to register on Trade Machine. This will allow
 you to submit trades with other members of the Flex Fox Fantasy Baseball League.
 
 Please click on the following link to complete the process:
 
-Register [http://localhost:8080/register?e=dGVzdEBleGFtcGxlLmNvbQ==]",
+Register [http://localhost:8080/register?e=dGVzdEBleGFtcGxlLmNvbQ==]
+
+",
     "to": "test@example.com",
   },
 }
@@ -265,9 +275,14 @@ a.button-link {
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - Test Email",
-    "text": " TRADEMACHINE
+    "text": "TRADEMACHINE
+
+
 TESTING... TESTING...
-Hi Jatheesh, this is a test email from the Flex Fox Fantasy Trade Machine.",
+
+Hi Jatheesh, this is a test email from the Flex Fox Fantasy Trade Machine.
+
+",
     "to": "test@example.com",
   },
 }
@@ -365,18 +380,29 @@ a.button-link {
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - Trade declined by RECIPIENT_TEAM",
-    "text": " TRADEMACHINE
+    "text": "TRADEMACHINE
+
+
 RECIPIENT_TEAM HAS DECLINED A TRADE OFFER INVOLVING YOU:
+
+
+
 Reason: horrible mismatch for me
 
+
 DECLINED TRADE WAS:
+
+
 CREATOR_TEAM WOULD HAVE RECEIVED:
 
-Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM 
+Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM
+
+
 RECIPIENT_TEAM WOULD HAVE RECEIVED:
 
-Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM 
-MiniMe (Jays - P - Low Minors) from CREATOR_TEAM",
+Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM MiniMe (Jays - P - Low Minors)
+from CREATOR_TEAM
+",
     "to": "test@example.com",
   },
 }
@@ -476,21 +502,31 @@ a.button-link {
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - Trade Proposal from CREATOR_TEAM",
-    "text": " TRADEMACHINE
+    "text": "TRADEMACHINE
+
+
 CREATOR_TEAM REQUESTED A TRADE WITH YOU:
+
+
+
+
 CREATOR_TEAM WOULD RECEIVE:
 
-Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM 
+Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM
+
 --------------------------------------------------------------------------------
+
 
 RECIPIENT_TEAM WOULD RECEIVE:
 
-Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM 
-MiniMe (Jays - P - Low Minors) from CREATOR_TEAM 
+Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM MiniMe (Jays - P - Low Minors)
+from CREATOR_TEAM
+
 --------------------------------------------------------------------------------
 
 Accept Trade [http://localhost:8080/trade/test-uuid/accept]Reject Trade
-[http://localhost:8080/trade/test-uuid/reject]",
+[http://localhost:8080/trade/test-uuid/reject]
+",
     "to": "test@example.com",
   },
 }
@@ -589,19 +625,27 @@ a.button-link {
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - Your Trade Has Been Accepted!",
-    "text": " TRADEMACHINE
+    "text": "TRADEMACHINE
+
+
 YOUR TRADE OFFER HAS BEEN ACCEPTED BY ALL RECIPIENTS:
+
+
 CREATOR_TEAM WILL RECEIVE:
 
-Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM 
+Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM
+
+
 RECIPIENT_TEAM WILL RECEIVE:
 
-Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM 
-MiniMe (Jays - P - Low Minors) from CREATOR_TEAM Upon submission of this trade,
-it will be announced in the #trade_announcements
+Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM MiniMe (Jays - P - Low Minors)
+from CREATOR_TEAM
+
+Upon submission of this trade, it will be announced in the #trade_announcements
 [https://flexfoxfantasy.slack.com/archives/C84UJAX5Y] channel.
 
-Submit Trade [http://localhost:8080/trade/test-uuid/submit]",
+Submit Trade [http://localhost:8080/trade/test-uuid/submit]
+",
     "to": "test@example.com",
   },
 }
