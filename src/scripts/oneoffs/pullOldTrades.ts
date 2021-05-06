@@ -264,6 +264,7 @@ async function createAndInsertTrades(trades: OldTrade[]) {
 }
 
 async function run() {
+  console.log("RUNNING SCRIPT IN ENV: " + process.env.SCRIPT_ENV)
   await initializeDb(true);
   userDAO = new UserDAO();
 
