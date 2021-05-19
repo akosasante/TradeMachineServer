@@ -112,8 +112,9 @@ const prodOldNameToNewOwnerId: {[key: string]: string} = {
   "Jeffrey Lim": "00bb4a06-6e97-48eb-b1b6-599c46d67882",
   "Benoit Michon": "d4b7f04b-fa8c-4d8f-8c8d-dbcb669d132e"
 }
-// 855 trades, 3866 tradde iiteem, 1744 participatns, 93 emails, 105 draft picks, 4452 players, 20 team, 26 user
+// 855 trades, 3866 trade item, 1744 participants, 93 emails, 105 draft picks, 4452 players, 20 team, 26 user
 let userDAO: UserDAO;
+const schema = process.env.ORM_CONFIG == "production" ? "public" : process.env.ORM_CONFIG;
 
 async function getOwnerFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise<User> {
   let myMapper;
@@ -123,7 +124,7 @@ async function getOwnerFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise
     myMapper = devOldNameToNewOwnerId
   }
   // console.log(`looking for user with name ${owner.name} id ${myMapper[owner.name]}`)
-  return (await getConnection(process.env.ORM_CONFIG).query(`SELECT * FROM "${process.env.ORM_CONFIG}"."user" WHERE id::text = $1 LIMIT 1`, [myMapper[owner.name]]))[0]
+  return (await getConnection(process.env.ORM_CONFIG).query(`SELECT * FROM "${schema}"."user" WHERE id::text = $1 LIMIT 1`, [myMapper[owner.name]]))[0]
 }
 
 async function getTeamFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise<Team | undefined> {
