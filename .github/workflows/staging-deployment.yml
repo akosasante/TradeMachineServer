@@ -91,7 +91,7 @@ jobs:
             tar -xzf out-staging.tar.gz --overwrite
             /home/dev_deployer/.asdf/shims/npm install --production
             /home/dev_deployer/.asdf/shims/npx pm2 restart staging_trademachine
-            sh replace-migration-schema.sh dev staging
+            bash replace-migration-schema.sh dev staging
             rm out-staging.tar.gz
 
       - name: Notify Rollbar of deploy finish
