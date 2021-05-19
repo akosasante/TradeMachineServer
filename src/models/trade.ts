@@ -36,7 +36,7 @@ export default class Trade extends BaseModel {
     public tradeParticipants?: TradeParticipant[];
     @OneToMany(type => TradeItem, tradeItem => tradeItem.trade, { cascade: true, eager: true })
     public tradeItems?: TradeItem[];
-    @OneToMany(_type => Email, email => email.trade, { eager: true })
+    @OneToMany(_type => Email, email => email.trade, { cascade: ["insert"], eager: true })
     public emails?: Email[];
 
     constructor(props: Partial<Trade>) {

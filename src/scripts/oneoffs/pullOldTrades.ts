@@ -13,10 +13,17 @@ import Team from "../../models/team";
 import User from "../../models/user";
 import { getConnection } from "typeorm";
 import axios from "axios";
+import { inspect } from "util";
 
 interface OldPlayer {
   _id: string,
   player: string,
+  rec: OldTradeOwner,
+}
+
+interface OldProspect {
+  _id: string,
+  prospect: string,
   rec: OldTradeOwner,
 }
 
@@ -32,7 +39,7 @@ interface OldTradeItem {
   _id: string,
   picks: OldPick[],
   players: OldPlayer[],
-  prospects: OldPlayer[],
+  prospects: OldProspect[],
   sender: OldTradeOwner
 }
 
@@ -105,23 +112,23 @@ const prodOldNameToNewOwnerId: {[key: string]: string} = {
   "Jeffrey Lim": "00bb4a06-6e97-48eb-b1b6-599c46d67882",
   "Benoit Michon": "d4b7f04b-fa8c-4d8f-8c8d-dbcb669d132e"
 }
-
+// 855 trades, 3866 tradde iiteem, 1744 participatns, 93 emails, 105 draft picks, 4452 players, 20 team, 26 user
 let userDAO: UserDAO;
 
 async function getOwnerFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise<User> {
-  console.log(`looking for user with name ${owner.name}`)
   let myMapper;
-  if (process.env.SCRIPT_ENV == "prod") {
+  if (process.env.ORM_CONFIG == "production" || process.env.ORM_CONFIG == "staging") {
     myMapper = prodOldNameToNewOwnerId
   } else {
     myMapper = devOldNameToNewOwnerId
   }
-  return (await getConnection(process.env.SCRIPT_ENV == "prod" ? "staging" : "development").query(`SELECT * FROM "user" WHERE id::text = $1 LIMIT 1`, [myMapper[owner.name]]))[0]
+  // console.log(`looking for user with name ${owner.name} id ${myMapper[owner.name]}`)
+  return (await getConnection(process.env.ORM_CONFIG).query(`SELECT * FROM "${process.env.ORM_CONFIG}"."user" WHERE id::text = $1 LIMIT 1`, [myMapper[owner.name]]))[0]
 }
 
 async function getTeamFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise<Team | undefined> {
   const user = await getOwnerFromOldOwner(owner);
-  console.dir(`GOT USER: ${JSON.stringify(user)}`)
+  // console.dir(`GOT USER: ${JSON.stringify(user)} for owner ${owner.name}`)
   // if (user) {
   //   const teams = await getConnection("development").query(`
   //       SELECT *
@@ -146,8 +153,9 @@ async function getLeagueLevelFromOldPick(oldPickType: string): Promise<LeagueLev
 }
 
 async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
-  return Promise.all(oldTrades.map(async oldTrade => {
-    const trade = new Trade({id: uuid()});
+  const res = [];
+  for await (const oldTrade of oldTrades) {
+    const trade = new Trade({ id: uuid() });
 
     if (oldTrade.declined.status) {
       trade.status = TradeStatus.REJECTED
@@ -164,89 +172,142 @@ async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
       participantType: TradeParticipantType.CREATOR,
       trade,
       // @ts-ignore
-      team: (await getTeamFromOldOwner(oldTrade.sender))?.id
+      team: await getTeamFromOldOwner(oldTrade.sender)
     });
 
-    const recipients: TradeParticipant[] = await Promise.all(oldTrade.recipients.map(async recipient => {
-      return new TradeParticipant({
+    const recipients: TradeParticipant[] = []
+    for await (const recipient of oldTrade.recipients) {
+      recipients.push(new TradeParticipant({
         id: uuid(),
         participantType: TradeParticipantType.RECIPIENT,
         trade,
-      // @ts-ignore
-        team: (await getTeamFromOldOwner(recipient.recipient))?.id
-      });
-    }));
+        // @ts-ignore
+        team: await getTeamFromOldOwner(recipient.recipient)
+      }))
+    }
 
     trade.tradeParticipants = [...recipients, creator];
 
-    const tradedPicks = await Promise.all(oldTrade.trades.flatMap(oldTradeItems => oldTradeItems.picks.map(async oldPick => {
-      const pick = new DraftPick({
-        id: uuid(),
-        round: oldPick.round,
-        // @ts-ignore
-        originalOwner: (await getTeamFromOldOwner({ name: oldPick.pick }))?.id,
-        type: await getLeagueLevelFromOldPick(oldPick.type),
-        season: new Date(oldTrade.expiry).getFullYear()
-      });
+    const tradedPicks = []
+    for await (const oldTradeItems of oldTrade.trades) {
+      for await (const oldPick of oldTradeItems.picks) {
+        const sender = await getTeamFromOldOwner(oldTradeItems.sender)
+        const recipient = await getTeamFromOldOwner(oldPick.rec)
 
-      return new TradeItem({
-        entity: pick,
-        tradeItemId: pick.id,
-        tradeItemType: TradeItemType.PICK,
-        trade,
-        // @ts-ignore
-        sender: (await getTeamFromOldOwner(oldTradeItems.sender))?.id,
-        // @ts-ignore
-        recipient: (await getTeamFromOldOwner(oldPick.rec))?.id
-      })
-    })));
+        // console.log(`CHECKING ${JSON.stringify(sender)} and ${JSON.stringify(recipient)}`)
 
-    const tradedPlayers = await Promise.all(oldTrade.trades.flatMap(oldTradeItems => oldTradeItems.players.map(async oldPlayer => {
-      const player = new Player({
-        id: uuid(),
-        name: oldPlayer.player,
-        league: PlayerLeagueType.MAJOR
-      })
+        let pickId = uuid();
+        const pick = new DraftPick({
+          round: oldPick.round,
+          // @ts-ignore
+          originalOwner: (await getTeamFromOldOwner({ name: oldPick.pick })),
+          type: await getLeagueLevelFromOldPick(oldPick.type),
+          season: new Date(oldTrade.expiry).getFullYear()
+        });
 
-      return new TradeItem({
-        entity: player,
-        tradeItemId: player.id,
-        tradeItemType: TradeItemType.PLAYER,
-        trade,
-        // @ts-ignore
-        sender: (await getTeamFromOldOwner(oldTradeItems.sender))?.id,
-        // @ts-ignore
-        recipient: (await getTeamFromOldOwner(oldPlayer.rec))?.id
-      })
-    })));
+        try {
+          const findPick = await getConnection(process.env.ORM_CONFIG).getRepository("DraftPick").findOne(pick);
+          if (findPick) {
+            // console.log(`found pick: ${inspect(findPick)}`)
+            pickId = (findPick as DraftPick).id!
+          } else {
+            await getConnection(process.env.ORM_CONFIG).getRepository("DraftPick").save({...pick, id: pickId});
+          }
+        } catch (e) {
+          console.dir(e)
+        }
 
-    const tradedProspects = await Promise.all(oldTrade.trades.flatMap(oldTradeItems => oldTradeItems.prospects.map(async oldProspect => {
-      const player = new Player({
-        id: uuid(),
-        name: oldProspect.player,
-        league: PlayerLeagueType.MINOR
-      })
+        tradedPicks.push(new TradeItem({
+          id: uuid(),
+          entity: pick,
+          tradeItemId: pickId,
+          tradeItemType: TradeItemType.PICK,
+          trade,
+          // @ts-ignore
+          sender: sender,
+          // @ts-ignore
+          recipient: recipient
+        }))
+      }
+    }
 
-      return new TradeItem({
-        entity: player,
-        tradeItemId: player.id,
-        tradeItemType: TradeItemType.PLAYER,
-        trade,
-      // @ts-ignore
-        sender: (await getTeamFromOldOwner(oldTradeItems.sender))?.id,
-        // @ts-ignore
-        recipient: (await getTeamFromOldOwner(oldProspect.rec))?.id
-      })
-    })));
+    const tradedPlayers = []
+    for await(const oldTradeItems of oldTrade.trades) {
+      for await (const oldPlayer of oldTradeItems.players) {
+        const sender = await getTeamFromOldOwner(oldTradeItems.sender)
+        const recipient = await getTeamFromOldOwner(oldPlayer.rec)
+
+        let playerId = uuid();
+        const player = new Player({
+          name: oldPlayer.player,
+          league: PlayerLeagueType.MAJOR
+        })
+        // console.log(`CHECKING PL ${JSON.stringify(oldPlayer)} AND ${JSON.stringify(player)}`)
+
+        const findPlayer = await getConnection(process.env.ORM_CONFIG).getRepository("Player").findOne(player);
+        if (findPlayer) {
+          // console.log(`found player: ${inspect(findPlayer)}`)
+          playerId = (findPlayer as Player).id!
+        } else {
+          await getConnection(process.env.ORM_CONFIG).getRepository("Player").save({...player, id: playerId});
+        }
+
+        tradedPlayers.push(new TradeItem({
+          id: uuid(),
+          tradeItemId: playerId,
+          tradeItemType: TradeItemType.PLAYER,
+          trade,
+          // @ts-ignore
+          sender: sender,
+          // @ts-ignore
+          recipient: recipient
+        }))
+      }
+    }
+
+    const tradedProspects = []
+    for await (const oldTradeItems of oldTrade.trades) {
+      for await (const oldProspect of oldTradeItems.prospects) {
+        const sender = await getTeamFromOldOwner(oldTradeItems.sender)
+        const recipient = await getTeamFromOldOwner(oldProspect.rec)
+
+        let playerId = uuid();
+        const player = new Player({
+          name: oldProspect.prospect,
+          league: PlayerLeagueType.MINOR
+        })
+        // console.log(`CHECKING PR ${JSON.stringify(oldProspect)} and ${JSON.stringify(player)}`)
+
+        const findPlayer = await getConnection(process.env.ORM_CONFIG).getRepository("Player").findOne(player);
+        if (findPlayer) {
+          // console.log(`found player: ${inspect(findPlayer)}`)
+          playerId = (findPlayer as Player).id!
+        } else {
+          await getConnection(process.env.ORM_CONFIG).getRepository("Player").save({...player, id: playerId});
+        }
+
+        tradedProspects.push(new TradeItem({
+          id: uuid(),
+          tradeItemId: playerId,
+          tradeItemType: TradeItemType.PLAYER,
+          trade,
+          // @ts-ignore
+          sender: sender,
+          // @ts-ignore
+          recipient: recipient
+        }))
+      }
+    }
 
     trade.tradeItems = [...tradedPicks, ...tradedPlayers, ...tradedProspects]
 
-    const email = new Email({ messageId: oldTrade.emailId, trade })
+    const email = new Email({ messageId: oldTrade.emailId, trade, status: "unknown - old tm" })
 
     trade.emails = [email]
 
-    return trade
-  }));
+    res.push(trade);
+  }
+  return res;
 }
 
 async function fetchOldTrades(): Promise<{ data: { result: OldTrade[] } }> {
@@ -259,17 +320,18 @@ async function fetchOldTrades(): Promise<{ data: { result: OldTrade[] } }> {
 
 async function createAndInsertTrades(trades: OldTrade[]) {
   const newFFTrades = await createTrades(trades);
+  console.log(inspect(newFFTrades[0]));
   // @ts-ignore
-  return await getConnection(process.env.SCRIPT_ENV == "prod" ? "staging" : "development").getRepository("Trade").save(newFFTrades);
+  return await getConnection(process.env.ORM_CONFIG).getRepository("Trade").save(newFFTrades, {chunk: 15});
 }
 
 async function run() {
-  console.log("RUNNING SCRIPT IN ENV: " + process.env.SCRIPT_ENV)
+  console.log("RUNNING SCRIPT IN ENV: " + process.env.ORM_CONFIG)
   await initializeDb(true);
   userDAO = new UserDAO();
 
   const { result: trades } = (await fetchOldTrades()).data;
-  await createAndInsertTrades(trades)
+  return await createAndInsertTrades(trades)
 }
 
 // const x = {
@@ -426,7 +488,11 @@ async function run() {
 // }
 
 run()
-  .then(() => process.exit(0))
+  .then(res => {
+    // @ts-ignore
+    console.log(inspect(res[0]));
+    process.exit(0);
+  })
   .catch(err => {
     console.error(err);
     process.exit(99);
