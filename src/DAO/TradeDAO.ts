@@ -38,6 +38,10 @@ export default class TradeDAO {
         return trade;
     }
 
+    public async returnHydratedTrades() {
+        return await getConnection(process.env.ORM_CONFIG).getRepository("hydrated_trades").find({ order: { tradeId: "ASC" } });
+    }
+
     public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {
         if (!Trade.isValid(tradeObj)) {
             throw new BadRequestError("Trade is not valid");
