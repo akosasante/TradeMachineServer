@@ -4,6 +4,10 @@ export class addEntityViews1621484012009 implements MigrationInterface {
     name = 'addEntityViews1621484012009'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE TABLE IF NOT EXISTS "dev"."typeorm_metadata" (
+            "type" varchar not null, "database" varchar, "schema" varchar, "table" varchar, "name" varchar, "value" text);
+            `);
+        await queryRunner.query(`ALTER TABLE "dev"."typeorm_metadata" owner to trader_dev;`);
         await queryRunner.query(`CREATE VIEW "dev"."hydrated_majors" AS 
         SELECT id, name, league, COALESCE("mlbTeam", meta->>'proTeamId') AS "mlbTeam", (SELECT json_build_object('id', "id", 'name', "name") FROM team t WHERE t.id = "leagueTeamId") AS "ownerTeam", meta->'espnPlayer'->'player'->'eligibleSlots' AS "eligiblePositions", meta->'position' AS "mainPosition"
         FROM player
