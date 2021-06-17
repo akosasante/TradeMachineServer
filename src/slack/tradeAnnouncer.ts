@@ -1,4 +1,4 @@
-import { IncomingWebhook } from "@slack/webhook";
+import { IncomingWebhook, IncomingWebhookResult } from "@slack/webhook";
 import Trade from "../models/trade";
 import TradeParticipant from "../models/tradeParticipant";
 import logger from "../bootstrap/logger";
@@ -56,7 +56,7 @@ export class SlackTradeAnnouncer {
         };
     }
 
-    public static async sendTradeAnnouncement(trade: Trade) {
+    public static async sendTradeAnnouncement(trade: Trade): Promise<IncomingWebhookResult> {
         logger.info("preparing to send trade announcement");
         const res = await SlackTradeAnnouncer.buildTradeAnnouncementMsg(trade);
         logger.debug(inspect(res));

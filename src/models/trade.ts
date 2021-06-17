@@ -32,9 +32,9 @@ export default class Trade extends BaseModel {
     public acceptedBy?: string[];
     @Column({ nullable: true })
     public acceptedOnDate?: Date;
-    @OneToMany(type => TradeParticipant, tradeParticipants => tradeParticipants.trade, { cascade: true, eager: true })
+    @OneToMany(_type => TradeParticipant, tradeParticipants => tradeParticipants.trade, { cascade: true, eager: true })
     public tradeParticipants?: TradeParticipant[];
-    @OneToMany(type => TradeItem, tradeItem => tradeItem.trade, { cascade: true, eager: true })
+    @OneToMany(_type => TradeItem, tradeItem => tradeItem.trade, { cascade: true, eager: true })
     public tradeItems?: TradeItem[];
     @OneToMany(_type => Email, email => email.trade, { cascade: ["insert"], eager: true })
     public emails?: Email[];

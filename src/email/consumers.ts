@@ -8,7 +8,7 @@ import User from "../models/user";
 import { rollbar } from "../bootstrap/rollbar";
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
-export function setupEmailConsumers() {
+export function setupEmailConsumers(): void {
     logger.info("registering email consumers");
     const queueName = process.env.ORM_CONFIG === "staging" ? "stg_email_queue" : "email_queue"; // TODO: Should this also have a conditional for test env queue?
     const emailQueue = new Bull(queueName, { settings: { maxStalledCount: 0, lockDuration: 60000 } });
@@ -72,7 +72,7 @@ export function setupEmailConsumers() {
         );
     });
 
-    emailQueue.on("completed", (job, _result) => {
+    emailQueue.on("completed", (job: Bull.Job<any>) => {
         rollbar.info("Email Worker completed", cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData));
         logger.info(`Email Worker completed: ${inspect(cleanJobForLogging(job, cleanLoggedReturn, cleanLoggedData))}`);
     });
