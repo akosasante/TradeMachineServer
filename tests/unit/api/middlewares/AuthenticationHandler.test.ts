@@ -6,6 +6,14 @@ import { ConflictError } from "../../../../src/api/middlewares/ErrorHandler";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import { UserFactory } from "../../../factories/UserFactory";
 import logger from "../../../../src/bootstrap/logger";
+import { Session, SessionData } from "express-session";
+
+// declare the additional fields that we add to express session (via routing-controllers)
+declare module "express-session" {
+    interface SessionData {
+        user: string | undefined;
+    }
+}
 
 const mockUserDAO = {
     findUserWithPassword: jest.fn(),
@@ -27,15 +35,13 @@ describe("Authentication middleware", () => {
             mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testUserWithPass);
             mockUserDAO.updateUser.mockResolvedValueOnce(testUserWithPass);
             const next: NextFunction = jest.fn();
-            const request: Request = {
+            const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                // @ts-ignore
-                session: { save: jest.fn() },
+                session: ({ save: jest.fn() } as unknown) as Session & SessionData,
             };
-            // @ts-ignore
-            const response: Response = {};
+
             const loginHandler = new LoginHandler((mockUserDAO as unknown) as UserDAO);
-            await loginHandler.use(request, response, next);
+            await loginHandler.use(request as Request, {} as Response, next);
 
             expect(request.session.save).toBeCalledTimes(1);
             expect(request.session.user).toBeDefined();
@@ -43,15 +49,13 @@ describe("Authentication middleware", () => {
         });
         it("should return and call next with an Unauthorized error and not serialize the user if sign in fails", async () => {
             const next: NextFunction = jest.fn();
-            const request: Request = {
+            const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                // @ts-ignore
-                session: { destroy: jest.fn() },
+                session: ({ destroy: jest.fn() } as unknown) as Session & SessionData,
             };
-            // @ts-ignore
-            const response: Response = {};
+
             const loginHandler = new LoginHandler((mockUserDAO as unknown) as UserDAO);
-            await loginHandler.use(request, response, next);
+            await loginHandler.use(request as Request, {} as Response, next);
 
             expect(next).toBeCalledTimes(1);
             expect(next).toBeCalledWith(
@@ -68,15 +72,13 @@ describe("Authentication middleware", () => {
             mockUserDAO.findUserWithPassword.mockResolvedValueOnce(passwordlessUser);
             mockUserDAO.updateUser.mockResolvedValueOnce(testUser);
             const next: NextFunction = jest.fn();
-            const request: Request = {
+            const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                // @ts-ignore
-                session: {},
+                session: ({} as unknown) as Session & SessionData,
             };
-            // @ts-ignore
-            const response: Response = {};
+
             const registerHandler = new RegisterHandler((mockUserDAO as unknown) as UserDAO);
-            await registerHandler.use(request, response, next);
+            await registerHandler.use(request as Request, {} as Response, next);
 
             expect(next).toBeCalledTimes(1);
             expect(next).toBeCalledWith();
@@ -86,15 +88,13 @@ describe("Authentication middleware", () => {
         it("should return the original error if the signup method returns an error", async () => {
             mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testUser);
             const next: NextFunction = jest.fn();
-            const request: Request = {
+            const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                // @ts-ignore
-                session: {},
+                session: ({} as unknown) as Session & SessionData,
             };
-            // @ts-ignore
-            const response: Response = {};
+
             const registerHandler = new RegisterHandler((mockUserDAO as unknown) as UserDAO);
-            await registerHandler.use(request, response, next);
+            await registerHandler.use(request as Request, {} as Response, next);
 
             expect(next).toBeCalledTimes(1);
             expect(next).toBeCalledWith(new ConflictError("Email already in use and signed up."));

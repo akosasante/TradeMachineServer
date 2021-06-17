@@ -79,7 +79,7 @@ async function updateMinorLeaguePlayers(deps: MinorLeagueUpdateDeps) {
     return `updated @ ${new Date().toLocaleDateString()}`;
 }
 
-export async function doUpdate(playerDAO: PlayerDAO) {
+export async function doUpdate(playerDAO: PlayerDAO): Promise<Player[]> {
     const axiosInst = axios.create({
         timeout: 20000,
     });

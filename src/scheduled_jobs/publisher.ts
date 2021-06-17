@@ -1,4 +1,4 @@
-import { Queue } from "bull";
+import Bull, { Queue } from "bull";
 
 export class Publisher {
     protected queue?: Queue;
@@ -11,7 +11,7 @@ export class Publisher {
         return Object.values(await this.queue!.getJobCounts()).reduce((val1: number, val2: number) => val1 + val2);
     }
 
-    public async cleanWaitQueue() {
-        return this.queue?.clean(100, "wait");
+    public async cleanWaitQueue(): Promise<Bull.Job<any>[]> {
+        return this.queue!.clean(100, "wait");
     }
 }
