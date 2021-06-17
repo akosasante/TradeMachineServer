@@ -1,6 +1,5 @@
 import Email from "email-templates";
 import nodemailer from "nodemailer";
-// @ts-ignore
 import SendinBlueTransport from "nodemailer-sendinblue-transport";
 import path from "path";
 import { inspect } from "util";
