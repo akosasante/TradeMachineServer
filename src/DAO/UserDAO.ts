@@ -31,13 +31,13 @@ export default class UserDAO {
         return findFn(query);
     }
 
-    public async findUserWithPassword(query: Partial<User>): Promise<User | undefined> {
+    public async findUserWithPasswordByEmail(email: string): Promise<User | undefined> {
         return await this.userDb
             .createQueryBuilder("user")
             .select("user.id")
             .addSelect("user.password")
             .addSelect("user.email")
-            .where(query)
+            .where("user.email ILIKE :email", { email })
             .getOne();
     }
 
