@@ -181,12 +181,12 @@ export default class EspnAPI {
 
     public async getAllMajorLeaguePlayers(year: number): Promise<EspnMajorLeaguePlayer[]> {
         let total = 0;
-        const players = [];
+        const players: EspnMajorLeaguePlayer[] = [];
         let serverTotal = 0;
         let offset = 0;
 
         do {
-            const { data, headers } = await this.req.get(
+            const { data, headers } = await this.req.get<{players: EspnMajorLeaguePlayer[]}>(
                 `${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`,
                 {
                     headers: {
