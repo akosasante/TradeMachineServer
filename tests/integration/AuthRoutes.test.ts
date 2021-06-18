@@ -120,6 +120,16 @@ describe("Auth API endpoints", () => {
             expect(body.lastLoggedIn).toBeDefined();
         });
 
+        it("should successfully login the user with case-insensitive email matching", async () => {
+            const { body } = await request(app)
+              .post("/auth/login")
+              .send({ email: testUser.email.toLocaleUpperCase(), password: testUser.password })
+              .expect(200);
+            expect(body.email).toEqual(testUser.email);
+            expect(body).not.toHaveProperty("password");
+            expect(body.lastLoggedIn).toBeDefined();
+        });
+
         it("should use the most recently logged in user credentials in the session (if somehow someone logs into a new user from an existing session", async () => {
             const sessionCheckFn = (agent: request.SuperTest<request.Test>) =>
                 agent.get("/auth/session_check").expect(200);
