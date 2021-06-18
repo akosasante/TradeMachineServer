@@ -16,7 +16,7 @@ declare module "express-session" {
 }
 
 const mockUserDAO = {
-    findUserWithPassword: jest.fn(),
+    findUserWithPasswordByEmail: jest.fn(),
     updateUser: jest.fn(),
 };
 
@@ -32,7 +32,7 @@ describe("Authentication middleware", () => {
     describe("LoginHandler", () => {
         it("should serialize the user and return the next function if sign in was successful", async () => {
             const testUserWithPass = { ...testUser, password: await hash(testUser.password!, 1) };
-            mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testUserWithPass);
+            mockUserDAO.findUserWithPasswordByEmail.mockResolvedValueOnce(testUserWithPass);
             mockUserDAO.updateUser.mockResolvedValueOnce(testUserWithPass);
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
@@ -69,8 +69,8 @@ describe("Authentication middleware", () => {
         it("should serialize the user and return the next function if sign up was successful", async () => {
             const passwordlessUser = { ...testUser };
             delete passwordlessUser.password;
-            mockUserDAO.findUserWithPassword.mockResolvedValueOnce(passwordlessUser);
-            mockUserDAO.updateUser.mockResolvedValueOnce(testUser);
+            mockUserDAO.findUserWithPasswordByEmail.mockResolvedValueOnce(passwordlessUser);
+            mockUserDAO.updateUser.mockResolvedValueOnce(passwordlessUser);
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
@@ -86,7 +86,7 @@ describe("Authentication middleware", () => {
             expect(request.session.user).toEqual(testUser.id);
         });
         it("should return the original error if the signup method returns an error", async () => {
-            mockUserDAO.findUserWithPassword.mockResolvedValueOnce(testUser);
+            mockUserDAO.findUserWithPasswordByEmail.mockResolvedValueOnce(testUser);
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
