@@ -148,7 +148,7 @@ serve: ## Serve the node server statically (no restarting on file changes)
 	node -r dotenv/config ./dist/server.js
 
 typecheck: ## Check for type errors that would cause failures to build
-	tsc --noEmit --incremental false
+	npx tsc --noEmit --incremental false
 
 # |----------- DATABASE MIGRATION SCRIPTS ---------|
 generate-migration: ## Generate a new migration file with name=MIGRATION_NAME and using config for ENV
