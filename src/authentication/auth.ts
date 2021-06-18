@@ -70,8 +70,8 @@ export async function signInAuthentication(
                 return done(new BadRequestError("Incorrect password"));
             }
         } else {
-            logger.error("Could not find user with this email when trying to sign in");
-            rollbar.error("Could not find user with this email when trying to sign in");
+            logger.error(`Could not find user with this email when trying to sign in. input_email=${email}`);
+            rollbar.error(`Could not find user with this email when trying to sign in. input_email=${email}`);
             return done(new NotFoundError("Error with sign-in strategy: no user found"));
         }
     } catch (error) {
