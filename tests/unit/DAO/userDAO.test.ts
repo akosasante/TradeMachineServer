@@ -105,7 +105,7 @@ describe("UserDAO", () => {
         });
     });
 
-    describe("findUserWithPassword", () => {
+    describe("findUserWithPasswordByEmail", () => {
         it("should pass a query object to the find method and return an array", async () => {
             const getOneFn = jest.fn().mockResolvedValueOnce(testUser);
             const whereFn = jest.fn();
@@ -119,10 +119,10 @@ describe("UserDAO", () => {
             };
             mockUserDb.createQueryBuilder.mockReturnValueOnce(findUserWithPasswordChain);
 
-            const condition = { password: testUser.password };
-            const res = await userDAO.findUserWithPassword(condition);
+            const condition = testUser.email ;
+            const res = await userDAO.findUserWithPasswordByEmail(condition);
 
-            expect(whereFn).toBeCalledWith(condition);
+            expect(whereFn).toBeCalledWith("user.email ILIKE :email", { email: testUser.email });
             expect(addSelectFn).toBeCalledWith("user.password");
             expect(addSelectFn).toBeCalledWith("user.email");
             expect(selectFn).toBeCalledWith("user.id");

@@ -27,7 +27,7 @@ export async function signUpAuthentication(
 ): Promise<void> {
     try {
         logger.debug("sign up strategy");
-        const user = await userDAO.findUserWithPassword({ email });
+        const user = await userDAO.findUserWithPasswordByEmail(email);
         if (!user) {
             logger.debug("no existing user with that email");
             const hashedPass = await generateHashedPassword(password);
@@ -58,7 +58,7 @@ export async function signInAuthentication(
     try {
         logger.debug("sign in strategy");
         // Will throw EntityNotFoundError if user is not found
-        const user = await userDAO.findUserWithPassword({ email });
+        const user = await userDAO.findUserWithPasswordByEmail(email);
         if (user) {
             logger.debug("found user with matching email");
             const validPassword = user.password && (await isPasswordMatching(password, user.password));
