@@ -76,7 +76,7 @@ describe("Auth API endpoints", () => {
             // Create user directly in db, with just email
             await userDAO.createUsers([{ email: testUser.email }]);
 
-            const noPassUser = await userDAO.findUserWithPassword({ email: testUser.email });
+            const noPassUser = await userDAO.findUserWithPasswordByEmail(testUser.email);
             expect(noPassUser!.password).toBeFalsy();
 
             // Sign up user
@@ -85,7 +85,7 @@ describe("Auth API endpoints", () => {
             expect(body.lastLoggedIn).toBeDefined();
 
             // Check that user password is now set
-            const updatedUser = await userDAO.findUserWithPassword({ email: testUser.email });
+            const updatedUser = await userDAO.findUserWithPasswordByEmail(testUser.email);
             expect(updatedUser!.password).toBeDefined();
         });
         it("should not allow signing up with the same email for an existing user that already has a password", async () => {
