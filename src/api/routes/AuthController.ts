@@ -19,7 +19,6 @@ import User from "../../models/user";
 import { EmailPublisher } from "../../email/publishers";
 import { rollbar } from "../../bootstrap/rollbar";
 import { SessionData } from "express-session";
-import { inspect } from "util";
 
 // declare the additional fields that we add to express session (via routing-controllers)
 declare module "express-session" {
@@ -46,7 +45,7 @@ export default class AuthController {
     }
 
     @Post("/login/sendResetEmail")
-    public async sendResetEmail(@Req() request: Request, @BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
+    public async sendResetEmail(@BodyParam("email") email: string, @Res() response: Response, @Req() request?: Request): Promise<Response> {
         logger.debug(`Preparing to send reset password email to: ${email}`);
         rollbar.info("sendResetEmail", { email }, request);
         const user = await this.userDao.findUser({ email });
@@ -72,9 +71,9 @@ export default class AuthController {
 
     @Post("/signup/sendEmail")
     public async sendRegistrationEmail(
-      @Req() request: Request,
         @BodyParam("email") email: string,
-        @Res() response: Response
+        @Res() response: Response,
+        @Req() request?: Request
     ): Promise<Response> {
         logger.debug(`Preparing to send registration email to: ${email}`);
         rollbar.info("sendRegistrationEmail", { email }, request);
@@ -117,11 +116,11 @@ export default class AuthController {
 
     @Post("/reset_password")
     public async resetPassword(
-      @Req() request: Request,
         @BodyParam("id") userId: string,
         @BodyParam("password") newPassword: string,
         @BodyParam("token") passwordResetToken: string,
-        @Res() response: Response
+        @Res() response: Response,
+        @Req() request?: Request
     ): Promise<Response> {
         rollbar.info("resetPassword", { userId }, request);
         const existingUser = await this.userDao.getUserById(userId);
