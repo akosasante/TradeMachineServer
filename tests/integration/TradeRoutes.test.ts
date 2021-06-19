@@ -370,6 +370,7 @@ describe("Trade API endpoints", () => {
         it(":action = accept - should return the trade with an updated status", async () => {
             const testTrade = TradeFactory.getTrade();
             testTrade.status = TradeStatus.REQUESTED;
+            testTrade.recipients[0].owners = [adminUser];
             await tradeDAO.createTrade(testTrade.parse());
 
             const { body } = await adminLoggedIn(putTradeRequest("accept", testTrade.id!, undefined), app);
