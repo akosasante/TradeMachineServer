@@ -340,6 +340,38 @@ describe("TradeController", () => {
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledWith(testTrade.id, TradeStatus.PENDING);
         });
+        it("should stay at PENDING if the accepting user is from the same team as an existing entry in the acceptedBy field", async () => {
+            // The existing trade recipient has an additional owner for a total of two owners on that team
+            const tradeRecipientSecondOwner = UserFactory.getOwnerUser();
+            recipient!.team.owners = [tradeRecipient, tradeRecipientSecondOwner];
+
+            // Trade has an additional recipient for a total of two recipient teams
+            const additionalRecipient = TradeFactory.getTradeRecipient(
+              TeamFactory.getTeam("RECIPIENT_TEAM_2"),
+              testTrade
+            );
+            const additionalRecipientUser = UserFactory.getOwnerUser();
+            additionalRecipient.team.owners = [additionalRecipientUser];
+
+            // let's say that the secondOwner already accepted the trade
+            const acceptedBy = [tradeRecipientSecondOwner.id!];
+
+            // Update mocks
+            mockTradeDAO.getTradeById.mockReset();
+            mockTradeDAO.getTradeById.mockResolvedValueOnce(
+              new Trade({
+                  ...testTrade,
+                  status: TradeStatus.REQUESTED,
+                  tradeParticipants: testTrade.tradeParticipants?.concat([additionalRecipient]),
+                  acceptedBy
+              })
+            );
+
+            await tradeController.acceptTrade(tradeRecipient, testTrade.id!);
+
+            expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.updateStatus).toHaveBeenCalledWith(testTrade.id, TradeStatus.PENDING);
+        });
         it("should reject the trade if the user who is trying to accept is not a recipient of the trade", async () => {
             const validStatuses = [TradeStatus.REQUESTED, TradeStatus.PENDING];
 

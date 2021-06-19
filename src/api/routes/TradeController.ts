@@ -94,6 +94,22 @@ function validateTradeDecliner(trade: Trade, declinedById: string) {
     return trade.tradeParticipants?.flatMap(tp => tp.team.owners?.map(u => u.id) || []).includes(declinedById);
 }
 
+function allRecipientTeamsAccepted(acceptedBy: string[], trade: Trade): boolean {
+    const numberOfRecipientTeams = (trade.recipients || []).length;
+    const acceptedTeams = (trade.recipients || []).reduce((totalNumTeams, recipientTeam) => {
+        if (recipientTeam.owners?.map(u => u.id!).some(recipientUserId => acceptedBy.includes(recipientUserId))) {
+            return totalNumTeams + 1;
+        } else {
+            return totalNumTeams;
+        }
+    }, 0);
+
+    console.log("NUMEBR OF TEAMS: ", numberOfRecipientTeams);
+    console.log("NUMEBR OF ACCEPTED: ", acceptedTeams);
+
+    return numberOfRecipientTeams === acceptedTeams;
+}
+
 async function acceptTradeIfValid(dao: TradeDAO, acceptingUser: User, trade: Trade): Promise<string[]> {
     if (!validateRecipientOfTrade(acceptingUser, trade)) {
         throw new UnauthorizedError("Trade can only be accepted by recipients or admins");
@@ -260,7 +276,7 @@ export default class TradeController {
 
         const acceptedBy = await acceptTradeIfValid(this.dao, user, trade);
 
-        if (acceptedBy.length === trade.recipients.length) {
+        if (allRecipientTeamsAccepted(acceptedBy, trade)) {
             trade = await this.dao.updateStatus(id, TradeStatus.ACCEPTED);
         } else if (trade.status !== TradeStatus.PENDING) {
             trade = await this.dao.updateStatus(id, TradeStatus.PENDING);
