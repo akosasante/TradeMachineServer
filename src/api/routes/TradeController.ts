@@ -97,15 +97,13 @@ function validateTradeDecliner(trade: Trade, declinedById: string) {
 function allRecipientTeamsAccepted(acceptedBy: string[], trade: Trade): boolean {
     const numberOfRecipientTeams = (trade.recipients || []).length;
     const acceptedTeams = (trade.recipients || []).reduce((totalNumTeams, recipientTeam) => {
-        if (recipientTeam.owners?.map(u => u.id!).some(recipientUserId => acceptedBy.includes(recipientUserId))) {
+        const recipientTeamOwnerIds = (recipientTeam.owners ||[ ]).map(u => u.id!);
+        if (recipientTeamOwnerIds.some(recipientUserId => acceptedBy.includes(recipientUserId))) {
             return totalNumTeams + 1;
         } else {
             return totalNumTeams;
         }
     }, 0);
-
-    console.log("NUMEBR OF TEAMS: ", numberOfRecipientTeams);
-    console.log("NUMEBR OF ACCEPTED: ", acceptedTeams);
 
     return numberOfRecipientTeams === acceptedTeams;
 }
