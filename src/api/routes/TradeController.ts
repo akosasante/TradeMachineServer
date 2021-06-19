@@ -37,6 +37,15 @@ function validateOwnerOfTrade(user: User, trade: Trade): boolean {
         return belongsToUser || false;
     }
 }
+function validateRecipientOfTrade(user: User, trade: Trade): boolean {
+    if (user.role === Role.ADMIN) {
+        return true;
+    } else {
+        const belongsToUser = trade.recipients?.flatMap(recipientTeam => recipientTeam.owners?.map(u => u.id)).includes(user.id);
+        logger.debug(`${user} is a recipient of ${trade}? = ${belongsToUser}`);
+        return belongsToUser || false;
+    }
+}
 
 function validateParticipantInTrade(user: User, trade: Trade): boolean {
     if (user.role === Role.ADMIN) {
@@ -86,14 +95,18 @@ function validateTradeDecliner(trade: Trade, declinedById: string) {
 }
 
 async function acceptTradeIfValid(dao: TradeDAO, acceptingUser: User, trade: Trade): Promise<string[]> {
-    if (!validateParticipantInTrade(acceptingUser, trade)) {
-        throw new UnauthorizedError("Trade can only be accepted by participants or admins");
+    if (!validateRecipientOfTrade(acceptingUser, trade)) {
+        throw new UnauthorizedError("Trade can only be accepted by recipients or admins");
     }
 
     if (!validateStatusChange(acceptingUser, trade, TradeStatus.ACCEPTED)) {
         throw new BadRequestError(
             `Trade with this status (${trade.status ? TradeStatus[trade.status] : "undefined"}) cannot be accepted`
         );
+    }
+
+    if ((trade.acceptedBy || []).includes(acceptingUser.id || "")) {
+        throw new BadRequestError(`Trade (${trade.id}) already has accepting user: ${acceptingUser.id} ${acceptingUser.displayName}`);
     }
 
     const acceptedBy = [...(trade.acceptedBy || []), acceptingUser.id!];
@@ -268,8 +281,8 @@ export default class TradeController {
         logger.debug("reject trade endpoint");
         const trade = await this.dao.getTradeById(id);
 
-        if (!validateParticipantInTrade(user, trade)) {
-            throw new UnauthorizedError("Trade can only be rejected by participants or admins");
+        if (!validateRecipientOfTrade(user, trade)) {
+            throw new UnauthorizedError("Trade can only be rejected by recipients or admins");
         }
 
         if (!validateStatusChange(user, trade, TradeStatus.REJECTED)) {

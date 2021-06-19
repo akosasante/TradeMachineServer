@@ -340,6 +340,36 @@ describe("TradeController", () => {
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledWith(testTrade.id, TradeStatus.PENDING);
         });
+        it("should reject the trade if the user who is trying to accept is not a recipient of the trade", async () => {
+            const validStatuses = [TradeStatus.REQUESTED, TradeStatus.PENDING];
+
+            for (const status of validStatuses) {
+                mockTradeDAO.getTradeById.mockReset();
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
+                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
+
+                await expect(tradeController.acceptTrade(tradeOwner, testTrade.id!)).rejects.toThrow(UnauthorizedError);
+            }
+        });
+        it("should reject the trade if the user who is trying to accept has already been added to the acceptedBy field", async () => {
+            const validStatuses = [TradeStatus.REQUESTED, TradeStatus.PENDING];
+            const acceptedBy = [tradeRecipient.id!];
+
+            for (const status of validStatuses) {
+
+                mockTradeDAO.getTradeById.mockReset();
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(
+                  new Trade({
+                      ...testTrade,
+                      status,
+                      acceptedBy,
+                  })
+                );
+                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
+
+                await expect(tradeController.acceptTrade(tradeRecipient, testTrade.id!)).rejects.toThrow(BadRequestError);
+            }
+        });
     });
 
     describe("rejectTrade method", () => {
@@ -352,6 +382,12 @@ describe("TradeController", () => {
 
             await expect(
                 tradeController.rejectTrade(otherUser, testTrade.id!, tradeRecipient.id!, "reason")
+            ).rejects.toThrow(UnauthorizedError);
+        });
+
+        it("should throw an error if the owner tries to update it", async () => {
+            await expect(
+                tradeController.rejectTrade(tradeOwner, testTrade.id!, tradeRecipient.id!, "reason")
             ).rejects.toThrow(UnauthorizedError);
         });
 
