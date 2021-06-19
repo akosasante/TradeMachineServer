@@ -9,8 +9,9 @@ import {
     Post,
     Put,
     QueryParam,
-    QueryParams, Req,
-    UploadedFile
+    QueryParams,
+    Req,
+    UploadedFile,
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -38,7 +39,7 @@ export default class DraftPickController {
     public async getAllDraftPicks(
         @QueryParam("include") include?: string[],
         @QueryParam("season") season?: string,
-      @Req() request?: Request
+        @Req() request?: Request
     ): Promise<DraftPick[]> {
         logger.debug("get all draftPicks endpoint" + `${include ? ` with params: ${include}` : ""}`);
         rollbar.info("getAllDraftPicks", { include }, request);
@@ -61,7 +62,10 @@ export default class DraftPickController {
     }
 
     @Get("/search")
-    public async findDraftPicksByQuery(@QueryParams() query: Partial<DraftPick>, @Req() request?: Request): Promise<DraftPick[]> {
+    public async findDraftPicksByQuery(
+        @QueryParams() query: Partial<DraftPick>,
+        @Req() request?: Request
+    ): Promise<DraftPick[]> {
         logger.debug(`searching for draftPick with props: ${inspect(query)}`);
         rollbar.info("findDraftPicksByQuery", { query }, request);
         const picks = await this.dao.findPicks(cleanupQuery(query as { [key: string]: string }));

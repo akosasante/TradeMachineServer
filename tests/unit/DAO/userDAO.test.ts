@@ -119,7 +119,7 @@ describe("UserDAO", () => {
             };
             mockUserDb.createQueryBuilder.mockReturnValueOnce(findUserWithPasswordChain);
 
-            const condition = testUser.email ;
+            const condition = testUser.email;
             const res = await userDAO.findUserWithPasswordByEmail(condition);
 
             expect(whereFn).toBeCalledWith("user.email ILIKE :email", { email: testUser.email });

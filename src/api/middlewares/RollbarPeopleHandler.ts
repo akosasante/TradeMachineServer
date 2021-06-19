@@ -8,39 +8,39 @@ import { inspect } from "util";
 import { SessionData } from "express-session";
 
 declare module "express" {
-  interface Request {
-    person?: {
-      id?: string;
-      email?: string;
-      username?: string;
-    };
-  }
+    interface Request {
+        person?: {
+            id?: string;
+            email?: string;
+            username?: string;
+        };
+    }
 }
 
 // declare the additional fields that we add to express session (via routing-controllers)
 declare module "express-session" {
-  interface SessionData {
-    user: string | undefined;
-  }
+    interface SessionData {
+        user: string | undefined;
+    }
 }
 
 @Middleware({ type: "before" })
 export default class RollbarPeopleHandler implements ExpressMiddlewareInterface {
-  public async use(request: Request, response: Response, next: NextFunction): Promise<void> {
-    logger.debug(`IN ROLLBAR HANDLER with session= ${inspect(request.session?.user)} ${!!request}`);
-    try {
-      if (request.session?.user) {
-        const existingUser = await deserializeUser(request.session.user);
-        logger.debug(`"Found user=", ${inspect(existingUser)}`);
-        request.person = {
-          id: existingUser.id,
-          email: existingUser.email,
-          username: existingUser.displayName
-        };
-      }
-      return next();
-    } catch (e) {
-      return next(e);
+    public async use(request: Request, response: Response, next: NextFunction): Promise<void> {
+        logger.debug(`IN ROLLBAR HANDLER with session= ${inspect(request.session?.user)} ${!!request}`);
+        try {
+            if (request.session?.user) {
+                const existingUser = await deserializeUser(request.session.user);
+                logger.debug(`"Found user=", ${inspect(existingUser)}`);
+                request.person = {
+                    id: existingUser.id,
+                    email: existingUser.email,
+                    username: existingUser.displayName,
+                };
+            }
+            return next();
+        } catch (e) {
+            return next(e);
+        }
     }
-  }
 }

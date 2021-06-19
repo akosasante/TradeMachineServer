@@ -6,5 +6,5 @@ export const rollbar = new Rollbar({
     autoInstrument: true, // may want to extend this in the future: https://docs.rollbar.com/docs/nodejs#telemetry
     captureEmail: true,
     captureUsername: true,
-    captureUncaught: true
+    captureUncaught: true,
 });
