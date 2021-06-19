@@ -19,6 +19,7 @@ import User from "../../models/user";
 import { EmailPublisher } from "../../email/publishers";
 import { rollbar } from "../../bootstrap/rollbar";
 import { SessionData } from "express-session";
+import { inspect } from "util";
 
 // declare the additional fields that we add to express session (via routing-controllers)
 declare module "express-session" {
@@ -40,14 +41,14 @@ export default class AuthController {
     @Post("/login")
     @UseBefore(LoginHandler)
     public async login(@Req() request: Request, @Session() session: SessionData): Promise<User> {
-        rollbar.info("login");
+        rollbar.info("login", request);
         return await deserializeUser(session.user!, this.userDao);
     }
 
     @Post("/login/sendResetEmail")
-    public async sendResetEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
+    public async sendResetEmail(@Req() request: Request, @BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
         logger.debug(`Preparing to send reset password email to: ${email}`);
-        rollbar.info("sendResetEmail", { email });
+        rollbar.info("sendResetEmail", { email }, request);
         const user = await this.userDao.findUser({ email });
 
         if (!user) {
@@ -65,17 +66,18 @@ export default class AuthController {
     @Post("/signup")
     @UseBefore(RegisterHandler)
     public async signup(@Req() request: Request, @Session() session: SessionData): Promise<User> {
-        rollbar.info("signup");
+        rollbar.info("signup", request);
         return await deserializeUser(session.user!, this.userDao);
     }
 
     @Post("/signup/sendEmail")
     public async sendRegistrationEmail(
+      @Req() request: Request,
         @BodyParam("email") email: string,
         @Res() response: Response
     ): Promise<Response> {
         logger.debug(`Preparing to send registration email to: ${email}`);
-        rollbar.info("sendRegistrationEmail", { email });
+        rollbar.info("sendRegistrationEmail", { email }, request);
         const user = await this.userDao.findUser({ email });
 
         if (!user) {
@@ -89,13 +91,13 @@ export default class AuthController {
 
     @Post("/logout")
     public async logout(@Req() request: Request, @Session() session: SessionData) {
-        rollbar.info("logout");
+        rollbar.info("logout", request);
         return new Promise((resolve, reject) => {
             if (session && session.user && request.session) {
                 request.session.destroy(err => {
                     if (err) {
                         logger.error("Error destroying session");
-                        rollbar.error(err);
+                        rollbar.error(err, request);
                         reject(err);
                     } else {
                         logger.debug(`Destroying user session for userId#${session.user}`);
@@ -115,12 +117,13 @@ export default class AuthController {
 
     @Post("/reset_password")
     public async resetPassword(
+      @Req() request: Request,
         @BodyParam("id") userId: string,
         @BodyParam("password") newPassword: string,
         @BodyParam("token") passwordResetToken: string,
         @Res() response: Response
     ): Promise<Response> {
-        rollbar.info("resetPassword", { userId });
+        rollbar.info("resetPassword", { userId }, request);
         const existingUser = await this.userDao.getUserById(userId);
 
         if (

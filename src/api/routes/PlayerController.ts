@@ -10,6 +10,7 @@ import {
     Put,
     QueryParam,
     QueryParams,
+    Req,
     UploadedFile,
 } from "routing-controllers";
 import { inspect } from "util";
@@ -22,6 +23,7 @@ import Player, { PlayerLeagueType } from "../../models/player";
 import { Role } from "../../models/user";
 import { cleanupQuery, fileUploadOptions as uploadOpts, UUID_PATTERN } from "../helpers/ApiHelpers";
 import { rollbar } from "../../bootstrap/rollbar";
+import { Request } from "express";
 
 @JsonController("/players")
 export default class PlayerController {
@@ -34,8 +36,8 @@ export default class PlayerController {
     }
 
     @Get("/")
-    public async getAllPlayers(@QueryParam("include") include?: string[]): Promise<Player[]> {
-        rollbar.info("getAllPlayers", { include });
+    public async getAllPlayers(@QueryParam("include") include?: string[], @Req() request?: Request): Promise<Player[]> {
+        rollbar.info("getAllPlayers", { include }, request);
         logger.debug("get all players endpoint" + `${include ? ` with params: ${include}` : ""}`);
         let players: Player[] = [];
         if (include) {
@@ -49,16 +51,19 @@ export default class PlayerController {
     }
 
     @Get(UUID_PATTERN)
-    public async getOnePlayer(@Param("id") id: string): Promise<Player> {
+    public async getOnePlayer(@Param("id") id: string, @Req() request?: Request): Promise<Player> {
         logger.debug("get one player endpoint");
-        rollbar.info("getOnePlayer", { id });
+        rollbar.info("getOnePlayer", { playerId: id }, request);
         return await this.dao.getPlayerById(id);
     }
 
     @Get("/search")
-    public async findPlayersByQuery(@QueryParams() query: Partial<Player>): Promise<Player[]> {
+    public async findPlayersByQuery(
+        @QueryParams() query: Partial<Player>,
+        @Req() request?: Request
+    ): Promise<Player[]> {
         logger.debug(`searching for player with props: ${inspect(query)}`);
-        rollbar.info("findPlayersByQuery", { query });
+        rollbar.info("findPlayersByQuery", { query }, request);
         const players = await this.dao.findPlayers(cleanupQuery(query as { [key: string]: string }));
         if (players.length) {
             return players;
@@ -70,18 +75,19 @@ export default class PlayerController {
     @Get("/search_by_name")
     public async findPlayersByName(
         @QueryParam("name") partialName: string,
-        @QueryParam("league") leagueId?: number
+        @QueryParam("league") leagueId?: number,
+        @Req() request?: Request
     ): Promise<Player[]> {
         logger.debug(`searching for players with names that contain: ${partialName} in league ${leagueId}`);
-        rollbar.info("findPlayersByName", { partialName, leagueId });
+        rollbar.info("findPlayersByName", { partialName, leagueId }, request);
 
         return await this.dao.queryPlayersByName(partialName, leagueId);
     }
 
     @Post("/")
-    public async createPlayers(@Body() playerObj: Partial<Player>[]): Promise<Player[]> {
+    public async createPlayers(@Body() playerObj: Partial<Player>[], @Req() request?: Request): Promise<Player[]> {
         logger.debug("create player endpoint");
-        rollbar.info("createPlayers", { playerObj });
+        rollbar.info("createPlayers", { playerObj }, request);
         return await this.dao.createPlayers(playerObj);
     }
 
@@ -89,26 +95,34 @@ export default class PlayerController {
     @Post("/batch")
     public async batchUploadMinorLeaguePlayers(
         @UploadedFile("minors", { required: true, options: uploadOpts }) file: Express.Multer.File,
-        @QueryParam("mode") mode: WriteMode
+        @QueryParam("mode") mode: WriteMode,
+        @Req() request?: Request
     ): Promise<Player[]> {
         logger.debug("batch add minor league players endpoint");
-        rollbar.info("batchUploadMinorLeaguePlayers");
+        rollbar.info("batchUploadMinorLeaguePlayers", request);
         const teams = await this.teamDAO.getAllTeams();
         return await processMinorLeagueCsv(file.path, teams, this.dao, mode);
     }
 
     @Authorized(Role.ADMIN)
     @Put(UUID_PATTERN)
-    public async updatePlayer(@Param("id") id: string, @Body() playerObj: Partial<Player>): Promise<Player> {
+    public async updatePlayer(
+        @Param("id") id: string,
+        @Body() playerObj: Partial<Player>,
+        @Req() request?: Request
+    ): Promise<Player> {
         logger.debug("update player endpoint");
-        rollbar.info("updatePlayer", { id, playerObj });
+        rollbar.info("updatePlayer", { playerId: id, playerObj }, request);
         return await this.dao.updatePlayer(id, playerObj);
     }
 
     @Authorized(Role.ADMIN)
     @Delete(UUID_PATTERN)
-    public async deletePlayer(@Param("id") id: string): Promise<{ deleteCount: number | null | undefined; id: any }> {
-        rollbar.info("deletePlayer", { id });
+    public async deletePlayer(
+        @Param("id") id: string,
+        @Req() request?: Request
+    ): Promise<{ deleteCount: number | null | undefined; id: any }> {
+        rollbar.info("deletePlayer", { playerId: id }, request);
         logger.debug("delete player endpoint");
         const result = await this.dao.deletePlayer(id);
         logger.debug(`delete successful: ${inspect(result)}`);

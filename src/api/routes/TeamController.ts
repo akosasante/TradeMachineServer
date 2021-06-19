@@ -13,6 +13,7 @@ import {
     Put,
     QueryParam,
     QueryParams,
+    Req,
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -21,6 +22,7 @@ import Team from "../../models/team";
 import User, { Role } from "../../models/user";
 import { cleanupQuery, UUID_PATTERN } from "../helpers/ApiHelpers";
 import { rollbar } from "../../bootstrap/rollbar";
+import { Request } from "express";
 
 @JsonController("/teams")
 export default class TeamController {
@@ -31,8 +33,8 @@ export default class TeamController {
     }
 
     @Get("/")
-    public async getAllTeams(@QueryParam("hasOwners") hasOwners?: string): Promise<Team[]> {
-        rollbar.info("getAllTeams", { hasOwners });
+    public async getAllTeams(@QueryParam("hasOwners") hasOwners?: string, @Req() request?: Request): Promise<Team[]> {
+        rollbar.info("getAllTeams", { hasOwners }, request);
         logger.debug("get all teams endpoint" + ` -- ${hasOwners ? "hasOwners: " + hasOwners : ""}`);
         let teams: Team[];
         if (hasOwners && ["true", "false"].includes(hasOwners.toLowerCase())) {
@@ -47,17 +49,17 @@ export default class TeamController {
     }
 
     @Get(UUID_PATTERN)
-    public async getOneTeam(@Param("id") id: string): Promise<Team> {
+    public async getOneTeam(@Param("id") id: string, @Req() request?: Request): Promise<Team> {
         logger.debug("get one team endpoint");
-        rollbar.info("getOneTeam", { id });
+        rollbar.info("getOneTeam", { teamId: id }, request);
         const team = await this.dao.getTeamById(id);
         logger.debug(`got team: ${team}`);
         return team;
     }
 
     @Get("/search")
-    public async findTeamsByQuery(@QueryParams() query: Partial<Team>): Promise<Team[]> {
-        rollbar.info("findTeamsByQuery", { query });
+    public async findTeamsByQuery(@QueryParams() query: Partial<Team>, @Req() request?: Request): Promise<Team[]> {
+        rollbar.info("findTeamsByQuery", { query }, request);
         logger.debug(`searching for team with props: ${inspect(query)}`);
         const teams = await this.dao.findTeams(cleanupQuery(query as { [key: string]: string }));
         if (teams.length) {
@@ -72,9 +74,9 @@ export default class TeamController {
 
     @Authorized(Role.ADMIN)
     @Post("/")
-    public async createTeam(@Body() teamObjs: Partial<Team>[]): Promise<Team[]> {
+    public async createTeam(@Body() teamObjs: Partial<Team>[], @Req() request?: Request): Promise<Team[]> {
         logger.debug("create team endpoint");
-        rollbar.info("createTeam", { teamObjs });
+        rollbar.info("createTeam", { teamObjs }, request);
         const teams = await this.dao.createTeams(teamObjs);
         logger.debug(`created teams: ${inspect(teams)}`);
         return teams;
@@ -82,9 +84,13 @@ export default class TeamController {
 
     @Authorized(Role.ADMIN)
     @Put(UUID_PATTERN)
-    public async updateTeam(@Param("id") id: string, @Body() teamObj: Partial<Team>): Promise<Team> {
+    public async updateTeam(
+        @Param("id") id: string,
+        @Body() teamObj: Partial<Team>,
+        @Req() request?: Request
+    ): Promise<Team> {
         logger.debug("update team endpoint");
-        rollbar.info("updateTeam", { id, teamObj });
+        rollbar.info("updateTeam", { teamId: id, team: teamObj }, request);
         const team = await this.dao.updateTeam(id, teamObj);
         logger.debug(`updated team: ${team}`);
         return team;
@@ -92,9 +98,12 @@ export default class TeamController {
 
     @Authorized(Role.ADMIN)
     @Delete(UUID_PATTERN)
-    public async deleteTeam(@Param("id") id: string): Promise<{ deleteCount: number | null | undefined; id: any }> {
+    public async deleteTeam(
+        @Param("id") id: string,
+        @Req() request?: Request
+    ): Promise<{ deleteCount: number | null | undefined; id: any }> {
         logger.debug("delete team endpoint");
-        rollbar.info("deleteTeam", { id });
+        rollbar.info("deleteTeam", { teamId: id }, request);
         const result = await this.dao.deleteTeam(id);
         logger.debug(`delete successful: ${inspect(result)}`);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
@@ -106,10 +115,11 @@ export default class TeamController {
     public async updateTeamOwners(
         @Param("id") id: string,
         @BodyParam("add") ownersToAdd: User[],
-        @BodyParam("remove") ownersToRemove: User[]
+        @BodyParam("remove") ownersToRemove: User[],
+        @Req() request?: Request
     ): Promise<Team> {
         logger.debug("update team owners endpoint");
-        rollbar.info("updateTeamOwners", { id, add: ownersToAdd, remove: ownersToRemove });
+        rollbar.info("updateTeamOwners", { teamId: id, add: ownersToAdd, remove: ownersToRemove }, request);
         logger.debug(`add: ${inspect((ownersToAdd || []).map((user: User) => new User(user).toString()))}
          remove: ${inspect((ownersToRemove || []).map((user: User) => new User(user).toString()))}`);
         return await this.dao.updateTeamOwners(id, ownersToAdd, ownersToRemove);
