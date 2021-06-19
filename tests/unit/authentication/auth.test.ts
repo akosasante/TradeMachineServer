@@ -142,7 +142,9 @@ describe("Authorization helper methods", () => {
             expect(cb).toBeCalledWith(undefined, passwordlessUser);
         });
         it("should return an error if the password is not matching", async () => {
-            mockUserDAO.findUserWithPasswordByEmail.mockResolvedValueOnce(new User({...testUser, password: "somethingsomething"}));
+            mockUserDAO.findUserWithPasswordByEmail.mockResolvedValueOnce(
+                new User({ ...testUser, password: "somethingsomething" })
+            );
 
             await signInAuthentication(testUser.email, testUser.password!, (mockUserDAO as unknown) as UserDAO, cb);
 

@@ -186,7 +186,7 @@ export default class EspnAPI {
         let offset = 0;
 
         do {
-            const { data, headers } = await this.req.get<{players: EspnMajorLeaguePlayer[]}>(
+            const { data, headers } = await this.req.get<{ players: EspnMajorLeaguePlayer[] }>(
                 `${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`,
                 {
                     headers: {

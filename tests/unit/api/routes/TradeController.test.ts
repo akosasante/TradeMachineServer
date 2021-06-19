@@ -347,8 +347,8 @@ describe("TradeController", () => {
 
             // Trade has an additional recipient for a total of two recipient teams
             const additionalRecipient = TradeFactory.getTradeRecipient(
-              TeamFactory.getTeam("RECIPIENT_TEAM_2"),
-              testTrade
+                TeamFactory.getTeam("RECIPIENT_TEAM_2"),
+                testTrade
             );
             const additionalRecipientUser = UserFactory.getOwnerUser();
             additionalRecipient.team.owners = [additionalRecipientUser];
@@ -359,12 +359,12 @@ describe("TradeController", () => {
             // Update mocks
             mockTradeDAO.getTradeById.mockReset();
             mockTradeDAO.getTradeById.mockResolvedValueOnce(
-              new Trade({
-                  ...testTrade,
-                  status: TradeStatus.REQUESTED,
-                  tradeParticipants: testTrade.tradeParticipants?.concat([additionalRecipient]),
-                  acceptedBy
-              })
+                new Trade({
+                    ...testTrade,
+                    status: TradeStatus.REQUESTED,
+                    tradeParticipants: testTrade.tradeParticipants?.concat([additionalRecipient]),
+                    acceptedBy,
+                })
             );
 
             await tradeController.acceptTrade(tradeRecipient, testTrade.id!);
@@ -388,18 +388,19 @@ describe("TradeController", () => {
             const acceptedBy = [tradeRecipient.id!];
 
             for (const status of validStatuses) {
-
                 mockTradeDAO.getTradeById.mockReset();
                 mockTradeDAO.getTradeById.mockResolvedValueOnce(
-                  new Trade({
-                      ...testTrade,
-                      status,
-                      acceptedBy,
-                  })
+                    new Trade({
+                        ...testTrade,
+                        status,
+                        acceptedBy,
+                    })
                 );
                 mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
 
-                await expect(tradeController.acceptTrade(tradeRecipient, testTrade.id!)).rejects.toThrow(BadRequestError);
+                await expect(tradeController.acceptTrade(tradeRecipient, testTrade.id!)).rejects.toThrow(
+                    BadRequestError
+                );
             }
         });
     });

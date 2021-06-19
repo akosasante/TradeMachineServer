@@ -122,9 +122,9 @@ describe("Auth API endpoints", () => {
 
         it("should successfully login the user with case-insensitive email matching", async () => {
             const { body } = await request(app)
-              .post("/auth/login")
-              .send({ email: testUser.email.toLocaleUpperCase(), password: testUser.password })
-              .expect(200);
+                .post("/auth/login")
+                .send({ email: testUser.email.toLocaleUpperCase(), password: testUser.password })
+                .expect(200);
             expect(body.email).toEqual(testUser.email);
             expect(body).not.toHaveProperty("password");
             expect(body.lastLoggedIn).toBeDefined();

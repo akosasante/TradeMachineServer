@@ -41,7 +41,9 @@ function validateRecipientOfTrade(user: User, trade: Trade): boolean {
     if (user.role === Role.ADMIN) {
         return true;
     } else {
-        const belongsToUser = trade.recipients?.flatMap(recipientTeam => recipientTeam.owners?.map(u => u.id)).includes(user.id);
+        const belongsToUser = trade.recipients
+            ?.flatMap(recipientTeam => recipientTeam.owners?.map(u => u.id))
+            .includes(user.id);
         logger.debug(`${user} is a recipient of ${trade}? = ${belongsToUser}`);
         return belongsToUser || false;
     }
@@ -97,7 +99,7 @@ function validateTradeDecliner(trade: Trade, declinedById: string) {
 function allRecipientTeamsAccepted(acceptedBy: string[], trade: Trade): boolean {
     const numberOfRecipientTeams = (trade.recipients || []).length;
     const acceptedTeams = (trade.recipients || []).reduce((totalNumTeams, recipientTeam) => {
-        const recipientTeamOwnerIds = (recipientTeam.owners ||[ ]).map(u => u.id!);
+        const recipientTeamOwnerIds = (recipientTeam.owners || []).map(u => u.id!);
         if (recipientTeamOwnerIds.some(recipientUserId => acceptedBy.includes(recipientUserId))) {
             return totalNumTeams + 1;
         } else {
@@ -120,7 +122,9 @@ async function acceptTradeIfValid(dao: TradeDAO, acceptingUser: User, trade: Tra
     }
 
     if ((trade.acceptedBy || []).includes(acceptingUser.id || "")) {
-        throw new BadRequestError(`Trade (${trade.id}) already has accepting user: ${acceptingUser.id} ${acceptingUser.displayName}`);
+        throw new BadRequestError(
+            `Trade (${trade.id}) already has accepting user: ${acceptingUser.id} ${acceptingUser.displayName}`
+        );
     }
 
     const acceptedBy = [...(trade.acceptedBy || []), acceptingUser.id!];

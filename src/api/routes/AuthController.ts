@@ -45,7 +45,11 @@ export default class AuthController {
     }
 
     @Post("/login/sendResetEmail")
-    public async sendResetEmail(@BodyParam("email") email: string, @Res() response: Response, @Req() request?: Request): Promise<Response> {
+    public async sendResetEmail(
+        @BodyParam("email") email: string,
+        @Res() response: Response,
+        @Req() request?: Request
+    ): Promise<Response> {
         logger.debug(`Preparing to send reset password email to: ${email}`);
         rollbar.info("sendResetEmail", { email }, request);
         const user = await this.userDao.findUser({ email });
