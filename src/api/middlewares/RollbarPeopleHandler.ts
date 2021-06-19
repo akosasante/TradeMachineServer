@@ -3,11 +3,13 @@ import { NextFunction, Request, Response } from "express";
 import logger from "../../bootstrap/logger";
 import { deserializeUser } from "../../authentication/auth";
 import { inspect } from "util";
+// importing for express-session declaration
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { SessionData } from "express-session";
 
 declare module "express" {
   interface Request {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    rollbar_person?: {
+    person?: {
       id?: string;
       email?: string;
       username?: string;
@@ -15,18 +17,27 @@ declare module "express" {
   }
 }
 
+// declare the additional fields that we add to express session (via routing-controllers)
+declare module "express-session" {
+  interface SessionData {
+    user: string | undefined;
+  }
+}
+
 @Middleware({ type: "before" })
 export default class RollbarPeopleHandler implements ExpressMiddlewareInterface {
   public async use(request: Request, response: Response, next: NextFunction): Promise<void> {
-    logger.debug(`IN ROLLBAR HANDLER with session= ${inspect(request.session.user)} ${!!request}`);
+    logger.debug(`IN ROLLBAR HANDLER with session= ${inspect(request.session?.user)} ${!!request}`);
     try {
-      const existingUser = await deserializeUser(request.session?.user || "");
-      logger.debug(`"Found user=", ${inspect(existingUser)}`);
-      request.rollbar_person = {
-        id: existingUser.id,
-        email: existingUser.email,
-        username: existingUser.displayName
-      };
+      if (request.session?.user) {
+        const existingUser = await deserializeUser(request.session.user);
+        logger.debug(`"Found user=", ${inspect(existingUser)}`);
+        request.person = {
+          id: existingUser.id,
+          email: existingUser.email,
+          username: existingUser.displayName
+        };
+      }
       return next();
     } catch (e) {
       return next(e);
