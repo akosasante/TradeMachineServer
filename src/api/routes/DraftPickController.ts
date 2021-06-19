@@ -9,8 +9,8 @@ import {
     Post,
     Put,
     QueryParam,
-    QueryParams,
-    UploadedFile,
+    QueryParams, Req,
+    UploadedFile
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -22,6 +22,7 @@ import DraftPick, { LeagueLevel } from "../../models/draftPick";
 import { Role } from "../../models/user";
 import { cleanupQuery, fileUploadOptions as uploadOpts, UUID_PATTERN } from "../helpers/ApiHelpers";
 import { rollbar } from "../../bootstrap/rollbar";
+import { Request } from "express";
 
 @JsonController("/picks")
 export default class DraftPickController {
@@ -36,10 +37,11 @@ export default class DraftPickController {
     @Get("/")
     public async getAllDraftPicks(
         @QueryParam("include") include?: string[],
-        @QueryParam("season") season?: string
+        @QueryParam("season") season?: string,
+      @Req() request?: Request
     ): Promise<DraftPick[]> {
         logger.debug("get all draftPicks endpoint" + `${include ? ` with params: ${include}` : ""}`);
-        rollbar.info("getAllDraftPicks", { include });
+        rollbar.info("getAllDraftPicks", { include }, request);
         let draftPicks: DraftPick[] = [];
         if (include || season) {
             const params = getAllDraftPicksQuery(include, season);
@@ -52,16 +54,16 @@ export default class DraftPickController {
     }
 
     @Get(UUID_PATTERN)
-    public async getOneDraftPick(@Param("id") id: string): Promise<DraftPick> {
+    public async getOneDraftPick(@Param("id") id: string, @Req() request?: Request): Promise<DraftPick> {
         logger.debug("get one draftPick endpoint");
-        rollbar.info("getOneDraftPick", { id });
+        rollbar.info("getOneDraftPick", { id }, request);
         return await this.dao.getPickById(id);
     }
 
     @Get("/search")
-    public async findDraftPicksByQuery(@QueryParams() query: Partial<DraftPick>): Promise<DraftPick[]> {
+    public async findDraftPicksByQuery(@QueryParams() query: Partial<DraftPick>, @Req() request?: Request): Promise<DraftPick[]> {
         logger.debug(`searching for draftPick with props: ${inspect(query)}`);
-        rollbar.info("findDraftPicksByQuery", { query });
+        rollbar.info("findDraftPicksByQuery", { query }, request);
         const picks = await this.dao.findPicks(cleanupQuery(query as { [key: string]: string }));
         if (picks.length) {
             return picks;

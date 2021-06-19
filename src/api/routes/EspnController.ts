@@ -1,8 +1,9 @@
-import { Authorized, Get, JsonController, QueryParam } from "routing-controllers";
+import { Authorized, Get, JsonController, QueryParam, Req } from "routing-controllers";
 import logger from "../../bootstrap/logger";
 import EspnAPI, { EspnFantasyTeam, EspnLeagueMember } from "../../espn/espnApi";
 import { Role } from "../../models/user";
 import { rollbar } from "../../bootstrap/rollbar";
+import { Request } from "express";
 
 @JsonController("/espn")
 export default class EspnController {
@@ -15,8 +16,11 @@ export default class EspnController {
 
     @Authorized(Role.ADMIN)
     @Get("/members")
-    public async getAllEspnMembers(@QueryParam("year") year?: number): Promise<EspnLeagueMember[]> {
-        rollbar.info("getAllEspnMembers", { year });
+    public async getAllEspnMembers(
+        @QueryParam("year") year?: number,
+        @Req() request?: Request
+    ): Promise<EspnLeagueMember[]> {
+        rollbar.info("getAllEspnMembers", { year }, request);
         logger.debug("get all ESPN members endpoint");
         const members = await this.api.getAllMembers(year || new Date().getFullYear());
         logger.debug(`got ${members.length} members`);
@@ -25,8 +29,11 @@ export default class EspnController {
 
     @Authorized(Role.ADMIN)
     @Get("/teams")
-    public async getAllEspnTeams(@QueryParam("year") year?: number): Promise<EspnFantasyTeam[]> {
-        rollbar.info("getAllEspnTeams", { year });
+    public async getAllEspnTeams(
+        @QueryParam("year") year?: number,
+        @Req() request?: Request
+    ): Promise<EspnFantasyTeam[]> {
+        rollbar.info("getAllEspnTeams", { year }, request);
         logger.debug("get all ESPN teams endpoint");
         const teams = await this.api.getAllLeagueTeams(year || new Date().getFullYear());
         logger.debug(`got ${teams.length} teams`);

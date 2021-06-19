@@ -1,5 +1,5 @@
-import { Response } from "express";
-import { Body, BodyParam, Controller, NotFoundError, Post, Res } from "routing-controllers";
+import { Request, Response } from "express";
+import { Body, BodyParam, Controller, NotFoundError, Post, Req, Res } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
@@ -36,17 +36,22 @@ export default class EmailController {
     @Post("/sendInMailWebhook")
     public async receiveSendInMailWebhook(
         @Body() event: EmailStatusEvent,
-        @Res() response: Response
+        @Res() response: Response,
+        @Req() request?: Request
     ): Promise<Response> {
-        rollbar.info("receiveSendInMailWebhook", { event });
+        rollbar.info("receiveSendInMailWebhook", { event }, request);
         logger.debug(`Received email webhook: ${inspect(event)}`);
         await this.emailPublisher.queueWebhookResponse(event);
         return response.status(200).json({});
     }
 
     @Post("/testEmail")
-    public async sendTestEmail(@BodyParam("email") email: string, @Res() response: Response): Promise<Response> {
-        rollbar.info("sendTestEmail", { email });
+    public async sendTestEmail(
+        @BodyParam("email") email: string,
+        @Res() response: Response,
+        @Req() request?: Request
+    ): Promise<Response> {
+        rollbar.info("sendTestEmail", { email }, request);
         logger.debug(`Preparing to send test email to: ${email}`);
         const user = await this.userDao.findUser({ email });
 

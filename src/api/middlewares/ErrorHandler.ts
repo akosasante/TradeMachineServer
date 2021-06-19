@@ -16,7 +16,7 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
 
     public error(error: Error, request: Request, response: Response, next: NextFunction): void {
         logger.error(`Handling error: ${error.stack}`);
-        rollbar.error(error);
+        rollbar.error(error, request);
         if (response.headersSent) {
             logger.error("headers already sent, passing to next");
             return next(error);
