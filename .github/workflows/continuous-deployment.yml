@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: '12.x'
       - name: Notify Rollbar of deploy start
-        uses: rollbar/github-deploy-action@2.0.0
+        uses: rollbar/github-deploy-action@2.1.1
         id: rollbar_pre_deploy
         with:
           environment: 'production'
@@ -124,7 +124,7 @@ jobs:
 #            /home/dev_deployer/.asdf/shims/npx typeorm migration:run -f ormconfig -c production
 
       - name: Notify Rollbar of deploy finish
-        uses: rollbar/github-deploy-action@1.1.0
+        uses: rollbar/github-deploy-action@2.1.1
         id: rollbar_post_deploy
         with:
           environment: 'production'
