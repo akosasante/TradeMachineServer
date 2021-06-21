@@ -21,9 +21,10 @@ jobs:
           environment: 'production'
           version: ${{ github.sha }}
           status: 'started'
+          local_username: ${{ github.actor }}
         env:
           ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
-          ROLLBAR_USERNAME: ${{ github.actor }}
+          ROLLBAR_USERNAME: 'aaasante'
       - name: Check out repository code
         uses: actions/checkout@v2
 
@@ -130,7 +131,8 @@ jobs:
           environment: 'production'
           version: ${{ github.sha }}
           status: 'succeeded'
+          local_username: ${{ github.actor }}
         env:
           ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
-          ROLLBAR_USERNAME: ${{ github.actor }}
+          ROLLBAR_USERNAME: 'aaasante'
           DEPLOY_ID: ${{ steps.rollbar_pre_deploy.outputs.deploy_id }}
