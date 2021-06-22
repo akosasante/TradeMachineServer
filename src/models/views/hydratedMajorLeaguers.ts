@@ -2,41 +2,49 @@ import { ViewColumn, ViewEntity } from "typeorm";
 import { PlayerLeagueType } from "../player";
 
 interface OwnerTeamMap {
-  id: string;
-  name: string;
+    id: string;
+    name: string;
 }
 
 @ViewEntity({
-  name: "hydrated_majors",
-  expression: `
-        SELECT id, name, league, COALESCE("mlbTeam", meta->>'proTeamId') AS "mlbTeam", (SELECT json_build_object('id', "id", 'name', "name") FROM team t WHERE t.id = "leagueTeamId") AS "ownerTeam", meta->'espnPlayer'->'player'->'eligibleSlots' AS "eligiblePositions", meta->'position' AS "mainPosition"
-        FROM player
-        WHERE league = '1';
-        `
+    name: "hydrated_majors",
+    expression: `
+      SELECT id,
+             name,
+             league,
+             COALESCE("mlbTeam", meta ->> 'proTeamId') AS "mlbTeam",
+             (SELECT json_build_object('id', "id", 'name', "name")
+              FROM team t
+              WHERE t.id = "leagueTeamId") AS "ownerTeam",
+             meta -> 'espnPlayer' -> 'player' -> 'eligibleSlots' AS "eligiblePositions",
+             meta -> 'position' AS "mainPosition"
+      FROM player
+      WHERE player.league::varchar = '1';
+  `,
 })
 export class HydratedMajorLeaguer {
-  @ViewColumn()
-  public id?: string;
+    @ViewColumn()
+    public id?: string;
 
-  @ViewColumn()
-  public name?: string;
+    @ViewColumn()
+    public name?: string;
 
-  @ViewColumn()
-  public league?: PlayerLeagueType;
+    @ViewColumn()
+    public league?: PlayerLeagueType;
 
-  @ViewColumn()
-  public mlbTeam?: string;
+    @ViewColumn()
+    public mlbTeam?: string;
 
-  @ViewColumn()
-  public ownerTeam?: OwnerTeamMap;
+    @ViewColumn()
+    public ownerTeam?: OwnerTeamMap;
 
-  @ViewColumn()
-  public eligiblePositions?: number[];
+    @ViewColumn()
+    public eligiblePositions?: number[];
 
-  @ViewColumn()
-  public mainPosition?: string;
+    @ViewColumn()
+    public mainPosition?: string;
 
-  constructor(props: Partial<HydratedMajorLeaguer>) {
-    return Object.assign({}, props);
-  }
+    constructor(props: Partial<HydratedMajorLeaguer>) {
+        return Object.assign({}, props);
+    }
 }

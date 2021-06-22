@@ -1,42 +1,51 @@
 import { ViewColumn, ViewEntity } from "typeorm";
-import { PlayerLeagueType } from "../player";
 import { LeagueLevel } from "../draftPick";
 
 interface OwnerTeamMap {
-  id: string;
-  name: string;
+    id: string;
+    name: string;
 }
 
 @ViewEntity({
-  name: "hydrated_picks",
-  expression: `
-      SELECT id, season, "type", round, "pickNumber", (SELECT json_build_object('id', "id", 'name', "name") FROM team t WHERE t.id = "currentOwnerId") AS "currentPickHolder", (SELECT json_build_object('id', "id", 'name', "name") FROM team t WHERE t.id = "originalOwnerId") AS "originalPickOwner"
+    name: "hydrated_picks",
+    expression: `
+      SELECT id,
+             season,
+             "type",
+             round,
+             "pickNumber",
+             (SELECT json_build_object('id', "id", 'name', "name")
+              FROM team t
+              WHERE t.id = "currentOwnerId") AS "currentPickHolder",
+             (SELECT json_build_object('id', "id", 'name', "name")
+              FROM team t
+              WHERE t.id = "originalOwnerId") AS "originalPickOwner"
       FROM draft_pick;
-        `
+  `,
 })
 export class HydratedPick {
-  @ViewColumn()
-  public id?: string;
+    @ViewColumn()
+    public id?: string;
 
-  @ViewColumn()
-  public season?: number;
+    @ViewColumn()
+    public season?: number;
 
-  @ViewColumn()
-  public type?: LeagueLevel;
+    @ViewColumn()
+    public type?: LeagueLevel;
 
-  @ViewColumn()
-  public round?: number;
+    @ViewColumn()
+    public round?: number;
 
-  @ViewColumn()
-  public pickNumber?: number;
+    @ViewColumn()
+    public pickNumber?: number;
 
-  @ViewColumn()
-  public currentPickHolder?: OwnerTeamMap;
+    @ViewColumn()
+    public currentPickHolder?: OwnerTeamMap;
 
-  @ViewColumn()
-  public originalPickOwner?: OwnerTeamMap;
+    @ViewColumn()
+    public originalPickOwner?: OwnerTeamMap;
 
-  constructor(props: Partial<HydratedPick>) {
-    return Object.assign({}, props);
-  }
+    constructor(props: Partial<HydratedPick>) {
+        return Object.assign({}, props);
+    }
 }
