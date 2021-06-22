@@ -39,7 +39,9 @@ export default class TradeDAO {
     }
 
     public async returnHydratedTrades() {
-        return await getConnection(process.env.ORM_CONFIG).getRepository("HydratedTrade").find({ order: { dateCreated: "DESC" } });
+        return await getConnection(process.env.ORM_CONFIG)
+            .getRepository("HydratedTrade")
+            .find({ order: { dateCreated: "DESC" } });
     }
 
     public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {

@@ -128,30 +128,6 @@ describe("TradeDAO", () => {
         expect(res).toEqual(testTrade);
     });
 
-    it("updateAcceptedBy - should call the db update and findOneOrFail once with id and accepted by field", async () => {
-        mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
-        const participant = testTrade.tradeParticipants?.[0].id;
-        const res = await tradeDAO.updateAcceptedBy(testTrade.id!, [participant!]);
-
-        expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.update).toHaveBeenCalledWith({id: testTrade.id!}, { acceptedBy: [participant], acceptedOnDate: expect.toBeDate()});
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
-        expect(res).toEqual(testTrade);
-    });
-
-    it("updateAcceptedBy - should call the db update and findOneOrFail once with id and accepted by field", async () => {
-        mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
-        const participant = testTrade.tradeParticipants?.[0].id;
-        const res = await tradeDAO.updateAcceptedBy(testTrade.id!, [participant!]);
-
-        expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.update).toHaveBeenCalledWith({id: testTrade.id!}, { acceptedBy: [participant], acceptedOnDate: expect.toBeDate()});
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
-        expect(res).toEqual(testTrade);
-    });
-
     it("updateParticipants - should call createQueryBuilder and findOneOrFail with id and participants", async () => {
         const addAndRemove = jest.fn();
         const of = jest.fn(() => ({ addAndRemove }));

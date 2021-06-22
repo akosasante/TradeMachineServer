@@ -1,7 +1,7 @@
 /* eslint-disable */
 import initializeDb from "../bootstrap/db";
 import TradeDAO from "../DAO/TradeDAO";
-import {SlackTradeAnnouncer} from "../slack/tradeAnnouncer";
+import { SlackTradeAnnouncer } from "../slack/tradeAnnouncer";
 
 async function run() {
     const args = process.argv.slice(2);
