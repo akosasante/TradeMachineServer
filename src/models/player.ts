@@ -23,6 +23,7 @@ export default class Player extends BaseModel {
     @Index()
     public name!: string;
 
+    @Index("player_league_type_index")
     @Column({ type: "enum", enum: PlayerLeagueType, nullable: true })
     public league?: PlayerLeagueType;
 
@@ -35,6 +36,7 @@ export default class Player extends BaseModel {
     @Column({ nullable: true, type: "jsonb" })
     public meta?: any;
 
+    @Index("player_league_team_id_index")
     @ManyToOne(_type => Team, team => team.players, { onDelete: "SET NULL" })
     public leagueTeam?: Team;
 

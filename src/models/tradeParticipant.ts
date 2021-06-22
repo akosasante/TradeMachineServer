@@ -12,13 +12,17 @@ export enum TradeParticipantType {
 
 @Entity()
 @Index(["trade", "team"], { unique: true })
+@Index("trade_creator_index", { synchronize: false })
+@Index("trade_recipient_index", { synchronize: false })
 export default class TradeParticipant extends BaseModel {
+    @Index()
     @Column({ type: "enum", enum: TradeParticipantType, default: TradeParticipantType.RECIPIENT })
     public participantType!: TradeParticipantType;
 
     @ManyToOne(type => Trade, trade => trade.tradeParticipants, { onDelete: "CASCADE" })
     public trade!: Trade;
 
+    @Index()
     @ManyToOne(type => Team, team => team.tradeParticipants, { cascade: true, eager: true })
     public team!: Team;
 

@@ -16,16 +16,27 @@ export type TradedItem = Player | DraftPick;
 
 @Entity()
 @Index(["trade", "tradeItemId", "tradeItemType", "sender", "recipient"], { unique: true })
+@Index("player_trade_item_index", { synchronize: false })
+@Index("pick_trade_item_index", { synchronize: false })
 export default class TradeItem extends BaseModel {
     public entity?: TradedItem;
+
+    @Index()
     @Column({ type: "uuid" })
     public readonly tradeItemId!: string;
+
+    @Index()
     @Column({ type: "enum", enum: TradeItemType, default: TradeItemType.PLAYER })
     public readonly tradeItemType!: TradeItemType;
+
     @ManyToOne(_type => Trade, trade => trade.tradeParticipants, { onDelete: "CASCADE" })
     public trade!: Trade;
+
+    @Index()
     @ManyToOne(_type => Team, team => team.tradeItemsSent, { cascade: true, eager: true })
     public sender!: Team;
+
+    @Index()
     @ManyToOne(_type => Team, team => team.tradeItemsReceived, { cascade: true, eager: true })
     public recipient!: Team;
 

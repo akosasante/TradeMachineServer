@@ -1,4 +1,4 @@
-import { AfterLoad, Column, Entity, ManyToOne, Unique } from "typeorm";
+import { AfterLoad, Column, Entity, ManyToOne, Unique, Index } from "typeorm";
 import { BaseModel } from "./base";
 import Team from "./team";
 
@@ -17,14 +17,21 @@ export const MinorLeagueLevels = [LeagueLevel.HIGH, LeagueLevel.LOW];
 export default class DraftPick extends BaseModel {
     @Column({ type: "numeric" })
     public round!: number;
+
     @Column({ nullable: true })
     public pickNumber?: number;
+
     @Column()
     public season!: number;
+
     @Column({ type: "enum", enum: LeagueLevel })
     public type!: LeagueLevel;
+
+    @Index()
     @ManyToOne(_type => Team, team => team.draftPicks, { eager: true, onDelete: "SET NULL" })
     public currentOwner?: Team;
+
+    @Index()
     @ManyToOne(_type => Team, team => team.originalDraftPicks, { eager: true, onDelete: "SET NULL" })
     public originalOwner?: Team;
 
