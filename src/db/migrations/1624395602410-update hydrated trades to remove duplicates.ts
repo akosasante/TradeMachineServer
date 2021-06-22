@@ -144,7 +144,7 @@ export class updateHydratedTradesToRemoveDuplicates1624395602410 implements Migr
                     (SELECT "name" FROM "team" tm WHERE tm.id = i."recipientId") AS "recipient",
                     d.*
              FROM "dev"."trade_item" i
-                      RIGHT JOIN "hydrated_picks" d ON d."id" = i."tradeItemId"
+                      RIGHT JOIN "dev"."hydrated_picks" d ON d."id" = i."tradeItemId"
              WHERE i."tradeItemType" = '2'
          ),
          traded_picks AS (
