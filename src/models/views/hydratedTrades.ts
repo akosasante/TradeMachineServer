@@ -32,6 +32,7 @@ const expression = `
              SELECT i."tradeId", array_to_json(array_agg(row_to_json(p))) AS "tradedMajors"
              FROM "dev"."trade_item" i
                       RIGHT JOIN "players_with_participants" p ON p."tradeId" = i."tradeId"
+             WHERE i."tradeItemType" = '1' AND i."tradeItemId" IN (p.id)
              GROUP BY i."tradeId"
          ),
          prospects_with_participants AS (
@@ -47,6 +48,7 @@ const expression = `
              SELECT i."tradeId", array_to_json(array_agg(row_to_json(p)))::jsonb AS "tradedMinors"
              FROM "dev"."trade_item" i
                       RIGHT JOIN "prospects_with_participants" p ON p."tradeId" = i."tradeId"
+             WHERE i."tradeItemType" = '1' AND i."tradeItemId" IN (p.id)
              GROUP BY i."tradeId"
          ),
          picks_with_participants AS (
@@ -62,6 +64,7 @@ const expression = `
              SELECT i."tradeId", array_to_json(array_agg(row_to_json(d))) AS "tradedPicks"
              FROM "dev"."trade_item" i
                       RIGHT JOIN "picks_with_participants" d ON d."tradeId" = i."tradeId"
+             WHERE i."tradeItemType" = '2' AND i."tradeItemId" IN (d.id)
              GROUP BY i."tradeId"
          )
     SELECT t.id                                                                          AS "tradeId",

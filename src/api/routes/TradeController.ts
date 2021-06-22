@@ -151,7 +151,7 @@ export default class TradeController {
 
         if (hydrated) {
             // return await Promise.all(trades.map(t => this.dao.hydrateTrade(t)));
-            const hydratedTrades = await this.dao.returnHydratedTrades() as Trade[];
+            const hydratedTrades = (await this.dao.returnHydratedTrades()) as Trade[];
             logger.debug(`got ${hydratedTrades.length} hydrated trades`);
             return hydratedTrades;
         } else {

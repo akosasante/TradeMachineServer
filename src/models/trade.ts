@@ -21,7 +21,7 @@ export enum TradeStatus {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
-@Index("dateCreated")
+@Index(["dateCreated"])
 export default class Trade extends BaseModel {
     @Index()
     @Column({ type: "enum", enum: TradeStatus, default: TradeStatus.DRAFT })
