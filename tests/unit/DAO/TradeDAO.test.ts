@@ -10,6 +10,7 @@ import TradeItem from "../../../src/models/tradeItem";
 import TradeParticipant from "../../../src/models/tradeParticipant";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
+import { HydratedTrade } from "../../../src/models/views/hydratedTrades";
 
 describe("TradeDAO", () => {
     const mockTradeDb: MockObj = {
@@ -18,6 +19,9 @@ describe("TradeDAO", () => {
         save: jest.fn(),
         createQueryBuilder: jest.fn(),
         update: jest.fn(),
+    };
+    const mockHydratedTradeDb: MockObj = {
+        find: jest.fn(),
     };
     const mockPlayerDao: MockObj = {
         getPlayerById: jest.fn(),
@@ -30,11 +34,12 @@ describe("TradeDAO", () => {
     const tradeDAO = new TradeDAO(
         (mockTradeDb as unknown) as Repository<Trade>,
         (mockPlayerDao as unknown) as PlayerDAO,
-        (mockPickDao as unknown) as DraftPickDAO
+        (mockPickDao as unknown) as DraftPickDAO,
+        (mockHydratedTradeDb as unknown) as Repository<HydratedTrade>
     );
 
     afterEach(() => {
-        [mockTradeDb, mockPlayerDao, mockPickDao].forEach(mockedThing =>
+        [mockTradeDb, mockPlayerDao, mockPickDao, mockHydratedTradeDb].forEach(mockedThing =>
             Object.values(mockedThing).forEach(mockFn => mockFn.mockReset())
         );
         mockWhereInIds.mockClear();
@@ -182,5 +187,11 @@ describe("TradeDAO", () => {
         await tradeDAO.hydrateTrade(testTrade);
         expect(mockPlayerDao.getPlayerById).toHaveBeenCalledTimes(2);
         expect(mockPickDao.getPickById).toHaveBeenCalledTimes(1);
+    });
+
+    it("returnHydratedTrades - should call find on the hydrated trades repo", async () => {
+        await tradeDAO.returnHydratedTrades();
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({ order: { dateCreated: "DESC" } });
     });
 });

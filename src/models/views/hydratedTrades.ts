@@ -6,31 +6,31 @@ import { HydratedMinorLeaguer } from "./hydratedMinorLeaguers";
 
 const expression = `
     WITH trade_creator AS (
-        SELECT p."tradeId", (SELECT "name" FROM "dev"."team" tm WHERE tm.id = p."teamId")
-        FROM "dev".trade_participant p
+        SELECT p."tradeId", (SELECT "name" FROM ${process.env.ORM_CONFIG}."team" tm WHERE tm.id = p."teamId")
+        FROM ${process.env.ORM_CONFIG}.trade_participant p
         WHERE p."participantType" = '1'::"trade_participant_participanttype_enum"
     ),
          trade_recipients AS (
-             SELECT p."tradeId", (SELECT "name" FROM "dev"."team" tm WHERE tm.id = p."teamId")
-             FROM "dev".trade_participant p
+             SELECT p."tradeId", (SELECT "name" FROM ${process.env.ORM_CONFIG}."team" tm WHERE tm.id = p."teamId")
+             FROM ${process.env.ORM_CONFIG}.trade_participant p
              WHERE p."participantType" = '2'::"trade_participant_participanttype_enum"
          ),
          accepted_users AS (
              SELECT t.id, json_array_elements_text(t."acceptedBy"::json) AS "acceptedById" 
-             FROM "dev"."trade" t
+             FROM ${process.env.ORM_CONFIG}."trade" t
          ),
          players_with_participants AS (
              SELECT i."tradeId",
                     (SELECT "name" FROM "team" tm WHERE tm.id = i."senderId")    AS "sender",
                     (SELECT "name" FROM "team" tm WHERE tm.id = i."recipientId") AS "recipient",
                     p.*
-             FROM "dev"."trade_item" i
-                      RIGHT JOIN "dev"."hydrated_majors" p ON p."id" = i."tradeItemId"
+             FROM ${process.env.ORM_CONFIG}."trade_item" i
+                      RIGHT JOIN ${process.env.ORM_CONFIG}."hydrated_majors" p ON p."id" = i."tradeItemId"
              WHERE i."tradeItemType" = '1'
          ),
          traded_players AS (
              SELECT i."tradeId", array_to_json(array_agg(row_to_json(p))) AS "tradedMajors"
-             FROM "dev"."trade_item" i
+             FROM ${process.env.ORM_CONFIG}."trade_item" i
                       RIGHT JOIN "players_with_participants" p ON p."tradeId" = i."tradeId"
              WHERE i."tradeItemType" = '1' AND i."tradeItemId" IN (p.id)
              GROUP BY i."tradeId"
@@ -40,13 +40,13 @@ const expression = `
                     (SELECT "name" FROM "team" tm WHERE tm.id = i."senderId")    AS "sender",
                     (SELECT "name" FROM "team" tm WHERE tm.id = i."recipientId") AS "recipient",
                     p.*
-             FROM "dev"."trade_item" i
-                      RIGHT JOIN "dev"."hydrated_minors" p ON p."id" = i."tradeItemId"
+             FROM ${process.env.ORM_CONFIG}."trade_item" i
+                      RIGHT JOIN ${process.env.ORM_CONFIG}."hydrated_minors" p ON p."id" = i."tradeItemId"
              WHERE i."tradeItemType" = '1'
          ),
          traded_minors AS (
              SELECT i."tradeId", array_to_json(array_agg(row_to_json(p)))::jsonb AS "tradedMinors"
-             FROM "dev"."trade_item" i
+             FROM ${process.env.ORM_CONFIG}."trade_item" i
                       RIGHT JOIN "prospects_with_participants" p ON p."tradeId" = i."tradeId"
              WHERE i."tradeItemType" = '1' AND i."tradeItemId" IN (p.id)
              GROUP BY i."tradeId"
@@ -56,13 +56,13 @@ const expression = `
                     (SELECT "name" FROM "team" tm WHERE tm.id = i."senderId")    AS "sender",
                     (SELECT "name" FROM "team" tm WHERE tm.id = i."recipientId") AS "recipient",
                     d.*
-             FROM "dev"."trade_item" i
-                      RIGHT JOIN "dev"."hydrated_picks" d ON d."id" = i."tradeItemId"
+             FROM ${process.env.ORM_CONFIG}."trade_item" i
+                      RIGHT JOIN ${process.env.ORM_CONFIG}."hydrated_picks" d ON d."id" = i."tradeItemId"
              WHERE i."tradeItemType" = '2'
          ),
          traded_picks AS (
              SELECT i."tradeId", array_to_json(array_agg(row_to_json(d))) AS "tradedPicks"
-             FROM "dev"."trade_item" i
+             FROM ${process.env.ORM_CONFIG}."trade_item" i
                       RIGHT JOIN "picks_with_participants" d ON d."tradeId" = i."tradeId"
              WHERE i."tradeItemType" = '2' AND i."tradeItemId" IN (d.id)
              GROUP BY i."tradeId"
@@ -72,17 +72,17 @@ const expression = `
            t.status                                                                      AS "tradeStatus",
            (SELECT "name" FROM trade_creator tc WHERE tc."tradeId" = t.id)               AS "tradeCreator",
            (SELECT array_agg("name") FROM trade_recipients tr WHERE tr."tradeId" = t.id) AS "tradeRecipients",
-           (SELECT "displayName" FROM "dev"."user" u WHERE u.id = t."declinedById")            AS "decliningUser",
+           (SELECT "displayName" FROM ${process.env.ORM_CONFIG}."user" u WHERE u.id = t."declinedById")            AS "decliningUser",
            t."declinedReason",
            (SELECT array_agg("displayName")
-            FROM "dev"."user" u
+            FROM ${process.env.ORM_CONFIG}."user" u
                      LEFT JOIN accepted_users on t.id = accepted_users.id
             WHERE u.id = "accepted_users"."acceptedById"::uuid)                          AS "acceptingUsers",
            t."acceptedOnDate",
            (SELECT "tradedMajors" FROM "traded_players" tp WHERE tp."tradeId" = t.id)    AS "tradedMajors",
            (SELECT "tradedMinors" FROM "traded_minors" tp WHERE tp."tradeId" = t.id)     AS "tradedMinors",
            (SELECT "tradedPicks" FROM "traded_picks" tp WHERE tp."tradeId" = t.id)       AS "tradedPicks"
-    FROM "dev".trade t;
+    FROM ${process.env.ORM_CONFIG}.trade t;
 `;
 
 @ViewEntity({

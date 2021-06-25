@@ -5,14 +5,23 @@ import TradeParticipant from "../models/tradeParticipant";
 import { BadRequestError } from "routing-controllers";
 import PlayerDAO from "./PlayerDAO";
 import DraftPickDAO from "./DraftPickDAO";
+import { HydratedTrade } from "../models/views/hydratedTrades";
 
 export default class TradeDAO {
     private tradeDb: Repository<Trade>;
+    private hydratedTradeDb: Repository<HydratedTrade>;
     private playerDao: PlayerDAO;
     private pickDao: DraftPickDAO;
 
-    constructor(repo?: Repository<Trade>, playerDao?: PlayerDAO, pickDao?: DraftPickDAO) {
+    constructor(
+        repo?: Repository<Trade>,
+        playerDao?: PlayerDAO,
+        pickDao?: DraftPickDAO,
+        hydratedTradeRepo?: Repository<HydratedTrade>
+    ) {
         this.tradeDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("Trade");
+        this.hydratedTradeDb =
+            hydratedTradeRepo || getConnection(process.env.ORM_CONFIG).getRepository("HydratedTrade");
         this.playerDao = playerDao || new PlayerDAO();
         this.pickDao = pickDao || new DraftPickDAO();
     }
@@ -38,10 +47,8 @@ export default class TradeDAO {
         return trade;
     }
 
-    public async returnHydratedTrades() {
-        return await getConnection(process.env.ORM_CONFIG)
-            .getRepository("HydratedTrade")
-            .find({ order: { dateCreated: "DESC" } });
+    public async returnHydratedTrades(): Promise<HydratedTrade[]> {
+        return await this.hydratedTradeDb.find({ order: { dateCreated: "DESC" } });
     }
 
     public async createTrade(tradeObj: Partial<Trade>): Promise<Trade> {

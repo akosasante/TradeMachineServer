@@ -11,12 +11,12 @@ export class updateHydratedTradesToRemoveDuplicates1624395602410 implements Migr
     WITH trade_creator AS (
         SELECT p."tradeId", (SELECT "name" FROM "dev"."team" tm WHERE tm.id = p."teamId")
         FROM "dev".trade_participant p
-        WHERE p."participantType" = '1'::"trade_participant_participanttype_enum"
+        WHERE p."participantType" = '1'::"dev"."trade_participant_participanttype_enum"
     ),
          trade_recipients AS (
              SELECT p."tradeId", (SELECT "name" FROM "dev"."team" tm WHERE tm.id = p."teamId")
              FROM "dev".trade_participant p
-             WHERE p."participantType" = '2'::"trade_participant_participanttype_enum"
+             WHERE p."participantType" = '2'::"dev"."trade_participant_participanttype_enum"
          ),
          accepted_users AS (
              SELECT t.id, json_array_elements_text(t."acceptedBy"::json) AS "acceptedById" 
@@ -97,12 +97,12 @@ export class updateHydratedTradesToRemoveDuplicates1624395602410 implements Migr
         await queryRunner.query(`CREATE VIEW "dev"."hydrated_trades" AS WITH trade_creator AS (
         SELECT p."tradeId", (SELECT "name" FROM "dev"."team" tm WHERE tm.id = p."teamId")
         FROM "dev".trade_participant p
-        WHERE p."participantType" = '1'::"trade_participant_participanttype_enum"
+        WHERE p."participantType" = '1'::"dev"."trade_participant_participanttype_enum"
     ),
          trade_recipients AS (
              SELECT p."tradeId", (SELECT "name" FROM "dev"."team" tm WHERE tm.id = p."teamId")
              FROM "dev".trade_participant p
-             WHERE p."participantType" = '2'::"trade_participant_participanttype_enum"
+             WHERE p."participantType" = '2'::"dev"."trade_participant_participanttype_enum"
          ),
          accepted_users AS (
              SELECT t.id, json_array_elements_text(t."acceptedBy"::json) AS "acceptedById" 

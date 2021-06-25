@@ -16,6 +16,7 @@ import { TradeFactory } from "../factories/TradeFactory";
 import {
     adminLoggedIn,
     clearDb,
+    DatePatternRegex,
     doLogout,
     makeDeleteRequest,
     makeGetRequest,
@@ -29,6 +30,10 @@ import * as TradeTracker from "../../src/csv/TradeTracker";
 import { getConnection } from "typeorm";
 import TradeDAO from "../../src/DAO/TradeDAO";
 import TradeItem from "../../src/models/tradeItem";
+import { HydratedTrade } from "../../src/models/views/hydratedTrades";
+import { HydratedPick } from "../../src/models/views/hydratedPicks";
+import { HydratedMajorLeaguer } from "../../src/models/views/hydratedMajorLeaguers";
+import { HydratedMinorLeaguer } from "../../src/models/views/hydratedMinorLeaguers";
 
 let app: Server;
 let adminUser: User;
@@ -176,19 +181,31 @@ describe("Trade API endpoints", () => {
             await pickDAO.createPicks(testTrade.picks.map(p => p.parse()));
             await playerDAO.createPlayers(testTrade.players.map(p => p.parse()));
             const pickIds = testTrade.picks.map(p => p.id);
-            const playerIds = testTrade.players.map(p => p.id);
+            const playerIds = testTrade.majorPlayers.map(p => p.id);
+            const prospectIds = testTrade.minorPlayers.map(p => p.id);
 
             const { body } = await getAllRequest("?hydrated=true");
 
-            const expected = {
-                ...testTrade,
-                tradeItems: expect.toBeArrayOfSize(testTrade.tradeItems!.length),
-                tradeParticipants: expect.toBeArrayOfSize(testTrade.tradeParticipants!.length),
+            const expected: HydratedTrade = {
+                tradedPicks: expect.toBeArrayOfSize(pickIds.length),
+                tradedMajors: expect.toBeArrayOfSize(playerIds.length),
+                tradedMinors: expect.toBeArrayOfSize(prospectIds.length),
+                tradeId: testTrade.id,
+                dateCreated: expect.stringMatching(DatePatternRegex),
+                tradeCreator: testTrade.creator?.name,
+                tradeRecipients: testTrade.recipients.map(t => t.name),
             };
             expect(body).toBeArrayOfSize(1);
             expect(body[0]).toMatchObject(expected);
-            expect(body[0].tradeItems).toSatisfyAll(
-                (ti: TradeItem) => pickIds.includes(ti.entity!.id) || playerIds.includes(ti.entity!.id)
+            expect(body[0].tradeStatus).toEqual(testTrade.status?.toString());
+            expect((body[0] as HydratedTrade).tradedPicks).toSatisfyAll((pick: HydratedPick) =>
+                pickIds.includes(pick.id)
+            );
+            expect((body[0] as HydratedTrade).tradedMajors).toSatisfyAll((player: HydratedMajorLeaguer) =>
+                playerIds.includes(player.id)
+            );
+            expect((body[0] as HydratedTrade).tradedMinors).toSatisfyAll((player: HydratedMinorLeaguer) =>
+                prospectIds.includes(player.id)
             );
         }, 2000);
     });

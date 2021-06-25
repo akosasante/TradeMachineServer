@@ -62,8 +62,6 @@ export default class Trade extends BaseModel {
     }
 
     public get recipients(): Team[] {
-        logger.debug(`this: ${inspect(this)}`);
-        logger.debug(`this.tp: ${inspect(this.tradeParticipants)}`);
         return (this.tradeParticipants || [])
             .filter(part => part.participantType === TradeParticipantType.RECIPIENT)
             .map(part => part.team);
