@@ -48,9 +48,6 @@ describe("User Class", () => {
                 owner.role = undefined;
                 expect(owner.isAdmin()).toEqual(false);
 
-                owner.role = null;
-                expect(owner.isAdmin()).toEqual(false);
-
                 delete owner.role;
                 expect(owner.isAdmin()).toEqual(false);
             });
