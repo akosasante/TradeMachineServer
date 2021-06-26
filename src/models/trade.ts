@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany } from "typeorm";
+import { Column, Entity, Index, OneToMany } from "typeorm";
 import { BaseModel } from "./base";
 import DraftPick, { LeagueLevel, MinorLeagueLevels } from "./draftPick";
 import Player, { PlayerLeagueType } from "./player";
@@ -21,21 +21,31 @@ export enum TradeStatus {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
+@Index(["dateCreated"])
 export default class Trade extends BaseModel {
+    @Index()
     @Column({ type: "enum", enum: TradeStatus, default: TradeStatus.DRAFT })
     public status?: TradeStatus;
+
     @Column({ nullable: true })
     public declinedReason?: string;
+
+    @Index()
     @Column({ nullable: true, type: "uuid" })
     public declinedById?: string;
+
     @Column({ nullable: true, type: "jsonb" })
     public acceptedBy?: string[];
+
     @Column({ nullable: true })
     public acceptedOnDate?: Date;
+
     @OneToMany(_type => TradeParticipant, tradeParticipants => tradeParticipants.trade, { cascade: true, eager: true })
     public tradeParticipants?: TradeParticipant[];
+
     @OneToMany(_type => TradeItem, tradeItem => tradeItem.trade, { cascade: true, eager: true })
     public tradeItems?: TradeItem[];
+
     @OneToMany(_type => Email, email => email.trade, { cascade: ["insert"], eager: true })
     public emails?: Email[];
 
@@ -52,8 +62,6 @@ export default class Trade extends BaseModel {
     }
 
     public get recipients(): Team[] {
-        logger.debug(`this: ${inspect(this)}`);
-        logger.debug(`this.tp: ${inspect(this.tradeParticipants)}`);
         return (this.tradeParticipants || [])
             .filter(part => part.participantType === TradeParticipantType.RECIPIENT)
             .map(part => part.team);
