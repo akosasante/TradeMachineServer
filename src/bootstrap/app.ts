@@ -59,6 +59,10 @@ export default async function startServer(): Promise<Server> {
             rollbar.info("server_started");
         });
 
+        srv.on("error", err => {
+            logger.error(`Server Error: ${inspect(err)}`);
+        });
+
         srv.on("close", () => {
             logger.debug("closing server");
             if (process.env.NODE_ENV !== "test") {

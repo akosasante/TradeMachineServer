@@ -36,6 +36,7 @@ export class LoginHandler implements ExpressMiddlewareInterface {
                 request.session.user = serializeUser(user);
                 request.session.save((sessionErr: any) => {
                     logger.debug(inspect(request.session));
+                    logger.debug(inspect(request.sessionID));
                     if (sessionErr) {
                         return next(new Error("Could not save session"));
                     }
