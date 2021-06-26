@@ -35,7 +35,7 @@ describe("AuthController", () => {
         (mockUserDAO as unknown) as UserDAO,
         (mockMailPublisher as unknown) as EmailPublisher
     );
-    const mockReq = { session: { destroy: jest.fn() } };
+    const mockReq = { session: { destroy: jest.fn() }, sessionID: "" };
     /* @ts-ignore */
     const mockRes: Response = {
         status: jest.fn().mockReturnThis(),
