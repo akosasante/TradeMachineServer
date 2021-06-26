@@ -15,12 +15,12 @@ interface OwnerTeamMap {
              round,
              "pickNumber",
              (SELECT json_build_object('id', "id", 'name', "name")
-              FROM team t
+              FROM ${process.env.ORM_CONFIG}.team t
               WHERE t.id = "currentOwnerId") AS "currentPickHolder",
              (SELECT json_build_object('id', "id", 'name', "name")
-              FROM team t
+              FROM ${process.env.ORM_CONFIG}.team t
               WHERE t.id = "originalOwnerId") AS "originalPickOwner"
-      FROM draft_pick;
+      FROM ${process.env.ORM_CONFIG}.draft_pick;
   `,
 })
 export class HydratedPick {

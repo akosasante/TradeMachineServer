@@ -18,8 +18,8 @@ interface OwnerTeamMap {
               WHERE t.id = "leagueTeamId") AS "ownerTeam",
              meta -> 'espnPlayer' -> 'player' -> 'eligibleSlots' AS "eligiblePositions",
              meta -> 'position' AS "mainPosition"
-      FROM player
-      WHERE player.league::varchar = '1';
+      FROM ${process.env.ORM_CONFIG}.player
+      WHERE player.league::text = '1';
   `,
 })
 export class HydratedMajorLeaguer {

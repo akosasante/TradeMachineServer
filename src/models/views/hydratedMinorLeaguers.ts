@@ -26,8 +26,8 @@ enum MinorLeagueLevel {
              meta -> 'minorLeaguePlayerFromSheet' ->> 'mlbTeam'     AS "minorTeam",
              meta -> 'minorLeaguePlayerFromSheet' ->> 'position'    as "position",
              meta -> 'minorLeaguePlayerFromSheet' ->> 'leagueLevel' as "minorLeagueLevel"
-      FROM player
-      WHERE player.league::varchar = '2';
+      FROM ${process.env.ORM_CONFIG}.player
+      WHERE player.league::text = '2';
   `,
 })
 export class HydratedMinorLeaguer {
