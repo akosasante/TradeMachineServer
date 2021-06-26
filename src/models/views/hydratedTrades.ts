@@ -21,8 +21,8 @@ const expression = `
          ),
          players_with_participants AS (
              SELECT i."tradeId",
-                    (SELECT "name" FROM "team" tm WHERE tm.id = i."senderId")    AS "sender",
-                    (SELECT "name" FROM "team" tm WHERE tm.id = i."recipientId") AS "recipient",
+                    (SELECT "name" FROM ${process.env.ORM_CONFIG}."team" tm WHERE tm.id = i."senderId")    AS "sender",
+                    (SELECT "name" FROM ${process.env.ORM_CONFIG}."team" tm WHERE tm.id = i."recipientId") AS "recipient",
                     p.*
              FROM ${process.env.ORM_CONFIG}."trade_item" i
                       RIGHT JOIN ${process.env.ORM_CONFIG}."hydrated_majors" p ON p."id" = i."tradeItemId"
@@ -37,8 +37,8 @@ const expression = `
          ),
          prospects_with_participants AS (
              SELECT i."tradeId",
-                    (SELECT "name" FROM "team" tm WHERE tm.id = i."senderId")    AS "sender",
-                    (SELECT "name" FROM "team" tm WHERE tm.id = i."recipientId") AS "recipient",
+                    (SELECT "name" FROM ${process.env.ORM_CONFIG}."team" tm WHERE tm.id = i."senderId")    AS "sender",
+                    (SELECT "name" FROM ${process.env.ORM_CONFIG}."team" tm WHERE tm.id = i."recipientId") AS "recipient",
                     p.*
              FROM ${process.env.ORM_CONFIG}."trade_item" i
                       RIGHT JOIN ${process.env.ORM_CONFIG}."hydrated_minors" p ON p."id" = i."tradeItemId"
@@ -53,8 +53,8 @@ const expression = `
          ),
          picks_with_participants AS (
              SELECT i."tradeId",
-                    (SELECT "name" FROM "team" tm WHERE tm.id = i."senderId")    AS "sender",
-                    (SELECT "name" FROM "team" tm WHERE tm.id = i."recipientId") AS "recipient",
+                    (SELECT "name" FROM ${process.env.ORM_CONFIG}."team" tm WHERE tm.id = i."senderId")    AS "sender",
+                    (SELECT "name" FROM ${process.env.ORM_CONFIG}."team" tm WHERE tm.id = i."recipientId") AS "recipient",
                     d.*
              FROM ${process.env.ORM_CONFIG}."trade_item" i
                       RIGHT JOIN ${process.env.ORM_CONFIG}."hydrated_picks" d ON d."id" = i."tradeItemId"

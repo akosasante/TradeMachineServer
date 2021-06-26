@@ -21,7 +21,7 @@ enum MinorLeagueLevel {
              name,
              league,
              (SELECT json_build_object('id', "id", 'name', "name")
-              FROM team t
+              FROM ${process.env.ORM_CONFIG}.team t
               WHERE t.id = "leagueTeamId")                          AS "ownerTeam",
              meta -> 'minorLeaguePlayerFromSheet' ->> 'mlbTeam'     AS "minorTeam",
              meta -> 'minorLeaguePlayerFromSheet' ->> 'position'    as "position",

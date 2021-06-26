@@ -14,7 +14,7 @@ interface OwnerTeamMap {
              league,
              COALESCE("mlbTeam", meta ->> 'proTeamId') AS "mlbTeam",
              (SELECT json_build_object('id', "id", 'name', "name")
-              FROM team t
+              FROM ${process.env.ORM_CONFIG}.team t
               WHERE t.id = "leagueTeamId") AS "ownerTeam",
              meta -> 'espnPlayer' -> 'player' -> 'eligibleSlots' AS "eligiblePositions",
              meta -> 'position' AS "mainPosition"
