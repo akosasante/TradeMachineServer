@@ -1,9 +1,26 @@
-import {MigrationInterface, QueryRunner} from "typeorm";
+import {MigrationInterface, QueryRunner, Table} from "typeorm";
 
 export class addHydratedPicks1629662585733 implements MigrationInterface {
     name = 'addHydratedPicks1629662585733'
 
+    typeOrmMetadataTable = new Table({
+        name: "typeorm_metadata",
+        columns: [
+            {name: "type", type: "varchar", isNullable: false},
+            {name: "database", type: "varchar", isNullable: true},
+            {name: "schema", type: "varchar", isNullable: true},
+            {name: "name", type: "varchar", isNullable: true},
+            {name: "value", type: "text", isNullable: true},
+        ]
+    });
+
     public async up(queryRunner: QueryRunner): Promise<void> {
+        // create table for orm to track views
+        await queryRunner.createTable(this.typeOrmMetadataTable, true);
+
+        await queryRunner.query(`ALTER TABLE "dev"."typeorm_metadata"
+            owner to trader_dev;`);
+
         await queryRunner.query(`CREATE VIEW "dev"."hydrated_picks" AS 
         SELECT id,
                season,
