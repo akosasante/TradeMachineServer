@@ -22,6 +22,7 @@ module.exports = [
         ...commonOpts,
         name: "development",
         schema: "dev",
+        port: 5438,
         extra: {
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 10000,
