@@ -79,4 +79,16 @@ module.exports = [
         },
         maxQueryExecutionTime: 500, // lets us log slow queries (over 0.5 sec to execute)
     },
+    {
+        ...commonOpts,
+        name: "tunnel-staging",
+        port: 5439,
+        schema: "staging",
+        cli: {
+            entitiesDir: "dist/models",
+            migrationsDir: "dist/db/migrations",
+            subscribersDir: "dist/db/subscribers",
+        },
+        maxQueryExecutionTime: 500, // lets us log slow queries (over 0.5 sec to execute)
+    },
 ];
