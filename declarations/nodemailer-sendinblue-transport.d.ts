@@ -5,7 +5,7 @@
 // prefixedErr.!0
 /* eslint-disable jsdoc/check-alignment, jsdoc/check-indentation, jsdoc/newline-after-description */
 // eslint-disable-next-line
-// import * as nodemaile_sendinblue from "/Users/aasante/h-dev/TradeMachine/trade-machine-server/node_modules/nodemailer-sendinblue-transport/lib/nodemailer-sendinblue-transport.js"
+// import * as nodemaile_sendinblue from "/Users/aasante/dev/TradeMachine/TradeMachineServer/node_modules/nodemailer-sendinblue-transport/lib/nodemailer-sendinblue-transport.js"
 declare module "nodemailer-sendinblue-transport" {
 /**
  *
