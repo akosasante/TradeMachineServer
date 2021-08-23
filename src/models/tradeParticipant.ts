@@ -1,7 +1,7 @@
-import { Column, Entity, Index, ManyToOne } from "typeorm";
+import {Column, Entity, Index, ManyToOne} from "typeorm";
 import Team from "./team";
 import Trade from "./trade";
-import { BaseModel } from "./base";
+import {BaseModel} from "./base";
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export enum TradeParticipantType {
@@ -11,9 +11,11 @@ export enum TradeParticipantType {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
-@Index(["trade", "team"], { unique: true })
+@Index(["trade", "team"], {unique: true})
 @Index(["team"])
 @Index(["participantType"])
+@Index("trade_creator_index", {synchronize: false})
+@Index("trade_recipient_index", {synchronize: false})
 export default class TradeParticipant extends BaseModel {
     @Column({ type: "enum", enum: TradeParticipantType, default: TradeParticipantType.RECIPIENT })
     public participantType!: TradeParticipantType;
