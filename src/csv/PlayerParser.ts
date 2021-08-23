@@ -131,7 +131,7 @@ async function formatForDb(
     return append
         ? uniqueWithIds
         : uniqueWithIds.filter(player => {
-            const existingPlayerSameName = existingPlayers.find(existing => existing.name === player.name);
-            return !(existingPlayerSameName && !existingPlayerSameName.playerDataId);
-        });
+              const existingPlayerSameName = existingPlayers.find(existing => existing.name === player.name);
+              return !(existingPlayerSameName && !existingPlayerSameName.playerDataId);
+          });
 }

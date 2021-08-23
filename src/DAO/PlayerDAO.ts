@@ -6,7 +6,7 @@ import {
     ILike,
     In,
     InsertResult,
-    Repository
+    Repository,
 } from "typeorm";
 import Player from "../models/player";
 
@@ -66,7 +66,7 @@ export default class PlayerDAO {
                 .insert()
                 .values(playerObjs)
                 .onConflict(
-                    "(\"name\", \"playerDataId\") DO UPDATE SET \"meta\" = player.meta || EXCLUDED.meta, \"leagueTeamId\" = EXCLUDED.\"leagueTeamId\", \"mlbTeam\" = EXCLUDED.\"mlbTeam\""
+                    '("name", "playerDataId") DO UPDATE SET "meta" = player.meta || EXCLUDED.meta, "leagueTeamId" = EXCLUDED."leagueTeamId", "mlbTeam" = EXCLUDED."mlbTeam"'
                 )
                 .execute();
 

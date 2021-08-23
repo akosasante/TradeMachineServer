@@ -13,7 +13,7 @@ import {
     Put,
     QueryParam,
     Req,
-    UnauthorizedError
+    UnauthorizedError,
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";

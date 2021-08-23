@@ -38,14 +38,14 @@ export default class DraftPick extends BaseModel {
 
     static leagueLevelToString(level: LeagueLevel): string | undefined {
         switch (level) {
-        case LeagueLevel.MAJORS:
-            return "Majors";
-        case LeagueLevel.HIGH:
-            return "High Minors";
-        case LeagueLevel.LOW:
-            return "Low Minors";
-        default:
-            return;
+            case LeagueLevel.MAJORS:
+                return "Majors";
+            case LeagueLevel.HIGH:
+                return "High Minors";
+            case LeagueLevel.LOW:
+                return "Low Minors";
+            default:
+                return;
         }
     }
 
