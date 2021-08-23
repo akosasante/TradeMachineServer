@@ -1,11 +1,11 @@
-import {DeleteResult, FindManyOptions, getConnection, Repository} from "typeorm";
-import Trade, {TradeStatus} from "../models/trade";
-import TradeItem, {TradeItemType} from "../models/tradeItem";
+import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
+import Trade, { TradeStatus } from "../models/trade";
+import TradeItem, { TradeItemType } from "../models/tradeItem";
 import TradeParticipant from "../models/tradeParticipant";
-import {BadRequestError} from "routing-controllers";
+import { BadRequestError } from "routing-controllers";
 import PlayerDAO from "./PlayerDAO";
 import DraftPickDAO from "./DraftPickDAO";
-import {HydratedTrade} from "../models/views/hydratedTrades";
+import { HydratedTrade } from "../models/views/hydratedTrades";
 
 export default class TradeDAO {
     private tradeDb: Repository<Trade>;
@@ -13,7 +13,12 @@ export default class TradeDAO {
     private playerDao: PlayerDAO;
     private pickDao: DraftPickDAO;
 
-    constructor(repo?: Repository<Trade>, playerDao?: PlayerDAO, pickDao?: DraftPickDAO, hydratedTradeRepo?: Repository<HydratedTrade>) {
+    constructor(
+        repo?: Repository<Trade>,
+        playerDao?: PlayerDAO,
+        pickDao?: DraftPickDAO,
+        hydratedTradeRepo?: Repository<HydratedTrade>
+    ) {
         this.tradeDb = repo || getConnection(process.env.ORM_CONFIG).getRepository("Trade");
         this.hydratedTradeDb =
             hydratedTradeRepo || getConnection(process.env.ORM_CONFIG).getRepository("HydratedTrade");
@@ -22,7 +27,7 @@ export default class TradeDAO {
     }
 
     public async getAllTrades(): Promise<Trade[]> {
-        const options: FindManyOptions = {order: {id: "ASC"}};
+        const options: FindManyOptions = { order: { id: "ASC" } };
         return await this.tradeDb.find(options);
     }
 
@@ -31,7 +36,7 @@ export default class TradeDAO {
             skip: (pageNumber - 1) * pageSize,
             take: pageSize,
         };
-        return await this.hydratedTradeDb.find({order: {dateCreated: "DESC"}, ...pagingOptions});
+        return await this.hydratedTradeDb.find({ order: { dateCreated: "DESC" }, ...pagingOptions });
     }
 
     public async getTradeById(id: string): Promise<Trade> {

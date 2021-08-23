@@ -1,16 +1,16 @@
 import "jest-extended";
 import TradeController from "../../../../src/api/routes/TradeController";
 import TradeDAO from "../../../../src/DAO/TradeDAO";
-import Trade, {TradeStatus} from "../../../../src/models/trade";
-import {TradeParticipantType} from "../../../../src/models/tradeParticipant";
-import {TradeFactory} from "../../../factories/TradeFactory";
+import Trade, { TradeStatus } from "../../../../src/models/trade";
+import { TradeParticipantType } from "../../../../src/models/tradeParticipant";
+import { TradeFactory } from "../../../factories/TradeFactory";
 import logger from "../../../../src/bootstrap/logger";
-import {UserFactory} from "../../../factories/UserFactory";
-import {BadRequestError, UnauthorizedError} from "routing-controllers";
-import {TeamFactory} from "../../../factories/TeamFactory";
-import {TradeItemType} from "../../../../src/models/tradeItem";
+import { UserFactory } from "../../../factories/UserFactory";
+import { BadRequestError, UnauthorizedError } from "routing-controllers";
+import { TeamFactory } from "../../../factories/TeamFactory";
+import { TradeItemType } from "../../../../src/models/tradeItem";
 import * as TradeTracker from "../../../../src/csv/TradeTracker";
-import {HydratedTrade} from "../../../../src/models/views/hydratedTrades";
+import { HydratedTrade } from "../../../../src/models/views/hydratedTrades";
 
 describe("TradeController", () => {
     const mockTradeDAO = {

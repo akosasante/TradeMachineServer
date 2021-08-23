@@ -105,7 +105,7 @@ module.exports = {
         "@typescript-eslint/no-misused-promises": "error",
         "@typescript-eslint/no-namespace": "error",
         "@typescript-eslint/no-non-null-asserted-optional-chain": "error",
-        "@typescript-eslint/no-non-null-assertion": "warn",
+        "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-parameter-properties": "off",
         "@typescript-eslint/no-shadow": [
             "error",
@@ -137,7 +137,7 @@ module.exports = {
         ],
         "@typescript-eslint/require-await": "warn",
         "@typescript-eslint/restrict-plus-operands": "error",
-        "@typescript-eslint/restrict-template-expressions": "warn",
+        "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/semi": [
             "error",
             "always"
@@ -200,7 +200,7 @@ module.exports = {
             "undefined"
         ],
         "id-match": "error",
-        "import/no-unresolved": "warn",
+        "import/no-unresolved": "off",
         "indent": "error",
         "jsdoc/check-alignment": "error",
         "jsdoc/check-indentation": "error",
@@ -236,15 +236,15 @@ module.exports = {
         "no-unused-vars": "off",
         "no-use-before-define": "off",
         "no-var": "error",
-        "node/no-unsupported-features/es-syntax": "warn",
-        "node/no-missing-import": "warn",
+        "node/no-unsupported-features/es-syntax": "off",
+        "node/no-missing-import": "off",
         "node/no-unpublished-import": "warn",
         "object-shorthand": "error",
         "one-var": [
             "error",
             "never"
         ],
-        "prefer-arrow/prefer-arrow-functions": "warn",
+        "prefer-arrow/prefer-arrow-functions": "off",
         "prefer-const": "error",
         "quotes": "error",
         "radix": "error",

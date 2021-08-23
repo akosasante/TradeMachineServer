@@ -1,16 +1,16 @@
 import "jest-extended";
-import {Repository} from "typeorm";
+import { Repository } from "typeorm";
 import TradeDAO from "../../../src/DAO/TradeDAO";
-import {TradeFactory} from "../../factories/TradeFactory";
-import {mockDeleteChain, mockExecute, MockObj, mockWhereInIds} from "./daoHelpers";
-import Trade, {TradeStatus} from "../../../src/models/trade";
+import { TradeFactory } from "../../factories/TradeFactory";
+import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
+import Trade, { TradeStatus } from "../../../src/models/trade";
 import logger from "../../../src/bootstrap/logger";
-import {v4 as uuid} from "uuid";
+import { v4 as uuid } from "uuid";
 import TradeItem from "../../../src/models/tradeItem";
 import TradeParticipant from "../../../src/models/tradeParticipant";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
-import {HydratedTrade} from "../../../src/models/views/hydratedTrades";
+import { HydratedTrade } from "../../../src/models/views/hydratedTrades";
 
 describe("TradeDAO", () => {
     const mockTradeDb: MockObj = {
@@ -55,7 +55,7 @@ describe("TradeDAO", () => {
 
     it("getAllTrades - should call the db find method once with option args", async () => {
         mockTradeDb.find.mockResolvedValueOnce([testTrade]);
-        const defaultOpts = {order: {id: "ASC"}};
+        const defaultOpts = { order: { id: "ASC" } };
         const res = await tradeDAO.getAllTrades();
 
         expect(mockTradeDb.find).toHaveBeenCalledTimes(1);
@@ -66,7 +66,7 @@ describe("TradeDAO", () => {
     it("returnHydratedTrades - should call find on the hydrated trades repo", async () => {
         await tradeDAO.returnHydratedTrades();
         expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({order: {dateCreated: "DESC"}, take: 25, skip: 0});
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({ order: { dateCreated: "DESC" }, take: 25, skip: 0 });
     });
 
     it("getTradeById - should call the db findOneOrFail once with id", async () => {
