@@ -4,9 +4,9 @@ import Team from "./team";
 import { EspnMajorLeaguePlayer } from "../espn/espnApi";
 import {
     ESPN_ELIGIBLE_POSITION_MAPPING,
-    espnMajorLeagueTeamFromId,
     ESPN_NON_POSITIONAL_NON_VALID_SLOTS,
     ESPN_POSITION_MAPPING,
+    espnMajorLeagueTeamFromId,
 } from "../espn/espnConstants";
 
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -18,6 +18,9 @@ export enum PlayerLeagueType {
 
 @Entity()
 @Unique(["name", "playerDataId"])
+@Index(["league"])
+@Index(["leagueTeam"])
+@Index(["leagueTeam", "league"])
 export default class Player extends BaseModel {
     @Column()
     @Index()
