@@ -83,6 +83,7 @@
     "jest": "latest",
     "jest-date-mock": "latest",
     "jest-extended": "latest",
+    "node-notifier": "^10.0.0",
     "nodemon": "latest",
     "prettier": "2.2.1",
     "supertest": "latest",
