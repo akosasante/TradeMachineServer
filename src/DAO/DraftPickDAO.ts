@@ -1,4 +1,4 @@
-import { DeleteResult, FindConditions, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
+import {DeleteResult, FindConditions, FindManyOptions, getConnection, In, InsertResult, Repository} from "typeorm";
 import DraftPick from "../models/draftPick";
 
 export default class DraftPickDAO {
@@ -11,18 +11,20 @@ export default class DraftPickDAO {
 
     public async getAllPicks(skipCache = false): Promise<DraftPick[]> {
         const options: FindManyOptions = {
-            order: { id: "ASC" },
+            order: {id: "ASC"},
             cache: skipCache ? false : this.cacheExpiryMilliseconds,
         };
         return await this.draftPickDb.find(options);
     }
 
+    public asy;
+
     public async getPickById(id: string): Promise<DraftPick> {
-        return await this.draftPickDb.findOneOrFail(id, { cache: this.cacheExpiryMilliseconds });
+        return await this.draftPickDb.findOneOrFail(id, {cache: this.cacheExpiryMilliseconds});
     }
 
     public async findPicks(query: FindConditions<DraftPick>): Promise<DraftPick[]> {
-        return await this.draftPickDb.find({ where: query, cache: this.cacheExpiryMilliseconds });
+        return await this.draftPickDb.find({where: query, cache: this.cacheExpiryMilliseconds});
     }
 
     public async createPicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
@@ -41,7 +43,7 @@ export default class DraftPickDAO {
                 .insert()
                 .values(pickObjs)
                 .onConflict(
-                    '("type", "season", "round", "originalOwnerId") DO UPDATE SET "currentOwnerId" = EXCLUDED."currentOwnerId", "pickNumber" = EXCLUDED."pickNumber"'
+                    "(\"type\", \"season\", \"round\", \"originalOwnerId\") DO UPDATE SET \"currentOwnerId\" = EXCLUDED.\"currentOwnerId\", \"pickNumber\" = EXCLUDED.\"pickNumber\""
                 )
                 .execute();
 

@@ -34,13 +34,13 @@ export function setupEmailConsumers(): void {
     const cleanLoggedReturn = (returnValue: any) => {
         return returnValue
             ? {
-                  messageId: returnValue?.messageId,
-                  code: returnValue?.code,
-                  message: returnValue?.message,
-                  to: returnValue?.originalMessage.to,
-                  from: returnValue?.originalMessage.from,
-                  subject: returnValue?.originalMessage.subject,
-              }
+                messageId: returnValue?.messageId,
+                code: returnValue?.code,
+                message: returnValue?.message,
+                to: returnValue?.originalMessage.to,
+                from: returnValue?.originalMessage.from,
+                subject: returnValue?.originalMessage.subject,
+            }
             : "";
     };
 

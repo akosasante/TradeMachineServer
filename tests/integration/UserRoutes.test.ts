@@ -18,7 +18,7 @@ import {
     makePutRequest,
     ownerLoggedIn,
     setupOwnerAndAdminUsers,
-    stringifyQuery,
+    stringifyQuery
 } from "./helpers";
 import { v4 as uuid } from "uuid";
 import { getConnection } from "typeorm";

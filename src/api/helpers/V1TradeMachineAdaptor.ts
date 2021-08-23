@@ -148,23 +148,23 @@ async function getTradeItemPicksFromSet(
 
 function getPickType(type: string) {
     switch (type) {
-        case "major":
-            return LeagueLevel.MAJORS;
-        case "high":
-            return LeagueLevel.HIGH;
-        case "low":
-            return LeagueLevel.LOW;
+    case "major":
+        return LeagueLevel.MAJORS;
+    case "high":
+        return LeagueLevel.HIGH;
+    case "low":
+        return LeagueLevel.LOW;
     }
 }
 
 function getV1PickType(type: LeagueLevel) {
     switch (type) {
-        case LeagueLevel.MAJORS:
-            return "major";
-        case LeagueLevel.HIGH:
-            return "high";
-        case LeagueLevel.LOW:
-            return "low";
+    case LeagueLevel.MAJORS:
+        return "major";
+    case LeagueLevel.HIGH:
+        return "high";
+    case LeagueLevel.LOW:
+        return "low";
     }
 }
 

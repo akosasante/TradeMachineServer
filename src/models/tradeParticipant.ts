@@ -11,7 +11,7 @@ export enum TradeParticipantType {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
-@Index(["trade", "team"], {unique: true})
+@Index(["trade", "team"], { unique: true })
 @Index(["team"])
 @Index(["participantType"])
 export default class TradeParticipant extends BaseModel {

@@ -24,7 +24,7 @@ const TradeFormatter = {
         function getMinorLeaguePlayerText(player: Player) {
             const playerMetaInfo = player.meta
                 ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                  `(${player.meta?.minorLeaguePlayerFromSheet?.position} - ${player.meta?.minorLeaguePlayerFromSheet?.leagueLevel} Minors - ${player.meta?.minorLeaguePlayerFromSheet?.mlbTeam})`
+                `(${player.meta?.minorLeaguePlayerFromSheet?.position} - ${player.meta?.minorLeaguePlayerFromSheet?.leagueLevel} Minors - ${player.meta?.minorLeaguePlayerFromSheet?.mlbTeam})`
                 : "(Minors)";
             const text = `• *${player.name}* ${playerMetaInfo}`;
             if (!twoPlayerTrade) {
@@ -80,8 +80,8 @@ const TradeFormatter = {
                 .map(([tradedPick, pick]) => {
                     return `• *${pick!.originalOwner?.name}'s* ${pick!.season} \
 ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
-                        pick?.pickNumber ? ` (#${pick.pickNumber})` : ""
-                    } from _${tradedPick!.sender.name}_`;
+    pick?.pickNumber ? ` (#${pick.pickNumber})` : ""
+} from _${tradedPick!.sender.name}_`;
                 })
                 .join("\n")
                 .trim();
@@ -153,12 +153,12 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
 
     getPickTypeString(pickType: LeagueLevel) {
         switch (pickType) {
-            case LeagueLevel.MAJORS:
-                return "Major League";
-            case LeagueLevel.HIGH:
-                return "High Minors";
-            case LeagueLevel.LOW:
-                return "Low Minors";
+        case LeagueLevel.MAJORS:
+            return "Major League";
+        case LeagueLevel.HIGH:
+            return "High Minors";
+        case LeagueLevel.LOW:
+            return "Low Minors";
         }
     },
 };

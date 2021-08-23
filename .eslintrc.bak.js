@@ -6,7 +6,7 @@ It represents the closest reasonable ESLint configuration to this
 project's original TSLint configuration.
 
 We recommend eventually switching this configuration to extend from
-the recommended rulesets in typescript-eslint. 
+the recommended rulesets in typescript-eslint.
 https://github.com/typescript-eslint/tslint-to-eslint-config/blob/master/docs/FAQs.md
 
 Happy linting! 💖
@@ -28,13 +28,12 @@ module.exports = {
     "parserOptions": {
         "project": "./tsconfig.eslint.json",
         "sourceType": "module",
-        "debugLevel": "true",
+        "debugLevel": "true"
     },
-    "ignorePatterns": ['.eslintrc.js', '**/*.d.ts', 'src/db/*', './src/scripts/**/*.ts'],
+    "ignorePatterns": ['.eslintrc.bak.js', '**/*.d.ts', 'src/db/*', './src/scripts/**/*.ts'],
     "plugins": [
         "eslint-plugin-no-null",
         "eslint-plugin-jsdoc",
-        "eslint-plugin-prefer-arrow",
         "@typescript-eslint",
         "@typescript-eslint/tslint",
     ],
@@ -135,9 +134,9 @@ module.exports = {
                 "avoidEscape": true
             }
         ],
-        "@typescript-eslint/require-await": "warn",
+        "@typescript-eslint/require-await": "off",
         "@typescript-eslint/restrict-plus-operands": "error",
-        "@typescript-eslint/restrict-template-expressions": "warn",
+        "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/semi": [
             "error",
             "always"
@@ -169,23 +168,13 @@ module.exports = {
             "error",
             "1tbs"
         ],
-        "comma-dangle": [
-            "error",
-            {
-                "objects": "always-multiline",
-                "arrays": "always-multiline",
-                "functions": "never"
-            }
-        ],
+        "comma-dangle": "off",
         "complexity": "off",
         "constructor-super": "error",
-        "dot-notation": "error",
         "eqeqeq": [
             "error",
             "smart"
         ],
-        "eslint-comments/no-unused-disable": "warn",
-        "eslint-comments/no-unlimited-disable": "warn",
         "guard-for-in": "error",
         "id-blacklist": [
             "error",
@@ -200,8 +189,6 @@ module.exports = {
             "undefined"
         ],
         "id-match": "error",
-        "import/no-unresolved": "warn",
-        "indent": "error",
         "jsdoc/check-alignment": "error",
         "jsdoc/check-indentation": "error",
         "jsdoc/newline-after-description": "error",
@@ -217,7 +204,7 @@ module.exports = {
         "no-console": "error",
         "no-debugger": "error",
         "no-empty": "error",
-        "no-empty-function": "warn",
+        "no-empty-function": "off",
         "no-eval": "error",
         "no-extra-semi": "off",
         "no-fallthrough": "off",
@@ -225,31 +212,22 @@ module.exports = {
         "no-invalid-this": "off",
         "no-new-wrappers": "error",
         "no-null/no-null": "warn",
-        "no-shadow": "warn",
         "no-throw-literal": "error",
         "no-trailing-spaces": "error",
         "no-undef-init": "error",
         "no-underscore-dangle": "warn",
         "no-unsafe-finally": "error",
-        "no-unused-expressions": "error",
         "no-unused-labels": "error",
         "no-unused-vars": "off",
-        "no-use-before-define": "off",
         "no-var": "error",
-        "node/no-unsupported-features/es-syntax": "warn",
-        "node/no-missing-import": "warn",
-        "node/no-unpublished-import": "warn",
         "object-shorthand": "error",
         "one-var": [
             "error",
             "never"
         ],
-        "prefer-arrow/prefer-arrow-functions": "warn",
         "prefer-const": "error",
-        "quotes": "error",
         "radix": "error",
         "require-await": "off",
-        "semi": "error",
         "spaced-comment": [
             "error",
             "always",
@@ -260,6 +238,12 @@ module.exports = {
             }
         ],
         "use-isnan": "error",
-        "valid-typeof": "off"
+        "valid-typeof": "off",
+        "eslint-comments/no-unused-disable": "error",
+        "eslint-comments/no-unlimited-disable": "warn",
+        "import/no-unresolved": "off",
+        "node/no-unsupported-features/es-syntax": "off",
+        "node/no-missing-import": "off",
+        "node/no-unpublished-import": "off"
     }
 };

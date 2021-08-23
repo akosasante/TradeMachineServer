@@ -14,7 +14,7 @@ import {
     makeGetRequest,
     makePostRequest,
     ownerLoggedIn,
-    setupOwnerAndAdminUsers,
+    setupOwnerAndAdminUsers
 } from "./helpers";
 import startServer from "../../src/bootstrap/app";
 import { getConnection } from "typeorm";

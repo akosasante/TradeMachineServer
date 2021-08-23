@@ -11,19 +11,19 @@ import {
     QueryParam,
     QueryParams,
     Req,
-    UploadedFile,
+    UploadedFile
 } from "routing-controllers";
-import { inspect } from "util";
+import {inspect} from "util";
 import logger from "../../bootstrap/logger";
-import { WriteMode } from "../../csv/CsvUtils";
-import { processDraftPickCsv } from "../../csv/DraftPickParser";
+import {WriteMode} from "../../csv/CsvUtils";
+import {processDraftPickCsv} from "../../csv/DraftPickParser";
 import DraftPickDAO from "../../DAO/DraftPickDAO";
 import TeamDAO from "../../DAO/TeamDAO";
-import DraftPick, { LeagueLevel } from "../../models/draftPick";
-import { Role } from "../../models/user";
-import { cleanupQuery, fileUploadOptions as uploadOpts, UUID_PATTERN } from "../helpers/ApiHelpers";
-import { rollbar } from "../../bootstrap/rollbar";
-import { Request } from "express";
+import DraftPick, {LeagueLevel} from "../../models/draftPick";
+import {Role} from "../../models/user";
+import {cleanupQuery, fileUploadOptions as uploadOpts, UUID_PATTERN} from "../helpers/ApiHelpers";
+import {rollbar} from "../../bootstrap/rollbar";
+import {Request} from "express";
 
 @JsonController("/picks")
 export default class DraftPickController {
@@ -131,9 +131,9 @@ function getAllDraftPicksQuery(includes?: string[], season?: string) {
         return includes.map(include =>
             season
                 ? {
-                      type: keywordToLevelMap[include],
-                      season: parseInt(season, 10),
-                  }
+                    type: keywordToLevelMap[include],
+                    season: parseInt(season, 10),
+                }
                 : { type: keywordToLevelMap[include] }
         );
     } else if (season) {

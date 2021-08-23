@@ -84,12 +84,12 @@ function getPlayerDetails(player: Player) {
 
 function getPickTypeString(pickType: LeagueLevel) {
     switch (pickType) {
-        case LeagueLevel.MAJORS:
-            return "Majors";
-        case LeagueLevel.HIGH:
-            return "High Minors";
-        case LeagueLevel.LOW:
-            return "Low Minors";
+    case LeagueLevel.MAJORS:
+        return "Majors";
+    case LeagueLevel.HIGH:
+        return "High Minors";
+    case LeagueLevel.LOW:
+        return "Low Minors";
     }
 }
 
