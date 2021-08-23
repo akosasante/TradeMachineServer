@@ -13,7 +13,7 @@ help: ## show make commands
 
 # |----------- TESTING SCRIPTS ---------|
 test-ci: ## run tests using CI config, and no logging
-	NODE_ENV=test ORM_CONFIG=test ENABLE_LOGS=false \
+	NODE_ENV=test ORM_CONFIG=test PG_SCHEMA=test \
 	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci
 
@@ -32,7 +32,7 @@ test-unit: ## run tests using local testing config, only run tests in `unit` fol
 	else \
 	  export DB_LOGS=false; \
 	fi; \
-	NODE_ENV=test ORM_CONFIG=test \
+	NODE_ENV=test ORM_CONFIG=local-test \
 	npx jest --config ./jest.config.js \
 	--detectOpenHandles --bail --forceExit --testPathPattern=unit/
 
@@ -51,12 +51,12 @@ test-integration: ## run tests using local testing config, only run tests in `in
 	else \
 	  export DB_LOGS=false; \
 	fi; \
-	NODE_ENV=test ORM_CONFIG=test \
+	NODE_ENV=test ORM_CONFIG=local-test \
 	npx jest --config ./jest.config.js \
 	--detectOpenHandles --runInBand --bail --forceExit --testPathPattern=integration/
 
 test-update-snapshots: ## update the jest snapshots (currently only targeted to mailer folder)
-	NODE_ENV=test ORM_CONFIG=test \
+	NODE_ENV=test ORM_CONFIG=local-test \
 	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=mailer --update-snapshot
 
@@ -75,7 +75,7 @@ test-watch: ## Watch for changes and run tests for git changed files
 	else \
 	  export DB_LOGS=false; \
 	fi; \
-	NODE_ENV=test ORM_CONFIG=test \
+	NODE_ENV=test ORM_CONFIG=local-test \
 	npx jest --watch --config ./jest.config.js
 
 test-file: ## Test a specific file
@@ -94,7 +94,7 @@ test-file: ## Test a specific file
 	else \
 	  export DB_LOGS=false; \
 	fi; \
-	NODE_ENV=test ORM_CONFIG=test \
+	NODE_ENV=test ORM_CONFIG=local-test \
 	npx jest --watch --runTestsByPath $$PATH_NAME --config ./jest.config.js
 
 test-local: test-unit test-integration ## run unit, then integration tests using local config

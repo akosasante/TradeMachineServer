@@ -15,7 +15,11 @@ export enum TradeItemType {
 export type TradedItem = Player | DraftPick;
 
 @Entity()
-@Index(["trade", "tradeItemId", "tradeItemType", "sender", "recipient"], { unique: true })
+@Index(["trade", "tradeItemId", "tradeItemType", "sender", "recipient"], {unique: true})
+@Index(["sender", "recipient"])
+@Index(["sender"])
+@Index(["recipient"])
+@Index(["tradeItemType"])
 export default class TradeItem extends BaseModel {
     public entity?: TradedItem;
     @Column({ type: "uuid" })

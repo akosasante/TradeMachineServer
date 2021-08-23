@@ -1,4 +1,4 @@
-import { AfterLoad, Column, Entity, ManyToOne, Unique } from "typeorm";
+import { AfterLoad, Column, Entity, Index, ManyToOne, Unique } from "typeorm";
 import { BaseModel } from "./base";
 import Team from "./team";
 
@@ -14,6 +14,9 @@ export const MinorLeagueLevels = [LeagueLevel.HIGH, LeagueLevel.LOW];
 
 @Entity()
 @Unique(["type", "season", "round", "originalOwner"])
+@Index(["currentOwner"])
+@Index(["originalOwner"])
+@Index(["currentOwner", "originalOwner"])
 export default class DraftPick extends BaseModel {
     @Column({ type: "numeric" })
     public round!: number;

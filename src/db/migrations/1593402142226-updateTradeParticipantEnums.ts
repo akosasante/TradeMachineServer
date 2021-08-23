@@ -3,7 +3,7 @@ import {MigrationInterface, QueryRunner} from "typeorm";
 export class updateTradeParticipantEnums1593402142226 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`ALTER TYPE "dev"."trade_participant_participanttype_enum" RENAME TO "trade_participant_participanttype_enum_old"`)
+        await queryRunner.query(`ALTER TYPE "dev"."trade_participant_participanttype_enum" RENAME TO "dev"."trade_participant_participanttype_enum_old"`)
         await queryRunner.query(`CREATE TYPE "dev"."trade_participant_participanttype_enum" AS ENUM('1', '2')`, undefined);
         await queryRunner.query(`ALTER TABLE "dev"."trade_participant" ALTER COLUMN "participantType" DROP DEFAULT`)
         await queryRunner.query(`ALTER TABLE "dev"."trade_participant" ALTER COLUMN "participantType" TYPE CHARACTER VARYING`)

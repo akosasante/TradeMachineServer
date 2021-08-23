@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany } from "typeorm";
+import { Column, Entity, Index, OneToMany } from "typeorm";
 import { BaseModel } from "./base";
 import DraftPick, { LeagueLevel, MinorLeagueLevels } from "./draftPick";
 import Player, { PlayerLeagueType } from "./player";
@@ -21,6 +21,7 @@ export enum TradeStatus {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 @Entity()
+@Index(["declinedById"])
 export default class Trade extends BaseModel {
     @Column({ type: "enum", enum: TradeStatus, default: TradeStatus.DRAFT })
     public status?: TradeStatus;
