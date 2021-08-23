@@ -73,6 +73,18 @@ module.exports = [
     },
     {
         ...commonOpts,
+        name: "tunnel-production",
+        port: 5439,
+        schema: "public",
+        cli: {
+            entitiesDir: "dist/models",
+            migrationsDir: "dist/db/migrations",
+            subscribersDir: "dist/db/subscribers",
+        },
+        maxQueryExecutionTime: 500, // lets us log slow queries (over 0.5 sec to execute)
+    },
+    {
+        ...commonOpts,
         name: "staging",
         schema: "staging",
         cli: {
