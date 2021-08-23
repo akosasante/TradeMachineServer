@@ -1,11 +1,10 @@
-import { ExpressMiddlewareInterface, Middleware } from "routing-controllers";
-import { NextFunction, Request, Response } from "express";
+import {ExpressMiddlewareInterface, Middleware} from "routing-controllers";
+import {NextFunction, Request, Response} from "express";
 import logger from "../../bootstrap/logger";
-import { deserializeUser } from "../../authentication/auth";
-import { inspect } from "util";
+import {deserializeUser} from "../../authentication/auth";
+import {inspect} from "util";
 // importing for express-session declaration
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { SessionData } from "express-session";
 
 declare module "express" {
     interface Request {
@@ -27,7 +26,7 @@ declare module "express-session" {
 @Middleware({ type: "before" })
 export default class RollbarPeopleHandler implements ExpressMiddlewareInterface {
     public async use(request: Request, response: Response, next: NextFunction): Promise<void> {
-        logger.debug(`IN ROLLBAR HANDLER with session= ${inspect(request.session?.user)} ${!!request}`);
+        logger.debug(`IN ROLLBAR HANDLER with sessionId=${request.sessionID} session=${inspect(request.session)} `);
         try {
             if (request.session?.user) {
                 const existingUser = await deserializeUser(request.session.user);

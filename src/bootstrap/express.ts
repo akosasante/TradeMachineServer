@@ -7,7 +7,7 @@ import morgan from "morgan";
 import redis from "redis";
 import responseTime from "response-time";
 import logger from "./logger";
-import { rollbar } from "./rollbar";
+import {rollbar} from "./rollbar";
 
 const app = express();
 
@@ -36,7 +36,7 @@ const REDIS_OPTS = {
     logErrors: true,
     ttl: COOKIE_MAX_AGE_SECONDS,
     client: redisClient,
-    prefix: "stg_sess",
+    prefix: process.env.ORM_CONFIG === "staging" ? "stg_sess:" : "sess:",
 };
 
 app.use(
