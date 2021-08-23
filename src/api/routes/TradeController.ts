@@ -1,4 +1,4 @@
-import { differenceBy } from "lodash";
+import {differenceBy} from "lodash";
 import {
     Authorized,
     BadRequestError,
@@ -13,20 +13,21 @@ import {
     Put,
     QueryParam,
     Req,
-    UnauthorizedError,
+    UnauthorizedError
 } from "routing-controllers";
-import { inspect } from "util";
+import {inspect} from "util";
 import logger from "../../bootstrap/logger";
 import TradeDAO from "../../DAO/TradeDAO";
-import Trade, { TradeStatus } from "../../models/trade";
-import User, { Role } from "../../models/user";
-import { UUID_PATTERN } from "../helpers/ApiHelpers";
+import Trade, {TradeStatus} from "../../models/trade";
+import User, {Role} from "../../models/user";
+import {UUID_PATTERN} from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
-import { appendNewTrade } from "../../csv/TradeTracker";
-import { EmailPublisher } from "../../email/publishers";
-import { SlackPublisher } from "../../slack/publishers";
-import { rollbar } from "../../bootstrap/rollbar";
-import { Request } from "express";
+import {HydratedTrade} from "../../models/views/hydratedTrades";
+import {appendNewTrade} from "../../csv/TradeTracker";
+import {EmailPublisher} from "../../email/publishers";
+import {SlackPublisher} from "../../slack/publishers";
+import {rollbar} from "../../bootstrap/rollbar";
+import {Request} from "express";
 
 function validateOwnerOfTrade(user: User, trade: Trade): boolean {
     if (user.role === Role.ADMIN) {
@@ -145,14 +146,17 @@ export default class TradeController {
     }
 
     @Get("/")
-    public async getAllTrades(@QueryParam("hydrated") hydrated?: boolean, @Req() request?: Request): Promise<Trade[]> {
+    public async getAllTrades(@QueryParam("hydrated") hydrated?: boolean, @Req() request?: Request): Promise<Trade[] | HydratedTrade[]> {
         logger.debug("get all trades endpoint");
-        rollbar.info("getAllTrades", { hydrated }, request);
-        const trades = await this.dao.getAllTrades();
-        logger.debug(`got ${trades.length} trades`);
+        rollbar.info("getAllTrades", {hydrated}, request);
         if (hydrated) {
-            return await Promise.all(trades.map(t => this.dao.hydrateTrade(t)));
+            // return await Promise.all(trades.map(t => this.dao.hydrateTrade(t)));
+            const hydratedTrades = await this.dao.returnHydratedTrades();
+            logger.debug(`got ${hydratedTrades.length} hydrated trades`);
+            return hydratedTrades;
         } else {
+            const trades = await this.dao.getAllTrades();
+            logger.debug(`got ${trades.length} trades`);
             return trades;
         }
     }
