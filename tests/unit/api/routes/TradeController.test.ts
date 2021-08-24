@@ -10,6 +10,7 @@ import { BadRequestError, UnauthorizedError } from "routing-controllers";
 import { TeamFactory } from "../../../factories/TeamFactory";
 import { TradeItemType } from "../../../../src/models/tradeItem";
 import * as TradeTracker from "../../../../src/csv/TradeTracker";
+import { HydratedTrade } from "../../../../src/models/views/hydratedTrades";
 
 describe("TradeController", () => {
     const mockTradeDAO = {
@@ -23,6 +24,7 @@ describe("TradeController", () => {
         updateDeclinedBy: jest.fn(),
         deleteTrade: jest.fn(),
         updateAcceptedBy: jest.fn(),
+        returnHydratedTrades: jest.fn(),
     };
 
     // @ts-ignore
@@ -60,15 +62,22 @@ describe("TradeController", () => {
             expect(res).toEqual([testTrade]);
         });
         it("should hydrate each trade before returning an array of trades if query param is present", async () => {
-            mockTradeDAO.getAllTrades.mockResolvedValueOnce([testTrade]);
-            mockTradeDAO.hydrateTrade.mockResolvedValueOnce(testTrade);
+            mockTradeDAO.returnHydratedTrades.mockResolvedValueOnce([testTrade as HydratedTrade]); // TODO: update this test properly
             const res = await tradeController.getAllTrades(true);
 
-            expect(mockTradeDAO.getAllTrades).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.getAllTrades).toHaveBeenCalledWith();
-            expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledWith(testTrade);
-            expect(res).toEqual([testTrade]);
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(undefined, undefined);
+            expect(mockTradeDAO.getAllTrades).toHaveBeenCalledTimes(0);
+            expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(0);
+            expect(res).toEqual([testTrade as HydratedTrade]);
+        });
+        it("should pass in any page parameters to hydrated trade call if present", async () => {
+            mockTradeDAO.returnHydratedTrades.mockResolvedValueOnce([testTrade as HydratedTrade]); // TODO: update this test properly
+            const res = await tradeController.getAllTrades(true, 50, 1);
+
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(50, 1);
+            expect(res).toEqual([testTrade as HydratedTrade]);
         });
         it("should bubble up any errors from the DAO", async () => {
             mockTradeDAO.getAllTrades.mockImplementation(() => {

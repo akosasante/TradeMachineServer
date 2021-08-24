@@ -22,6 +22,7 @@ import Trade, { TradeStatus } from "../../models/trade";
 import User, { Role } from "../../models/user";
 import { UUID_PATTERN } from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
+import { HydratedTrade } from "../../models/views/hydratedTrades";
 import { appendNewTrade } from "../../csv/TradeTracker";
 import { EmailPublisher } from "../../email/publishers";
 import { SlackPublisher } from "../../slack/publishers";
@@ -145,14 +146,22 @@ export default class TradeController {
     }
 
     @Get("/")
-    public async getAllTrades(@QueryParam("hydrated") hydrated?: boolean, @Req() request?: Request): Promise<Trade[]> {
-        logger.debug("get all trades endpoint");
-        rollbar.info("getAllTrades", { hydrated }, request);
-        const trades = await this.dao.getAllTrades();
-        logger.debug(`got ${trades.length} trades`);
+    public async getAllTrades(
+        @QueryParam("hydrated") hydrated?: boolean,
+        @QueryParam("pageSize") pageSize?: number,
+        @QueryParam("pageNumber") pageNumber?: number,
+        @Req() request?: Request
+    ): Promise<Trade[] | HydratedTrade[]> {
+        logger.debug(`get all trades endpoint; ${inspect({ hydrated, pageSize, pageNumber })}`);
+        rollbar.info("getAllTrades", { hydrated, pageSize, pageNumber }, request);
         if (hydrated) {
-            return await Promise.all(trades.map(t => this.dao.hydrateTrade(t)));
+            // return await Promise.all(trades.map(t => this.dao.hydrateTrade(t)));
+            const hydratedTrades = await this.dao.returnHydratedTrades(pageSize, pageNumber);
+            logger.debug(`got ${hydratedTrades.length} hydrated trades`);
+            return hydratedTrades;
         } else {
+            const trades = await this.dao.getAllTrades();
+            logger.debug(`got ${trades.length} trades`);
             return trades;
         }
     }
