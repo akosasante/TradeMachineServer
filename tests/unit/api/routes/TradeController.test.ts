@@ -1,16 +1,16 @@
 import "jest-extended";
 import TradeController from "../../../../src/api/routes/TradeController";
 import TradeDAO from "../../../../src/DAO/TradeDAO";
-import Trade, { TradeStatus } from "../../../../src/models/trade";
-import { TradeParticipantType } from "../../../../src/models/tradeParticipant";
-import { TradeFactory } from "../../../factories/TradeFactory";
+import Trade, {TradeStatus} from "../../../../src/models/trade";
+import {TradeParticipantType} from "../../../../src/models/tradeParticipant";
+import {TradeFactory} from "../../../factories/TradeFactory";
 import logger from "../../../../src/bootstrap/logger";
-import { UserFactory } from "../../../factories/UserFactory";
-import { BadRequestError, UnauthorizedError } from "routing-controllers";
-import { TeamFactory } from "../../../factories/TeamFactory";
-import { TradeItemType } from "../../../../src/models/tradeItem";
+import {UserFactory} from "../../../factories/UserFactory";
+import {BadRequestError, UnauthorizedError} from "routing-controllers";
+import {TeamFactory} from "../../../factories/TeamFactory";
+import {TradeItemType} from "../../../../src/models/tradeItem";
 import * as TradeTracker from "../../../../src/csv/TradeTracker";
-import { HydratedTrade } from "../../../../src/models/views/hydratedTrades";
+import {HydratedTrade} from "../../../../src/models/views/hydratedTrades";
 
 describe("TradeController", () => {
     const mockTradeDAO = {
@@ -66,9 +66,17 @@ describe("TradeController", () => {
             const res = await tradeController.getAllTrades(true);
 
             expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith();
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(undefined, undefined);
             expect(mockTradeDAO.getAllTrades).toHaveBeenCalledTimes(0);
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(0);
+            expect(res).toEqual([testTrade as HydratedTrade]);
+        });
+        it("should pass in any page parameters to hydrated trade call if present", async () => {
+            mockTradeDAO.returnHydratedTrades.mockResolvedValueOnce([testTrade as HydratedTrade]); // TODO: update this test properly
+            const res = await tradeController.getAllTrades(true, 50, 1);
+
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(50, 1);
             expect(res).toEqual([testTrade as HydratedTrade]);
         });
         it("should bubble up any errors from the DAO", async () => {
