@@ -170,7 +170,7 @@ module.exports = {
             "1tbs"
         ],
         "comma-dangle": [
-            "error",
+            "warn",
             {
                 "objects": "always-multiline",
                 "arrays": "always-multiline",
@@ -201,7 +201,7 @@ module.exports = {
         ],
         "id-match": "error",
         "import/no-unresolved": "off",
-        "indent": "error",
+        "indent": "off",
         "jsdoc/check-alignment": "error",
         "jsdoc/check-indentation": "error",
         "jsdoc/newline-after-description": "error",
@@ -246,7 +246,7 @@ module.exports = {
         ],
         "prefer-arrow/prefer-arrow-functions": "off",
         "prefer-const": "error",
-        "quotes": "error",
+        "quotes": "off",
         "radix": "error",
         "require-await": "off",
         "semi": "error",
