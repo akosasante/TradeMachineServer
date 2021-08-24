@@ -1,6 +1,7 @@
 import logger from "../../../src/bootstrap/logger";
 import User, { Role } from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
+// @ts-ignore
 import uuid from "uuid/v4";
 
 describe("User Class", () => {
@@ -46,6 +47,9 @@ describe("User Class", () => {
                 expect(owner.isAdmin()).toEqual(false);
 
                 owner.role = undefined;
+                expect(owner.isAdmin()).toEqual(false);
+
+                delete owner.role;
                 expect(owner.isAdmin()).toEqual(false);
             });
             it("should return true if the user's role is admin", () => {

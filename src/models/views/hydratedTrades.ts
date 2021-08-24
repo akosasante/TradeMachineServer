@@ -141,4 +141,3 @@ export class HydratedTrade {
         return Object.assign({}, props);
     }
 }
-

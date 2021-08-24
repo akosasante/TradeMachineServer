@@ -36,7 +36,7 @@ const REDIS_OPTS = {
     logErrors: true,
     ttl: COOKIE_MAX_AGE_SECONDS,
     client: redisClient,
-    prefix: "stg_sess",
+    prefix: process.env.ORM_CONFIG === "staging" ? "stg_sess:" : "sess:",
 };
 
 app.use(

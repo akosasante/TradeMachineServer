@@ -49,6 +49,7 @@ jobs:
             ./package-lock.json
             ./check_migrations.sh
             ./replace-migration-schema.sh
+            ./Makefile
           outPath: out.tar.gz
 
       - name: Upload built folders to artifacts
