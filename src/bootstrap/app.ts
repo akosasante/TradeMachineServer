@@ -1,13 +1,13 @@
-import {Express} from "express";
+import { Express } from "express";
 import "reflect-metadata";
-import {useExpressServer} from "routing-controllers";
-import {authorizationChecker, currentUserChecker} from "../authentication/auth";
+import { useExpressServer } from "routing-controllers";
+import { authorizationChecker, currentUserChecker } from "../authentication/auth";
 import initializeDb from "./db";
-import expressApp, {redisClient} from "./express";
+import expressApp, { redisClient } from "./express";
 import logger from "./logger";
-import {inspect} from "util";
-import {rollbar} from "./rollbar";
-import {Server} from "http";
+import { inspect } from "util";
+import { rollbar } from "./rollbar";
+import { Server } from "http";
 
 export async function setupExpressApp(): Promise<Express> {
     // Set up db

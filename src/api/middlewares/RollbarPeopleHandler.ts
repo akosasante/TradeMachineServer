@@ -1,8 +1,8 @@
-import {ExpressMiddlewareInterface, Middleware} from "routing-controllers";
-import {NextFunction, Request, Response} from "express";
+import { ExpressMiddlewareInterface, Middleware } from "routing-controllers";
+import { NextFunction, Request, Response } from "express";
 import logger from "../../bootstrap/logger";
-import {deserializeUser} from "../../authentication/auth";
-import {inspect} from "util";
+import { deserializeUser } from "../../authentication/auth";
+import { inspect } from "util";
 // importing for express-session declaration
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 

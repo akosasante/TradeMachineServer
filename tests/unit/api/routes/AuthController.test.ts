@@ -1,11 +1,11 @@
-import {Request, Response} from "express";
+import { Request, Response } from "express";
 import AuthController from "../../../../src/api/routes/AuthController";
 import UserDAO from "../../../../src/DAO/UserDAO";
-import {UserFactory} from "../../../factories/UserFactory";
+import { UserFactory } from "../../../factories/UserFactory";
 import logger from "../../../../src/bootstrap/logger";
-import {NotFoundError} from "routing-controllers";
-import {EmailPublisher} from "../../../../src/email/publishers";
-import {SessionData} from "express-session";
+import { NotFoundError } from "routing-controllers";
+import { EmailPublisher } from "../../../../src/email/publishers";
+import { SessionData } from "express-session";
 
 declare module "express-session" {
     interface SessionData {
@@ -35,7 +35,7 @@ describe("AuthController", () => {
         (mockUserDAO as unknown) as UserDAO,
         (mockMailPublisher as unknown) as EmailPublisher
     );
-    const mockReq = {session: {destroy: jest.fn()}, sessionID: ""};
+    const mockReq = { session: { destroy: jest.fn() }, sessionID: "" };
 
     /* @ts-ignore */
     const mockRes: Response = {
@@ -45,7 +45,7 @@ describe("AuthController", () => {
     const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {
         passwordResetToken: "xyz-uuid",
     });
-    let mockSess = {user: testUser.id};
+    let mockSess = { user: testUser.id };
 
     afterEach(() => {
         [mockUserDAO, mockMailPublisher].forEach(mockedThing =>

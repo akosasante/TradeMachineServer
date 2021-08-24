@@ -7,7 +7,7 @@ import morgan from "morgan";
 import redis from "redis";
 import responseTime from "response-time";
 import logger from "./logger";
-import {rollbar} from "./rollbar";
+import { rollbar } from "./rollbar";
 
 const app = express();
 

@@ -1,6 +1,6 @@
 import logger from "../../../src/bootstrap/logger";
-import User, {Role} from "../../../src/models/user";
-import {UserFactory} from "../../factories/UserFactory";
+import User, { Role } from "../../../src/models/user";
+import { UserFactory } from "../../factories/UserFactory";
 // @ts-ignore
 import uuid from "uuid/v4";
 
@@ -11,7 +11,7 @@ describe("User Class", () => {
     afterAll(() => {
         logger.debug("~~~~~~USER TESTS COMPLETE~~~~~~");
     });
-    const userObj = UserFactory.getUserObject(undefined, undefined, undefined, Role.ADMIN, {id: uuid()});
+    const userObj = UserFactory.getUserObject(undefined, undefined, undefined, Role.ADMIN, { id: uuid() });
     const user = new User(userObj);
 
     describe("constructor", () => {
@@ -43,7 +43,7 @@ describe("User Class", () => {
 
         describe("isAdmin/0", () => {
             it("should return false if the user's role is not set or is owner", () => {
-                const owner = new User({email: "test@example.com", role: Role.OWNER});
+                const owner = new User({ email: "test@example.com", role: Role.OWNER });
                 expect(owner.isAdmin()).toEqual(false);
 
                 owner.role = undefined;
