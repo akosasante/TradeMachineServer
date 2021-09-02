@@ -81,7 +81,7 @@ describe("TradeController", () => {
             const res = await tradeController.getAllTrades(true);
 
             expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(undefined, undefined);
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(undefined, undefined, undefined, undefined);
             expect(mockTradeDAO.getAllTrades).toHaveBeenCalledTimes(0);
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(0);
             expect(res).toEqual([testTrade as HydratedTrade]);
@@ -91,7 +91,16 @@ describe("TradeController", () => {
             const res = await tradeController.getAllTrades(true, 50, 1);
 
             expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(50, 1);
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(50, 1, undefined, undefined);
+            expect(res).toEqual([testTrade as HydratedTrade]);
+        });
+        it("should pass in any search parameters to the hydrated trade call if present", async () => {
+            mockTradeDAO.returnHydratedTrades.mockResolvedValueOnce([testTrade as HydratedTrade]); // TODO: update this test to properly use a hydrated trade
+            const team = TeamFactory.getTeam();
+            const res = await tradeController.getAllTrades(true, undefined, undefined, TradeStatus.PENDING, team.name);
+
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(undefined, undefined, TradeStatus.PENDING, team.name);
             expect(res).toEqual([testTrade as HydratedTrade]);
         });
         it("should bubble up any errors from the DAO", async () => {
