@@ -1,12 +1,12 @@
-import {DeleteResult, FindManyOptions, getConnection, Raw, Repository} from "typeorm";
-import Trade, {TradeStatus} from "../models/trade";
-import TradeItem, {TradeItemType} from "../models/tradeItem";
+import { DeleteResult, FindManyOptions, getConnection, Raw, Repository } from "typeorm";
+import Trade, { TradeStatus } from "../models/trade";
+import TradeItem, { TradeItemType } from "../models/tradeItem";
 import TradeParticipant from "../models/tradeParticipant";
-import {BadRequestError} from "routing-controllers";
+import { BadRequestError } from "routing-controllers";
 import PlayerDAO from "./PlayerDAO";
 import DraftPickDAO from "./DraftPickDAO";
-import {HydratedTrade} from "../models/views/hydratedTrades";
-import {FindConditions} from "typeorm/find-options/FindConditions";
+import { HydratedTrade } from "../models/views/hydratedTrades";
+import { FindConditions } from "typeorm/find-options/FindConditions";
 
 interface TradeDeleteResult extends DeleteResult {
     raw: Trade[];
@@ -33,25 +33,38 @@ export default class TradeDAO {
     }
 
     public async getAllTrades(): Promise<Trade[]> {
-        const options: FindManyOptions = {order: {id: "ASC"}};
+        const options: FindManyOptions = { order: { id: "ASC" } };
         return await this.tradeDb.find(options);
     }
 
-    public async returnHydratedTrades(pageSize = 25, pageNumber = 1, status?: TradeStatus, includeTeam?: string): Promise<HydratedTrade[]> {
-        const statusWhereClause: FindConditions<HydratedTrade>[] = status ? [{tradeStatus: status}] : [];
-        const participantWhereClause: FindConditions<HydratedTrade>[] = includeTeam ? [{tradeCreator: includeTeam}, {tradeRecipients: Raw(tp => `:teamName = ANY("${tp}")`, {teamName: includeTeam})}] : [];
+    public async returnHydratedTrades(
+        pageSize = 25,
+        pageNumber = 1,
+        status?: TradeStatus,
+        includeTeam?: string
+    ): Promise<HydratedTrade[]> {
+        const statusWhereClause: FindConditions<HydratedTrade>[] = status ? [{ tradeStatus: status }] : [];
+        const participantWhereClause: FindConditions<HydratedTrade>[] = includeTeam
+            ? [
+                  { tradeCreator: includeTeam },
+                  { tradeRecipients: Raw(tp => ':teamName = ANY("tradeRecipients")', { teamName: includeTeam }) },
+              ]
+            : [];
         const where = [...statusWhereClause, ...participantWhereClause];
-        const whereClause = where.length > 0 ? {where} : null;
+        const whereClause = where.length > 0 ? { where } : null;
 
         const pagingOptions = {
             skip: (pageNumber - 1) * pageSize,
             take: pageSize,
         };
 
-        return await (whereClause ? this.hydratedTradeDb.find({
-            order: {dateCreated: "DESC"}, ...pagingOptions,
-            where,
-        }) : this.hydratedTradeDb.find({order: {dateCreated: "DESC"}, ...pagingOptions}));
+        return await (whereClause
+            ? this.hydratedTradeDb.find({
+                  order: { dateCreated: "DESC" },
+                  ...pagingOptions,
+                  where,
+              })
+            : this.hydratedTradeDb.find({ order: { dateCreated: "DESC" }, ...pagingOptions }));
     }
 
     public async getTradeById(id: string): Promise<Trade> {

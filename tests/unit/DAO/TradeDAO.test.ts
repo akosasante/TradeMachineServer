@@ -1,17 +1,17 @@
 import "jest-extended";
-import {FindOperator, Repository} from "typeorm";
+import { FindOperator, Repository } from "typeorm";
 import TradeDAO from "../../../src/DAO/TradeDAO";
-import {TradeFactory} from "../../factories/TradeFactory";
-import {mockDeleteChain, mockExecute, MockObj, mockWhereInIds} from "./daoHelpers";
-import Trade, {TradeStatus} from "../../../src/models/trade";
+import { TradeFactory } from "../../factories/TradeFactory";
+import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
+import Trade, { TradeStatus } from "../../../src/models/trade";
 import logger from "../../../src/bootstrap/logger";
-import {v4 as uuid} from "uuid";
+import { v4 as uuid } from "uuid";
 import TradeItem from "../../../src/models/tradeItem";
 import TradeParticipant from "../../../src/models/tradeParticipant";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
-import {HydratedTrade} from "../../../src/models/views/hydratedTrades";
-import {TeamFactory} from "../../factories/TeamFactory";
+import { HydratedTrade } from "../../../src/models/views/hydratedTrades";
+import { TeamFactory } from "../../factories/TeamFactory";
 
 describe("TradeDAO", () => {
     const mockTradeDb: MockObj = {
@@ -67,25 +67,32 @@ describe("TradeDAO", () => {
     it("returnHydratedTrades - should call find on the hydrated trades repo", async () => {
         await tradeDAO.returnHydratedTrades();
         expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({order: {dateCreated: "DESC"}, take: 25, skip: 0});
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({ order: { dateCreated: "DESC" }, take: 25, skip: 0 });
     });
 
     it("returnHydratedTrades - should correctly format the where clause for parameters passed in", async () => {
-        const defaultQueryParams = {order: {dateCreated: "DESC"}, take: 25, skip: 0};
+        const defaultQueryParams = { order: { dateCreated: "DESC" }, take: 25, skip: 0 };
         const team = TeamFactory.getTeam();
-        const expectedStatusClause = [{tradeStatus: TradeStatus.PENDING}];
-        const expectedParticipantsClause = [{tradeCreator: team.name}, {tradeRecipients: new FindOperator("raw", expect.toBeArray(), true, true, expect.toBeFunction(), {"teamName": team.name})}];
-        const expectedWhereClauseBoth = {where: [...expectedStatusClause, ...expectedParticipantsClause]};
+        const expectedStatusClause = [{ tradeStatus: TradeStatus.PENDING }];
+        const expectedParticipantsClause = [
+            { tradeCreator: team.name },
+            {
+                tradeRecipients: new FindOperator("raw", expect.toBeArray(), true, true, expect.toBeFunction(), {
+                    teamName: team.name,
+                }),
+            },
+        ];
+        const expectedWhereClauseBoth = { where: [...expectedStatusClause, ...expectedParticipantsClause] };
 
         await tradeDAO.returnHydratedTrades(undefined, undefined, TradeStatus.PENDING, team.name);
 
         expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({...defaultQueryParams, ...expectedWhereClauseBoth});
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({ ...defaultQueryParams, ...expectedWhereClauseBoth });
 
         await tradeDAO.returnHydratedTrades(undefined, undefined, TradeStatus.PENDING);
 
         expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(2);
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({...defaultQueryParams, where: expectedStatusClause});
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({ ...defaultQueryParams, where: expectedStatusClause });
 
         await tradeDAO.returnHydratedTrades(undefined, undefined, undefined, team.name);
 

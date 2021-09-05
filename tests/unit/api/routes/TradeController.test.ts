@@ -100,7 +100,12 @@ describe("TradeController", () => {
             const res = await tradeController.getAllTrades(true, undefined, undefined, TradeStatus.PENDING, team.name);
 
             expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(undefined, undefined, TradeStatus.PENDING, team.name);
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(
+                undefined,
+                undefined,
+                TradeStatus.PENDING,
+                team.name
+            );
             expect(res).toEqual([testTrade as HydratedTrade]);
         });
         it("should bubble up any errors from the DAO", async () => {

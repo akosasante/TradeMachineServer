@@ -1,4 +1,4 @@
-import {differenceBy} from "lodash";
+import { differenceBy } from "lodash";
 import {
     Authorized,
     BadRequestError,
@@ -13,21 +13,21 @@ import {
     Put,
     QueryParam,
     Req,
-    UnauthorizedError
+    UnauthorizedError,
 } from "routing-controllers";
-import {inspect} from "util";
+import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import TradeDAO from "../../DAO/TradeDAO";
-import Trade, {TradeStatus} from "../../models/trade";
-import User, {Role} from "../../models/user";
-import {UUID_PATTERN} from "../helpers/ApiHelpers";
+import Trade, { TradeStatus } from "../../models/trade";
+import User, { Role } from "../../models/user";
+import { UUID_PATTERN } from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
-import {HydratedTrade} from "../../models/views/hydratedTrades";
-import {appendNewTrade} from "../../csv/TradeTracker";
-import {EmailPublisher} from "../../email/publishers";
-import {SlackPublisher} from "../../slack/publishers";
-import {rollbar} from "../../bootstrap/rollbar";
-import {Request} from "express";
+import { HydratedTrade } from "../../models/views/hydratedTrades";
+import { appendNewTrade } from "../../csv/TradeTracker";
+import { EmailPublisher } from "../../email/publishers";
+import { SlackPublisher } from "../../slack/publishers";
+import { rollbar } from "../../bootstrap/rollbar";
+import { Request } from "express";
 
 function validateOwnerOfTrade(user: User, trade: Trade): boolean {
     if (user.role === Role.ADMIN) {
@@ -154,8 +154,8 @@ export default class TradeController {
         @QueryParam("includeTeam") includeTeam?: string,
         @Req() request?: Request
     ): Promise<Trade[] | HydratedTrade[]> {
-        logger.debug(`get all trades endpoint; ${inspect({hydrated, pageSize, pageNumber})}`);
-        rollbar.info("getAllTrades", {hydrated, pageSize, pageNumber, status, includeTeam}, request);
+        logger.debug(`get all trades endpoint; ${inspect({ hydrated, pageSize, pageNumber, status, includeTeam })}`);
+        rollbar.info("getAllTrades", { hydrated, pageSize, pageNumber, status, includeTeam }, request);
         if (hydrated) {
             const hydratedTrades = await this.dao.returnHydratedTrades(pageSize, pageNumber, status, includeTeam);
             logger.debug(`got ${hydratedTrades.length} hydrated trades`);
