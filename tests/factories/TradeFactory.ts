@@ -107,4 +107,19 @@ export class TradeFactory {
     public static getTradeRecipient(team?: Team, trade?: Trade) {
         return new TradeParticipant({ id: uuid(), participantType: TradeParticipantType.RECIPIENT, trade, team });
     }
+
+    public static replaceItemParticipants(trade: Trade, mapper: { [teamNameToReplace: string]: Team }) {
+        const teamsToReplace = Object.keys(mapper);
+        return (trade.tradeItems || []).map(ti => {
+            if (teamsToReplace.includes(ti.sender.name)) {
+                ti.sender = mapper[ti.sender.name];
+            }
+
+            if (teamsToReplace.includes(ti.recipient.name)) {
+                ti.recipient = mapper[ti.recipient.name];
+            }
+
+            return ti;
+        });
+    }
 }
