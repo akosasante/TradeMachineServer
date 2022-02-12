@@ -19,7 +19,7 @@ export class cacheSynch1610590777794 implements MigrationInterface {
         // await queryRunner.query(`ALTER TABLE "dev"."trade_item" DROP COLUMN "test"`);
         // await queryRunner.query(`ALTER TABLE "dev"."trade_item" DROP COLUMN "test_uuid"`);
         await queryRunner.createTable(this.cacheTable, true);
-        await queryRunner.query(`ALTER TABLE "dev"."${cacheSynch1610590777794.name}"
+        await queryRunner.query(`ALTER TABLE "dev"."${this.cacheTable.name}"
             owner to trader_dev;`);
     }
 
