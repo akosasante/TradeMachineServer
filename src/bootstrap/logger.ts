@@ -36,6 +36,7 @@ if (process.env.NODE_ENV !== "test") {
         filename: `${logDir}/server-error.log`,
         level: "error",
         eol: "\r\n",
+        format: json(),
         maxsize: 52428800,
         maxFiles: 10,
         tailable: true,
@@ -54,6 +55,7 @@ if (process.env.NODE_ENV !== "test") {
     exceptionHandler = new winston.transports.File({
         filename: `${logDir}/uncaught-exceptions.log`,
         eol: "\r\n",
+        format: json(),
         maxsize: 52428800,
         maxFiles: 10,
         tailable: true,
