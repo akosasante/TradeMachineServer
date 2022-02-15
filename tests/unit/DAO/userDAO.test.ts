@@ -16,7 +16,7 @@ describe("UserDAO", () => {
     };
 
     const testUser = UserFactory.getUser();
-    const userDAO: UserDAO = new UserDAO((mockUserDb as unknown) as Repository<User>);
+    const userDAO: UserDAO = new UserDAO(mockUserDb as unknown as Repository<User>);
 
     afterEach(async () => {
         Object.values(mockUserDb).forEach(mockFn => mockFn.mockReset());
@@ -122,11 +122,11 @@ describe("UserDAO", () => {
             const condition = testUser.email;
             const res = await userDAO.findUserWithPasswordByEmail(condition);
 
-            expect(whereFn).toBeCalledWith("user.email ILIKE :email", { email: testUser.email });
-            expect(addSelectFn).toBeCalledWith("user.password");
-            expect(addSelectFn).toBeCalledWith("user.email");
-            expect(selectFn).toBeCalledWith("user.id");
-            expect(mockUserDb.createQueryBuilder).toBeCalledWith("user");
+            expect(whereFn).toHaveBeenCalledWith("user.email ILIKE :email", { email: testUser.email });
+            expect(addSelectFn).toHaveBeenCalledWith("user.password");
+            expect(addSelectFn).toHaveBeenCalledWith("user.email");
+            expect(selectFn).toHaveBeenCalledWith("user.id");
+            expect(mockUserDb.createQueryBuilder).toHaveBeenCalledWith("user");
             expect(res).toEqual(testUser);
         });
     });

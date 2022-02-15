@@ -27,8 +27,8 @@ describe("DraftPickController", () => {
     };
     const testDraftPick = DraftPickFactory.getPick();
     const draftPickController = new DraftPickController(
-        (mockDraftPickDAO as unknown) as DraftPickDAO,
-        (mockTeamDAO as unknown) as TeamDAO
+        mockDraftPickDAO as unknown as DraftPickDAO,
+        mockTeamDAO as unknown as TeamDAO
     );
 
     afterEach(() => {

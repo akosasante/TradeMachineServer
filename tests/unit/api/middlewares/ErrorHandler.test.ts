@@ -26,7 +26,7 @@ describe("Error handler middleware", () => {
     afterEach(() => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
         Object.values(response).forEach(mockFn => mockFn.mockClear());
-        ((next as unknown) as jest.Mock).mockReset();
+        (next as unknown as jest.Mock).mockReset();
     });
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const errorObjectExpect = expect.objectContaining({ message: expect.any(String), stack: expect.any(String) });
@@ -36,8 +36,8 @@ describe("Error handler middleware", () => {
         const responseWithHeadersSent: Response = { ...response, headersSent: true };
 
         errorHandler.error(error, request, responseWithHeadersSent, next);
-        expect(next).toBeCalledTimes(1);
-        expect(next).toBeCalledWith(error);
+        expect(next).toHaveBeenCalledTimes(1);
+        expect(next).toHaveBeenCalledWith(error);
     });
     it("should call response with the status and error object if HTTP Error", async () => {
         const error = new HttpError(409, "generic error");

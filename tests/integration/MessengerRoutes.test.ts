@@ -28,21 +28,14 @@ let teamDAO: TeamDAO;
 const emailPublisher = EmailPublisher.getInstance();
 const slackPublisher = SlackPublisher.getInstance();
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 async function shutdown() {
-    await new Promise<void>((resolve, reject) => {
-        redisClient.quit((err, reply) => {
-            if (err) {
-                reject(err);
-            } else {
-                logger.debug(`Redis quit successfully with reply ${reply}`);
-                resolve();
-            }
-        });
-    });
-    // redis.quit() creates a thread to close the connection.
-    // We wait until all threads have been run once to ensure the connection closes.
-    return await new Promise(resolve => setImmediate(resolve));
+    try {
+        await redisClient.disconnect();
+        await emailPublisher.closeQueue();
+        await slackPublisher.closeQueue();
+    } catch (err) {
+        logger.error(`Error while closing redis: ${err}`);
+    }
 }
 
 beforeAll(async () => {
@@ -96,8 +89,10 @@ describe("Messenger API endpoints", () => {
     });
 
     describe("POST /requestTrade/:id (send trade request email)", () => {
-        const req = (id: string, status = 202) => (agent: request.SuperTest<request.Test>) =>
-            makePostRequest<undefined>(agent, `/messenger/requestTrade/${id}`, undefined, status);
+        const req =
+            (id: string, status = 202) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<undefined>(agent, `/messenger/requestTrade/${id}`, undefined, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -110,7 +105,7 @@ describe("Messenger API endpoints", () => {
             const { body } = await adminLoggedIn(req(requestedTrade.id!), app);
             const queueLengthAfter = await emailPublisher.getJobTotal();
 
-            expect(body.status).toEqual("trade request queued");
+            expect(body.status).toBe("trade request queued");
             expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
         });
         it("should queue a trade request job successfully if logged in as an owner", async () => {
@@ -120,7 +115,7 @@ describe("Messenger API endpoints", () => {
             const { body } = await ownerLoggedIn(req(requestedTrade.id!), app);
             const queueLengthAfter = await emailPublisher.getJobTotal();
 
-            expect(body.status).toEqual("trade request queued");
+            expect(body.status).toBe("trade request queued");
             expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
         }, 2000);
         it("should return a 400 Bad Request if the trade status is not REQUESTED", async () => {
@@ -151,8 +146,10 @@ describe("Messenger API endpoints", () => {
     });
 
     describe("POST /declineTrade/:id (send trade declined email)", () => {
-        const req = (id: string, status = 202) => (agent: request.SuperTest<request.Test>) =>
-            makePostRequest<undefined>(agent, `/messenger/declineTrade/${id}`, undefined, status);
+        const req =
+            (id: string, status = 202) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<undefined>(agent, `/messenger/declineTrade/${id}`, undefined, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -168,7 +165,7 @@ describe("Messenger API endpoints", () => {
             const { body } = await adminLoggedIn(req(declinedTrade.id!), app);
             const queueLengthAfter = await emailPublisher.getJobTotal();
 
-            expect(body.status).toEqual("trade decline email queued");
+            expect(body.status).toBe("trade decline email queued");
             expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
         });
         it("should queue a trade declined email job successfully if logged in as an owner", async () => {
@@ -181,7 +178,7 @@ describe("Messenger API endpoints", () => {
             const { body } = await ownerLoggedIn(req(declinedTrade.id!), app);
             const queueLengthAfter = await emailPublisher.getJobTotal();
 
-            expect(body.status).toEqual("trade decline email queued");
+            expect(body.status).toBe("trade decline email queued");
             expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
         });
         it("should return a 400 Bad Request if the trade status is not DECLINED", async () => {
@@ -216,8 +213,10 @@ describe("Messenger API endpoints", () => {
     });
 
     describe("POST /submitTrade/:id (send trade announcement to slack)", () => {
-        const req = (id: string, status = 202) => (agent: request.SuperTest<request.Test>) =>
-            makePostRequest<undefined>(agent, `/messenger/submitTrade/${id}`, undefined, status);
+        const req =
+            (id: string, status = 202) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<undefined>(agent, `/messenger/submitTrade/${id}`, undefined, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -230,7 +229,7 @@ describe("Messenger API endpoints", () => {
             const { body } = await adminLoggedIn(req(submittedTrade.id!), app);
             const queueLengthAfter = await slackPublisher.getJobTotal();
 
-            expect(body.status).toEqual("accepted trade announcement queued");
+            expect(body.status).toBe("accepted trade announcement queued");
             expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
         });
         it("should queue a trade announcement job successfully if logged in as an owner", async () => {
@@ -240,7 +239,7 @@ describe("Messenger API endpoints", () => {
             const { body } = await ownerLoggedIn(req(submittedTrade.id!), app);
             const queueLengthAfter = await slackPublisher.getJobTotal();
 
-            expect(body.status).toEqual("accepted trade announcement queued");
+            expect(body.status).toBe("accepted trade announcement queued");
             expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
         });
         it("should return a 400 Bad Request if the trade status is not SUBMITTED", async () => {
@@ -272,8 +271,10 @@ describe("Messenger API endpoints", () => {
     });
 
     describe("POST /acceptTrade/:id (send trade acceptance email)", () => {
-        const req = (id: string, status = 202) => (agent: request.SuperTest<request.Test>) =>
-            makePostRequest<undefined>(agent, `/messenger/acceptTrade/${id}`, undefined, status);
+        const req =
+            (id: string, status = 202) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<undefined>(agent, `/messenger/acceptTrade/${id}`, undefined, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -286,7 +287,7 @@ describe("Messenger API endpoints", () => {
             const { body } = await adminLoggedIn(req(acceptedTrade.id!), app);
             const queueLengthAfter = await emailPublisher.getJobTotal();
 
-            expect(body.status).toEqual("trade acceptance email queued");
+            expect(body.status).toBe("trade acceptance email queued");
             expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
         });
         it("should queue a trade acceptance job successfully if logged in as an owner", async () => {
@@ -296,7 +297,7 @@ describe("Messenger API endpoints", () => {
             const { body } = await ownerLoggedIn(req(acceptedTrade.id!), app);
             const queueLengthAfter = await emailPublisher.getJobTotal();
 
-            expect(body.status).toEqual("trade acceptance email queued");
+            expect(body.status).toBe("trade acceptance email queued");
             expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
         });
         it("should return a 400 Bad Request if the trade is not accepted", async () => {

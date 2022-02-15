@@ -37,21 +37,12 @@ let userDAO: UserDAO;
 let teamDAO: TeamDAO;
 let playerDAO: PlayerDAO;
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 async function shutdown() {
-    await new Promise<void>((resolve, reject) => {
-        redisClient.quit((err, reply) => {
-            if (err) {
-                reject(err);
-            } else {
-                logger.debug(`Redis quit successfully with reply ${reply}`);
-                resolve();
-            }
-        });
-    });
-    // redis.quit() creates a thread to close the connection.
-    // We wait until all threads have been run once to ensure the connection closes.
-    return await new Promise(resolve => setImmediate(resolve));
+    try {
+        await redisClient.disconnect();
+    } catch (err) {
+        logger.error(`Error while closing redis: ${err}`);
+    }
 }
 
 beforeAll(async () => {
@@ -89,8 +80,10 @@ describe("Player API endpoints", () => {
 
     describe("POST /players (create new player)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (playerObjs: Partial<Player>[], status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makePostRequest<Partial<Player>[]>(agent, "/players", playerObjs, status);
+        const postRequest =
+            (playerObjs: Partial<Player>[], status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<Partial<Player>[]>(agent, "/players", playerObjs, status);
         const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/players/${id}`, status);
 
         it("should return a list of player objects based on object(s) passed in", async () => {
@@ -109,6 +102,7 @@ describe("Player API endpoints", () => {
             const invalidPropsObj = { ...testPlayer1.parse(), blah: "Hello" };
 
             const { body } = await adminLoggedIn(postRequest([invalidPropsObj]), app);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             const { body: getBody } = await getOneRequest(body[0].id);
 
             expect(getBody).toMatchObject({
@@ -144,6 +138,7 @@ describe("Player API endpoints", () => {
             const { body } = await getAllRequest();
 
             expect(body).toBeArrayOfSize(2);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             expect(body.map((p: Player) => p.id)).toSatisfyAll(id => testPlayers.map(tp => tp.id).includes(id));
         });
         it("should return an array of all players in a given league or leagues", async () => {
@@ -249,9 +244,10 @@ describe("Player API endpoints", () => {
     });
 
     describe("PUT /players/:id (update one player)", () => {
-        const putRequest = (id: string, playerObj: Partial<Player>, status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) => makePutRequest<Partial<Player>>(agent, `/players/${id}`, playerObj, status);
+        const putRequest =
+            (id: string, playerObj: Partial<Player>, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePutRequest<Partial<Player>>(agent, `/players/${id}`, playerObj, status);
         const updatedPlayerObj = { mlbTeam: "Miami Marlins" };
 
         afterEach(async () => {
@@ -290,8 +286,10 @@ describe("Player API endpoints", () => {
     });
 
     describe("DELETE /players/:id (delete one player)", () => {
-        const deleteRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makeDeleteRequest(agent, `/players/${id}`, status);
+        const deleteRequest =
+            (id: string, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makeDeleteRequest(agent, `/players/${id}`, status);
         afterEach(async () => {
             return await doLogout(request.agent(app));
         });
@@ -335,19 +333,21 @@ describe("Player API endpoints", () => {
     describe("POST /batch (batch add new minor league players via csv file)", () => {
         // CSV contains 99 minor league players
         const csv = `${process.env.BASE_DIR}/tests/resources/three-teams-four-owners-minor-players.csv`;
-        const postFileRequest = (filePath: string, mode?: WriteMode, status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) =>
-            agent
-                .post(`/players/batch${mode ? "?mode=" + mode : ""}`)
-                .attach("minors", filePath)
-                .expect("Content-Type", /json/)
-                .expect(status);
-        const requestWithoutFile = (mode?: WriteMode, status = 200) => (agent: request.SuperTest<request.Test>) =>
-            agent
-                .post(`/players/batch${mode ? "?mode=" + mode : ""}`)
-                .expect("Content-Type", /json/)
-                .expect(status);
+        const postFileRequest =
+            (filePath: string, mode?: WriteMode, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                agent
+                    .post(`/players/batch${mode ? "?mode=" + mode : ""}`)
+                    .attach("minors", filePath)
+                    .expect("Content-Type", /json/)
+                    .expect(status);
+        const requestWithoutFile =
+            (mode?: WriteMode, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                agent
+                    .post(`/players/batch${mode ? "?mode=" + mode : ""}`)
+                    .expect("Content-Type", /json/)
+                    .expect(status);
 
         beforeEach(async () => {
             // Updating + adding users for each of the owners in the test CSV file
@@ -396,7 +396,7 @@ describe("Player API endpoints", () => {
 
             const { body: afterGetAllResMinorsOnly } = await request(app).get("/players?include[]=minors").expect(200);
             expect(afterGetAllResMinorsOnly).toBeArrayOfSize(100);
-        }, 2000);
+        }, 5000);
         it("should append with the given mode passed in", async () => {
             const initialPlayers = [
                 PlayerFactory.getPlayer(),

@@ -78,8 +78,8 @@ describe("TradeTracker.appendNewTrade/1", () => {
             },
         };
 
-        expect(mockBatchUpdate).toBeCalledTimes(1);
-        expect(mockBatchUpdate).toBeCalledWith(expectedBatchUpdate);
+        expect(mockBatchUpdate).toHaveBeenCalledTimes(1);
+        expect(mockBatchUpdate).toHaveBeenCalledWith(expectedBatchUpdate);
     });
 
     it("should contain the correct amount of cells", () => {
@@ -93,7 +93,7 @@ describe("TradeTracker.appendNewTrade/1", () => {
 
     it("should leave a blank cell for ratings", () => {
         const ratingCells = [values[5], values[10]];
-        // eslint-disable-next-line @typescript-eslint/ban-types
+
         ratingCells.forEach((cell: object) =>
             expect(cell).toEqual(expect.objectContaining({ userEnteredValue: { stringValue: " " } }))
         );
@@ -111,7 +111,7 @@ describe("TradeTracker.appendNewTrade/1", () => {
         const creatorReceivedPlayers = values[2];
         const creatorReceivedPicks = values[4];
         const receiverProspects = values[8];
-        // eslint-disable-next-line @typescript-eslint/ban-types
+
         [creatorReceivedPlayers, creatorReceivedPicks, receiverProspects].forEach((cell: object) =>
             expect(cell).toEqual(expect.objectContaining({ userEnteredValue: { stringValue: "" } }))
         );

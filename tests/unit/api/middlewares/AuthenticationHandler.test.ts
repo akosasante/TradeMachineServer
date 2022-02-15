@@ -37,13 +37,13 @@ describe("Authentication middleware", () => {
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                session: ({ save: jest.fn() } as unknown) as Session & SessionData,
+                session: { save: jest.fn() } as unknown as Session & SessionData,
             };
 
-            const loginHandler = new LoginHandler((mockUserDAO as unknown) as UserDAO);
+            const loginHandler = new LoginHandler(mockUserDAO as unknown as UserDAO);
             await loginHandler.use(request as Request, {} as Response, next);
 
-            expect(request.session.save).toBeCalledTimes(1);
+            expect(request.session.save).toHaveBeenCalledTimes(1);
             expect(request.session.user).toBeDefined();
             expect(request.session.user).toEqual(testUser.id);
         });
@@ -51,17 +51,17 @@ describe("Authentication middleware", () => {
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                session: ({ destroy: jest.fn() } as unknown) as Session & SessionData,
+                session: { destroy: jest.fn() } as unknown as Session & SessionData,
             };
 
-            const loginHandler = new LoginHandler((mockUserDAO as unknown) as UserDAO);
+            const loginHandler = new LoginHandler(mockUserDAO as unknown as UserDAO);
             await loginHandler.use(request as Request, {} as Response, next);
 
-            expect(next).toBeCalledTimes(1);
-            expect(next).toBeCalledWith(
+            expect(next).toHaveBeenCalledTimes(1);
+            expect(next).toHaveBeenCalledWith(
                 new UnauthorizedError("User could not be authenticated. Error with sign-in strategy: no user found")
             );
-            expect(request.session.destroy).toBeCalledTimes(1);
+            expect(request.session.destroy).toHaveBeenCalledTimes(1);
             expect(request.session.user).toBeUndefined();
         });
     });
@@ -74,14 +74,14 @@ describe("Authentication middleware", () => {
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                session: ({} as unknown) as Session & SessionData,
+                session: {} as unknown as Session & SessionData,
             };
 
-            const registerHandler = new RegisterHandler((mockUserDAO as unknown) as UserDAO);
+            const registerHandler = new RegisterHandler(mockUserDAO as unknown as UserDAO);
             await registerHandler.use(request as Request, {} as Response, next);
 
-            expect(next).toBeCalledTimes(1);
-            expect(next).toBeCalledWith();
+            expect(next).toHaveBeenCalledTimes(1);
+            expect(next).toHaveBeenCalledWith();
             expect(request.session.user).toBeDefined();
             expect(request.session.user).toEqual(testUser.id);
         });
@@ -90,14 +90,14 @@ describe("Authentication middleware", () => {
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                session: ({} as unknown) as Session & SessionData,
+                session: {} as unknown as Session & SessionData,
             };
 
-            const registerHandler = new RegisterHandler((mockUserDAO as unknown) as UserDAO);
+            const registerHandler = new RegisterHandler(mockUserDAO as unknown as UserDAO);
             await registerHandler.use(request as Request, {} as Response, next);
 
-            expect(next).toBeCalledTimes(1);
-            expect(next).toBeCalledWith(new ConflictError("Email already in use and signed up."));
+            expect(next).toHaveBeenCalledTimes(1);
+            expect(next).toHaveBeenCalledWith(new ConflictError("Email already in use and signed up."));
             expect(request.session.user).toBeUndefined();
         });
     });

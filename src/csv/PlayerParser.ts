@@ -49,7 +49,7 @@ async function maybeDropMinorPlayers(dao: PlayerDAO, mode?: WriteMode) {
             await dao.deleteAllPlayers({ league: PlayerLeagueType.MINOR });
         } catch (e) {
             logger.error(inspect(e));
-            rollbar.error(e);
+            rollbar.error(inspect(e));
             throw e;
         }
     }

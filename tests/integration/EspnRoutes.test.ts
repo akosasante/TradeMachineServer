@@ -13,21 +13,12 @@ let app: Server;
 let adminUser: User;
 let ownerUser: User;
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 async function shutdown() {
-    await new Promise<void>((resolve, reject) => {
-        redisClient.quit((err, reply) => {
-            if (err) {
-                reject(err);
-            } else {
-                logger.debug(`Redis quit successfully with reply ${reply}`);
-                resolve();
-            }
-        });
-    });
-    // redis.quit() creates a thread to close the connection.
-    // We wait until all threads have been run once to ensure the connection closes.
-    return await new Promise(resolve => setImmediate(resolve));
+    try {
+        await redisClient.disconnect();
+    } catch (err) {
+        logger.error(`Error while closing redis: ${err}`);
+    }
 }
 
 beforeAll(async () => {
@@ -57,10 +48,12 @@ describe("ESPN API endpoints", () => {
     });
 
     describe("GET /espn/teams?year (get all ESPN teams)", () => {
-        const getAllRequest = (year?: number, status = 200) => (agent: request.SuperTest<request.Test>) => {
-            const yearParam = year ? `?year=${year}` : "";
-            return makeGetRequest(agent, `/espn/teams${yearParam}`, status);
-        };
+        const getAllRequest =
+            (year?: number, status = 200) =>
+            (agent: request.SuperTest<request.Test>) => {
+                const yearParam = year ? `?year=${year}` : "";
+                return makeGetRequest(agent, `/espn/teams${yearParam}`, status);
+            };
 
         it("should return all teams in the default year", async () => {
             const { body } = await adminLoggedIn(getAllRequest(), app);
@@ -83,10 +76,12 @@ describe("ESPN API endpoints", () => {
     });
 
     describe("GET /espn/members?year (get all ESPN teams)", () => {
-        const getAllRequest = (year?: number, status = 200) => (agent: request.SuperTest<request.Test>) => {
-            const yearParam = year ? `?year=${year}` : "";
-            return makeGetRequest(agent, `/espn/members${yearParam}`, status);
-        };
+        const getAllRequest =
+            (year?: number, status = 200) =>
+            (agent: request.SuperTest<request.Test>) => {
+                const yearParam = year ? `?year=${year}` : "";
+                return makeGetRequest(agent, `/espn/members${yearParam}`, status);
+            };
 
         it("should return all members in the default year", async () => {
             const { body } = await adminLoggedIn(getAllRequest(), app);

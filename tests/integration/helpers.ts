@@ -30,7 +30,7 @@ export async function makePostRequest<T>(
 ) {
     return agent
         .post(url)
-        .send((obj as unknown) as { [key: string]: string | number | undefined | null })
+        .send(obj as unknown as { [key: string]: string | number | undefined | null })
         .expect("Content-Type", /json/)
         .expect(expectedStatus);
 }
@@ -47,7 +47,7 @@ export async function makePutRequest<T>(
 ) {
     return agent
         .put(url)
-        .send((obj as unknown) as { [key: string]: string | number | undefined | null })
+        .send(obj as unknown as { [key: string]: string | number | undefined | null })
         .expect("Content-Type", /json/)
         .expect(expectedStatus);
 }
@@ -64,7 +64,7 @@ export async function makePatchRequest<T>(
 ) {
     return agent
         .patch(url)
-        .send((obj as unknown) as { [key: string]: string | number | undefined | null })
+        .send(obj as unknown as { [key: string]: string | number | undefined | null })
         .expect("Content-Type", /json/)
         .expect(expectedStatus);
 }

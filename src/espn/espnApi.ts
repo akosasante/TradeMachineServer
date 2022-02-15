@@ -6,7 +6,6 @@ import PlayerDAO from "../DAO/PlayerDAO";
 import TeamDAO from "../DAO/TeamDAO";
 import { cleanupQuery } from "../api/helpers/ApiHelpers";
 
-/* eslint-disable @typescript-eslint/ban-types */
 export interface EspnLeagueMember {
     id: string;
     isLeagueManager: boolean;
@@ -131,7 +130,6 @@ interface EspnScheduleItem {
     away?: EspnScoreObj;
     playoffTierType?: string;
 }
-/* eslint-enable @typescript-eslint/ban-types */
 
 type EspnSchedule = EspnScheduleItem[];
 

@@ -4,17 +4,17 @@ import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import EspnAPI from "../../../src/espn/espnApi";
 import { EspnUpdateDaos, updateEspnData } from "../../../src/scheduled_jobs/espnScheduledUpdate";
 
-const mockPlayerDao = ({} as unknown) as PlayerDAO;
-const mockTeamDao = ({} as unknown) as TeamDAO;
-const mockEspnApi = ({
+const mockPlayerDao = {} as unknown as PlayerDAO;
+const mockTeamDao = {} as unknown as TeamDAO;
+const mockEspnApi = {
     updateEspnTeamInfo: jest.fn(),
     updateMajorLeaguePlayers: jest.fn(),
-} as unknown) as EspnAPI;
-const mockDeps = ({
+} as unknown as EspnAPI;
+const mockDeps = {
     playerDao: mockPlayerDao,
     teamDao: mockTeamDao,
     espnApi: mockEspnApi,
-} as unknown) as EspnUpdateDaos;
+} as unknown as EspnUpdateDaos;
 
 describe("Espn Scheduled Update Jobs", () => {
     beforeAll(() => {

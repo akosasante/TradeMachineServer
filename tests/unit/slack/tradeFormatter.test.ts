@@ -29,12 +29,12 @@ trade.tradeItems?.forEach(it => {
 });
 const mockGetPlayerById = jest.fn();
 
-const mockPickDao = ({
+const mockPickDao = {
     getPickById: jest.fn().mockResolvedValue(tradedPick),
-} as unknown) as DraftPickDAO;
-const mockPlayerDao = ({
+} as unknown as DraftPickDAO;
+const mockPlayerDao = {
     getPlayerById: mockGetPlayerById,
-} as unknown) as PlayerDAO;
+} as unknown as PlayerDAO;
 
 afterEach(() => {
     mockGetPlayerById.mockClear();
@@ -46,17 +46,17 @@ afterEach(() => {
 
 describe("Trade Formatter methods", () => {
     it("getTitleText/0 should return the expected title text", () => {
-        expect(TradeFormatter.getTitleText()).toEqual(":loud_sound:  *A Trade Has Been Submitted*  :loud_sound:");
+        expect(TradeFormatter.getTitleText()).toBe(":loud_sound:  *A Trade Has Been Submitted*  :loud_sound:");
     });
     it("getLinkText/0 should return the expected link text", () => {
-        expect(TradeFormatter.getLinkText()).toEqual(
+        expect(TradeFormatter.getLinkText()).toBe(
             ":link: Submit trades on the <https://trades.flexfoxfantasy.com|FlexFoxFantasy TradeMachine> by 11:00PM ET"
         );
     });
     it("getPickTypeString/1 should return the appropriate pick type text", () => {
-        expect(TradeFormatter.getPickTypeString(LeagueLevel.MAJORS)).toEqual("Major League");
-        expect(TradeFormatter.getPickTypeString(LeagueLevel.HIGH)).toEqual("High Minors");
-        expect(TradeFormatter.getPickTypeString(LeagueLevel.LOW)).toEqual("Low Minors");
+        expect(TradeFormatter.getPickTypeString(LeagueLevel.MAJORS)).toBe("Major League");
+        expect(TradeFormatter.getPickTypeString(LeagueLevel.HIGH)).toBe("High Minors");
+        expect(TradeFormatter.getPickTypeString(LeagueLevel.LOW)).toBe("Low Minors");
     });
     it("getNotificationText/1 should format the team names involved in the trade", () => {
         const text = TradeFormatter.getNotificationText(trade);

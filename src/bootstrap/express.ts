@@ -1,10 +1,9 @@
-import bodyParser from "body-parser";
 import compression from "compression";
 import connectRedis from "connect-redis";
 import express from "express";
 import expressSession from "express-session";
 import morgan from "morgan";
-import redis from "redis";
+import { createClient } from "redis";
 import responseTime from "response-time";
 import logger from "./logger";
 import { rollbar } from "./rollbar";
@@ -18,8 +17,8 @@ app.set("env", process.env.NODE_ENV || "development");
 app.set("json spaces", 2);
 app.set("trust proxy", 1);
 app.use(compression());
-app.use(bodyParser.json({ limit: "10mb" }));
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev", { stream: { write: message => logger.info(message.trim()) } }));
 app.use(responseTime());
 app.use(rollbar.errorHandler());
@@ -27,10 +26,15 @@ app.use(rollbar.errorHandler());
 // Session tracking
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 60 sec * 60 min * 24hr * 7 = 7 days
 const redisStore = connectRedis(expressSession);
-export const redisClient = redis.createClient(
-    Number(process.env.REDIS_PORT || 6379),
-    process.env.REDIS_IP || "localhost"
-);
+
+export const redisClient = createClient({
+    // legacyMode: true is required to work with connect-redis + redis v4: https://github.com/tj/connect-redis/pull/345
+    legacyMode: true,
+    socket: {
+        host: (process.env.REDIS_IP || "localhost"),
+        port: Number(process.env.REDIS_PORT || 6379),
+    },
+});
 
 const REDIS_OPTS = {
     logErrors: true,

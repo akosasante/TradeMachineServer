@@ -28,7 +28,7 @@ export interface SendInBlueSendResponse {
         subject: string;
         html: string;
         text: string;
-        // eslint-disable-next-line @typescript-eslint/ban-types
+
         attachments: object[];
     };
 }
@@ -38,7 +38,7 @@ const SEND_IN_BLUE_OPTS = {
     apiUrl: process.env.EMAIL_API_URL,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
 const sendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SEND_IN_BLUE_OPTS));
 
 const baseDomain = process.env.BASE_URL;
@@ -103,10 +103,9 @@ function getTradeTextForRequest(trade: Trade) {
             receivedPlayers,
             ([player, _sender]) => (player as Player).league === PlayerLeagueType.MAJOR
         );
-        const receivedPicks = TradeItem.itemsReceivedBy(
-            TradeItem.filterPicks(trade.tradeItems),
-            participant.team
-        ).map(item => [item.entity as DraftPick, item.sender.name]);
+        const receivedPicks = TradeItem.itemsReceivedBy(TradeItem.filterPicks(trade.tradeItems), participant.team).map(
+            item => [item.entity as DraftPick, item.sender.name]
+        );
         return {
             sender: participant.team.name,
             majors: receivedMajors.map(

@@ -22,9 +22,9 @@ export const fileUploadOptions = {
     limits: { fieldNameSize: 255, fileSize: 1024 * 1024 * 2 },
 };
 
-export function cleanupQuery(initQuery: {
-    [key: string]: string;
-}): { [returned_key: string]: string | FindOperator<any> } {
+export function cleanupQuery(initQuery: { [key: string]: string }): {
+    [returned_key: string]: string | FindOperator<any>;
+} {
     /* clone so that we don't cause weird stuff to
     inadvertently happen by mutating the original object */
     const query = { ...initQuery };

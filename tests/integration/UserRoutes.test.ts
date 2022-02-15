@@ -29,21 +29,12 @@ let ownerUser: User;
 let adminUser: User;
 let userDao: UserDAO;
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access */
 async function shutdown() {
-    await new Promise<void>((resolve, reject) => {
-        redisClient.quit((err, reply) => {
-            if (err) {
-                reject(err);
-            } else {
-                logger.debug(`Redis quit successfully with reply ${reply}`);
-                resolve();
-            }
-        });
-    });
-    // redis.quit() creates a thread to close the connection.
-    // We wait until all threads have been run once to ensure the connection closes.
-    return await new Promise(resolve => setImmediate(resolve));
+    try {
+        await redisClient.disconnect();
+    } catch (err) {
+        logger.error(`Error while closing redis: ${err}`);
+    }
 }
 
 beforeAll(async () => {
@@ -79,8 +70,10 @@ describe("User API endpoints", () => {
         const jatheeshUser = UserFactory.getUser("jatheesh@example.com");
         const akosUser = UserFactory.getUser("akos@example.com");
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (userObj: Partial<User>, status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makePostRequest<Partial<User>>(agent, "/users", userObj, status);
+        const postRequest =
+            (userObj: Partial<User>, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<Partial<User>>(agent, "/users", userObj, status);
         const getOneRequest = (id: string) => makeGetRequest(request(app), `/users/${id}`, 200);
 
         afterEach(async () => {
@@ -106,6 +99,7 @@ describe("User API endpoints", () => {
                 bloop: "yeeeah",
             };
             const { body } = await adminLoggedIn(postRequest([invalidPropsObj]), app);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             const { body: getBody } = await getOneRequest(body[0].id);
             const expected = {
                 ...akosUser,
@@ -211,6 +205,7 @@ describe("User API endpoints", () => {
 
     describe("GET /users/search?queryOpts (get user by query)", () => {
         const findRequest = (query: any, status = 200) =>
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             makeGetRequest(request(app), `/users/search${stringifyQuery(query)}`, status);
 
         it("should return a single public user for the given query", async () => {
@@ -243,9 +238,10 @@ describe("User API endpoints", () => {
     });
 
     describe("PUT /users/:id (update one user)", () => {
-        const putRequest = (id: string, userObj: Partial<User>, status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) => makePutRequest<Partial<User>>(agent, `/users/${id}`, userObj, status);
+        const putRequest =
+            (id: string, userObj: Partial<User>, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePutRequest<Partial<User>>(agent, `/users/${id}`, userObj, status);
         const getOneRequest = (id: string) => makeGetRequest(request(app), `/users/${id}`, 200);
         const slackUsername = "MrMeSeeks92";
         const updatedAdmin = (admin: User) => ({ ...admin, slackUsername });
@@ -307,8 +303,10 @@ describe("User API endpoints", () => {
     });
 
     describe("DELETE /users/:id (delete one user)", () => {
-        const deleteRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makeDeleteRequest(agent, `/users/${id}`, status);
+        const deleteRequest =
+            (id: string, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makeDeleteRequest(agent, `/users/${id}`, status);
         const getAllRequest = () => makeGetRequest(request(app), "/users", 200);
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -323,7 +321,7 @@ describe("User API endpoints", () => {
                 (user: User) => user.id !== adminUser.id! && user.id !== ownerUser.id!
             )[0];
             expect(getAllBefore).toBeArrayOfSize(4);
-
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             const res = await adminLoggedIn(deleteRequest(deletableUser.id!), app);
             expect(res.body).toEqual({ deleteCount: 1, id: deletableUser.id! });
 

@@ -15,7 +15,9 @@ declare module "express-session" {
 }
 
 export class LoginHandler implements ExpressMiddlewareInterface {
-    constructor(public userDAO: UserDAO = new UserDAO()) {}
+    constructor(public userDAO: UserDAO = new UserDAO()) {
+        // do nothing, constructor is just to pass in the userDAO.
+    }
 
     public async use(request: Request, response: Response, next: NextFunction): Promise<void> {
         logger.debug("IN LOGIN HANDLER");
@@ -24,8 +26,8 @@ export class LoginHandler implements ExpressMiddlewareInterface {
         const password = request?.body?.password as string;
         /* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        return signInAuthentication(email, password, this.userDAO, async (err?: Error, user?: UserDO) => {
+
+        return signInAuthentication(email, password, this.userDAO, (err?: Error, user?: UserDO) => {
             if (err || !user) {
                 const message = `User could not be authenticated. ${err ? err.message : ""}`;
                 request.session.destroy((sessionDestroyErr: Error) => {
@@ -37,6 +39,7 @@ export class LoginHandler implements ExpressMiddlewareInterface {
                 request.session.save((sessionErr: any) => {
                     logger.debug(inspect(request.session));
                     if (sessionErr) {
+                        logger.error(inspect(sessionErr));
                         return next(new Error("Could not save session"));
                     }
                     return next();
@@ -47,7 +50,9 @@ export class LoginHandler implements ExpressMiddlewareInterface {
 }
 
 export class RegisterHandler implements ExpressMiddlewareInterface {
-    constructor(public userDAO: UserDAO = new UserDAO()) {}
+    constructor(public userDAO: UserDAO = new UserDAO()) {
+        // do nothing, constructor is just to pass in the userDAO.
+    }
 
     public async use(request: Request, response: Response, next: NextFunction): Promise<void> {
         logger.debug("IN REGISTER HANDLER");
@@ -58,8 +63,8 @@ export class RegisterHandler implements ExpressMiddlewareInterface {
         if (!email || !password) {
             return next(new Error("Some details are missing. Cannot register user."));
         }
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        return signUpAuthentication(email, password, this.userDAO, async (err?: Error, user?: UserDO) => {
+
+        return signUpAuthentication(email, password, this.userDAO, (err?: Error, user?: UserDO) => {
             if (err) {
                 return next(err);
             } else if (!user) {

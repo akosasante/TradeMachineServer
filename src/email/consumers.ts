@@ -14,13 +14,13 @@ export function setupEmailConsumers(): void {
     const emailQueue = new Bull(queueName, { settings: { maxStalledCount: 0, lockDuration: 60000 } });
     const cleanLoggedData = (data: any) => {
         if (data.user) {
-            const user: User = JSON.parse(data.user || "{}");
+            const user: User = JSON.parse((data.user as string) || "{}");
             return {
                 userId: user.id,
                 userName: user.displayName,
             };
         } else if (data.trade) {
-            const trade: Trade = JSON.parse(data.trade || "{}");
+            const trade: Trade = JSON.parse((data.trade as string) || "{}");
             return {
                 tradeId: trade.id,
                 status: trade.status,

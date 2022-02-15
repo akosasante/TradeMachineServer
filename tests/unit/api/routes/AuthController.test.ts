@@ -32,8 +32,8 @@ describe("AuthController", () => {
         queueResetEmail: jest.fn(),
     };
     const authController: AuthController = new AuthController(
-        (mockUserDAO as unknown) as UserDAO,
-        (mockMailPublisher as unknown) as EmailPublisher
+        mockUserDAO as unknown as UserDAO,
+        mockMailPublisher as unknown as EmailPublisher
     );
     const mockReq = { session: { destroy: jest.fn() }, sessionID: "" };
 
@@ -58,7 +58,7 @@ describe("AuthController", () => {
     describe("login method", () => {
         it("should return the user model that logged in", async () => {
             mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
-            const res = await authController.login((mockReq as unknown) as Request, mockSess as SessionData);
+            const res = await authController.login(mockReq as unknown as Request, mockSess as SessionData);
             expect(res).toEqual(testUser);
         });
     });
@@ -66,7 +66,7 @@ describe("AuthController", () => {
     describe("signup method", () => {
         it("should return the user model that signed in", async () => {
             mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
-            const res = await authController.signup((mockReq as unknown) as Request, mockSess as SessionData);
+            const res = await authController.signup(mockReq as unknown as Request, mockSess as SessionData);
             expect(res).toEqual(testUser);
         });
     });
@@ -76,18 +76,18 @@ describe("AuthController", () => {
             mockReq.session.destroy.mockImplementationOnce(cb => {
                 return cb(undefined);
             });
-            const res = await authController.logout((mockReq as unknown) as Request, mockSess as SessionData);
+            const res = await authController.logout(mockReq as unknown as Request, mockSess as SessionData);
 
             expect(mockReq.session.destroy).toHaveBeenCalledTimes(1);
             expect(mockSess.user).toBeUndefined();
-            expect(res).toEqual(true);
+            expect(res).toBe(true);
             // expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(1);
             // expect(mockUserDAO.updateUser).toHaveBeenCalledWith(testUser.id, { lastLoggedIn: expect.any(Date) });
         });
         it("should resolve the promise if there is no userId on the session", async () => {
-            const res = await authController.logout((mockReq as unknown) as Request, {} as SessionData);
+            const res = await authController.logout(mockReq as unknown as Request, {} as SessionData);
 
-            expect(res).toEqual(true);
+            expect(res).toBe(true);
             // expect(mockReq.session.destroy).toHaveBeenCalledTimes(0);
             // expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
         });
@@ -97,7 +97,7 @@ describe("AuthController", () => {
             mockReq.session.destroy.mockImplementationOnce(cb => {
                 return cb(err);
             });
-            const res = authController.logout((mockReq as unknown) as Request, mockSess as SessionData);
+            const res = authController.logout(mockReq as unknown as Request, mockSess as SessionData);
 
             await expect(res).rejects.toEqual(err);
             // expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
@@ -157,7 +157,7 @@ describe("AuthController", () => {
             mockUserDAO.findUser.mockResolvedValueOnce(testUser);
             mockUserDAO.setPasswordExpires.mockResolvedValueOnce(testUser);
 
-            await authController.sendResetEmail(testUser.email, (mockRes as unknown) as Response);
+            await authController.sendResetEmail(testUser.email, mockRes as unknown as Response);
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.findUser).toHaveBeenCalledWith({ email: testUser.email });
@@ -172,9 +172,9 @@ describe("AuthController", () => {
         });
 
         it("should throw an error if no user found", async () => {
-            await expect(
-                authController.sendResetEmail(testUser.email, (mockRes as unknown) as Response)
-            ).rejects.toThrow(NotFoundError);
+            await expect(authController.sendResetEmail(testUser.email, mockRes as unknown as Response)).rejects.toThrow(
+                NotFoundError
+            );
             expect(mockRes.status).toHaveBeenCalledTimes(0);
             expect(mockRes.json).toHaveBeenCalledTimes(0);
         });
@@ -184,7 +184,7 @@ describe("AuthController", () => {
         it("should find a user and call mailQueue", async () => {
             mockUserDAO.findUser.mockResolvedValueOnce(testUser);
 
-            await authController.sendRegistrationEmail(testUser.email, (mockRes as unknown) as Response);
+            await authController.sendRegistrationEmail(testUser.email, mockRes as unknown as Response);
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.findUser).toHaveBeenCalledWith({ email: testUser.email });
@@ -199,7 +199,7 @@ describe("AuthController", () => {
 
         it("should throw an error if there's something wrong inside", async () => {
             await expect(
-                authController.sendRegistrationEmail(testUser.email, (mockRes as unknown) as Response)
+                authController.sendRegistrationEmail(testUser.email, mockRes as unknown as Response)
             ).rejects.toThrow(NotFoundError);
             expect(mockRes.status).toHaveBeenCalledTimes(0);
             expect(mockRes.json).toHaveBeenCalledTimes(0);

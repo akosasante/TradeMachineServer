@@ -32,10 +32,10 @@ describe("TradeDAO", () => {
 
     const testTrade = TradeFactory.getTrade();
     const tradeDAO = new TradeDAO(
-        (mockTradeDb as unknown) as Repository<Trade>,
-        (mockPlayerDao as unknown) as PlayerDAO,
-        (mockPickDao as unknown) as DraftPickDAO,
-        (mockHydratedTradeDb as unknown) as Repository<HydratedTrade>
+        mockTradeDb as unknown as Repository<Trade>,
+        mockPlayerDao as unknown as PlayerDAO,
+        mockPickDao as unknown as DraftPickDAO,
+        mockHydratedTradeDb as unknown as Repository<HydratedTrade>
     );
 
     afterEach(() => {

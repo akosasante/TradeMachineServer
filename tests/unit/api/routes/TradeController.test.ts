@@ -39,7 +39,7 @@ describe("TradeController", () => {
     creator!.team.owners = [tradeOwner];
     const tradeRecipient = UserFactory.getOwnerUser();
     recipient!.team.owners = [tradeRecipient];
-    const tradeController = new TradeController((mockTradeDAO as unknown) as TradeDAO);
+    const tradeController = new TradeController(mockTradeDAO as unknown as TradeDAO);
 
     beforeAll(() => {
         logger.debug("~~~~~~TRADE CONTROLLER TESTS BEGIN~~~~~~");
@@ -147,7 +147,7 @@ describe("TradeController", () => {
             });
 
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.updateStatus).toBeCalledWith(testTrade.id, TradeStatus.ACCEPTED);
+            expect(mockTradeDAO.updateStatus).toHaveBeenCalledWith(testTrade.id, TradeStatus.ACCEPTED);
             expect(mockTradeDAO.updateItems).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.updateItems).toHaveBeenCalledWith(testTrade.id, [], testTrade.tradeItems);
             expect(mockTradeDAO.updateParticipants).toHaveBeenCalledTimes(1);

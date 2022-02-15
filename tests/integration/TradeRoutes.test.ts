@@ -45,21 +45,12 @@ let tradeDAO: TradeDAO;
 // @ts-ignore
 TradeTracker.appendNewTrade = jest.fn();
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access */
 async function shutdown() {
-    await new Promise<void>((resolve, reject) => {
-        redisClient.quit((err, reply) => {
-            if (err) {
-                reject(err);
-            } else {
-                logger.debug(`Redis quit successfully with reply ${reply}`);
-                resolve();
-            }
-        });
-    });
-    // redis.quit() creates a thread to close the connection.
-    // We wait until all threads have been run once to ensure the connection closes.
-    return await new Promise(resolve => setImmediate(resolve));
+    try {
+        await redisClient.disconnect();
+    } catch (err) {
+        logger.error(`Error while closing redis: ${err}`);
+    }
 }
 
 beforeAll(async () => {
@@ -98,8 +89,10 @@ describe("Trade API endpoints", () => {
 
     describe("POST /trades (create new trade)", () => {
         const expectErrorString = expect.stringMatching(/Trade is not valid/);
-        const postRequest = (tradeObj: Partial<Trade>, status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makePostRequest<Partial<Trade>>(agent, "/trades", tradeObj, status);
+        const postRequest =
+            (tradeObj: Partial<Trade>, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<Partial<Trade>>(agent, "/trades", tradeObj, status);
         const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/trades/${id}`, status);
 
         afterEach(async () => {
@@ -257,9 +250,10 @@ describe("Trade API endpoints", () => {
     });
 
     describe("PUT /trades/:id (update one trade)", () => {
-        const putTradeRequest = (id: string, tradeObj: Partial<Trade>, status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) => makePutRequest<Partial<Trade>>(agent, `/trades/${id}`, tradeObj, status);
+        const putTradeRequest =
+            (id: string, tradeObj: Partial<Trade>, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePutRequest<Partial<Trade>>(agent, `/trades/${id}`, tradeObj, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -291,6 +285,7 @@ describe("Trade API endpoints", () => {
             expect(body).toMatchObject({
                 id: testTrade.id,
                 tradeParticipants: expect.toSatisfyAll(participant =>
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
                     updatedTradeParticipantIds.includes(participant.id)
                 ),
                 tradeItems: expect.toSatisfyAll(item => newItem.id === item.id),
@@ -376,9 +371,10 @@ describe("Trade API endpoints", () => {
     describe("PUT /trades/:id/:action (accept/reject/submit a trade)", () => {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         type actionBody = { declinedById: string; declinedReason: string } | undefined;
-        const putTradeRequest = (action: string, id: string, actionObj: actionBody, status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) => makePutRequest<actionBody>(agent, `/trades/${id}/${action}`, actionObj, status);
+        const putTradeRequest =
+            (action: string, id: string, actionObj: actionBody, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePutRequest<actionBody>(agent, `/trades/${id}/${action}`, actionObj, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -436,8 +432,10 @@ describe("Trade API endpoints", () => {
     });
 
     describe("DELETE /trades/:id (delete one trade)", () => {
-        const deleteTradeRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makeDeleteRequest(agent, `/trades/${id}`, status);
+        const deleteTradeRequest =
+            (id: string, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makeDeleteRequest(agent, `/trades/${id}`, status);
         afterEach(async () => {
             return await doLogout(request.agent(app));
         });

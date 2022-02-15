@@ -55,7 +55,7 @@ async function maybeDeleteExistingPicks(dao: DraftPickDAO, mode?: WriteMode) {
             await dao.deleteAllPicks();
         } catch (e) {
             logger.error(inspect(e));
-            rollbar.error(e);
+            rollbar.error(inspect(e));
             throw e;
         }
     }

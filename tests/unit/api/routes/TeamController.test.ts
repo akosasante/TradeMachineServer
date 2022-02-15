@@ -18,7 +18,7 @@ describe("TeamController", () => {
         updateTeamOwners: jest.fn(),
     };
     const testTeam = TeamFactory.getTeam();
-    const teamController = new TeamController((mockTeamDAO as unknown) as TeamDAO);
+    const teamController = new TeamController(mockTeamDAO as unknown as TeamDAO);
 
     beforeAll(() => {
         logger.debug("~~~~~~TEAM CONTROLLER TESTS BEGIN~~~~~~");

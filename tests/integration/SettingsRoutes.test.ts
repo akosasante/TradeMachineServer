@@ -51,21 +51,12 @@ let mergedSettings: {
 };
 let settingsDAO: SettingsDAO;
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 async function shutdown() {
-    await new Promise<void>((resolve, reject) => {
-        redisClient.quit((err, reply) => {
-            if (err) {
-                reject(err);
-            } else {
-                logger.debug(`Redis quit successfully with reply ${reply}`);
-                resolve();
-            }
-        });
-    });
-    // redis.quit() creates a thread to close the connection.
-    // We wait until all threads have been run once to ensure the connection closes.
-    return await new Promise(resolve => setImmediate(resolve));
+    try {
+        await redisClient.disconnect();
+    } catch (err) {
+        logger.error(`Error while closing redis: ${err}`);
+    }
 }
 
 beforeAll(async () => {
@@ -150,8 +141,10 @@ describe("Settings API endpoints for general settings", () => {
     });
 
     describe("GET /settings (get all settings lines)", () => {
-        const getAllRequest = (status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makeGetRequest(agent, "/settings", status);
+        const getAllRequest =
+            (status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makeGetRequest(agent, "/settings", status);
 
         it("should return an array of all settings in the db", async () => {
             // insert some settings rows
@@ -174,8 +167,10 @@ describe("Settings API endpoints for general settings", () => {
     });
 
     describe("GET /settings/current (get most recent settings line)", () => {
-        const getRecentRequest = (status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makeGetRequest(agent, "/settings/current", status);
+        const getRecentRequest =
+            (status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makeGetRequest(agent, "/settings/current", status);
 
         it("should return the most recently inserted settings line", async () => {
             // insert some settings rows
@@ -196,8 +191,10 @@ describe("Settings API endpoints for general settings", () => {
     });
 
     describe("GET /settings/:id (get settings line by ID)", () => {
-        const getOneRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makeGetRequest(agent, `/settings/${id}`, status);
+        const getOneRequest =
+            (id: string, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makeGetRequest(agent, `/settings/${id}`, status);
 
         it("should return the settings line with the given id", async () => {
             // insert some settings rows
@@ -219,11 +216,14 @@ describe("Settings API endpoints for general settings", () => {
 
     describe("POST /settings (insert new settings line)", () => {
         const expectErrorString = expect.stringMatching(/Modifying user must be provided/);
-        const postRequest = (settingsObj: Partial<Settings>, status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) => makePostRequest<Partial<Settings>>(agent, "/settings", settingsObj, status);
-        const getOneRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makeGetRequest(agent, `/settings/${id}`, status);
+        const postRequest =
+            (settingsObj: Partial<Settings>, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<Partial<Settings>>(agent, "/settings", settingsObj, status);
+        const getOneRequest =
+            (id: string, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makeGetRequest(agent, `/settings/${id}`, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -241,6 +241,7 @@ describe("Settings API endpoints for general settings", () => {
                 } as Partial<Settings>),
                 app
             );
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             const { body } = await adminLoggedIn(getOneRequest(createBody.id), app);
 
             expect(body).toMatchObject(expectedTestSettings2);

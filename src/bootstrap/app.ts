@@ -52,8 +52,9 @@ export async function setupExpressApp(): Promise<Express> {
 
 export default async function startServer(): Promise<Server> {
     try {
+        await redisClient.connect();
         const app = await setupExpressApp();
-        const srv = app.listen(app.get("port"), app.get("ip"), () => {
+        const srv = app.listen(app.get("port") as number, app.get("ip") as string, () => {
             logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
             logger.info("Press CTRL-C to stop\n");
             rollbar.info("server_started");
@@ -63,17 +64,17 @@ export default async function startServer(): Promise<Server> {
             logger.error(`Server Error: ${inspect(err)}`);
         });
 
-        srv.on("close", () => {
+        srv.on("close", async () => {
             logger.debug("closing server");
             if (process.env.NODE_ENV !== "test") {
-                redisClient.quit();
+                await redisClient.quit();
             }
             logger.debug("server says bye!");
         });
         return srv;
     } catch (err) {
         logger.error(`fatal error when starting server: ${inspect(err)}`);
-        rollbar.error(err);
+        rollbar.error(inspect(err));
         throw err;
     }
 }

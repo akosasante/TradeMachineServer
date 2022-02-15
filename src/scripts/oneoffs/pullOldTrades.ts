@@ -125,9 +125,10 @@ async function getOwnerFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise
     }
     // console.log(`looking for user with name ${owner.name} id ${myMapper[owner.name]}`)
     return (
-        await getConnection(
-            process.env.ORM_CONFIG
-        ).query(`SELECT * FROM "${schema}"."user" WHERE id::text = $1 LIMIT 1`, [myMapper[owner.name]])
+        await getConnection(process.env.ORM_CONFIG).query(
+            `SELECT * FROM "${schema}"."user" WHERE id::text = $1 LIMIT 1`,
+            [myMapper[owner.name]]
+        )
     )[0];
 }
 

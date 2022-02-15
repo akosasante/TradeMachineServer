@@ -1,5 +1,5 @@
 import { Connection, createConnection, getConnectionOptions } from "typeorm";
-import util, { inspect } from "util";
+import { inspect } from "util";
 import CustomQueryLogger from "../db/QueryLogger";
 import logger from "./logger";
 import { rollbar } from "./rollbar";
@@ -32,7 +32,7 @@ export default async function initializeDb(logQueries = false): Promise<Connecti
                 } catch (reconnectError) {
                     logger.error("Reconnection error");
                     logger.error(reconnectError);
-                    rollbar.error(reconnectError);
+                    rollbar.error(inspect(reconnectError));
                 }
             }, 5000);
         });
@@ -45,9 +45,9 @@ export default async function initializeDb(logQueries = false): Promise<Connecti
         return connection;
     } catch (error) {
         logger.error("Error while initializing db connection.");
-        logger.error(util.inspect(error));
-        logger.error(util.inspect(connection));
-        rollbar.error(error);
+        logger.error(inspect(error));
+        logger.error(inspect(connection));
+        rollbar.error(inspect(error));
         throw error;
     }
 }

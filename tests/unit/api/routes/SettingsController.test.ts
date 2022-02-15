@@ -15,7 +15,7 @@ describe("SettingsController", () => {
         tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
         tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
     });
-    const settingsController = new SettingsController((mockSettingsDAO as unknown) as SettingsDAO);
+    const settingsController = new SettingsController(mockSettingsDAO as unknown as SettingsDAO);
 
     beforeAll(() => {
         logger.debug("~~~~~~SETTINGS CONTROLLER TESTS BEGIN~~~~~~");

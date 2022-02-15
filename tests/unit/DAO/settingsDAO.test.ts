@@ -17,7 +17,7 @@ describe("SettingsDAO", () => {
         tradeWindowStart: SettingsFactory.DEFAULT_WINDOW_START,
         tradeWindowEnd: SettingsFactory.DEFAULT_WINDOW_END,
     });
-    const settingsDAO = new SettingsDAO((mockSettingsDb as unknown) as Repository<Settings>);
+    const settingsDAO = new SettingsDAO(mockSettingsDb as unknown as Repository<Settings>);
 
     afterEach(() => {
         Object.values(mockSettingsDb).forEach(mockFn => mockFn.mockReset());

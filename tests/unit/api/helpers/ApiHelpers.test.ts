@@ -16,18 +16,20 @@ describe("ApiHelpers utility functions", () => {
             const keys = ["null", "undefined"];
             for (const key of keys) {
                 const query = { ...baseQuery, field: key };
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
                 const returned: any = cleanupQuery(query);
                 expect(returned.field.value).toEqual(IsNull().value);
-                expect(returned.field._type).toEqual("isNull");
+                expect(returned.field._type).toBe("isNull");
             }
         });
         it("should turn all of the accepted values into ISNOTNULLs", () => {
             const keys = ["not null", "!undefined"];
             for (const key of keys) {
                 const query = { ...baseQuery, field: key };
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
                 const returned: any = cleanupQuery(query);
                 expect(returned.field.value).toEqual(Not(IsNull()).value);
-                expect(returned.field._type).toEqual("not");
+                expect(returned.field._type).toBe("not");
             }
         });
     });

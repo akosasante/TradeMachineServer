@@ -13,7 +13,13 @@ Happy linting! 💖
 */
 module.exports = {
     "env": {
-        "node": true
+        "node": true,
+        "jest/globals": true
+    },
+    settings: {
+        jest: {
+            version: require('jest/package.json').version
+        }
     },
     "extends": [
         "plugin:@typescript-eslint/recommended",
@@ -23,6 +29,8 @@ module.exports = {
         "plugin:node/recommended",
         "plugin:import/errors",
         "plugin:import/warnings",
+        "plugin:jest/recommended",
+        "plugin:jest/style"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
@@ -37,6 +45,7 @@ module.exports = {
         "eslint-plugin-prefer-arrow",
         "@typescript-eslint",
         "@typescript-eslint/tslint",
+        "jest"
     ],
     "rules": {
         "@typescript-eslint/adjacent-overload-signatures": "error",
