@@ -46,18 +46,14 @@ describe("PlayerParser", () => {
     });
 
     it("should not call deleteAllPlayers if mode is undefined", async () => {
-        await processMinorLeagueCsv(
-            threeOwnerCsv,
-            [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as PlayerDAO
-        );
+        await processMinorLeagueCsv(threeOwnerCsv, [testTeam1, testTeam2, testTeam3], mockDAO as unknown as PlayerDAO);
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(0);
     });
     it("should not call deleteAllPlayers if mode is append", async () => {
         await processMinorLeagueCsv(
             threeOwnerCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as PlayerDAO,
+            mockDAO as unknown as PlayerDAO,
             "append"
         );
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(0);
@@ -66,7 +62,7 @@ describe("PlayerParser", () => {
         await processMinorLeagueCsv(
             threeOwnerCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as PlayerDAO,
+            mockDAO as unknown as PlayerDAO,
             "overwrite"
         );
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(1);
@@ -76,7 +72,7 @@ describe("PlayerParser", () => {
         await processMinorLeagueCsv(
             threeOwnerCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as PlayerDAO,
+            mockDAO as unknown as PlayerDAO,
             "return"
         );
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(0);
@@ -91,7 +87,7 @@ describe("PlayerParser", () => {
             processMinorLeagueCsv(
                 threeOwnerCsv,
                 [testTeam1, testTeam2, testTeam3],
-                (mockDAO as unknown) as PlayerDAO,
+                mockDAO as unknown as PlayerDAO,
                 "overwrite"
             )
         ).rejects.toThrow(Error);
@@ -101,11 +97,7 @@ describe("PlayerParser", () => {
     });
 
     it("should call DAO.batchUpsertPlayers", async () => {
-        await processMinorLeagueCsv(
-            threeOwnerCsv,
-            [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as PlayerDAO
-        );
+        await processMinorLeagueCsv(threeOwnerCsv, [testTeam1, testTeam2, testTeam3], mockDAO as unknown as PlayerDAO);
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(0);
         expect(mockDAO.batchUpsertPlayers).toHaveBeenCalledTimes(1);
         expect(mockDAO.batchUpsertPlayers).toHaveBeenCalledWith(expect.toBeArrayOfSize(99));
@@ -116,7 +108,7 @@ describe("PlayerParser", () => {
         const res = await processMinorLeagueCsv(
             threeOwnerCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as PlayerDAO
+            mockDAO as unknown as PlayerDAO
         );
         expect(res).toBeArrayOfSize(99);
         expect(res).toSatisfyAll(player => player instanceof Player);
@@ -124,18 +116,14 @@ describe("PlayerParser", () => {
     });
 
     it("should skip any rows from the csv that don't have a team with that owner in the db", async () => {
-        const res = await processMinorLeagueCsv(
-            threeOwnerCsv,
-            [testTeam1, testTeam2],
-            (mockDAO as unknown) as PlayerDAO
-        );
+        const res = await processMinorLeagueCsv(threeOwnerCsv, [testTeam1, testTeam2], mockDAO as unknown as PlayerDAO);
         expect(res).toBeArrayOfSize(64);
     });
     it("should find owners that aren't the first one in the array", async () => {
         const res = await processMinorLeagueCsv(
             fourOwnerCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as PlayerDAO
+            mockDAO as unknown as PlayerDAO
         );
         expect(res).toBeArrayOfSize(99);
     });
@@ -143,7 +131,7 @@ describe("PlayerParser", () => {
         const res = await processMinorLeagueCsv(
             invalidPlayersCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as PlayerDAO
+            mockDAO as unknown as PlayerDAO
         );
         expect(res).toBeArrayOfSize(89);
     });
@@ -152,7 +140,7 @@ describe("PlayerParser", () => {
         const res = await processMinorLeagueCsv(
             dupedPlayersCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as PlayerDAO
+            mockDAO as unknown as PlayerDAO
         );
         expect(res).toBeArrayOfSize(9);
     });
@@ -165,7 +153,7 @@ describe("PlayerParser", () => {
         const res = await processMinorLeagueCsv(
             dupedPlayersCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as PlayerDAO
+            mockDAO as unknown as PlayerDAO
         );
         expect(res).toBeArrayOfSize(9);
         expect(res.find(p => p.name === "Josh Naylor")).toBeDefined();

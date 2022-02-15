@@ -97,7 +97,7 @@ export default class AuthController {
         rollbar.info("logout", request);
         return new Promise((resolve, reject) => {
             if (session && session.user && request.session) {
-                request.session.destroy(err => {
+                request.session.destroy((err: Error) => {
                     if (err) {
                         logger.error("Error destroying session");
                         rollbar.error(err, request);

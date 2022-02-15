@@ -104,7 +104,7 @@ export async function appendNewTrade(trade: Trade): Promise<void> {
         .then(() => {
             logger.info(`Successfully inserted new row in trade index: ${trade.id}`);
         })
-        .catch(err => {
+        .catch((err: Error) => {
             logger.error(`err: ${inspect(err)}`);
             rollbar.error(err);
         });

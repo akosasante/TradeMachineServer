@@ -18,7 +18,7 @@ describe("PlayerDAO", () => {
     };
 
     const testPlayer1 = PlayerFactory.getPlayer();
-    const playerDAO: PlayerDAO = new PlayerDAO((mockPlayerDb as unknown) as Repository<Player>);
+    const playerDAO: PlayerDAO = new PlayerDAO(mockPlayerDb as unknown as Repository<Player>);
 
     afterEach(() => {
         Object.values(mockPlayerDb).forEach(mockFn => mockFn.mockReset());

@@ -11,7 +11,7 @@ export function setupSlackConsumers(): void {
     const queueName = process.env.ORM_CONFIG === "staging" ? "stg_slack_queue" : "slack_queue"; // TODO: Should this also have a conditional for test env?
     const slackQueue = new Bull(queueName);
     const cleanLoggedData = (data: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
         const trade: Trade = JSON.parse(data.trade || "{}");
         return {
             tradeId: trade.id,
@@ -23,6 +23,7 @@ export function setupSlackConsumers(): void {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     const cleanLoggedReturn = (returnValue: any) => returnValue;
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
     void slackQueue.process("trade_announce", x => processTradeAnnounceJob(x));
 
     slackQueue.on("error", error => {

@@ -1,17 +1,26 @@
-import Bull, { Queue } from "bull";
+import Bull, { Queue, JobCounts } from "bull";
+import logger from "../bootstrap/logger";
+
+interface TypedJobCounts extends JobCounts {
+    [key: string]: number;
+}
 
 export class Publisher {
     protected queue?: Queue;
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    protected constructor() {}
-
     public async getJobTotal(): Promise<number> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return Object.values(await this.queue!.getJobCounts()).reduce((val1: number, val2: number) => val1 + val2);
+        return Object.values<number>(await this.queue!.getJobCounts() as TypedJobCounts).reduce((val1: number, val2: number) => val1 + val2);
     }
 
     public async cleanWaitQueue(): Promise<Bull.Job<any>[]> {
         return this.queue!.clean(100, "wait");
+    }
+
+    public async closeQueue(): Promise<void> {
+        return this.queue!.close().then(() => {
+            logger.info(`Closing the queue. ${this.queue!.name}`);
+        }).catch(() => {
+            logger.error(`Erorr closing queue. ${this.queue!.name}`);
+        });
     }
 }

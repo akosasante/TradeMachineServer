@@ -17,7 +17,7 @@ describe("DraftPickDAO", () => {
     };
 
     const testPick1 = DraftPickFactory.getPick();
-    const draftPickDAO = new DraftPickDAO((mockPickDb as unknown) as Repository<DraftPick>);
+    const draftPickDAO = new DraftPickDAO(mockPickDb as unknown as Repository<DraftPick>);
     const defaultCacheTimeout = 60000;
 
     afterEach(() => {

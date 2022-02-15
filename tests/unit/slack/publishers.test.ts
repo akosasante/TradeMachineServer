@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 describe("SlackPublisher", () => {
-    const publisher = SlackPublisher.getInstance((mockQueue as unknown) as Bull.Queue);
+    const publisher = SlackPublisher.getInstance(mockQueue as unknown as Bull.Queue);
     const trade = TradeFactory.getTrade();
     const tradeJson = JSON.stringify(trade);
     const exponentialBackoff = { attempts: 3, backoff: { type: "exponential", delay: 30000 } };

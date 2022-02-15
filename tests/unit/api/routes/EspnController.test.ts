@@ -9,7 +9,7 @@ describe("EspnController", () => {
         getAllMembers: jest.fn(),
         getAllLeagueTeams: jest.fn(),
     };
-    const espnController = new EspnController((mockEspnApi as unknown) as EspnAPI);
+    const espnController = new EspnController(mockEspnApi as unknown as EspnAPI);
     const member = EspnFactory.getMember();
     const team = EspnFactory.getTeam();
 

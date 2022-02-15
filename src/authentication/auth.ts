@@ -44,8 +44,8 @@ export async function signUpAuthentication(
     } catch (error) {
         logger.error("Error in sign-up strategy");
         logger.error(error);
-        rollbar.error(error);
-        return done(error);
+        rollbar.error(inspect(error));
+        return done(error as Error);
     }
 }
 
@@ -83,8 +83,8 @@ export async function signInAuthentication(
             }`
         );
         logger.error(error);
-        rollbar.error(error);
-        return done(error);
+        rollbar.error(inspect(error));
+        return done(error as Error);
     }
 }
 

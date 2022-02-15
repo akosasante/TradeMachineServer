@@ -74,9 +74,9 @@ describe("MessengerController", () => {
     });
 
     const messengerController = new MessengerController(
-        (mockEmailPublisher as unknown) as EmailPublisher,
-        (mockTradeDao as unknown) as TradeDAO,
-        (mockSlackPublisher as unknown) as SlackPublisher
+        mockEmailPublisher as unknown as EmailPublisher,
+        mockTradeDao as unknown as TradeDAO,
+        mockSlackPublisher as unknown as SlackPublisher
     );
 
     beforeAll(() => {
@@ -96,7 +96,7 @@ describe("MessengerController", () => {
         it("should get a trade, hydrate it and queue emails for each recipient owner", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(requestedTrade);
             mockTradeDao.hydrateTrade.mockResolvedValueOnce(requestedTrade);
-            await messengerController.sendRequestTradeMessage(requestedTrade.id!, (mockRes as unknown) as Response);
+            await messengerController.sendRequestTradeMessage(requestedTrade.id!, mockRes as unknown as Response);
 
             expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(requestedTrade.id);
@@ -121,7 +121,7 @@ describe("MessengerController", () => {
         it("should return a BadRequest if trade is not requested", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(draftTrade);
             await expect(
-                messengerController.sendRequestTradeMessage(draftTrade.id!, (mockRes as unknown) as Response)
+                messengerController.sendRequestTradeMessage(draftTrade.id!, mockRes as unknown as Response)
             ).rejects.toThrow(BadRequestError);
 
             expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
@@ -135,7 +135,7 @@ describe("MessengerController", () => {
         it("should get a trade, hydrate it, and queue emails for each non-declining user", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(declinedTrade);
             mockTradeDao.hydrateTrade.mockResolvedValueOnce(declinedTrade);
-            await messengerController.sendTradeDeclineMessage(declinedTrade.id!, (mockRes as unknown) as Response);
+            await messengerController.sendTradeDeclineMessage(declinedTrade.id!, mockRes as unknown as Response);
 
             expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(declinedTrade.id);
@@ -159,7 +159,7 @@ describe("MessengerController", () => {
         it("should return a BadRequest if trade is not rejected", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(draftTrade);
             await expect(
-                messengerController.sendTradeDeclineMessage(draftTrade.id!, (mockRes as unknown) as Response)
+                messengerController.sendTradeDeclineMessage(draftTrade.id!, mockRes as unknown as Response)
             ).rejects.toThrow(BadRequestError);
 
             expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
@@ -173,10 +173,7 @@ describe("MessengerController", () => {
         it("should get a trade, hydrate it and then queue for slack announcement", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(submittedTrade);
             mockTradeDao.hydrateTrade.mockResolvedValueOnce(submittedTrade);
-            await messengerController.sendTradeAnnouncementMessage(
-                submittedTrade.id!,
-                (mockRes as unknown) as Response
-            );
+            await messengerController.sendTradeAnnouncementMessage(submittedTrade.id!, mockRes as unknown as Response);
 
             expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(submittedTrade.id);
@@ -194,7 +191,7 @@ describe("MessengerController", () => {
         it("should return a BadRequest if trade is not submitted", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(draftTrade);
             await expect(
-                messengerController.sendTradeAnnouncementMessage(draftTrade.id!, (mockRes as unknown) as Response)
+                messengerController.sendTradeAnnouncementMessage(draftTrade.id!, mockRes as unknown as Response)
             ).rejects.toThrow(BadRequestError);
 
             expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
@@ -208,7 +205,7 @@ describe("MessengerController", () => {
         it("should get a trade, hydrate it and queue emails for each creator owner", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(acceptedTrade);
             mockTradeDao.hydrateTrade.mockResolvedValueOnce(acceptedTrade);
-            await messengerController.sendTradeAcceptanceMessage(acceptedTrade.id!, (mockRes as unknown) as Response);
+            await messengerController.sendTradeAcceptanceMessage(acceptedTrade.id!, mockRes as unknown as Response);
 
             expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(acceptedTrade.id);
@@ -233,7 +230,7 @@ describe("MessengerController", () => {
         it("should return a BadRequest if trade is not accepted", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(draftTrade);
             await expect(
-                messengerController.sendTradeAcceptanceMessage(draftTrade.id!, (mockRes as unknown) as Response)
+                messengerController.sendTradeAcceptanceMessage(draftTrade.id!, mockRes as unknown as Response)
             ).rejects.toThrow(BadRequestError);
 
             expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);

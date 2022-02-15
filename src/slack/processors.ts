@@ -13,6 +13,7 @@ export async function processTradeAnnounceJob(
 ): Promise<void> {
     logger.debug(`processing ${tradeJob.name} trade job#${tradeJob.id}`);
     if (tradeJob.data.trade) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const trade = new Trade(JSON.parse(tradeJob.data.trade));
         await slackAnnouncer.sendTradeAnnouncement(trade);
     }

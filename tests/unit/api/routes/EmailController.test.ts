@@ -22,8 +22,8 @@ describe("EmailController", () => {
     };
     const testUser = UserFactory.getUser();
     const emailController = new EmailController(
-        (mockUserDAO as unknown) as UserDAO,
-        (mockMailPublisher as unknown) as EmailPublisher
+        mockUserDAO as unknown as UserDAO,
+        mockMailPublisher as unknown as EmailPublisher
     );
 
     beforeAll(() => {
@@ -43,7 +43,7 @@ describe("EmailController", () => {
         it("should find a user and call mailQueue", async () => {
             mockUserDAO.findUser.mockResolvedValueOnce(testUser);
 
-            await emailController.sendTestEmail(testUser.email, (mockRes as unknown) as Response);
+            await emailController.sendTestEmail(testUser.email, mockRes as unknown as Response);
 
             expect(mockUserDAO.findUser).toHaveBeenCalledTimes(1);
             expect(mockUserDAO.findUser).toHaveBeenCalledWith({ email: testUser.email });
@@ -57,9 +57,9 @@ describe("EmailController", () => {
         });
 
         it("should throw an error if there's something wrong inside", async () => {
-            await expect(
-                emailController.sendTestEmail(testUser.email, (mockRes as unknown) as Response)
-            ).rejects.toThrow(NotFoundError);
+            await expect(emailController.sendTestEmail(testUser.email, mockRes as unknown as Response)).rejects.toThrow(
+                NotFoundError
+            );
             expect(mockRes.status).toHaveBeenCalledTimes(0);
             expect(mockRes.json).toHaveBeenCalledTimes(0);
         });
@@ -78,7 +78,7 @@ describe("EmailController", () => {
                 ts_event: 1586556782,
             };
 
-            await emailController.receiveSendInMailWebhook(webhookEvent, (mockRes as unknown) as Response);
+            await emailController.receiveSendInMailWebhook(webhookEvent, mockRes as unknown as Response);
 
             expect(mockMailPublisher.queueWebhookResponse).toHaveBeenCalledTimes(1);
             expect(mockMailPublisher.queueWebhookResponse).toHaveBeenCalledWith(webhookEvent);

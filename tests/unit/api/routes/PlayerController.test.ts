@@ -29,8 +29,8 @@ describe("PlayerController", () => {
 
     const testPlayer = PlayerFactory.getPlayer();
     const playerController = new PlayerController(
-        (mockPlayerDAO as unknown) as PlayerDAO,
-        (mockTeamDAO as unknown) as TeamDAO
+        mockPlayerDAO as unknown as PlayerDAO,
+        mockTeamDAO as unknown as TeamDAO
     );
 
     beforeAll(() => {

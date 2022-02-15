@@ -50,7 +50,7 @@ describe("DraftPickParser", () => {
             await processDraftPickCsv(
                 threePlayerCsv,
                 [testTeam1, testTeam2, testTeam3],
-                (mockDAO as unknown) as DraftPickDAO
+                mockDAO as unknown as DraftPickDAO
             );
             expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
         });
@@ -58,7 +58,7 @@ describe("DraftPickParser", () => {
             await processDraftPickCsv(
                 threePlayerCsv,
                 [testTeam1, testTeam2, testTeam3],
-                (mockDAO as unknown) as DraftPickDAO,
+                mockDAO as unknown as DraftPickDAO,
                 "append"
             );
             expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
@@ -67,7 +67,7 @@ describe("DraftPickParser", () => {
             await processDraftPickCsv(
                 threePlayerCsv,
                 [testTeam1, testTeam2, testTeam3],
-                (mockDAO as unknown) as DraftPickDAO,
+                mockDAO as unknown as DraftPickDAO,
                 "overwrite"
             );
             expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(1);
@@ -82,7 +82,7 @@ describe("DraftPickParser", () => {
                 processDraftPickCsv(
                     threePlayerCsv,
                     [testTeam1, testTeam2, testTeam3],
-                    (mockDAO as unknown) as DraftPickDAO,
+                    mockDAO as unknown as DraftPickDAO,
                     "overwrite"
                 )
             ).rejects.toThrow(Error);
@@ -92,7 +92,7 @@ describe("DraftPickParser", () => {
     });
 
     it("should call DAO.batchUpsertPicks once if less than 50 rows", async () => {
-        await processDraftPickCsv(twoPlayerCsv, [testTeam1, testTeam2], (mockDAO as unknown) as DraftPickDAO);
+        await processDraftPickCsv(twoPlayerCsv, [testTeam1, testTeam2], mockDAO as unknown as DraftPickDAO);
         expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledTimes(1);
         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledWith(expect.toBeArrayOfSize(6));
@@ -103,7 +103,7 @@ describe("DraftPickParser", () => {
         await processDraftPickCsv(
             threePlayerCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as DraftPickDAO
+            mockDAO as unknown as DraftPickDAO
         );
         expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledTimes(1);
@@ -116,7 +116,7 @@ describe("DraftPickParser", () => {
         const res = await processDraftPickCsv(
             threePlayerCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as DraftPickDAO
+            mockDAO as unknown as DraftPickDAO
         );
         expect(res).toBeArrayOfSize(50);
         expect(res).toSatisfyAll(p => p instanceof DraftPick);
@@ -126,7 +126,7 @@ describe("DraftPickParser", () => {
         const res = await processDraftPickCsv(
             threePlayerCsv,
             [testTeam1, testTeam2],
-            (mockDAO as unknown) as DraftPickDAO
+            mockDAO as unknown as DraftPickDAO
         );
         expect(res).toBeArrayOfSize(32);
     });
@@ -134,7 +134,7 @@ describe("DraftPickParser", () => {
         const res = await processDraftPickCsv(
             threePlayerCsvWithPickNumbers,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as DraftPickDAO
+            mockDAO as unknown as DraftPickDAO
         );
         expect(res).toBeArrayOfSize(50);
         expect(res.filter(pick => !!pick.pickNumber)).toBeArrayOfSize(25);
@@ -143,14 +143,14 @@ describe("DraftPickParser", () => {
         const res1 = await processDraftPickCsv(
             invalidRowCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as DraftPickDAO
+            mockDAO as unknown as DraftPickDAO
         );
         expect(res1).toBeArrayOfSize(46);
 
         const res2 = await processDraftPickCsv(
             invalidHeadersCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as DraftPickDAO
+            mockDAO as unknown as DraftPickDAO
         );
         expect(res2).toEqual([]);
     });
@@ -159,7 +159,7 @@ describe("DraftPickParser", () => {
         const res = await processDraftPickCsv(
             threePlayersWithDupeCsv,
             [testTeam1, testTeam2, testTeam3],
-            (mockDAO as unknown) as DraftPickDAO
+            mockDAO as unknown as DraftPickDAO
         );
         expect(res).toBeArrayOfSize(9);
     });

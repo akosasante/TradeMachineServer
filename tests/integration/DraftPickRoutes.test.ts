@@ -35,21 +35,12 @@ let userDAO: UserDAO;
 let teamDAO: TeamDAO;
 let pickDAO: DraftPickDAO;
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment,  @typescript-eslint/no-unsafe-call */
 async function shutdown() {
-    await new Promise<void>((resolve, reject) => {
-        redisClient.quit((err, reply) => {
-            if (err) {
-                reject(err);
-            } else {
-                logger.debug(`Redis quit successfully with reply ${reply}`);
-                resolve();
-            }
-        });
-    });
-    // redis.quit() creates a thread to close the connection.
-    // We wait until all threads have been run once to ensure the connection closes.
-    return await new Promise(resolve => setImmediate(resolve));
+    try {
+        await redisClient.disconnect();
+    } catch (err) {
+        logger.error(`Error while closing redis: ${err}`);
+    }
 }
 
 beforeAll(async () => {
@@ -86,9 +77,10 @@ describe("Pick API endpoints", () => {
 
     describe("POST /picks (create new pick)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (pickObjs: Partial<DraftPick>[], status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) => makePostRequest<Partial<DraftPick>[]>(agent, "/picks", pickObjs, status);
+        const postRequest =
+            (pickObjs: Partial<DraftPick>[], status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<Partial<DraftPick>[]>(agent, "/picks", pickObjs, status);
         const getOneRequest = (id: number, status = 200) => makeGetRequest(request(app), `/picks/${id}`, status);
 
         afterEach(async () => {
@@ -116,6 +108,7 @@ describe("Pick API endpoints", () => {
                 ]),
                 app
             );
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             const { body: getBody } = await getOneRequest(body[0].id);
 
             expect(getBody).toMatchObject(testPick1);
@@ -251,9 +244,10 @@ describe("Pick API endpoints", () => {
     });
 
     describe("PUT /picks/:id (update one pick)", () => {
-        const putRequest = (id: string, pickObj: Partial<DraftPick>, status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) => makePutRequest<Partial<DraftPick>>(agent, `/picks/${id}`, pickObj, status);
+        const putRequest =
+            (id: string, pickObj: Partial<DraftPick>, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePutRequest<Partial<DraftPick>>(agent, `/picks/${id}`, pickObj, status);
         const updatedPickObj = { season: 2018 };
 
         afterEach(async () => {
@@ -294,8 +288,10 @@ describe("Pick API endpoints", () => {
     });
 
     describe("DELETE /picks/:id (delete one pick)", () => {
-        const deleteRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makeDeleteRequest(agent, `/picks/${id}`, status);
+        const deleteRequest =
+            (id: string, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makeDeleteRequest(agent, `/picks/${id}`, status);
 
         afterEach(async () => {
             return await doLogout(request.agent(app));
@@ -348,19 +344,21 @@ describe("Pick API endpoints", () => {
     describe("POST /batch (batch add new draft picks via csv file)", () => {
         const csv1 = `${process.env.BASE_DIR}/tests/resources/three-player-25-picks-1.csv`;
         const csv2 = `${process.env.BASE_DIR}/tests/resources/three-player-25-picks-2.csv`;
-        const postFileRequest = (filePath: string, mode?: WriteMode, status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) =>
-            agent
-                .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
-                .attach("picks", filePath)
-                .expect("Content-Type", /json/)
-                .expect(status);
-        const requestWithoutFile = (mode?: WriteMode, status = 200) => (agent: request.SuperTest<request.Test>) =>
-            agent
-                .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
-                .expect("Content-Type", /json/)
-                .expect(status);
+        const postFileRequest =
+            (filePath: string, mode?: WriteMode, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                agent
+                    .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
+                    .attach("picks", filePath)
+                    .expect("Content-Type", /json/)
+                    .expect(status);
+        const requestWithoutFile =
+            (mode?: WriteMode, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                agent
+                    .post(`/picks/batch${mode ? "?mode=" + mode : ""}`)
+                    .expect("Content-Type", /json/)
+                    .expect(status);
 
         beforeEach(async () => {
             // Updating + adding users for each of the owners in the test CSV file

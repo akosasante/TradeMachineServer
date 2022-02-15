@@ -45,20 +45,20 @@ describe("Email queue processors", () => {
         it("calls sendPasswordResetEmail", async () => {
             // @ts-ignore
             await handleEmailJob({ name: "reset_pass", data: { user: userJson } });
-            expect(EMAILER.sendPasswordResetEmail).toBeCalledTimes(1);
-            expect(EMAILER.sendPasswordResetEmail).toBeCalledWith(user);
+            expect(EMAILER.sendPasswordResetEmail).toHaveBeenCalledTimes(1);
+            expect(EMAILER.sendPasswordResetEmail).toHaveBeenCalledWith(user);
         });
         it("calls sendTestEmail", async () => {
             // @ts-ignore
             await handleEmailJob({ name: "test_email", data: { user: userJson } });
-            expect(EMAILER.sendTestEmail).toBeCalledTimes(1);
-            expect(EMAILER.sendTestEmail).toBeCalledWith(user);
+            expect(EMAILER.sendTestEmail).toHaveBeenCalledTimes(1);
+            expect(EMAILER.sendTestEmail).toHaveBeenCalledWith(user);
         });
         it("calls sendRegistrationEmail", async () => {
             // @ts-ignore
             await handleEmailJob({ name: "registration_email", data: { user: userJson } });
-            expect(EMAILER.sendRegistrationEmail).toBeCalledTimes(1);
-            expect(EMAILER.sendRegistrationEmail).toBeCalledWith(user);
+            expect(EMAILER.sendRegistrationEmail).toHaveBeenCalledTimes(1);
+            expect(EMAILER.sendRegistrationEmail).toHaveBeenCalledWith(user);
         });
     });
 
@@ -69,8 +69,8 @@ describe("Email queue processors", () => {
                 name: "request_trade",
                 data: { trade: tradeJson, recipient: "me@example.com" },
             });
-            expect(EMAILER.sendTradeRequestEmail).toBeCalledTimes(1);
-            expect(EMAILER.sendTradeRequestEmail).toBeCalledWith("me@example.com", trade);
+            expect(EMAILER.sendTradeRequestEmail).toHaveBeenCalledTimes(1);
+            expect(EMAILER.sendTradeRequestEmail).toHaveBeenCalledWith("me@example.com", trade);
         });
         it("should call sendTradeDeclinedEmail for trade_declined jobs", async () => {
             // @ts-ignore
@@ -78,8 +78,8 @@ describe("Email queue processors", () => {
                 name: "trade_declined",
                 data: { trade: tradeJson, recipient: "me@example.com" },
             });
-            expect(EMAILER.sendTradeDeclinedEmail).toBeCalledTimes(1);
-            expect(EMAILER.sendTradeDeclinedEmail).toBeCalledWith("me@example.com", trade);
+            expect(EMAILER.sendTradeDeclinedEmail).toHaveBeenCalledTimes(1);
+            expect(EMAILER.sendTradeDeclinedEmail).toHaveBeenCalledWith("me@example.com", trade);
         });
         it("should call sendTradeSubmissionEmail for trade_accepted jobs", async () => {
             // @ts-ignore
@@ -87,8 +87,8 @@ describe("Email queue processors", () => {
                 name: "trade_accepted",
                 data: { trade: tradeJson, recipient: "me@example.com" },
             });
-            expect(EMAILER.sendTradeSubmissionEmail).toBeCalledTimes(1);
-            expect(EMAILER.sendTradeSubmissionEmail).toBeCalledWith("me@example.com", trade);
+            expect(EMAILER.sendTradeSubmissionEmail).toHaveBeenCalledTimes(1);
+            expect(EMAILER.sendTradeSubmissionEmail).toHaveBeenCalledWith("me@example.com", trade);
         });
     });
 
@@ -103,7 +103,7 @@ describe("Email queue processors", () => {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             ts_event: 1586556782,
         };
-        await handleWebhookResponse(webhookEvent, (mockEmailDAO as unknown) as EmailDAO);
+        await handleWebhookResponse(webhookEvent, mockEmailDAO as unknown as EmailDAO);
         expect(mockEmailDAO.getEmailByMessageId).toHaveBeenCalledTimes(1);
         expect(mockEmailDAO.getEmailByMessageId).toHaveBeenCalledWith("<5d0e2800bbddbd4ed05cc56a@domain.com>");
     });

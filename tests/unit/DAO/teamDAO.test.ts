@@ -15,7 +15,7 @@ describe("TeamDAO", () => {
         createQueryBuilder: jest.fn(),
     };
     const testTeam = TeamFactory.getTeam();
-    const teamDAO = new TeamDAO((mockTeamDb as unknown) as Repository<Team>);
+    const teamDAO = new TeamDAO(mockTeamDb as unknown as Repository<Team>);
 
     afterEach(async () => {
         Object.values(mockTeamDb).forEach(mockFn => mockFn.mockReset());

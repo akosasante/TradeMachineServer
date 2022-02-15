@@ -7,19 +7,19 @@ const mockedGet = jest.fn().mockResolvedValue(
     // eslint-disable-next-line @typescript-eslint/naming-convention
     { data: { ops_team_players: { queryResults: { row: [] } } } }
 );
-const mockPlayerDao = ({
+const mockPlayerDao = {
     getAllPlayers: jest.fn(),
     batchUpsertPlayers: jest.fn().mockResolvedValue([]),
-} as unknown) as PlayerDAO;
+} as unknown as PlayerDAO;
 
 jest.mock(
     "axios",
     () =>
-        (({
+        ({
             create: jest.fn(() => ({
                 get: mockedGet,
             })),
-        } as unknown) as AxiosPromise)
+        } as unknown as AxiosPromise)
 );
 
 beforeAll(() => {
@@ -38,8 +38,8 @@ afterEach(() => {
 describe("Minor League Scheduled Jobs", () => {
     test("doUpdate/1 - should make an axios call and then insert into the db", async () => {
         await doUpdate(mockPlayerDao);
-        expect(mockedGet).toBeCalledTimes(3); // once for each league level
-        expect(mockPlayerDao.getAllPlayers).toBeCalledTimes(1);
-        expect(mockPlayerDao.batchUpsertPlayers).toBeCalledTimes(1);
+        expect(mockedGet).toHaveBeenCalledTimes(3); // once for each league level
+        expect(mockPlayerDao.getAllPlayers).toHaveBeenCalledTimes(1);
+        expect(mockPlayerDao.batchUpsertPlayers).toHaveBeenCalledTimes(1);
     });
 });

@@ -35,21 +35,12 @@ let otherUser: User;
 let userDAO: UserDAO;
 let teamDAO: TeamDAO;
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access */
 async function shutdown() {
-    await new Promise<void>((resolve, reject) => {
-        redisClient.quit((err, reply) => {
-            if (err) {
-                reject(err);
-            } else {
-                logger.debug(`Redis quit successfully with reply ${reply}`);
-                resolve();
-            }
-        });
-    });
-    // redis.quit() creates a thread to close the connection.
-    // We wait until all threads have been run once to ensure the connection closes.
-    return await new Promise(resolve => setImmediate(resolve));
+    try {
+        await redisClient.disconnect();
+    } catch (err) {
+        logger.error(`Error while closing redis: ${err}`);
+    }
 }
 
 beforeAll(async () => {
@@ -86,8 +77,10 @@ describe("Team API endpoints", () => {
 
     describe("POST /teams (create new team)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest = (teamObjs: Partial<Team>[], status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makePostRequest<Partial<Team>[]>(agent, "/teams", teamObjs, status);
+        const postRequest =
+            (teamObjs: Partial<Team>[], status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<Partial<Team>[]>(agent, "/teams", teamObjs, status);
         const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/teams/${id}`, status);
 
         afterEach(async () => {
@@ -113,6 +106,7 @@ describe("Team API endpoints", () => {
                 ]),
                 app
             );
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             const { body } = await getOneRequest(createBody[0].id);
 
             expect(body).toMatchObject({ ...testTeam1.parse(), owners: expect.any(Array) });
@@ -213,9 +207,10 @@ describe("Team API endpoints", () => {
     });
 
     describe("PUT /teams/:id (update one team)", () => {
-        const putTeamRequest = (id: string, teamObj: Partial<Team>, status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) => makePutRequest<Partial<Team>>(agent, `/teams/${id}`, teamObj, status);
+        const putTeamRequest =
+            (id: string, teamObj: Partial<Team>, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePutRequest<Partial<Team>>(agent, `/teams/${id}`, teamObj, status);
         const updatedTeamObj = { name: "Hello darkness my old friend" };
 
         afterEach(async () => {
@@ -254,9 +249,10 @@ describe("Team API endpoints", () => {
     });
 
     describe("PATCH /teams/:id (edit a team's owners)", () => {
-        const patchTeamRequest = (id: string, ownersToAdd: User[], ownersToRemove: User[], status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) => makePatchRequest(agent, `/teams/${id}`, { add: ownersToAdd, remove: ownersToRemove }, status);
+        const patchTeamRequest =
+            (id: string, ownersToAdd: User[], ownersToRemove: User[], status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePatchRequest(agent, `/teams/${id}`, { add: ownersToAdd, remove: ownersToRemove }, status);
         afterEach(async () => {
             return await doLogout(request.agent(app));
         });
@@ -292,8 +288,10 @@ describe("Team API endpoints", () => {
     });
 
     describe("DELETE /teams/:id (delete one team)", () => {
-        const deleteTeamRequest = (id: string, status = 200) => (agent: request.SuperTest<request.Test>) =>
-            makeDeleteRequest(agent, `/teams/${id}`, status);
+        const deleteTeamRequest =
+            (id: string, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makeDeleteRequest(agent, `/teams/${id}`, status);
         afterEach(async () => {
             return await doLogout(request.agent(app));
         });

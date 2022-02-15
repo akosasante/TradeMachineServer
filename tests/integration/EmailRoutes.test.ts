@@ -12,19 +12,11 @@ let app: Server;
 let ownerUser: User;
 
 async function shutdown() {
-    await new Promise<void>((resolve, reject) => {
-        redisClient.quit((err, reply) => {
-            if (err) {
-                reject(err);
-            } else {
-                logger.debug(`Redis quit successfully with reply ${reply}`);
-                resolve();
-            }
-        });
-    });
-    // redis.quit() creates a thread to close the connection.
-    // We wait until all threads have been run once to ensure the connection closes.
-    return await new Promise(resolve => setImmediate(resolve));
+    try {
+        await redisClient.disconnect();
+    } catch (err) {
+        logger.error(`Error while closing redis: ${err}`);
+    }
 }
 
 beforeAll(async () => {
@@ -53,11 +45,14 @@ describe("Email API endpoints", () => {
         return await clearDb(getConnection(process.env.ORM_CONFIG));
     });
 
-    const emailPostRequest = (email: string, url: string, status = 202) => (agent: request.SuperTest<request.Test>) =>
-        makePostRequest<{ email: string }>(agent, `/email/${url}`, { email }, status);
-    const webhookPostRequest = (event: { [key: string]: string | number }, status = 200) => (
-        agent: request.SuperTest<request.Test>
-    ) => makePostRequest<{ [key: string]: string | number }>(agent, "/email/sendInMailWebhook", event, status);
+    const emailPostRequest =
+        (email: string, url: string, status = 202) =>
+        (agent: request.SuperTest<request.Test>) =>
+            makePostRequest<{ email: string }>(agent, `/email/${url}`, { email }, status);
+    const webhookPostRequest =
+        (event: { [key: string]: string | number }, status = 200) =>
+        (agent: request.SuperTest<request.Test>) =>
+            makePostRequest<{ [key: string]: string | number }>(agent, "/email/sendInMailWebhook", event, status);
 
     describe("POST /testEmail (send a test notification email)", () => {
         it("should return a 202 message if the email is successfully queued", async () => {

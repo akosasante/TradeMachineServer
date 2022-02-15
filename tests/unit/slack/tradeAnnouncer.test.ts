@@ -48,26 +48,26 @@ describe("SlackTradeAnnouncer class", () => {
 
     it("buildTradeAnnouncementMsg/1 - should call the appropriate formatting methods", async () => {
         await SlackTradeAnnouncer.buildTradeAnnouncementMsg(trade);
-        expect(mockedTradeFormatter.getTradeTextForParticipant).toBeCalledTimes(2);
-        expect(mockedTradeFormatter.getTradeTextForParticipant).toBeCalledWith(
+        expect(mockedTradeFormatter.getTradeTextForParticipant).toHaveBeenCalledTimes(2);
+        expect(mockedTradeFormatter.getTradeTextForParticipant).toHaveBeenCalledWith(
             true,
             trade,
             trade.tradeParticipants![0]
         );
-        expect(mockedTradeFormatter.getTradeTextForParticipant).toBeCalledWith(
+        expect(mockedTradeFormatter.getTradeTextForParticipant).toHaveBeenCalledWith(
             true,
             trade,
             trade.tradeParticipants![1]
         );
 
-        expect(mockedTradeFormatter.getNotificationText).toBeCalledTimes(1);
-        expect(mockedTradeFormatter.getNotificationText).toBeCalledWith(trade);
+        expect(mockedTradeFormatter.getNotificationText).toHaveBeenCalledTimes(1);
+        expect(mockedTradeFormatter.getNotificationText).toHaveBeenCalledWith(trade);
 
-        expect(mockedTradeFormatter.getSubtitleText).toBeCalledTimes(1);
-        expect(mockedTradeFormatter.getSubtitleText).toBeCalledWith(trade);
+        expect(mockedTradeFormatter.getSubtitleText).toHaveBeenCalledTimes(1);
+        expect(mockedTradeFormatter.getSubtitleText).toHaveBeenCalledWith(trade);
 
-        expect(mockedTradeFormatter.getLinkText).toBeCalledTimes(1);
-        expect(mockedTradeFormatter.getLinkText).toBeCalledWith();
+        expect(mockedTradeFormatter.getLinkText).toHaveBeenCalledTimes(1);
+        expect(mockedTradeFormatter.getLinkText).toHaveBeenCalledWith();
     });
     it("buildTradeAnnouncementMsg/1 - should return the expected slack message object", async () => {
         const res = await SlackTradeAnnouncer.buildTradeAnnouncementMsg(trade);
@@ -76,7 +76,7 @@ describe("SlackTradeAnnouncer class", () => {
     it("sendTradeAnnouncement/1 - should call the slack webhook send method", async () => {
         await SlackTradeAnnouncer.sendTradeAnnouncement(trade);
         const mockInstance = mockedIncomingWebhook.mock.instances[0];
-        expect(mockInstance.send).toBeCalledTimes(1);
-        expect(mockInstance.send).toBeCalledWith(expected);
+        expect(mockInstance.send).toHaveBeenCalledTimes(1);
+        expect(mockInstance.send).toHaveBeenCalledWith(expected);
     });
 });

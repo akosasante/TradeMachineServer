@@ -69,7 +69,7 @@ describe("Player Class", () => {
         it("getEspnEligiblePositions/0 - should return a comma-separated list of eligible ESPN positions for the player", () => {
             const convertedPlayer = Player.convertEspnMajorLeaguerToPlayer(espnPlayer);
             const eligiblePositions = convertedPlayer.getEspnEligiblePositions();
-            expect(eligiblePositions).toEqual("CF, SP");
+            expect(eligiblePositions).toBe("CF, SP");
         });
     });
 
@@ -84,11 +84,11 @@ describe("Player Class", () => {
             expect(convertedPlayer.league).toEqual(PlayerLeagueType.MAJOR);
         });
         it("convertEspnMajorLeaguerToPlayer/1 - should use the full name field if available or the player id otherwise", () => {
-            expect(convertedPlayer.name).toEqual("Luis Ortiz");
-            expect(Player.convertEspnMajorLeaguerToPlayer(noNamePlayer).name).toEqual("ESPN Player #2966");
+            expect(convertedPlayer.name).toBe("Luis Ortiz");
+            expect(Player.convertEspnMajorLeaguerToPlayer(noNamePlayer).name).toBe("ESPN Player #2966");
         });
         it("convertEspnMajorLeaguerToPlayer/1 - should convert the mlb team id to the abbreviated team name", () => {
-            expect(convertedPlayer.mlbTeam).toEqual("BAL");
+            expect(convertedPlayer.mlbTeam).toBe("BAL");
         });
         it("convertEspnMajorLeaguerToPlayer/1 - should pass along the espn player id and other info", () => {
             expect(convertedPlayer.meta).toMatchObject({ espnPlayer });

@@ -13,21 +13,12 @@ import { advanceBy } from "jest-date-mock";
 
 let app: Server;
 let userDAO: UserDAO;
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 async function shutdown() {
-    await new Promise<void>((resolve, reject) => {
-        redisClient.quit((err, reply) => {
-            if (err) {
-                reject(err);
-            } else {
-                logger.debug(`Redis quit successfully with reply ${reply}`);
-                resolve();
-            }
-        });
-    });
-    // redis.quit() creates a thread to close the connection.
-    // We wait until all threads have been run once to ensure the connection closes.
-    return await new Promise(resolve => setImmediate(resolve));
+    try {
+        await redisClient.disconnect();
+    } catch (err) {
+        logger.error(`Error while closing redis: ${err}`);
+    }
 }
 
 beforeAll(async () => {
@@ -55,9 +46,10 @@ describe("Auth API endpoints", () => {
     });
 
     describe("POST /auth/signup", () => {
-        const signupRequest = (email: string, password: string, status = 200) => (
-            agent: request.SuperTest<request.Test>
-        ) => makePostRequest<Partial<User>>(agent, "/auth/signup", { email, password }, status);
+        const signupRequest =
+            (email: string, password: string, status = 200) =>
+            (agent: request.SuperTest<request.Test>) =>
+                makePostRequest<Partial<User>>(agent, "/auth/signup", { email, password }, status);
 
         it("should successfully signup the user, set up the session, and return the public user", async () => {
             const { body } = await signupRequest(testUser.email, testUser.password)(request(app));
@@ -184,7 +176,7 @@ describe("Auth API endpoints", () => {
             const resetPasswordObj = { id, token: passwordResetToken, password: "newPass" };
 
             const res = await request(app).post("/auth/reset_password").send(resetPasswordObj).expect(200);
-            expect(res.body).toEqual("success");
+            expect(res.body).toBe("success");
         });
 
         it("should return a 404 if there's no user with that passwordResetToken", async () => {
