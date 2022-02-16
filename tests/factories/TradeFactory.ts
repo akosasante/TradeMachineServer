@@ -5,6 +5,7 @@ import TradeParticipant, { TradeParticipantType } from "../../src/models/tradePa
 import { DraftPickFactory } from "./DraftPickFactory";
 import { PlayerFactory } from "./PlayerFactory";
 import { TeamFactory } from "./TeamFactory";
+import { espnIdCounter } from "./Counter";
 import { v4 as uuid } from "uuid";
 import Team from "../../src/models/team";
 
@@ -42,7 +43,7 @@ export class TradeFactory {
 
     public static getTradeParticipants(
         teamA = TeamFactory.getTeam("CREATOR_TEAM"),
-        teamB = TeamFactory.getTeam("RECIPIENT_TEAM", 2)
+        teamB = TeamFactory.getTeam("RECIPIENT_TEAM", espnIdCounter())
     ) {
         const creator = TradeFactory.getTradeCreator(teamA);
         const recipient = TradeFactory.getTradeRecipient(teamB);

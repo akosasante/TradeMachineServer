@@ -11,6 +11,7 @@ import User, { Role } from "../../src/models/user";
 import { PlayerFactory } from "../factories/PlayerFactory";
 import { TeamFactory } from "../factories/TeamFactory";
 import { UserFactory } from "../factories/UserFactory";
+import { espnIdCounter } from "../factories/Counter";
 import {
     adminLoggedIn,
     clearDb,
@@ -363,9 +364,9 @@ describe("Player API endpoints", () => {
                 }),
             ]);
             const [team1, team2, team3] = await teamDAO.createTeams([
-                TeamFactory.getTeamObject("Camtastic", 1),
-                TeamFactory.getTeamObject("Squad", 2),
-                TeamFactory.getTeamObject("Asantes", 3),
+                TeamFactory.getTeamObject("Camtastic", espnIdCounter()),
+                TeamFactory.getTeamObject("Squad", espnIdCounter()),
+                TeamFactory.getTeamObject("Asantes", espnIdCounter()),
             ]);
 
             await teamDAO.updateTeamOwners(team1.id!, [adminUser], []);

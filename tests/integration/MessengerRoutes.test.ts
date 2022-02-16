@@ -13,6 +13,7 @@ import Trade, { TradeStatus } from "../../src/models/trade";
 import PlayerDAO from "../../src/DAO/PlayerDAO";
 import { PlayerFactory } from "../factories/PlayerFactory";
 import { TeamFactory } from "../factories/TeamFactory";
+import { espnIdCounter } from "../factories/Counter";
 import TeamDAO from "../../src/DAO/TeamDAO";
 import { v4 as uuid } from "uuid";
 import { SlackPublisher } from "../../src/slack/publishers";
@@ -62,8 +63,8 @@ describe("Messenger API endpoints", () => {
     const createTradeOfStatus = async (status: TradeStatus, tradeArgs: Partial<Trade> = {}) => {
         const [player] = await playerDao.createPlayers([PlayerFactory.getPlayer()]);
         let [team1, team2] = await teamDAO.createTeams([
-            TeamFactory.getTeamObject("team1", 1),
-            TeamFactory.getTeamObject("team2", 2),
+            TeamFactory.getTeamObject("team1", espnIdCounter()),
+            TeamFactory.getTeamObject("team2", espnIdCounter()),
         ]);
         team1 = await teamDAO.updateTeamOwners(team1.id!, [adminUser], []);
         team2 = await teamDAO.updateTeamOwners(team2.id!, [ownerUser], []);

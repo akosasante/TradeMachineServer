@@ -12,6 +12,7 @@ import User from "../../src/models/user";
 import startServer from "../../src/bootstrap/app";
 import { TeamFactory } from "../factories/TeamFactory";
 import { TradeFactory } from "../factories/TradeFactory";
+import { espnIdCounter } from "../factories/Counter";
 import {
     adminLoggedIn,
     clearDb,
@@ -230,7 +231,7 @@ describe("Trade API endpoints", () => {
             // 2) STATUS: DRAFT | CREATOR: NEW_CREATOR_TEAM | REC: [CREATOR_TEAM]
             const tradeWithCreatorAsRecipient = TradeFactory.getTrade();
             tradeWithCreatorAsRecipient.tradeParticipants = [
-                TradeFactory.getTradeCreator(TeamFactory.getTeam("NEW_CREATOR_TEAM", 99)),
+                TradeFactory.getTradeCreator(TeamFactory.getTeam("NEW_CREATOR_TEAM", espnIdCounter())),
                 TradeFactory.getTradeRecipient(creator),
             ];
             tradeWithCreatorAsRecipient.tradeItems = TradeFactory.replaceItemParticipants(tradeWithCreatorAsRecipient, {
@@ -242,8 +243,8 @@ describe("Trade API endpoints", () => {
             // 3) STATUS: DRAFT | CREATOR: SEPARATE_CREATOR | REC: [SEPARATE_RECIPIENT]
             const tradeWithNoSharedParticipants = TradeFactory.getTrade();
             tradeWithNoSharedParticipants.tradeParticipants = [
-                TradeFactory.getTradeCreator(TeamFactory.getTeam("SEPERATE_CREATOR", 98)),
-                TradeFactory.getTradeRecipient(TeamFactory.getTeam("SEPERATE_RECIPIENT", 97)),
+                TradeFactory.getTradeCreator(TeamFactory.getTeam("SEPERATE_CREATOR", espnIdCounter())),
+                TradeFactory.getTradeRecipient(TeamFactory.getTeam("SEPERATE_RECIPIENT", espnIdCounter())),
             ];
             tradeWithNoSharedParticipants.tradeItems = TradeFactory.replaceItemParticipants(
                 tradeWithNoSharedParticipants,
@@ -283,7 +284,7 @@ describe("Trade API endpoints", () => {
             // 2) STATUS: DRAFT | CREATOR: NEW_CREATOR_TEAM | REC: [CREATOR_TEAM]
             const tradeWithCreatorAsRecipient = TradeFactory.getTrade();
             tradeWithCreatorAsRecipient.tradeParticipants = [
-                TradeFactory.getTradeCreator(TeamFactory.getTeam("NEW_CREATOR_TEAM", 99)),
+                TradeFactory.getTradeCreator(TeamFactory.getTeam("NEW_CREATOR_TEAM", espnIdCounter())),
                 TradeFactory.getTradeRecipient(creator),
             ];
             tradeWithCreatorAsRecipient.tradeItems = TradeFactory.replaceItemParticipants(tradeWithCreatorAsRecipient, {
@@ -295,8 +296,8 @@ describe("Trade API endpoints", () => {
             // 3) STATUS: DRAFT | CREATOR: SEPARATE_CREATOR | REC: [SEPARATE_RECIPIENT]
             const tradeWithNoSharedParticipants = TradeFactory.getTrade();
             tradeWithNoSharedParticipants.tradeParticipants = [
-                TradeFactory.getTradeCreator(TeamFactory.getTeam("SEPERATE_CREATOR", 98)),
-                TradeFactory.getTradeRecipient(TeamFactory.getTeam("SEPERATE_RECIPIENT", 97)),
+                TradeFactory.getTradeCreator(TeamFactory.getTeam("SEPERATE_CREATOR", espnIdCounter())),
+                TradeFactory.getTradeRecipient(TeamFactory.getTeam("SEPERATE_RECIPIENT", espnIdCounter())),
             ];
             tradeWithNoSharedParticipants.tradeItems = TradeFactory.replaceItemParticipants(
                 tradeWithNoSharedParticipants,
@@ -311,7 +312,7 @@ describe("Trade API endpoints", () => {
             const pendingTrade = TradeFactory.getTrade();
             pendingTrade.tradeParticipants = [
                 TradeFactory.getTradeCreator(creator),
-                TradeFactory.getTradeRecipient(TeamFactory.getTeam("SEPERATE_RECIPIENT_2", 197)),
+                TradeFactory.getTradeRecipient(TeamFactory.getTeam("SEPERATE_RECIPIENT_2", espnIdCounter())),
             ];
             pendingTrade.tradeItems = TradeFactory.replaceItemParticipants(pendingTrade, {
                 [testTrade.creator!.name]: pendingTrade.creator!,
@@ -322,8 +323,8 @@ describe("Trade API endpoints", () => {
             // 5) STATUS: PENDING | CREATOR: SEPARATE_CREATOR | REC: [SEPARATE_RECIPIENT]
             const tradeWithNoSharedParticipantsButPending = TradeFactory.getTrade();
             tradeWithNoSharedParticipantsButPending.tradeParticipants = [
-                TradeFactory.getTradeCreator(TeamFactory.getTeam("SEPERATE_CREATOR_2", 198)),
-                TradeFactory.getTradeRecipient(TeamFactory.getTeam("SEPERATE_RECIPIENT_3", 297)),
+                TradeFactory.getTradeCreator(TeamFactory.getTeam("SEPERATE_CREATOR_2", espnIdCounter())),
+                TradeFactory.getTradeRecipient(TeamFactory.getTeam("SEPERATE_RECIPIENT_3", espnIdCounter())),
             ];
             tradeWithNoSharedParticipantsButPending.tradeItems = TradeFactory.replaceItemParticipants(
                 tradeWithNoSharedParticipantsButPending,
