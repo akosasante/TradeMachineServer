@@ -51,7 +51,14 @@ module.exports = {
     "rules": {
         "jest/expect-expect": [
             "warn",
-            {"assertFunctionNames": ["expect", "request.**.expect"]}
+            {
+                "assertFunctionNames": [
+                "expect", 
+                "request.**.expect", 
+                "**(request(app))", 
+                "adminLoggedIn(**(**), app)"
+            ]
+        }
         ],
         "@typescript-eslint/adjacent-overload-signatures": "error",
         "@typescript-eslint/array-type": [

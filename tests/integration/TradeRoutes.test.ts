@@ -221,11 +221,13 @@ describe("Trade API endpoints", () => {
         });
 
         it("should return only trades with matching trade participants", async () => {
+            // 1) STATUS: DRAFT | CREATOR: CREATOR_TEAM | REC: [RECIPIENT_TEAM]
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
             const creator = testTrade.creator;
             delete creator!.espnId;
 
+            // 2) STATUS: DRAFT | CREATOR: NEW_CREATOR_TEAM | REC: [CREATOR_TEAM]
             const tradeWithCreatorAsRecipient = TradeFactory.getTrade();
             tradeWithCreatorAsRecipient.tradeParticipants = [
                 TradeFactory.getTradeCreator(TeamFactory.getTeam("NEW_CREATOR_TEAM", 99)),
@@ -237,6 +239,7 @@ describe("Trade API endpoints", () => {
             });
             await tradeDAO.createTrade(tradeWithCreatorAsRecipient.parse());
 
+            // 3) STATUS: DRAFT | CREATOR: SEPARATE_CREATOR | REC: [SEPARATE_RECIPIENT]
             const tradeWithNoSharedParticipants = TradeFactory.getTrade();
             tradeWithNoSharedParticipants.tradeParticipants = [
                 TradeFactory.getTradeCreator(TeamFactory.getTeam("SEPERATE_CREATOR", 98)),
@@ -251,9 +254,11 @@ describe("Trade API endpoints", () => {
             );
             await tradeDAO.createTrade(tradeWithNoSharedParticipants.parse());
 
+            // No filtering, should return all three trades
             const { body: bodyAll } = await getAllRequest("?hydrated=true");
             expect(bodyAll).toBeArrayOfSize(3);
 
+            // Filtering for CREAOTR_TEAM, should return trades (1) and (2)
             const { body: tradesWithCreatorIncluded } = await getAllRequest(
                 `?hydrated=true&includeTeam=${creator?.name}`
             );
@@ -266,12 +271,16 @@ describe("Trade API endpoints", () => {
             expect(noMatchingResults).toBeArrayOfSize(0);
         });
 
-        it("should return a combination of participant status search", async () => {
+        it("should return a combination of participant and status search", async () => {
+            // 1) STATUS: DRAFT | CREATOR: CREATOR_TEAM | REC: [RECIPIENT_TEAM]
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
+            const recipient = testTrade.recipients[0];
             const creator = testTrade.creator;
             delete creator!.espnId;
+            delete recipient.espnId;
 
+            // 2) STATUS: DRAFT | CREATOR: NEW_CREATOR_TEAM | REC: [CREATOR_TEAM]
             const tradeWithCreatorAsRecipient = TradeFactory.getTrade();
             tradeWithCreatorAsRecipient.tradeParticipants = [
                 TradeFactory.getTradeCreator(TeamFactory.getTeam("NEW_CREATOR_TEAM", 99)),
@@ -283,6 +292,7 @@ describe("Trade API endpoints", () => {
             });
             await tradeDAO.createTrade(tradeWithCreatorAsRecipient.parse());
 
+            // 3) STATUS: DRAFT | CREATOR: SEPARATE_CREATOR | REC: [SEPARATE_RECIPIENT]
             const tradeWithNoSharedParticipants = TradeFactory.getTrade();
             tradeWithNoSharedParticipants.tradeParticipants = [
                 TradeFactory.getTradeCreator(TeamFactory.getTeam("SEPERATE_CREATOR", 98)),
@@ -297,22 +307,63 @@ describe("Trade API endpoints", () => {
             );
             await tradeDAO.createTrade(tradeWithNoSharedParticipants.parse());
 
+            // 4) STATUS: PENDING | CREATOR: CREATOR_TEAM | REC: [SEPERATE_RECIPIENT_2]
             const pendingTrade = TradeFactory.getTrade();
-            pendingTrade.tradeParticipants = pendingTrade.tradeParticipants?.map(tp => {
-                tp.team.espnId! += 20;
-                return tp;
+            pendingTrade.tradeParticipants = [
+                TradeFactory.getTradeCreator(creator),
+                TradeFactory.getTradeRecipient(TeamFactory.getTeam("SEPERATE_RECIPIENT_2", 197)),
+            ];
+            pendingTrade.tradeItems = TradeFactory.replaceItemParticipants(pendingTrade, {
+                [testTrade.creator!.name]: pendingTrade.creator!,
+                [testTrade.recipients[0].name]: pendingTrade.recipients[0],
             });
             await tradeDAO.createTrade({ ...pendingTrade.parse(), status: TradeStatus.PENDING });
 
-            const { body: bodyAll } = await getAllRequest("?hydrated=true");
-            expect(bodyAll).toBeArrayOfSize(4);
-
-            const { body: matchingTrades } = await getAllRequest(
-                `?hydrated=true&status=${TradeStatus.PENDING}&includeTeam=${creator?.name}`
+            // 5) STATUS: PENDING | CREATOR: SEPARATE_CREATOR | REC: [SEPARATE_RECIPIENT]
+            const tradeWithNoSharedParticipantsButPending = TradeFactory.getTrade();
+            tradeWithNoSharedParticipantsButPending.tradeParticipants = [
+                TradeFactory.getTradeCreator(TeamFactory.getTeam("SEPERATE_CREATOR_2", 198)),
+                TradeFactory.getTradeRecipient(TeamFactory.getTeam("SEPERATE_RECIPIENT_3", 297)),
+            ];
+            tradeWithNoSharedParticipantsButPending.tradeItems = TradeFactory.replaceItemParticipants(
+                tradeWithNoSharedParticipantsButPending,
+                {
+                    [testTrade.creator!.name]: tradeWithNoSharedParticipantsButPending.creator!,
+                    [testTrade.recipients[0].name]: tradeWithNoSharedParticipantsButPending.recipients[0],
+                }
             );
-            expect(matchingTrades).toBeArrayOfSize(3); // All except tradeWithNoSharedParticipants
-            expect(matchingTrades).toSatisfyAll(
-                hydratedTrade => hydratedTrade.tradeId !== tradeWithNoSharedParticipants.id
+            await tradeDAO.createTrade({
+                ...tradeWithNoSharedParticipantsButPending.parse(),
+                status: TradeStatus.PENDING,
+            });
+
+            // No filter. Expect all 5 trades to be returned
+            const { body: bodyAll } = await getAllRequest("?hydrated=true");
+            expect(bodyAll).toBeArrayOfSize(5);
+
+            // Expect trades 4 and 5 to be returned, since they're both PENDING
+            const { body: matchingTradesByStatus } = await getAllRequest(
+                `?hydrated=true&status=${TradeStatus.PENDING}`
+            );
+            expect(matchingTradesByStatus).toBeArrayOfSize(2);
+            expect(matchingTradesByStatus).toSatisfyAll(hydratedTrade =>
+                [pendingTrade.id!, tradeWithNoSharedParticipantsButPending.id!].includes(hydratedTrade.tradeId)
+            );
+
+            // Expect trades 1, 2 and 4 to be returned, since they all have CREATOR as a participant
+            const { body: matchingTradesByTeam } = await getAllRequest(`?hydrated=true&includeTeam=${creator?.name}`);
+            expect(matchingTradesByTeam).toBeArrayOfSize(3);
+            expect(matchingTradesByTeam).toSatisfyAll(hydratedTrade =>
+                [pendingTrade.id!, tradeWithCreatorAsRecipient.id!, testTrade.id!].includes(hydratedTrade.tradeId)
+            );
+
+            // Expect trades only 4 to be returned, since they it is both the right team participant and status
+            const { body: matchingTradesByTeamAndStatus } = await getAllRequest(
+                `?hydrated=true&includeTeam=${creator?.name}&status=${TradeStatus.PENDING}`
+            );
+            expect(matchingTradesByTeamAndStatus).toBeArrayOfSize(1); // All except tradeWithNoSharedParticipants
+            expect(matchingTradesByTeamAndStatus).toSatisfyAll(hydratedTrade =>
+                [pendingTrade.id].includes(hydratedTrade.tradeId)
             );
         });
     });

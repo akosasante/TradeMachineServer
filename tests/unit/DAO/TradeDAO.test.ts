@@ -82,7 +82,12 @@ describe("TradeDAO", () => {
                 }),
             },
         ];
-        const expectedWhereClauseBoth = { where: [...expectedStatusClause, ...expectedParticipantsClause] };
+        const expectedWhereClauseBoth = {
+            where: [
+                { ...expectedStatusClause[0], ...expectedParticipantsClause[0] },
+                { ...expectedStatusClause[0], ...expectedParticipantsClause[1] },
+            ],
+        };
 
         await tradeDAO.returnHydratedTrades(undefined, undefined, TradeStatus.PENDING, team.name);
 

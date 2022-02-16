@@ -43,15 +43,26 @@ export default class TradeDAO {
         status?: TradeStatus,
         includeTeam?: string
     ): Promise<HydratedTrade[]> {
-        const statusWhereClause: FindConditions<HydratedTrade>[] = status ? [{ tradeStatus: status }] : [];
-        const participantWhereClause: FindConditions<HydratedTrade>[] = includeTeam
-            ? [
-                  { tradeCreator: includeTeam },
-                  { tradeRecipients: Raw(tp => ':teamName = ANY("tradeRecipients")', { teamName: includeTeam }) },
-              ]
-            : [];
-        const where = [...statusWhereClause, ...participantWhereClause];
-        const whereClause = where.length > 0 ? { where } : null;
+        let where: FindConditions<HydratedTrade>[] | undefined;
+
+        if (status && includeTeam) {
+            where = [
+                { tradeCreator: includeTeam, tradeStatus: status },
+                {
+                    tradeRecipients: Raw(tp => ':teamName = ANY("tradeRecipients")', { teamName: includeTeam }),
+                    tradeStatus: status,
+                },
+            ];
+        } else if (status) {
+            where = [{ tradeStatus: status }];
+        } else if (includeTeam) {
+            where = [
+                { tradeCreator: includeTeam },
+                { tradeRecipients: Raw(tp => ':teamName = ANY("tradeRecipients")', { teamName: includeTeam }) },
+            ];
+        }
+
+        const whereClause = where && where.length > 0 ? { where } : undefined;
 
         const pagingOptions = {
             skip: (pageNumber - 1) * pageSize,
