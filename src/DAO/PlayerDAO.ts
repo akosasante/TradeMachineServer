@@ -10,6 +10,11 @@ import {
 } from "typeorm";
 import Player from "../models/player";
 
+interface PlayerDeleteResult extends DeleteResult {
+    raw: Player[];
+    affected?: number | null;
+}
+
 export default class PlayerDAO {
     private playerDb: Repository<Player>;
 
@@ -83,7 +88,7 @@ export default class PlayerDAO {
         return await this.getPlayerById(id);
     }
 
-    public async deletePlayer(id: string): Promise<DeleteResult> {
+    public async deletePlayer(id: string): Promise<PlayerDeleteResult> {
         await this.getPlayerById(id);
         return await this.playerDb.createQueryBuilder().delete().whereInIds(id).returning("id").execute();
     }

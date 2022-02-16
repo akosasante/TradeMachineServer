@@ -361,7 +361,6 @@ export default class TradeController {
         logger.debug("delete trade endpoint");
         const result = await this.dao.deleteTrade(id);
         logger.debug(`delete successful: ${inspect(result)}`);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
         return { deleteCount: result.affected, id: result.raw[0].id };
     }
 }

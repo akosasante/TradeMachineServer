@@ -1,6 +1,11 @@
 import { DeleteResult, FindConditions, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
 import DraftPick from "../models/draftPick";
 
+interface DraftPickDeleteResult extends DeleteResult {
+    raw: DraftPick[];
+    affected?: number | null;
+}
+
 export default class DraftPickDAO {
     private draftPickDb: Repository<DraftPick>;
     private cacheExpiryMilliseconds = 60000;
@@ -36,6 +41,7 @@ export default class DraftPickDAO {
 
     public async batchUpsertPicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
         if (pickObjs.length) {
+            // TODO: Look into replacing onConflict with orUpdate
             const result: InsertResult = await this.draftPickDb
                 .createQueryBuilder()
                 .insert()
@@ -58,7 +64,7 @@ export default class DraftPickDAO {
         return await this.getPickById(id);
     }
 
-    public async deletePick(id: string): Promise<DeleteResult> {
+    public async deletePick(id: string): Promise<DraftPickDeleteResult> {
         await this.getPickById(id);
         return await this.draftPickDb.createQueryBuilder().delete().whereInIds(id).returning("id").execute();
     }

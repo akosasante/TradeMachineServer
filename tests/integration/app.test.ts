@@ -1,6 +1,5 @@
 import { Server } from "http";
-// @ts-ignore
-import request from "supertest";
+import * as request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";

@@ -1,7 +1,6 @@
 import { Server } from "http";
 import "jest-extended";
-// @ts-ignore
-import request from "supertest";
+import * as request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import { WriteMode } from "../../src/csv/CsvUtils";
@@ -447,4 +446,3 @@ describe("Player API endpoints", () => {
         });
     });
 });
-/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */

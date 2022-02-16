@@ -1,7 +1,6 @@
 import { Server } from "http";
 import "jest-extended";
-// @ts-ignore
-import request from "supertest";
+import * as request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import Settings from "../../src/models/settings";
@@ -283,4 +282,3 @@ describe("Settings API endpoints for general settings", () => {
         });
     });
 });
-/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */

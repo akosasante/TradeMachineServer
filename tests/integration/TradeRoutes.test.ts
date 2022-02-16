@@ -1,7 +1,6 @@
 import { Server } from "http";
 import "jest-extended";
-// @ts-ignore
-import request from "supertest";
+import * as request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import DraftPickDAO from "../../src/DAO/DraftPickDAO";
@@ -285,7 +284,7 @@ describe("Trade API endpoints", () => {
             expect(body).toMatchObject({
                 id: testTrade.id,
                 tradeParticipants: expect.toSatisfyAll(participant =>
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     updatedTradeParticipantIds.includes(participant.id)
                 ),
                 tradeItems: expect.toSatisfyAll(item => newItem.id === item.id),
@@ -462,4 +461,3 @@ describe("Trade API endpoints", () => {
         });
     });
 });
-/* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access */

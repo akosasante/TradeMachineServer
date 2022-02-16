@@ -126,7 +126,6 @@ export default class PlayerController {
         logger.debug("delete player endpoint");
         const result = await this.dao.deletePlayer(id);
         logger.debug(`delete successful: ${inspect(result)}`);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
         return { deleteCount: result.affected, id: result.raw[0].id };
     }
 }

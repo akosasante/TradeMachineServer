@@ -31,7 +31,7 @@ export const redisClient = createClient({
     // legacyMode: true is required to work with connect-redis + redis v4: https://github.com/tj/connect-redis/pull/345
     legacyMode: true,
     socket: {
-        host: (process.env.REDIS_IP || "localhost"),
+        host: process.env.REDIS_IP || "localhost",
         port: Number(process.env.REDIS_PORT || 6379),
     },
 });

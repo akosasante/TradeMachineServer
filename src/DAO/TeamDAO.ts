@@ -2,6 +2,11 @@ import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Reposit
 import Team from "../models/team";
 import User from "../models/user";
 
+interface TeamDeleteResult extends DeleteResult {
+    raw: Team[];
+    affected?: number | null;
+}
+
 export default class TeamDAO {
     private teamDb: Repository<Team>;
 
@@ -44,7 +49,7 @@ export default class TeamDAO {
         return await this.getTeamById(id);
     }
 
-    public async deleteTeam(id: string): Promise<DeleteResult> {
+    public async deleteTeam(id: string): Promise<TeamDeleteResult> {
         await this.teamDb.findOneOrFail(id);
         return await this.teamDb.createQueryBuilder().delete().whereInIds(id).returning("id").execute();
     }

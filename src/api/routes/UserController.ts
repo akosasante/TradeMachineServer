@@ -114,7 +114,6 @@ export default class UserController {
         rollbar.info("deleteUser", { id }, request);
         const result = await this.dao.deleteUser(id);
         logger.debug(`delete successful: ${inspect(result)}`);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
         return { deleteCount: result.affected, id: result.raw[0].id };
     }
 }

@@ -64,12 +64,15 @@ export default async function startServer(): Promise<Server> {
             logger.error(`Server Error: ${inspect(err)}`);
         });
 
-        srv.on("close", async () => {
-            logger.debug("closing server");
-            if (process.env.NODE_ENV !== "test") {
-                await redisClient.quit();
-            }
-            logger.debug("server says bye!");
+        srv.on("close", () => {
+            const serverCloseHandler = async () => {
+                logger.debug("closing server");
+                if (process.env.NODE_ENV !== "test") {
+                    await redisClient.quit();
+                }
+                logger.debug("server says bye!");
+            };
+            serverCloseHandler().catch(logger.error);
         });
         return srv;
     } catch (err) {
