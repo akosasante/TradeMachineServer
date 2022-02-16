@@ -9,7 +9,9 @@ export class Publisher {
     protected queue?: Queue;
 
     public async getJobTotal(): Promise<number> {
-        return Object.values<number>(await this.queue!.getJobCounts() as TypedJobCounts).reduce((val1: number, val2: number) => val1 + val2);
+        return Object.values<number>((await this.queue!.getJobCounts()) as TypedJobCounts).reduce(
+            (val1: number, val2: number) => val1 + val2
+        );
     }
 
     public async cleanWaitQueue(): Promise<Bull.Job<any>[]> {
@@ -17,10 +19,12 @@ export class Publisher {
     }
 
     public async closeQueue(): Promise<void> {
-        return this.queue!.close().then(() => {
-            logger.info(`Closing the queue. ${this.queue!.name}`);
-        }).catch(() => {
-            logger.error(`Erorr closing queue. ${this.queue!.name}`);
-        });
+        return this.queue!.close()
+            .then(() => {
+                logger.info(`Closing the queue. ${this.queue!.name}`);
+            })
+            .catch(() => {
+                logger.error(`Erorr closing queue. ${this.queue!.name}`);
+            });
     }
 }

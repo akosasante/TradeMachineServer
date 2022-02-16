@@ -26,7 +26,6 @@ export class LoginHandler implements ExpressMiddlewareInterface {
         const password = request?.body?.password as string;
         /* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
-
         return signInAuthentication(email, password, this.userDAO, (err?: Error, user?: UserDO) => {
             if (err || !user) {
                 const message = `User could not be authenticated. ${err ? err.message : ""}`;

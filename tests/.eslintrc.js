@@ -14,7 +14,14 @@ Happy linting! 💖
 module.exports = {
     "env": {
         "node": true,
+        "jest/globals": true
     },
+    settings: {
+        jest: {
+            version: require('jest/package.json').version
+        }
+    },
+    "root": true,
     "extends": [
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
@@ -22,23 +29,30 @@ module.exports = {
         "plugin:eslint-comments/recommended",
         "plugin:node/recommended",
         "plugin:import/errors",
-        "plugin:import/warnings"
+        "plugin:import/warnings",
+        "plugin:jest/recommended",
+        "plugin:jest/style"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "project": ["./tsconfig.eslint.json"],
+        "project": "./tsconfig.eslint.json",
         "sourceType": "module",
         "debugLevel": "true",
     },
-    "ignorePatterns": ['.eslintrc.js', 'src/db/*', './src/scripts/**/*.ts', './tests/*'],
+    "ignorePatterns": ['.eslintrc.js'],
     "plugins": [
         "eslint-plugin-no-null",
         "eslint-plugin-jsdoc",
         "eslint-plugin-prefer-arrow",
         "@typescript-eslint",
-        "@typescript-eslint/tslint"
+        "@typescript-eslint/tslint",
+        "jest"
     ],
     "rules": {
+        "jest/expect-expect": [
+            "warn",
+            {"assertFunctionNames": ["expect", "request.**.expect"]}
+        ],
         "@typescript-eslint/adjacent-overload-signatures": "error",
         "@typescript-eslint/array-type": [
             "error",
@@ -115,10 +129,11 @@ module.exports = {
         ],
         "@typescript-eslint/no-this-alias": "error",
         "@typescript-eslint/no-unnecessary-type-assertion": "error",
-        "@typescript-eslint/no-unsafe-assignment": "error",
-        "@typescript-eslint/no-unsafe-call": "error",
-        "@typescript-eslint/no-unsafe-member-access": "error",
-        "@typescript-eslint/no-unsafe-return": "error",
+        "@typescript-eslint/no-unsafe-argument": "warn",
+        "@typescript-eslint/no-unsafe-assignment": "warn",
+        "@typescript-eslint/no-unsafe-call": "warn",
+        "@typescript-eslint/no-unsafe-member-access": "warn",
+        "@typescript-eslint/no-unsafe-return": "warn",
         "@typescript-eslint/no-unused-expressions": "error",
         "@typescript-eslint/no-unused-vars": "warn",
         "@typescript-eslint/no-use-before-define": "off",

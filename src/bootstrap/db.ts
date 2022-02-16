@@ -21,19 +21,21 @@ export default async function initializeDb(logQueries = false): Promise<Connecti
         pgClient.on("error", (dbErr: any) => {
             logger.error(`DBERROR: ${inspect(dbErr)}`);
             rollbar.error(`DBERROR: ${inspect(dbErr)}`);
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            setTimeout(async () => {
-                try {
+
+            setTimeout(() => {
+                const connectionHandler = async () => {
                     logger.error("Reconnecting to database...");
                     rollbar.error("Reconnecting to database...");
                     await connection!.close();
                     await connection!.connect();
                     logger.debug("Reconnected");
-                } catch (reconnectError) {
+                };
+
+                connectionHandler().catch(reconnectError => {
                     logger.error("Reconnection error");
                     logger.error(reconnectError);
                     rollbar.error(inspect(reconnectError));
-                }
+                });
             }, 5000);
         });
 

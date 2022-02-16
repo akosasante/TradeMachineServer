@@ -116,7 +116,6 @@ export default class DraftPickController {
         rollbar.info("deleteDraftPick", { id });
         const result = await this.dao.deletePick(id);
         logger.debug(`delete successful: ${inspect(result)}`);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
         return { deleteCount: result.affected, id: result.raw[0].id };
     }
 }

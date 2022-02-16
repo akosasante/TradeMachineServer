@@ -2,6 +2,11 @@ import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Reposit
 import User from "../models/user";
 import { v4 as uuid } from "uuid";
 
+interface UserDeleteResult extends DeleteResult {
+    raw: User[];
+    affected?: number | null;
+}
+
 export default class UserDAO {
     private readonly userDb: Repository<User>;
 
@@ -55,7 +60,7 @@ export default class UserDAO {
         return await this.getUserById(id);
     }
 
-    public async deleteUser(id: string): Promise<DeleteResult> {
+    public async deleteUser(id: string): Promise<UserDeleteResult> {
         await this.getUserById(id); // This should throw error if the id does not exist
         return await this.userDb.createQueryBuilder().delete().whereInIds(id).returning("id").execute();
     }

@@ -66,8 +66,7 @@ export async function handleEmailJob(emailJob: Job<EmailJob>): Promise<SendInBlu
         const event = JSON.parse(emailJob.data.event);
         return await (emailTask as WebhookEmailFunction)(event);
     } else if (authEmailTasks.includes(emailJob.name) && emailJob.data.user) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
-        const user = new User(JSON.parse(emailJob.data.user));
+        const user = new User(JSON.parse(emailJob.data.user) as Partial<User> & Required<Pick<User, "email">>);
         return await (emailTask as AuthEmailFunction)(user);
     }
 }
@@ -77,8 +76,7 @@ export async function handleTradeEmailJob(emailJob: Job<TradeEmail>): Promise<Se
     const emailTask = emailCallbacks[emailJob.name as EmailJobName];
 
     if (emailJob.data.trade && emailJob.data.recipient) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
-        const trade = new Trade(JSON.parse(emailJob.data.trade));
+        const trade = new Trade(JSON.parse(emailJob.data.trade) as Partial<Trade>);
         for (const item of trade.tradeItems || []) {
             if (item.tradeItemType === TradeItemType.PLAYER) {
                 item.entity = new Player(item.entity as Partial<Player> & Required<Pick<Player, "name">>);

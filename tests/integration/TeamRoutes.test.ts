@@ -1,7 +1,6 @@
 import { Server } from "http";
 import "jest-extended";
-// @ts-ignore
-import request from "supertest";
+import * as request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
@@ -337,4 +336,3 @@ describe("Team API endpoints", () => {
         });
     });
 });
-/* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access */

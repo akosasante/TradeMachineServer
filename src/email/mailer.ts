@@ -1,6 +1,6 @@
 import Email from "email-templates";
 import nodemailer from "nodemailer";
-import SendinBlueTransport from "nodemailer-sendinblue-transport";
+import SendinBlueTransport, { SendInBlueTransportOptions } from "nodemailer-sendinblue-transport";
 import path from "path";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
@@ -14,6 +14,7 @@ import ordinal from "ordinal";
 import { rollbar } from "../bootstrap/rollbar";
 import EmailDAO from "../DAO/EmailDAO";
 import DbEmail from "../models/email";
+import TradeParticipant from "src/models/tradeParticipant";
 
 export interface SendInBlueSendResponse {
     envelope: {
@@ -33,12 +34,11 @@ export interface SendInBlueSendResponse {
     };
 }
 
-const SEND_IN_BLUE_OPTS = {
-    apiKey: process.env.EMAIL_KEY,
-    apiUrl: process.env.EMAIL_API_URL,
+const SEND_IN_BLUE_OPTS: SendInBlueTransportOptions = {
+    apiKey: process.env.EMAIL_KEY || "",
+    apiUrl: process.env.EMAIL_API_URL || "",
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
 const sendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SEND_IN_BLUE_OPTS));
 
 const baseDomain = process.env.BASE_URL;
@@ -93,7 +93,14 @@ function getPickTypeString(pickType: LeagueLevel) {
     }
 }
 
-function getTradeTextForRequest(trade: Trade) {
+interface TradeTextObject {
+    sender: string;
+    majors: string[];
+    minors: string[];
+    picks: string[];
+}
+
+function getTradeTextForRequest(trade: Trade): TradeTextObject[] | undefined {
     return trade.tradeParticipants?.map(participant => {
         const receivedPlayers = TradeItem.itemsReceivedBy(
             TradeItem.filterPlayers(trade.tradeItems),

@@ -23,7 +23,7 @@ export function setupSlackConsumers(): void {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     const cleanLoggedReturn = (returnValue: any) => returnValue;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     void slackQueue.process("trade_announce", x => processTradeAnnounceJob(x));
 
     slackQueue.on("error", error => {

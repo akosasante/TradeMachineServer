@@ -7,6 +7,11 @@ import PlayerDAO from "./PlayerDAO";
 import DraftPickDAO from "./DraftPickDAO";
 import { HydratedTrade } from "../models/views/hydratedTrades";
 
+interface TradeDeleteResult extends DeleteResult {
+    raw: Trade[];
+    affected?: number | null;
+}
+
 export default class TradeDAO {
     private tradeDb: Repository<Trade>;
     private hydratedTradeDb: Repository<HydratedTrade>;
@@ -65,7 +70,7 @@ export default class TradeDAO {
         return this.tradeDb.findOneOrFail(saved.id);
     }
 
-    public async deleteTrade(id: string): Promise<DeleteResult> {
+    public async deleteTrade(id: string): Promise<TradeDeleteResult> {
         await this.tradeDb.findOneOrFail(id);
         return await this.tradeDb.createQueryBuilder().delete().whereInIds(id).returning("id").execute();
     }
