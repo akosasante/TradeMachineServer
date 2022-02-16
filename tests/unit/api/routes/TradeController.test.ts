@@ -11,6 +11,8 @@ import { TeamFactory } from "../../../factories/TeamFactory";
 import { TradeItemType } from "../../../../src/models/tradeItem";
 import * as TradeTracker from "../../../../src/csv/TradeTracker";
 import { HydratedTrade } from "../../../../src/models/views/hydratedTrades";
+import { SlackPublisher } from "../../../../src/slack/publishers";
+import { EmailPublisher } from "../../../../src/email/publishers";
 
 describe("TradeController", () => {
     const mockTradeDAO = {
@@ -41,11 +43,24 @@ describe("TradeController", () => {
     recipient!.team.owners = [tradeRecipient];
     const tradeController = new TradeController(mockTradeDAO as unknown as TradeDAO);
 
+    const emailPublisher = EmailPublisher.getInstance();
+    const slackPublisher = SlackPublisher.getInstance();
+
+    async function shutdown() {
+        try {
+            await emailPublisher.closeQueue();
+            await slackPublisher.closeQueue();
+        } catch (err) {
+            logger.error(`Error while closing redis: ${err}`);
+        }
+    }
+
     beforeAll(() => {
         logger.debug("~~~~~~TRADE CONTROLLER TESTS BEGIN~~~~~~");
     });
-    afterAll(() => {
+    afterAll(async () => {
         logger.debug("~~~~~~TRADE CONTROLLER TESTS COMPLETE~~~~~~");
+        return await shutdown();
     });
     afterEach(() => {
         Object.values(mockTradeDAO).forEach(mockFn => mockFn.mockReset());

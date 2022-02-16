@@ -1,6 +1,6 @@
 import { Server } from "http";
 import "jest-extended";
-import * as request from "supertest";
+import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import Settings from "../../src/models/settings";
