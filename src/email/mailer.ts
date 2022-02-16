@@ -14,7 +14,7 @@ import ordinal from "ordinal";
 import { rollbar } from "../bootstrap/rollbar";
 import EmailDAO from "../DAO/EmailDAO";
 import DbEmail from "../models/email";
-import TradeParticipant from "src/models/tradeParticipant";
+import TradeParticipant from "../models/tradeParticipant";
 
 export interface SendInBlueSendResponse {
     envelope: {

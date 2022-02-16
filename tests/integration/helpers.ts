@@ -1,5 +1,5 @@
 import { Server } from "http";
-import * as request from "supertest";
+import request from "supertest";
 import UserDAO from "../../src/DAO/UserDAO";
 import { UserFactory } from "../factories/UserFactory";
 import { generateHashedPassword } from "../../src/authentication/auth";

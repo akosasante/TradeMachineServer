@@ -1,6 +1,6 @@
 import "jest-extended";
 import { Server } from "http";
-import * as request from "supertest";
+import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
@@ -49,13 +49,13 @@ beforeAll(async () => {
 
 afterAll(async () => {
     logger.debug("~~~~~~MESSENGER ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    const shutdownRedisAndQueues = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
-    return shutdownRedis;
+    return shutdownRedisAndQueues;
 });
 
 describe("Messenger API endpoints", () => {
