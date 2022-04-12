@@ -32,7 +32,7 @@
     "nodemailer-sendinblue-transport": "^1.2.3",
     "ordinal": "^1.0.3",
     "pg": "^8.7.3",
-    "redis": ">=3.1.1",
+    "redis": "^4.0.0",
     "reflect-metadata": "^0.1.13",
     "response-time": "^2.3.2",
     "rollbar": "^2.21.1",
