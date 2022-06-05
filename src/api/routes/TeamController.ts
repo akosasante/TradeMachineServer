@@ -44,7 +44,7 @@ export default class TeamController {
         } else {
             throw new BadRequestError(`Given parameter (${hasOwners}) for hasOwners queryParam is invalid.`);
         }
-        logger.debug(`got ${teams.length} teams`);
+        logger.debug(`got ${teams.length} teams (${inspect(teams.map(team => team.id))} )`);
         return teams;
     }
 
