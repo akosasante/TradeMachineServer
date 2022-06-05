@@ -3,7 +3,7 @@ import connectRedis from "connect-redis";
 import express from "express";
 import expressSession from "express-session";
 import morgan from "morgan";
-import { createClient } from "redis";
+import { createClient, RedisClient } from "redis";
 import responseTime from "response-time";
 import logger from "./logger";
 import { rollbar } from "./rollbar";
@@ -27,7 +27,7 @@ app.use(rollbar.errorHandler());
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 60 sec * 60 min * 24hr * 7 = 7 days
 const redisStore = connectRedis(expressSession);
 
-export const redisClient = createClient({
+export const redisClient: RedisClient = createClient({
     // legacyMode: true is required to work with connect-redis + redis v4: https://github.com/tj/connect-redis/pull/345
     legacyMode: true,
     socket: {
