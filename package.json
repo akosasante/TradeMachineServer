@@ -49,6 +49,7 @@
     "@jest/types": "^29.3.1",
     "@swc/core": "^1.2.50",
     "@swc/wasm": "^1.2.50",
+    "@types/axios": "^0.14",
     "@types/bcryptjs": "^2.4.2",
     "@types/compression": "1.0.1",
     "@types/connect-redis": "0.0.19",
