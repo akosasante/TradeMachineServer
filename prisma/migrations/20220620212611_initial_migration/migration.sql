@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- CreateEnum
 CREATE TYPE "draft_pick_type_enum" AS ENUM ('1', '2', '3');
 
