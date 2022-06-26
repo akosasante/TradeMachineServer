@@ -24,11 +24,11 @@ jobs:
           ROLLBAR_USERNAME: 'aaasante'
 
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.0.2
 
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3.3.0
         with:
-          node-version: '12.x'
+          node-version: '16.x'
           cache: 'npm'
 
       - name: Install all packages
@@ -38,7 +38,7 @@ jobs:
         run: make build
 
       - name: Compress built folders
-        uses:  master-atul/tar-action@v1.0.2
+        uses:  master-atul/tar-action@v1.1.0
         id: compress
         with:
           command: c
@@ -56,7 +56,7 @@ jobs:
           outPath: out.tar.gz
 
       - name: Upload built folders to artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3.1.0
         with:
           name: transpiled_app_folder
           path: ./out.tar.gz
@@ -69,7 +69,7 @@ jobs:
 
     steps:
       - name: Download dist folder
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3.0.0
         with:
           name: transpiled_app_folder
 
