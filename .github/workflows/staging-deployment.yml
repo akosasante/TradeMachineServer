@@ -81,6 +81,15 @@ jobs:
           source: "out-staging.tar.gz"
           target: "/opt/Apps/StagingTradeMachine"
 
+      - name: Make a logical backup of the staging db and upload to Google Drive
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.BACKUP_USERNAME }}
+          password: ${{ secrets.BACKUP_PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: bash tm_backup.sh trade_machine staging tm_backup ${{ secrets.BACKUP_PASSWORD }}
+
       - name: Unzip and restart the server
         uses: appleboy/ssh-action@master
         with:
