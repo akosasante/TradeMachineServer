@@ -6,7 +6,7 @@ import {
     ILike,
     In,
     InsertResult,
-    Repository,
+    Repository
 } from "typeorm";
 import Player from "../models/player";
 

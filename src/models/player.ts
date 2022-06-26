@@ -6,7 +6,7 @@ import {
     ESPN_ELIGIBLE_POSITION_MAPPING,
     ESPN_NON_POSITIONAL_NON_VALID_SLOTS,
     ESPN_POSITION_MAPPING,
-    espnMajorLeagueTeamFromId,
+    espnMajorLeagueTeamFromId
 } from "../espn/espnConstants";
 
 /* eslint-disable @typescript-eslint/naming-convention */
