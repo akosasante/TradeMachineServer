@@ -60,7 +60,7 @@ export default async function startServer(): Promise<Server> {
             rollbar.info("server_started");
         });
 
-        redisClient.on("error", err => {
+        redisClient.on("error", (err: Error) => {
             logger.error(`Redis Client Error: ${inspect(err)}`);
         });
 

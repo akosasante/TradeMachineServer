@@ -11,7 +11,7 @@ import {
     QueryParam,
     QueryParams,
     Req,
-    UploadedFile,
+    UploadedFile
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
