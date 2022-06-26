@@ -11,9 +11,6 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '12.x'
       - name: Notify Rollbar of deploy start
         uses: rollbar/github-deploy-action@2.1.1
         id: rollbar_pre_deploy
@@ -25,8 +22,13 @@ jobs:
         env:
           ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
           ROLLBAR_USERNAME: 'aaasante'
+
       - name: Check out repository code
         uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
 
       - name: Install all packages
         run: npm install
