@@ -1,0 +1,1517 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model DraftPick {
+  id              String          @id(map: "PK_173c858141c28aba85f3f2b66bb") @db.Uuid @default(uuid())
+  dateCreated     DateTime        @default(now()) @db.Timestamp(6)
+  dateModified    DateTime        @default(now()) @db.Timestamp(6)
+  // The draft round for this pick (can be decimal because sometimes they have something like round 1.5 for additional picks)
+  round           Decimal         @db.Decimal
+  // Determines the order of the pick in its round. Not available until close to the draft when the lottery is complete.
+  pickNumber      Int?
+  // What draft year is this pick associated with. Each year is a new set of draft picks. major league draft is in march;
+  // minor league draft is in october. during the current season, next year's major picks and this year's minor picks are available for trade
+  season          Int
+  // Major league, high minors (triple A and above), low minors
+  type            PickLeagueLevel
+  // [n-1] Maps to the FFF team that currently owns this pick (after trades). TODO: Should this field be marked as mandatory?
+  currentOwnerId  String?         @db.Uuid
+  currentOwner    Team?           @relation("draft_pick_currentOwnerIdToteam", fields: [currentOwnerId], references: [id], onUpdate: NoAction, map: "FK_edbfdecf43bec56ee160c9ba6bd")
+  // [n-1] Maps to the FFF team that owned this pick at the start of the season. TODO: Should this field be marked as mandatory?
+  originalOwnerId String?         @db.Uuid
+  originalOwner   Team?           @relation("draft_pick_originalOwnerIdToteam", fields: [originalOwnerId], references: [id], onUpdate: NoAction, map: "FK_5e448065a1f32514925e8045b61")
+
+
+  @@unique([type, season, round, originalOwnerId], map: "UQ_b0ee29a2eed55b5c4739873e3cd")
+  @@index([currentOwnerId, originalOwnerId], map: "IDX_0de9414ff65ab246290e2793ac")
+  @@index([originalOwnerId], map: "IDX_5e448065a1f32514925e8045b6")
+  @@index([currentOwnerId], map: "IDX_edbfdecf43bec56ee160c9ba6b")
+  @@map("draft_pick")
+}
+
+model Email {
+  // This id comes from SendInBlue
+  messageId    String   @id(map: "PK_b77796b667171ffa41401cfa393be9a3") @db.VarChar
+  dateCreated  DateTime @default(now()) @db.Timestamp(6)
+  dateModified DateTime @default(now()) @db.Timestamp(6)
+  // Updated by SendInBlue webhooks. Indicates the current delivery state of the email
+  status       String   @db.VarChar
+  // [n-1] For emails regarding trades, indicates what trade the email was about
+  tradeId      String?  @db.Uuid
+  trade        Trade?   @relation(fields: [tradeId], references: [id], onUpdate: NoAction, map: "FK_9140a2b1ba9cdc4e9c273f0eb21")
+
+
+  @@index([status], map: "IDX_7d64d8e03978e61c58c436ec31")
+  @@map("email")
+}
+
+// Pretty sure this is from TypeORM so we may be able to drop it eventually. Wonder what Prisma uses for migrations
+model migrations {
+  id        Int    @id(map: "PK_6fd861cae8a5b6ceee818af8ed5") @default(autoincrement())
+  timestamp BigInt
+  name      String @db.VarChar
+
+  @@ignore()
+}
+
+model nc_acl {
+  id         Int       @id @default(autoincrement())
+  project_id String?   @db.VarChar(255)
+  db_alias   String?   @default("db") @db.VarChar(255)
+  tn         String?   @db.VarChar(255)
+  acl        String?
+  type       String?   @default("table") @db.VarChar(255)
+  created_at DateTime? @db.Timestamptz(6)
+  updated_at DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_api_tokens {
+  id          Int       @id @default(autoincrement())
+  project_id  String?   @db.VarChar(255)
+  db_alias    String?   @db.VarChar(255)
+  description String?   @db.VarChar(255)
+  permissions String?
+  token       String?
+  expiry      String?   @db.VarChar(255)
+  enabled     Boolean?  @default(true)
+  created_at  DateTime? @db.Timestamptz(6)
+  updated_at  DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_audit {
+  id          Int       @id @default(autoincrement())
+  user        String?   @db.VarChar(255)
+  ip          String?   @db.VarChar(255)
+  project_id  String?   @db.VarChar(255)
+  db_alias    String?   @db.VarChar(255)
+  model_name  String?   @db.VarChar(100)
+  model_id    String?   @db.VarChar(100)
+  op_type     String?   @db.VarChar(255)
+  op_sub_type String?   @db.VarChar(255)
+  status      String?   @db.VarChar(255)
+  description String?
+  details     String?
+  created_at  DateTime? @db.Timestamptz(6)
+  updated_at  DateTime? @db.Timestamptz(6)
+
+
+  @@index([db_alias, project_id, model_name, model_id], map: "`nc_audit_index`")
+  @@ignore()
+}
+
+model nc_audit_v2 {
+  id             String          @id @db.VarChar(20)
+  user           String?         @db.VarChar(255)
+  ip             String?         @db.VarChar(255)
+  base_id        String?         @db.VarChar(20)
+  project_id     String?         @db.VarChar(128)
+  fk_model_id    String?         @db.VarChar(20)
+  row_id         String?         @db.VarChar(255)
+  op_type        String?         @db.VarChar(255)
+  op_sub_type    String?         @db.VarChar(255)
+  status         String?         @db.VarChar(255)
+  description    String?
+  details        String?
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime        @default(now()) @db.Timestamptz(6)
+  nc_bases_v2    nc_bases_v2?    @relation(fields: [base_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_audit_v2_base_id_foreign")
+  nc_models_v2   nc_models_v2?   @relation(fields: [fk_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_audit_v2_fk_model_id_foreign")
+  nc_projects_v2 nc_projects_v2? @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_audit_v2_project_id_foreign")
+
+
+  @@index([row_id], map: "nc_audit_v2_row_id_index")
+  @@ignore()
+}
+
+model nc_bases_v2 {
+  id                String          @id @db.VarChar(20)
+  project_id        String?         @db.VarChar(128)
+  alias             String?         @db.VarChar(255)
+  config            String?
+  meta              String?
+  is_meta           Boolean?
+  type              String?         @db.VarChar(255)
+  inflection_column String?         @db.VarChar(255)
+  inflection_table  String?         @db.VarChar(255)
+  created_at        DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime        @default(now()) @db.Timestamptz(6)
+  nc_projects_v2    nc_projects_v2? @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_bases_v2_project_id_foreign")
+  nc_audit_v2       nc_audit_v2[]
+  nc_models_v2      nc_models_v2[]
+
+  @@ignore()
+}
+
+model nc_col_formula_v2 {
+  id            String         @id @db.VarChar(20)
+  fk_column_id  String?        @db.VarChar(20)
+  formula       String
+  formula_raw   String?
+  error         String?
+  deleted       Boolean?
+  order         Float?         @db.Real
+  created_at    DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime       @default(now()) @db.Timestamptz(6)
+  nc_columns_v2 nc_columns_v2? @relation(fields: [fk_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_formula_v2_fk_column_id_foreign")
+
+  @@ignore()
+}
+
+model nc_col_lookup_v2 {
+  id                                                                  String         @id @db.VarChar(20)
+  fk_column_id                                                        String?        @db.VarChar(20)
+  fk_relation_column_id                                               String?        @db.VarChar(20)
+  fk_lookup_column_id                                                 String?        @db.VarChar(20)
+  deleted                                                             Boolean?
+  created_at                                                          DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at                                                          DateTime       @default(now()) @db.Timestamptz(6)
+  nc_columns_v2_nc_col_lookup_v2_fk_column_idTonc_columns_v2          nc_columns_v2? @relation("nc_col_lookup_v2_fk_column_idTonc_columns_v2", fields: [fk_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_lookup_v2_fk_column_id_foreign")
+  nc_columns_v2_nc_col_lookup_v2_fk_lookup_column_idTonc_columns_v2   nc_columns_v2? @relation("nc_col_lookup_v2_fk_lookup_column_idTonc_columns_v2", fields: [fk_lookup_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_lookup_v2_fk_lookup_column_id_foreign")
+  nc_columns_v2_nc_col_lookup_v2_fk_relation_column_idTonc_columns_v2 nc_columns_v2? @relation("nc_col_lookup_v2_fk_relation_column_idTonc_columns_v2", fields: [fk_relation_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_lookup_v2_fk_relation_column_id_foreign")
+
+  @@ignore()
+}
+
+model nc_col_relations_v2 {
+  id                                                                      String         @id @db.VarChar(20)
+  ref_db_alias                                                            String?        @db.VarChar(255)
+  type                                                                    String?        @db.VarChar(255)
+  virtual                                                                 Boolean?
+  db_type                                                                 String?        @db.VarChar(255)
+  fk_column_id                                                            String?        @db.VarChar(20)
+  fk_related_model_id                                                     String?        @db.VarChar(20)
+  fk_child_column_id                                                      String?        @db.VarChar(20)
+  fk_parent_column_id                                                     String?        @db.VarChar(20)
+  fk_mm_model_id                                                          String?        @db.VarChar(20)
+  fk_mm_child_column_id                                                   String?        @db.VarChar(20)
+  fk_mm_parent_column_id                                                  String?        @db.VarChar(20)
+  ur                                                                      String?        @db.VarChar(255)
+  dr                                                                      String?        @db.VarChar(255)
+  fk_index_name                                                           String?        @db.VarChar(255)
+  deleted                                                                 Boolean?
+  created_at                                                              DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at                                                              DateTime       @default(now()) @db.Timestamptz(6)
+  nc_columns_v2_nc_col_relations_v2_fk_child_column_idTonc_columns_v2     nc_columns_v2? @relation("nc_col_relations_v2_fk_child_column_idTonc_columns_v2", fields: [fk_child_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_relations_v2_fk_child_column_id_foreign")
+  nc_columns_v2_nc_col_relations_v2_fk_column_idTonc_columns_v2           nc_columns_v2? @relation("nc_col_relations_v2_fk_column_idTonc_columns_v2", fields: [fk_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_relations_v2_fk_column_id_foreign")
+  nc_columns_v2_nc_col_relations_v2_fk_mm_child_column_idTonc_columns_v2  nc_columns_v2? @relation("nc_col_relations_v2_fk_mm_child_column_idTonc_columns_v2", fields: [fk_mm_child_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_relations_v2_fk_mm_child_column_id_foreign")
+  nc_models_v2_nc_col_relations_v2_fk_mm_model_idTonc_models_v2           nc_models_v2?  @relation("nc_col_relations_v2_fk_mm_model_idTonc_models_v2", fields: [fk_mm_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_relations_v2_fk_mm_model_id_foreign")
+  nc_columns_v2_nc_col_relations_v2_fk_mm_parent_column_idTonc_columns_v2 nc_columns_v2? @relation("nc_col_relations_v2_fk_mm_parent_column_idTonc_columns_v2", fields: [fk_mm_parent_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_relations_v2_fk_mm_parent_column_id_foreign")
+  nc_columns_v2_nc_col_relations_v2_fk_parent_column_idTonc_columns_v2    nc_columns_v2? @relation("nc_col_relations_v2_fk_parent_column_idTonc_columns_v2", fields: [fk_parent_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_relations_v2_fk_parent_column_id_foreign")
+  nc_models_v2_nc_col_relations_v2_fk_related_model_idTonc_models_v2      nc_models_v2?  @relation("nc_col_relations_v2_fk_related_model_idTonc_models_v2", fields: [fk_related_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_relations_v2_fk_related_model_id_foreign")
+
+  @@ignore()
+}
+
+model nc_col_rollup_v2 {
+  id                                                                  String         @id @db.VarChar(20)
+  fk_column_id                                                        String?        @db.VarChar(20)
+  fk_relation_column_id                                               String?        @db.VarChar(20)
+  fk_rollup_column_id                                                 String?        @db.VarChar(20)
+  rollup_function                                                     String?        @db.VarChar(255)
+  deleted                                                             Boolean?
+  created_at                                                          DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at                                                          DateTime       @default(now()) @db.Timestamptz(6)
+  nc_columns_v2_nc_col_rollup_v2_fk_column_idTonc_columns_v2          nc_columns_v2? @relation("nc_col_rollup_v2_fk_column_idTonc_columns_v2", fields: [fk_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_rollup_v2_fk_column_id_foreign")
+  nc_columns_v2_nc_col_rollup_v2_fk_relation_column_idTonc_columns_v2 nc_columns_v2? @relation("nc_col_rollup_v2_fk_relation_column_idTonc_columns_v2", fields: [fk_relation_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_rollup_v2_fk_relation_column_id_foreign")
+  nc_columns_v2_nc_col_rollup_v2_fk_rollup_column_idTonc_columns_v2   nc_columns_v2? @relation("nc_col_rollup_v2_fk_rollup_column_idTonc_columns_v2", fields: [fk_rollup_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_rollup_v2_fk_rollup_column_id_foreign")
+
+  @@ignore()
+}
+
+model nc_col_select_options_v2 {
+  id            String         @id @db.VarChar(20)
+  fk_column_id  String?        @db.VarChar(20)
+  title         String?        @db.VarChar(255)
+  color         String?        @db.VarChar(255)
+  order         Float?         @db.Real
+  created_at    DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime       @default(now()) @db.Timestamptz(6)
+  nc_columns_v2 nc_columns_v2? @relation(fields: [fk_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_col_select_options_v2_fk_column_id_foreign")
+
+  @@ignore()
+}
+
+model nc_columns_v2 {
+  id                                                                            String                       @id @db.VarChar(20)
+  base_id                                                                       String?                      @db.VarChar(20)
+  project_id                                                                    String?                      @db.VarChar(128)
+  fk_model_id                                                                   String?                      @db.VarChar(20)
+  title                                                                         String?                      @db.VarChar(255)
+  column_name                                                                   String?                      @db.VarChar(255)
+  uidt                                                                          String?                      @db.VarChar(255)
+  dt                                                                            String?                      @db.VarChar(255)
+  np                                                                            String?                      @db.VarChar(255)
+  ns                                                                            String?                      @db.VarChar(255)
+  clen                                                                          String?                      @db.VarChar(255)
+  cop                                                                           String?                      @db.VarChar(255)
+  pk                                                                            Boolean?
+  pv                                                                            Boolean?
+  rqd                                                                           Boolean?
+  un                                                                            Boolean?
+  ct                                                                            String?
+  ai                                                                            Boolean?
+  unique                                                                        Boolean?
+  cdf                                                                           String?
+  cc                                                                            String?
+  csn                                                                           String?                      @db.VarChar(255)
+  dtx                                                                           String?                      @db.VarChar(255)
+  dtxp                                                                          String?
+  dtxs                                                                          String?                      @db.VarChar(255)
+  au                                                                            Boolean?
+  validate                                                                      String?
+  virtual                                                                       Boolean?
+  deleted                                                                       Boolean?
+  system                                                                        Boolean?                     @default(false)
+  order                                                                         Float?                       @db.Real
+  created_at                                                                    DateTime                     @default(now()) @db.Timestamptz(6)
+  updated_at                                                                    DateTime                     @default(now()) @db.Timestamptz(6)
+  meta                                                                          String?
+  nc_models_v2                                                                  nc_models_v2?                @relation(fields: [fk_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_columns_v2_fk_model_id_foreign")
+  nc_col_formula_v2                                                             nc_col_formula_v2[]
+  nc_col_lookup_v2_nc_col_lookup_v2_fk_column_idTonc_columns_v2                 nc_col_lookup_v2[]           @relation("nc_col_lookup_v2_fk_column_idTonc_columns_v2")
+  nc_col_lookup_v2_nc_col_lookup_v2_fk_lookup_column_idTonc_columns_v2          nc_col_lookup_v2[]           @relation("nc_col_lookup_v2_fk_lookup_column_idTonc_columns_v2")
+  nc_col_lookup_v2_nc_col_lookup_v2_fk_relation_column_idTonc_columns_v2        nc_col_lookup_v2[]           @relation("nc_col_lookup_v2_fk_relation_column_idTonc_columns_v2")
+  nc_col_relations_v2_nc_col_relations_v2_fk_child_column_idTonc_columns_v2     nc_col_relations_v2[]        @relation("nc_col_relations_v2_fk_child_column_idTonc_columns_v2")
+  nc_col_relations_v2_nc_col_relations_v2_fk_column_idTonc_columns_v2           nc_col_relations_v2[]        @relation("nc_col_relations_v2_fk_column_idTonc_columns_v2")
+  nc_col_relations_v2_nc_col_relations_v2_fk_mm_child_column_idTonc_columns_v2  nc_col_relations_v2[]        @relation("nc_col_relations_v2_fk_mm_child_column_idTonc_columns_v2")
+  nc_col_relations_v2_nc_col_relations_v2_fk_mm_parent_column_idTonc_columns_v2 nc_col_relations_v2[]        @relation("nc_col_relations_v2_fk_mm_parent_column_idTonc_columns_v2")
+  nc_col_relations_v2_nc_col_relations_v2_fk_parent_column_idTonc_columns_v2    nc_col_relations_v2[]        @relation("nc_col_relations_v2_fk_parent_column_idTonc_columns_v2")
+  nc_col_rollup_v2_nc_col_rollup_v2_fk_column_idTonc_columns_v2                 nc_col_rollup_v2[]           @relation("nc_col_rollup_v2_fk_column_idTonc_columns_v2")
+  nc_col_rollup_v2_nc_col_rollup_v2_fk_relation_column_idTonc_columns_v2        nc_col_rollup_v2[]           @relation("nc_col_rollup_v2_fk_relation_column_idTonc_columns_v2")
+  nc_col_rollup_v2_nc_col_rollup_v2_fk_rollup_column_idTonc_columns_v2          nc_col_rollup_v2[]           @relation("nc_col_rollup_v2_fk_rollup_column_idTonc_columns_v2")
+  nc_col_select_options_v2                                                      nc_col_select_options_v2[]
+  nc_filter_exp_v2                                                              nc_filter_exp_v2[]
+  nc_form_view_columns_v2                                                       nc_form_view_columns_v2[]
+  nc_gallery_view_columns_v2                                                    nc_gallery_view_columns_v2[]
+  nc_gallery_view_v2                                                            nc_gallery_view_v2[]
+  nc_grid_view_columns_v2                                                       nc_grid_view_columns_v2[]
+  nc_kanban_view_columns_v2                                                     nc_kanban_view_columns_v2[]
+  nc_sort_v2                                                                    nc_sort_v2[]
+
+  @@ignore()
+}
+
+model nc_cron {
+  id             Int       @id @default(autoincrement())
+  project_id     String?   @db.VarChar(255)
+  db_alias       String?   @default("db") @db.VarChar(255)
+  title          String?   @db.VarChar(255)
+  description    String?   @db.VarChar(255)
+  env            String?   @db.VarChar(255)
+  pattern        String?   @db.VarChar(255)
+  webhook        String?   @db.VarChar(255)
+  timezone       String?   @default("America/Los_Angeles") @db.VarChar(255)
+  active         Boolean?  @default(true)
+  cron_handler   String?
+  payload        String?
+  headers        String?
+  retries        Int?      @default(0)
+  retry_interval Int?      @default(60000)
+  timeout        Int?      @default(60000)
+  created_at     DateTime? @db.Timestamptz(6)
+  updated_at     DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_disabled_models_for_role {
+  id                 Int       @id @default(autoincrement())
+  project_id         String?   @db.VarChar(255)
+  db_alias           String?   @db.VarChar(45)
+  title              String?   @db.VarChar(45)
+  type               String?   @db.VarChar(45)
+  role               String?   @db.VarChar(45)
+  disabled           Boolean?  @default(true)
+  tn                 String?   @db.VarChar(255)
+  rtn                String?   @db.VarChar(255)
+  cn                 String?   @db.VarChar(255)
+  rcn                String?   @db.VarChar(255)
+  relation_type      String?   @db.VarChar(255)
+  created_at         DateTime? @db.Timestamptz(6)
+  updated_at         DateTime? @db.Timestamptz(6)
+  parent_model_title String?   @db.VarChar(255)
+
+
+  @@index([project_id, db_alias, title, type, role], map: "xc_disabled124_idx")
+  @@ignore()
+}
+
+model nc_disabled_models_for_role_v2 {
+  id          String       @id @db.VarChar(20)
+  base_id     String?      @db.VarChar(20)
+  project_id  String?      @db.VarChar(128)
+  fk_view_id  String?      @db.VarChar(20)
+  role        String?      @db.VarChar(45)
+  disabled    Boolean?     @default(true)
+  created_at  DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime     @default(now()) @db.Timestamptz(6)
+  nc_views_v2 nc_views_v2? @relation(fields: [fk_view_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_disabled_models_for_role_v2_fk_view_id_foreign")
+
+  @@ignore()
+}
+
+model nc_evolutions {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(255)
+  titleDown   String?   @db.VarChar(255)
+  description String?   @db.VarChar(255)
+  batch       Int?
+  checksum    String?   @db.VarChar(255)
+  status      Int?
+  created     DateTime? @db.Timestamptz(6)
+  created_at  DateTime? @db.Timestamptz(6)
+  updated_at  DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_filter_exp_v2 {
+  id                     String             @id @db.VarChar(20)
+  base_id                String?            @db.VarChar(20)
+  project_id             String?            @db.VarChar(128)
+  fk_view_id             String?            @db.VarChar(20)
+  fk_hook_id             String?            @db.VarChar(20)
+  fk_column_id           String?            @db.VarChar(20)
+  fk_parent_id           String?            @db.VarChar(20)
+  logical_op             String?            @db.VarChar(255)
+  comparison_op          String?            @db.VarChar(255)
+  value                  String?            @db.VarChar(255)
+  is_group               Boolean?
+  order                  Float?             @db.Real
+  created_at             DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime           @default(now()) @db.Timestamptz(6)
+  nc_columns_v2          nc_columns_v2?     @relation(fields: [fk_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_filter_exp_v2_fk_column_id_foreign")
+  nc_hooks_v2            nc_hooks_v2?       @relation(fields: [fk_hook_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_filter_exp_v2_fk_hook_id_foreign")
+  nc_filter_exp_v2       nc_filter_exp_v2?  @relation("nc_filter_exp_v2Tonc_filter_exp_v2_fk_parent_id", fields: [fk_parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_filter_exp_v2_fk_parent_id_foreign")
+  nc_views_v2            nc_views_v2?       @relation(fields: [fk_view_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_filter_exp_v2_fk_view_id_foreign")
+  other_nc_filter_exp_v2 nc_filter_exp_v2[] @relation("nc_filter_exp_v2Tonc_filter_exp_v2_fk_parent_id")
+
+  @@ignore()
+}
+
+model nc_form_view_columns_v2 {
+  id              String           @id @db.VarChar(20)
+  base_id         String?          @db.VarChar(20)
+  project_id      String?          @db.VarChar(128)
+  fk_view_id      String?          @db.VarChar(20)
+  fk_column_id    String?          @db.VarChar(20)
+  uuid            String?          @db.VarChar(255)
+  label           String?          @db.VarChar(255)
+  help            String?          @db.VarChar(255)
+  description     String?
+  required        Boolean?
+  show            Boolean?
+  order           Float?           @db.Real
+  created_at      DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime         @default(now()) @db.Timestamptz(6)
+  nc_columns_v2   nc_columns_v2?   @relation(fields: [fk_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_form_view_columns_v2_fk_column_id_foreign")
+  nc_form_view_v2 nc_form_view_v2? @relation(fields: [fk_view_id], references: [fk_view_id], onDelete: NoAction, onUpdate: NoAction, map: "nc_form_view_columns_v2_fk_view_id_foreign")
+
+  @@ignore()
+}
+
+model nc_form_view_v2 {
+  base_id                 String?                   @db.VarChar(20)
+  project_id              String?                   @db.VarChar(128)
+  fk_view_id              String                    @id @db.VarChar(20)
+  heading                 String?                   @db.VarChar(255)
+  subheading              String?                   @db.VarChar(255)
+  success_msg             String?
+  redirect_url            String?
+  redirect_after_secs     String?                   @db.VarChar(255)
+  email                   String?                   @db.VarChar(255)
+  submit_another_form     Boolean?
+  show_blank_form         Boolean?
+  uuid                    String?                   @db.VarChar(255)
+  banner_image_url        String?
+  logo_url                String?
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  nc_views_v2             nc_views_v2               @relation(fields: [fk_view_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_form_view_v2_fk_view_id_foreign")
+  nc_form_view_columns_v2 nc_form_view_columns_v2[]
+
+  @@ignore()
+}
+
+model nc_gallery_view_columns_v2 {
+  id                 String              @id @db.VarChar(20)
+  base_id            String?             @db.VarChar(20)
+  project_id         String?             @db.VarChar(128)
+  fk_view_id         String?             @db.VarChar(20)
+  fk_column_id       String?             @db.VarChar(20)
+  uuid               String?             @db.VarChar(255)
+  label              String?             @db.VarChar(255)
+  help               String?             @db.VarChar(255)
+  show               Boolean?
+  order              Float?              @db.Real
+  created_at         DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime            @default(now()) @db.Timestamptz(6)
+  nc_columns_v2      nc_columns_v2?      @relation(fields: [fk_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_gallery_view_columns_v2_fk_column_id_foreign")
+  nc_gallery_view_v2 nc_gallery_view_v2? @relation(fields: [fk_view_id], references: [fk_view_id], onDelete: NoAction, onUpdate: NoAction, map: "nc_gallery_view_columns_v2_fk_view_id_foreign")
+
+  @@ignore()
+}
+
+model nc_gallery_view_v2 {
+  base_id                    String?                      @db.VarChar(20)
+  project_id                 String?                      @db.VarChar(128)
+  fk_view_id                 String                       @id @db.VarChar(20)
+  next_enabled               Boolean?
+  prev_enabled               Boolean?
+  cover_image_idx            Int?
+  fk_cover_image_col_id      String?                      @db.VarChar(20)
+  cover_image                String?                      @db.VarChar(255)
+  restrict_types             String?                      @db.VarChar(255)
+  restrict_size              String?                      @db.VarChar(255)
+  restrict_number            String?                      @db.VarChar(255)
+  public                     Boolean?
+  dimensions                 String?                      @db.VarChar(255)
+  responsive_columns         String?                      @db.VarChar(255)
+  created_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  nc_columns_v2              nc_columns_v2?               @relation(fields: [fk_cover_image_col_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_gallery_view_v2_fk_cover_image_col_id_foreign")
+  nc_views_v2                nc_views_v2                  @relation(fields: [fk_view_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_gallery_view_v2_fk_view_id_foreign")
+  nc_gallery_view_columns_v2 nc_gallery_view_columns_v2[]
+
+  @@ignore()
+}
+
+model nc_grid_view_columns_v2 {
+  id              String           @id @db.VarChar(20)
+  fk_view_id      String?          @db.VarChar(20)
+  fk_column_id    String?          @db.VarChar(20)
+  base_id         String?          @db.VarChar(20)
+  project_id      String?          @db.VarChar(128)
+  uuid            String?          @db.VarChar(255)
+  label           String?          @db.VarChar(255)
+  help            String?          @db.VarChar(255)
+  width           String?          @default("200px") @db.VarChar(255)
+  show            Boolean?
+  order           Float?           @db.Real
+  created_at      DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime         @default(now()) @db.Timestamptz(6)
+  nc_columns_v2   nc_columns_v2?   @relation(fields: [fk_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_grid_view_columns_v2_fk_column_id_foreign")
+  nc_grid_view_v2 nc_grid_view_v2? @relation(fields: [fk_view_id], references: [fk_view_id], onDelete: NoAction, onUpdate: NoAction, map: "nc_grid_view_columns_v2_fk_view_id_foreign")
+
+  @@ignore()
+}
+
+model nc_grid_view_v2 {
+  fk_view_id              String                    @id @db.VarChar(20)
+  base_id                 String?                   @db.VarChar(20)
+  project_id              String?                   @db.VarChar(128)
+  uuid                    String?                   @db.VarChar(255)
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  nc_views_v2             nc_views_v2               @relation(fields: [fk_view_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_grid_view_v2_fk_view_id_foreign")
+  nc_grid_view_columns_v2 nc_grid_view_columns_v2[]
+
+  @@ignore()
+}
+
+model nc_hook_logs_v2 {
+  id             String   @id @db.VarChar(20)
+  base_id        String?  @db.VarChar(20)
+  project_id     String?  @db.VarChar(128)
+  fk_hook_id     String?  @db.VarChar(20)
+  type           String?  @db.VarChar(255)
+  event          String?  @db.VarChar(255)
+  operation      String?  @db.VarChar(255)
+  test_call      Boolean? @default(true)
+  payload        String?
+  conditions     String?
+  notification   String?
+  error_code     String?  @db.VarChar(255)
+  error_message  String?  @db.VarChar(255)
+  error          String?
+  execution_time Int?
+  response       String?  @db.VarChar(255)
+  triggered_by   String?  @db.VarChar(255)
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @default(now()) @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_hooks {
+  id             Int       @id @default(autoincrement())
+  project_id     String?   @db.VarChar(255)
+  db_alias       String?   @default("db") @db.VarChar(255)
+  title          String?   @db.VarChar(255)
+  description    String?   @db.VarChar(255)
+  env            String?   @default("all") @db.VarChar(255)
+  tn             String?   @db.VarChar(255)
+  type           String?   @db.VarChar(255)
+  event          String?   @db.VarChar(255)
+  operation      String?   @db.VarChar(255)
+  async          Boolean?  @default(false)
+  payload        Boolean?  @default(true)
+  url            String?
+  headers        String?
+  condition      String?
+  notification   String?
+  retries        Int?      @default(0)
+  retry_interval Int?      @default(60000)
+  timeout        Int?      @default(60000)
+  active         Boolean?  @default(true)
+  created_at     DateTime? @db.Timestamptz(6)
+  updated_at     DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_hooks_v2 {
+  id               String             @id @db.VarChar(20)
+  base_id          String?            @db.VarChar(20)
+  project_id       String?            @db.VarChar(128)
+  fk_model_id      String?            @db.VarChar(20)
+  title            String?            @db.VarChar(255)
+  description      String?            @db.VarChar(255)
+  env              String?            @default("all") @db.VarChar(255)
+  type             String?            @db.VarChar(255)
+  event            String?            @db.VarChar(255)
+  operation        String?            @db.VarChar(255)
+  async            Boolean?           @default(false)
+  payload          Boolean?           @default(true)
+  url              String?
+  headers          String?
+  condition        Boolean?           @default(false)
+  notification     String?
+  retries          Int?               @default(0)
+  retry_interval   Int?               @default(60000)
+  timeout          Int?               @default(60000)
+  active           Boolean?           @default(true)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  nc_models_v2     nc_models_v2?      @relation(fields: [fk_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_hooks_v2_fk_model_id_foreign")
+  nc_filter_exp_v2 nc_filter_exp_v2[]
+
+  @@ignore()
+}
+
+model nc_kanban_view_columns_v2 {
+  id                String             @id @db.VarChar(20)
+  base_id           String?            @db.VarChar(20)
+  project_id        String?            @db.VarChar(128)
+  fk_view_id        String?            @db.VarChar(20)
+  fk_column_id      String?            @db.VarChar(20)
+  uuid              String?            @db.VarChar(255)
+  label             String?            @db.VarChar(255)
+  help              String?            @db.VarChar(255)
+  show              Boolean?
+  order             Float?             @db.Real
+  created_at        DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime           @default(now()) @db.Timestamptz(6)
+  nc_columns_v2     nc_columns_v2?     @relation(fields: [fk_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_kanban_view_columns_v2_fk_column_id_foreign")
+  nc_kanban_view_v2 nc_kanban_view_v2? @relation(fields: [fk_view_id], references: [fk_view_id], onDelete: NoAction, onUpdate: NoAction, map: "nc_kanban_view_columns_v2_fk_view_id_foreign")
+
+  @@ignore()
+}
+
+model nc_kanban_view_v2 {
+  fk_view_id                String                      @id @db.VarChar(20)
+  base_id                   String?                     @db.VarChar(20)
+  project_id                String?                     @db.VarChar(128)
+  show                      Boolean?
+  order                     Float?                      @db.Real
+  uuid                      String?                     @db.VarChar(255)
+  title                     String?                     @db.VarChar(255)
+  public                    Boolean?
+  password                  String?                     @db.VarChar(255)
+  show_all_fields           Boolean?
+  created_at                DateTime                    @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime                    @default(now()) @db.Timestamptz(6)
+  nc_views_v2               nc_views_v2                 @relation(fields: [fk_view_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_kanban_view_v2_fk_view_id_foreign")
+  nc_kanban_view_columns_v2 nc_kanban_view_columns_v2[]
+
+  @@ignore()
+}
+
+model nc_loaders {
+  id         Int       @id @default(autoincrement())
+  project_id String?   @db.VarChar(255)
+  db_alias   String?   @default("db") @db.VarChar(255)
+  title      String?   @db.VarChar(255)
+  parent     String?   @db.VarChar(255)
+  child      String?   @db.VarChar(255)
+  relation   String?   @db.VarChar(255)
+  resolver   String?   @db.VarChar(255)
+  functions  String?
+  created_at DateTime? @db.Timestamptz(6)
+  updated_at DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_migrations {
+  id          Int       @id @default(autoincrement())
+  project_id  String?   @db.VarChar(255)
+  db_alias    String?   @db.VarChar(255)
+  up          String?
+  down        String?
+  title       String    @db.VarChar(255)
+  title_down  String?   @db.VarChar(255)
+  description String?   @db.VarChar(255)
+  batch       Int?
+  checksum    String?   @db.VarChar(255)
+  status      Int?
+  created_at  DateTime? @db.Timestamptz(6)
+  updated_at  DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_models {
+  id                 Int       @id @default(autoincrement())
+  project_id         String?   @db.VarChar(255)
+  db_alias           String?   @default("db") @db.VarChar(255)
+  title              String?   @db.VarChar(255)
+  alias              String?   @db.VarChar(255)
+  type               String?   @default("table") @db.VarChar(255)
+  meta               String?
+  schema             String?
+  schema_previous    String?
+  services           String?
+  messages           String?
+  enabled            Boolean?  @default(true)
+  parent_model_title String?   @db.VarChar(255)
+  show_as            String?   @default("table") @db.VarChar(255)
+  query_params       String?
+  list_idx           Int?
+  tags               String?   @db.VarChar(255)
+  pinned             Boolean?
+  created_at         DateTime? @db.Timestamptz(6)
+  updated_at         DateTime? @db.Timestamptz(6)
+  mm                 Int?
+  m_to_m_meta        String?
+  order              Float?    @db.Real
+  view_order         Float?    @db.Real
+
+
+  @@index([db_alias, title], map: "nc_models_db_alias_title_index")
+  @@index([order], map: "nc_models_order_index")
+  @@index([view_order], map: "nc_models_view_order_index")
+  @@ignore()
+}
+
+model nc_models_v2 {
+  id                                                                        String                @id @db.VarChar(20)
+  base_id                                                                   String?               @db.VarChar(20)
+  project_id                                                                String?               @db.VarChar(128)
+  table_name                                                                String?               @db.VarChar(255)
+  title                                                                     String?               @db.VarChar(255)
+  type                                                                      String?               @default("table") @db.VarChar(255)
+  meta                                                                      String?
+  schema                                                                    String?
+  enabled                                                                   Boolean?              @default(true)
+  mm                                                                        Boolean?              @default(false)
+  tags                                                                      String?               @db.VarChar(255)
+  pinned                                                                    Boolean?
+  deleted                                                                   Boolean?
+  order                                                                     Float?                @db.Real
+  created_at                                                                DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at                                                                DateTime              @default(now()) @db.Timestamptz(6)
+  nc_bases_v2                                                               nc_bases_v2?          @relation(fields: [base_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_models_v2_base_id_foreign")
+  nc_projects_v2                                                            nc_projects_v2?       @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_models_v2_project_id_foreign")
+  nc_audit_v2                                                               nc_audit_v2[]
+  nc_col_relations_v2_nc_col_relations_v2_fk_mm_model_idTonc_models_v2      nc_col_relations_v2[] @relation("nc_col_relations_v2_fk_mm_model_idTonc_models_v2")
+  nc_col_relations_v2_nc_col_relations_v2_fk_related_model_idTonc_models_v2 nc_col_relations_v2[] @relation("nc_col_relations_v2_fk_related_model_idTonc_models_v2")
+  nc_columns_v2                                                             nc_columns_v2[]
+  nc_hooks_v2                                                               nc_hooks_v2[]
+  nc_views_v2                                                               nc_views_v2[]
+
+  @@ignore()
+}
+
+model nc_orgs_v2 {
+  id               String             @id @db.VarChar(20)
+  title            String?            @db.VarChar(255)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  nc_teams_v2      nc_teams_v2[]
+  nc_team_users_v2 nc_team_users_v2[] @ignore
+
+  @@ignore()
+}
+
+model nc_plugins {
+  id              Int       @id @default(autoincrement())
+  project_id      String?   @db.VarChar(255)
+  db_alias        String?   @db.VarChar(255)
+  title           String?   @db.VarChar(45)
+  description     String?
+  active          Boolean?  @default(false)
+  rating          Float?    @db.Real
+  version         String?   @db.VarChar(255)
+  docs            String?   @db.VarChar(255)
+  status          String?   @default("install") @db.VarChar(255)
+  status_details  String?   @db.VarChar(255)
+  logo            String?   @db.VarChar(255)
+  icon            String?   @db.VarChar(255)
+  tags            String?   @db.VarChar(255)
+  category        String?   @db.VarChar(255)
+  input_schema    String?
+  input           String?
+  creator         String?   @db.VarChar(255)
+  creator_website String?   @db.VarChar(255)
+  price           String?   @db.VarChar(255)
+  created_at      DateTime? @db.Timestamptz(6)
+  updated_at      DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_plugins_v2 {
+  id              String   @id @db.VarChar(20)
+  title           String?  @db.VarChar(45)
+  description     String?
+  active          Boolean? @default(false)
+  rating          Float?   @db.Real
+  version         String?  @db.VarChar(255)
+  docs            String?  @db.VarChar(255)
+  status          String?  @default("install") @db.VarChar(255)
+  status_details  String?  @db.VarChar(255)
+  logo            String?  @db.VarChar(255)
+  icon            String?  @db.VarChar(255)
+  tags            String?  @db.VarChar(255)
+  category        String?  @db.VarChar(255)
+  input_schema    String?
+  input           String?
+  creator         String?  @db.VarChar(255)
+  creator_website String?  @db.VarChar(255)
+  price           String?  @db.VarChar(255)
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime @default(now()) @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_projects {
+  id          String    @id @db.VarChar(128)
+  title       String?   @db.VarChar(255)
+  status      String?   @db.VarChar(255)
+  description String?
+  config      String?
+  meta        String?
+  created_at  DateTime? @db.Timestamptz(6)
+  updated_at  DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model nc_projects_users {
+  project_id String?   @db.VarChar(255)
+  user_id    Int?
+  roles      String?
+  created_at DateTime? @db.Timestamptz(6)
+  updated_at DateTime? @db.Timestamptz(6)
+
+  @@index([project_id], map: "nc_projects_users_project_id_index")
+  @@index([user_id], map: "nc_projects_users_user_id_index")
+  @@ignore()
+}
+
+model nc_projects_v2 {
+  id                  String                @id @db.VarChar(128)
+  title               String?               @db.VarChar(255)
+  prefix              String?               @db.VarChar(255)
+  status              String?               @db.VarChar(255)
+  description         String?
+  meta                String?
+  color               String?               @db.VarChar(255)
+  uuid                String?               @db.VarChar(255)
+  password            String?               @db.VarChar(255)
+  roles               String?               @db.VarChar(255)
+  deleted             Boolean?              @default(false)
+  is_meta             Boolean?
+  order               Float?                @db.Real
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime              @default(now()) @db.Timestamptz(6)
+  nc_audit_v2         nc_audit_v2[]
+  nc_bases_v2         nc_bases_v2[]
+  nc_models_v2        nc_models_v2[]
+  nc_project_users_v2 nc_project_users_v2[] @ignore
+  nc_sync_source_v2   nc_sync_source_v2[]
+
+  @@ignore()
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model nc_project_users_v2 {
+  project_id     String?         @db.VarChar(128)
+  fk_user_id     String?         @db.VarChar(20)
+  roles          String?
+  starred        Boolean?
+  pinned         Boolean?
+  group          String?         @db.VarChar(255)
+  color          String?         @db.VarChar(255)
+  order          Float?          @db.Real
+  hidden         Float?          @db.Real
+  opened_date    DateTime?       @db.Timestamptz(6)
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime        @default(now()) @db.Timestamptz(6)
+  nc_users_v2    nc_users_v2?    @relation(fields: [fk_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_project_users_v2_fk_user_id_foreign")
+  nc_projects_v2 nc_projects_v2? @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_project_users_v2_project_id_foreign")
+
+  @@ignore()
+}
+
+model nc_relations {
+  id                  Int       @id @default(autoincrement())
+  project_id          String?   @db.VarChar(255)
+  db_alias            String?   @db.VarChar(255)
+  tn                  String?   @db.VarChar(255)
+  rtn                 String?   @db.VarChar(255)
+  hidden_tn           String?   @map("_tn") @db.VarChar(255)
+  hidden_rtn          String?   @map("_rtn") @db.VarChar(255)
+  cn                  String?   @db.VarChar(255)
+  rcn                 String?   @db.VarChar(255)
+  hidden_cn           String?   @map("_cn") @db.VarChar(255)
+  hidden_rcn          String?   @map("_rcn") @db.VarChar(255)
+  referenced_db_alias String?   @db.VarChar(255)
+  type                String?   @db.VarChar(255)
+  db_type             String?   @db.VarChar(255)
+  ur                  String?   @db.VarChar(255)
+  dr                  String?   @db.VarChar(255)
+  created_at          DateTime? @db.Timestamptz(6)
+  updated_at          DateTime? @db.Timestamptz(6)
+  fkn                 String?   @db.VarChar(255)
+
+
+  @@index([db_alias, tn], map: "nc_relations_db_alias_tn_index")
+  @@ignore()
+}
+
+model nc_resolvers {
+  id           Int       @id @default(autoincrement())
+  project_id   String?   @db.VarChar(255)
+  db_alias     String?   @default("db") @db.VarChar(255)
+  title        String?   @db.VarChar(255)
+  resolver     String?
+  type         String?   @db.VarChar(255)
+  acl          String?
+  functions    String?
+  handler_type Int?      @default(1)
+  created_at   DateTime? @db.Timestamptz(6)
+  updated_at   DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_roles {
+  id          Int       @id @default(autoincrement())
+  project_id  String?   @db.VarChar(255)
+  db_alias    String?   @default("db") @db.VarChar(255)
+  title       String?   @db.VarChar(255)
+  type        String?   @default("CUSTOM") @db.VarChar(255)
+  description String?   @db.VarChar(255)
+  created_at  DateTime? @db.Timestamptz(6)
+  updated_at  DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_routes {
+  id            Int       @id @default(autoincrement())
+  project_id    String?   @db.VarChar(255)
+  db_alias      String?   @default("db") @db.VarChar(255)
+  title         String?   @db.VarChar(255)
+  tn            String?   @db.VarChar(255)
+  tnp           String?   @db.VarChar(255)
+  tnc           String?   @db.VarChar(255)
+  relation_type String?   @db.VarChar(255)
+  path          String?
+  type          String?   @db.VarChar(255)
+  handler       String?
+  acl           String?
+  order         Int?
+  functions     String?
+  handler_type  Int?      @default(1)
+  is_custom     Boolean?
+  created_at    DateTime? @db.Timestamptz(6)
+  updated_at    DateTime? @db.Timestamptz(6)
+
+
+  @@index([db_alias, title, tn], map: "nc_routes_db_alias_title_tn_index")
+  @@ignore()
+}
+
+model nc_rpc {
+  id            Int       @id @default(autoincrement())
+  project_id    String?   @db.VarChar(255)
+  db_alias      String?   @default("db") @db.VarChar(255)
+  title         String?   @db.VarChar(255)
+  tn            String?   @db.VarChar(255)
+  service       String?
+  tnp           String?   @db.VarChar(255)
+  tnc           String?   @db.VarChar(255)
+  relation_type String?   @db.VarChar(255)
+  order         Int?
+  type          String?   @db.VarChar(255)
+  acl           String?
+  functions     String?
+  handler_type  Int?      @default(1)
+  created_at    DateTime? @db.Timestamptz(6)
+  updated_at    DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_shared_bases {
+  id             Int      @id @default(autoincrement())
+  project_id     String?  @db.VarChar(255)
+  db_alias       String?  @db.VarChar(255)
+  roles          String?  @default("viewer") @db.VarChar(255)
+  shared_base_id String?  @db.VarChar(255)
+  enabled        Boolean? @default(true)
+  password       String?  @db.VarChar(255)
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @default(now()) @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_shared_views {
+  id              Int       @id @default(autoincrement())
+  project_id      String?   @db.VarChar(255)
+  db_alias        String?   @db.VarChar(255)
+  model_name      String?   @db.VarChar(255)
+  meta            String?
+  query_params    String?
+  view_id         String?   @db.VarChar(255)
+  show_all_fields Boolean?
+  allow_copy      Boolean?
+  password        String?   @db.VarChar(255)
+  created_at      DateTime? @db.Timestamptz(6)
+  updated_at      DateTime? @db.Timestamptz(6)
+  view_type       String?   @db.VarChar(255)
+  view_name       String?   @db.VarChar(255)
+
+  @@ignore()
+}
+
+model nc_shared_views_v2 {
+  id              String       @id @db.VarChar(20)
+  fk_view_id      String?      @db.VarChar(20)
+  meta            String?
+  query_params    String?
+  view_id         String?      @db.VarChar(255)
+  show_all_fields Boolean?
+  allow_copy      Boolean?
+  password        String?      @db.VarChar(255)
+  deleted         Boolean?
+  order           Float?       @db.Real
+  created_at      DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime     @default(now()) @db.Timestamptz(6)
+  nc_views_v2     nc_views_v2? @relation(fields: [fk_view_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_shared_views_v2_fk_view_id_foreign")
+
+  @@ignore()
+}
+
+model nc_sort_v2 {
+  id            String         @id @db.VarChar(20)
+  base_id       String?        @db.VarChar(20)
+  project_id    String?        @db.VarChar(128)
+  fk_view_id    String?        @db.VarChar(20)
+  fk_column_id  String?        @db.VarChar(20)
+  direction     String?        @default("false") @db.VarChar(255)
+  order         Float?         @db.Real
+  created_at    DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime       @default(now()) @db.Timestamptz(6)
+  nc_columns_v2 nc_columns_v2? @relation(fields: [fk_column_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_sort_v2_fk_column_id_foreign")
+  nc_views_v2   nc_views_v2?   @relation(fields: [fk_view_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_sort_v2_fk_view_id_foreign")
+
+  @@ignore()
+}
+
+model nc_store {
+  id         Int       @id @default(autoincrement())
+  project_id String?   @db.VarChar(255)
+  db_alias   String?   @default("db") @db.VarChar(255)
+  key        String?   @db.VarChar(255)
+  value      String?
+  type       String?   @db.VarChar(255)
+  env        String?   @db.VarChar(255)
+  tag        String?   @db.VarChar(255)
+  created_at DateTime? @db.Timestamptz(6)
+  updated_at DateTime? @db.Timestamptz(6)
+
+
+  @@index([key], map: "nc_store_key_index")
+  @@ignore()
+}
+
+model nc_sync_logs_v2 {
+  id                String   @id @db.VarChar(20)
+  project_id        String?  @db.VarChar(128)
+  fk_sync_source_id String?  @db.VarChar(20)
+  time_taken        Int?
+  status            String?  @db.VarChar(255)
+  status_details    String?
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime @default(now()) @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model nc_sync_source_v2 {
+  id             String          @id @db.VarChar(20)
+  title          String?         @db.VarChar(255)
+  type           String?         @db.VarChar(255)
+  details        String?
+  deleted        Boolean?
+  enabled        Boolean?        @default(true)
+  order          Float?          @db.Real
+  project_id     String?         @db.VarChar(128)
+  fk_user_id     String?         @db.VarChar(128)
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime        @default(now()) @db.Timestamptz(6)
+  nc_users_v2    nc_users_v2?    @relation(fields: [fk_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_sync_source_v2_fk_user_id_foreign")
+  nc_projects_v2 nc_projects_v2? @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_sync_source_v2_project_id_foreign")
+
+  @@ignore()
+}
+
+model nc_teams_v2 {
+  id         String      @id @db.VarChar(20)
+  title      String?     @db.VarChar(255)
+  org_id     String?     @db.VarChar(20)
+  created_at DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at DateTime    @default(now()) @db.Timestamptz(6)
+  nc_orgs_v2 nc_orgs_v2? @relation(fields: [org_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_teams_v2_org_id_foreign")
+
+  @@ignore()
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model nc_team_users_v2 {
+  org_id      String?      @db.VarChar(20)
+  user_id     String?      @db.VarChar(20)
+  created_at  DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime     @default(now()) @db.Timestamptz(6)
+  nc_orgs_v2  nc_orgs_v2?  @relation(fields: [org_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_team_users_v2_org_id_foreign")
+  nc_users_v2 nc_users_v2? @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_team_users_v2_user_id_foreign")
+
+  @@ignore()
+}
+
+model nc_users_v2 {
+  id                       String                @id @db.VarChar(20)
+  email                    String?               @db.VarChar(255)
+  password                 String?               @db.VarChar(255)
+  salt                     String?               @db.VarChar(255)
+  firstname                String?               @db.VarChar(255)
+  lastname                 String?               @db.VarChar(255)
+  username                 String?               @db.VarChar(255)
+  refresh_token            String?               @db.VarChar(255)
+  invite_token             String?               @db.VarChar(255)
+  invite_token_expires     String?               @db.VarChar(255)
+  reset_password_expires   DateTime?             @db.Timestamptz(6)
+  reset_password_token     String?               @db.VarChar(255)
+  email_verification_token String?               @db.VarChar(255)
+  email_verified           Boolean?
+  roles                    String?               @default("editor") @db.VarChar(255)
+  created_at               DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime              @default(now()) @db.Timestamptz(6)
+  nc_project_users_v2      nc_project_users_v2[] @ignore
+  nc_sync_source_v2        nc_sync_source_v2[]
+  nc_team_users_v2         nc_team_users_v2[]    @ignore
+
+  @@ignore()
+}
+
+model nc_views_v2 {
+  id                             String                           @id @db.VarChar(20)
+  base_id                        String?                          @db.VarChar(20)
+  project_id                     String?                          @db.VarChar(128)
+  fk_model_id                    String?                          @db.VarChar(20)
+  title                          String?                          @db.VarChar(255)
+  type                           Int?
+  is_default                     Boolean?
+  show_system_fields             Boolean?
+  lock_type                      String?                          @default("collaborative") @db.VarChar(255)
+  uuid                           String?                          @db.VarChar(255)
+  password                       String?                          @db.VarChar(255)
+  show                           Boolean?
+  order                          Float?                           @db.Real
+  created_at                     DateTime                         @default(now()) @db.Timestamptz(6)
+  updated_at                     DateTime                         @default(now()) @db.Timestamptz(6)
+  nc_models_v2                   nc_models_v2?                    @relation(fields: [fk_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "nc_views_v2_fk_model_id_foreign")
+  nc_disabled_models_for_role_v2 nc_disabled_models_for_role_v2[]
+  nc_filter_exp_v2               nc_filter_exp_v2[]
+  nc_form_view_v2                nc_form_view_v2?
+  nc_gallery_view_v2             nc_gallery_view_v2?
+  nc_grid_view_v2                nc_grid_view_v2?
+  nc_kanban_view_v2              nc_kanban_view_v2?
+  nc_shared_views_v2             nc_shared_views_v2[]
+  nc_sort_v2                     nc_sort_v2[]
+
+  @@ignore()
+}
+
+model oban_jobs {
+  id           BigInt         @id @default(autoincrement())
+  queue        String         @default("default")
+  worker       String
+  args         Json           @default("{}")
+  errors       Json[]
+  attempt      Int            @default(0)
+  max_attempts Int            @default(20)
+  inserted_at  DateTime       @default(dbgenerated("timezone('UTC'::text, now())")) @db.Timestamp(6)
+  scheduled_at DateTime       @default(dbgenerated("timezone('UTC'::text, now())")) @db.Timestamp(6)
+  attempted_at DateTime?      @db.Timestamp(6)
+  completed_at DateTime?      @db.Timestamp(6)
+  attempted_by String[]
+  discarded_at DateTime?      @db.Timestamp(6)
+  priority     Int            @default(0)
+  tags         String[]       @db.VarChar(255)
+  meta         Json?          @default("{}")
+  cancelled_at DateTime?      @db.Timestamp(6)
+  state        oban_job_state @default(available)
+
+
+  @@index([args], map: "oban_jobs_args_index")
+  @@index([meta], map: "oban_jobs_meta_index")
+  @@index([queue, state, priority, scheduled_at, id], map: "oban_jobs_queue_state_priority_scheduled_at_id_index")
+  @@ignore()
+}
+
+model Player {
+  id           String             @id(map: "PK_9fd0dba262c28fb584448f6ec12") @db.Uuid @default(uuid())
+  dateCreated  DateTime           @default(now()) @db.Timestamp(6)
+  dateModified DateTime           @default(now()) @db.Timestamp(6)
+  // Name of the baseball player
+  name         String             @db.VarChar
+  // Are they a major league or minor league player; currently set by the Bull sync job, soon to be Oban + NocoDB
+  league       PlayerLeagueLevel?
+  // What MLB team do they play for; currently may be null for minor leaguers, old scripts also populated this with the minor league parent team
+  mlbTeam      String?            @db.VarChar
+  // Unstructured data. Currently mainly used for minor leaguers. Probably worth denormalizing some of that data or having a polymorphic table setup
+  meta         Json?
+  // The ESPN id of the player; currently only set for major leaguers to allow deduplication.
+  playerDataId Int?
+  // [n-1] The team in FFF who currently owns this player, if any.
+  leagueTeamId String?            @db.Uuid
+  ownerTeam    Team?              @relation(fields: [leagueTeamId], references: [id], onUpdate: NoAction, map: "FK_1aad05b09bda2079429cd8ba9d8")
+
+
+  @@unique([name, playerDataId], map: "UQ_b3fd08fd2ba540e6fc2b6946e2c")
+  @@index([leagueTeamId], map: "IDX_1aad05b09bda2079429cd8ba9d")
+  @@index([name], map: "IDX_40e3ad1d41d05dda60e9ba76cc")
+  @@index([leagueTeamId, league], map: "IDX_a49ffcdb6d07eb76e0052d5784")
+  @@index([league], map: "IDX_d94a2974262e7c6129a4c5e690")
+  @@map("player")
+}
+
+// probably don't need this either in the post-typeorm world; question is there a caching solution in prisma?
+model query_result_cache {
+  id         Int    @id(map: "PK_6a98f758d8bfd010e7e10ffd3d3") @default(autoincrement())
+  identifier String @db.VarChar
+  time       BigInt
+  duration   Int
+  query      String
+  result     String
+
+  @@map("query-result-cache")
+  @@ignore()
+}
+
+// I _think_ this is for elixir?
+model schema_migrations {
+  version     BigInt    @id
+  inserted_at DateTime? @db.Timestamp(0)
+
+  @@ignore()
+}
+
+model Settings {
+  id               String    @id(map: "PK_173c858141c28aba85f3f2b66cc") @db.Uuid @default(uuid())
+  dateCreated      DateTime  @default(now()) @db.Timestamp(6)
+  dateModified     DateTime  @default(now()) @db.Timestamp(6)
+  // Not currently really used, but in theory would allow us to set a flag on the website for when trades can/cannot be made (time of day).
+  tradeWindowStart DateTime? @db.Time(6)
+  tradeWindowEnd   DateTime? @db.Time(6)
+  // Not currently really used, but in theory would allow us set a flag on the website for when the trade machine is down or not to be used.
+  downtime         Json?
+  // Which user updated the settings. TODO: Should this field be marked as mandatory?
+  modifiedById     String?   @db.Uuid
+  modifiedBy       User?     @relation(fields: [modifiedById], references: [id], onUpdate: NoAction, map: "FK_cb5f64b730072c78ba13d5db952")
+
+
+  @@index([downtime, modifiedById], map: "IDX_032a9a86a6ea1ccd874a452f62")
+  @@index([tradeWindowStart, tradeWindowEnd, modifiedById], map: "IDX_3fa40f2df01d35d0bbed8264ca")
+  @@index([modifiedById], map: "IDX_cb5f64b730072c78ba13d5db95")
+  @@map("settings")
+}
+
+model Team {
+  id                 String             @id(map: "PK_d4c9ceb4d198d0214d982242c10") @db.Uuid @default(uuid())
+  dateCreated        DateTime           @default(now()) @db.Timestamp(6)
+  dateModified       DateTime           @default(now()) @db.Timestamp(6)
+  // The id of the FFF team in ESPN, used for pulling ESPN data like the team name for display or synch
+  espnId             Int?               @unique(map: "UQ_4f8b73a54933f9eab5177b90362")
+  // Name of the team; synched daily from ESPN
+  name               String             @db.VarChar
+  // Whether the team is currently active in the league or not
+  status             TeamStatus         @default(DISABLED)
+  // Unstructured data pulled from ESPN; mostly not currently used
+  espnTeam           Json?
+  // [1-n] A list of the draft picks that this team currently owns (not filtered by year or anything)
+  currentDraftPicks  DraftPick[]        @relation("draft_pick_currentOwnerIdToteam")
+  // [1-n] A list of the draft picks that this team owned at the beginning of a season (not filtered by year or anything)
+  originalDraftPicks DraftPick[]        @relation("draft_pick_originalOwnerIdToteam")
+  // [1-n] A list of players that this team currently owns
+  players            Player[]
+  // [1-n] A list of tradeItems received by this team (all-time)
+  tradeItemsReceived TradeItem[]        @relation("teamTotrade_item_recipientId")
+  // [1-n] A list of tradeItems sent by this team (all-time)
+  tradeItemsSent     TradeItem[]        @relation("teamTotrade_item_senderId")
+  // [1-n] A list of tradeParticipant rows (useful for indicating trades this team has been a participant in) // TODO: can prisma implicitly figure out the latter?
+  tradeParticipants  TradeParticipant[]
+  // [1-n] A list of users that are owners of this team.
+  owners             User[]
+
+  @@map("team")
+}
+
+model Trade {
+  id                String             @id(map: "PK_8a1cea805d050478a2482f0960e") @db.Uuid @default(uuid())
+  dateCreated       DateTime           @default(now()) @db.Timestamp(6)
+  dateModified      DateTime           @default(now()) @db.Timestamp(6)
+  // What state the trade is curerntly in (draft, submitted, etc)
+  status            TradeStatus        @default(DRAFT)
+  // A string describing why a trade is declined. For now just kept for record-keeping and in an email.
+  declinedReason    String?            @db.VarChar
+  // Which specific user declind a trade. // TODO I don't recall if there's a particular reason that this _isn't_ a relation
+  declinedById      String?            @db.Uuid
+  // JSON array of alal the users that have agreed to a trade (useful in case of multi-team trades); _could_ be a separate table, but I think this is fine enough for postgres
+  acceptedBy        Json?
+  // Timestamp for when it was accepted (idk why we don't keep a timestamp of when it was declined; but I guess the former is more important)
+  acceptedOnDate    DateTime?          @db.Timestamp(6)
+  // [1-n] List of emails associated with this trade
+  emails            Email[]
+  // [1-n] List of trade items (players/picks) that are part of this trade
+  tradeItems        TradeItem[]
+  // [1-n] List of trade participants that took part in this trade (always at least 2, constrained at app-level)
+  tradeParticipants TradeParticipant[]
+
+
+  @@index([declinedById], map: "IDX_33ece5157bae9642f83f4e69e6")
+  @@map("trade")
+}
+
+model TradeItem {
+  id            String        @id @db.Uuid @default(uuid())
+  dateCreated   DateTime      @default(now()) @db.Timestamp(6)
+  dateModified  DateTime      @default(now()) @db.Timestamp(6)
+  // this is the primary key id of a draft pick or player. TODO is there a way to represent this polymorphic column in prisma?
+  tradeItemId   String        @db.Uuid
+  // whether this trade item is a pick or a player
+  tradeItemType TradeItemType @default(PLAYER)
+  // [n-1] the trade that this item is a part of. TODO: Should this be mandatory?
+  tradeId       String?       @db.Uuid
+  trade         Trade?        @relation(fields: [tradeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_b0526160a5fca917459d481e202")
+  // [n-1] the team that is sending this pick/player. TODO: Should this be mandatory?
+  senderId      String?       @db.Uuid
+  sender        Team?         @relation("teamTotrade_item_senderId", fields: [senderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_93c36c896adc55ffa2fde088079")
+  // [n-1] the team that is receiving this pick/player. TODO: Should this be mandatory?
+  recipientId   String?       @db.Uuid
+  recipient     Team?         @relation("teamTotrade_item_recipientId", fields: [recipientId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_1abdf634a91dc15221fecbd2535")
+
+
+  // TODO From typeorm, should these be in the db too?
+  // @Index("player_trade_item_index", { synchronize: false })
+  //@Index("pick_trade_item_index", { synchronize: false })
+
+  @@unique([tradeId, tradeItemId, tradeItemType, senderId, recipientId], map: "IDX_e052cf9b5b061404e7d9757a5f")
+  @@index([recipientId], map: "IDX_1abdf634a91dc15221fecbd253")
+  @@index([senderId, recipientId], map: "IDX_5183edace8d48f41e21706f3de")
+  @@index([tradeItemType], map: "IDX_7410fa0ef846786168a48f8309")
+  @@index([senderId], map: "IDX_93c36c896adc55ffa2fde08807")
+  @@map("trade_item")
+}
+
+model TradeParticipant {
+  id              String               @id(map: "PK_60f29eec159bc8b923a8ebda680") @db.Uuid @default(uuid())
+  dateCreated     DateTime             @default(now()) @db.Timestamp(6)
+  dateModified    DateTime             @default(now()) @db.Timestamp(6)
+  // Indicates whether this participant created/initiated/requested the trade or if they're a 'receiver'
+  participantType TradeParticipantType @default(RECIPIENT)
+  // [n-1] The trade that this participant is associated with. TODO: Should this be mandatory?
+  tradeId         String?              @db.Uuid
+  trade           Trade?               @relation(fields: [tradeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_55814676906f1f2c458fa255042")
+  // [n-1] The team that this participant is associated with. TODO: Should this be mandatory?
+  teamId          String?              @db.Uuid
+  team            Team?                @relation(fields: [teamId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_6f42978de8c286663f97f12c9dc")
+
+
+  // From typeorm should these be in the db too?
+  // @Index("trade_creator_index", { synchronize: false })
+  //@Index("trade_recipient_index", { synchronize: false })
+
+  @@unique([tradeId, teamId], map: "IDX_6cefad40c0c9cbb34500c9f2b5")
+  @@index([participantType], map: "IDX_4790898869f46e4f7714c23f4e")
+  @@index([teamId], map: "IDX_6f42978de8c286663f97f12c9d")
+  @@map("trade_participant")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model typeorm_metadata {
+  type     String  @db.VarChar
+  database String? @db.VarChar
+  schema   String? @db.VarChar
+  name     String? @db.VarChar
+  value    String?
+
+  @@ignore()
+}
+
+model User {
+  id                     String     @id(map: "PK_46a8d3f2767f238737f7bbde32a") @db.Uuid @default(uuid())
+  dateCreated            DateTime   @default(now()) @db.Timestamp(6)
+  dateModified           DateTime   @default(now()) @db.Timestamp(6)
+  // email address used for login and for trademachine to send emails to
+  email                  String     @unique(map: "UQ_37a55ad1dbb070054bece40642f") @db.VarChar
+  // hashed + salted password
+  password               String?    @db.VarChar
+  // display name; used is a couple places in the UI and maybe in emails
+  displayName            String?    @db.VarChar
+  // used to `@` mention the correct person in slack when posting the trade submitted message
+  slackUsername          String?    @db.VarChar
+  // Used for access control; whether they're a regular-degular owner, a privelged commissioner, or all-powerful admin
+  role                   UserRole   @default(OWNER)
+  // used for cookies
+  lastLoggedIn           DateTime?  @db.Timestamp(6)
+  // used during password reset flow
+  passwordResetExpiresOn DateTime?  @db.Timestamp(6)
+  // used during password reset flow
+  passwordResetToken     String?    @db.VarChar
+  // is this user currently active or not.
+  status                 UserStatus @default(ACTIVE)
+  // the name used in the minorleague sheet; used for mapping when running synchs from that sheet
+  csvName                String?    @db.VarChar
+  // unstructured data from ESPN mapping to this user; not sure if this currently used at all
+  espnMember             Json?
+  // [n-1] each user can only be a member of 0-1 teams but teams can have multiple users
+  team                   Team?      @relation(fields: [teamId], references: [id], onUpdate: NoAction, map: "FK_77f62757967de516e50ff134e35") // TODO: does this cover ondelete: set null?
+  teamId                 String?    @db.Uuid
+  // [1-n] settings modified by this user
+  modifiedSettings       Settings[]
+
+  @@map("user")
+}
+
+model xc_knex_migrations {
+  id             Int       @id @default(autoincrement())
+  name           String?   @db.VarChar(255)
+  batch          Int?
+  migration_time DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model xc_knex_migrations_lock {
+  index     Int  @id @default(autoincrement())
+  is_locked Int?
+
+  @@ignore()
+}
+
+model xc_knex_migrationsv2 {
+  id             Int       @id @default(autoincrement())
+  name           String?   @db.VarChar(255)
+  batch          Int?
+  migration_time DateTime? @db.Timestamptz(6)
+
+  @@ignore()
+}
+
+model xc_knex_migrationsv2_lock {
+  index     Int  @id @default(autoincrement())
+  is_locked Int?
+
+  @@ignore()
+}
+
+enum PickLeagueLevel {
+  MAJORS      @map("1")
+  HIGHMINORS  @map("2")
+  LOWMINORS   @map("3")
+
+  @@map("draft_pick_type_enum")
+}
+
+enum oban_job_state {
+  available
+  scheduled
+  executing
+  retryable
+  completed
+  discarded
+  cancelled
+}
+
+enum PlayerLeagueLevel {
+  MAJORS  @map("1")
+  MINORS  @map("2")
+
+  @@map("player_league_enum")
+}
+
+enum TeamStatus {
+  ACTIVE    @map("1")
+  DISABLED  @map("2")
+
+  @@map("team_status_enum")
+}
+
+enum TradeItemType {
+  PLAYER  @map("1")
+  PICK    @map("2")
+
+  @@map("trade_item_tradeitemtype_enum")
+}
+
+enum TradeParticipantType {
+  CREATOR    @map("1")
+  RECIPIENT  @map("2")
+
+  @@map("trade_participant_participanttype_enum")
+}
+
+enum TradeStatus {
+  DRAFT      @map("1")
+  REQUESTED  @map("2")
+  PENDING    @map("3")
+  ACCEPTED   @map("4")
+  REJECTED   @map("5")
+  SUBMITTED  @map("6")
+
+  @@map("trade_status_enum")
+}
+
+enum UserRole {
+  ADMIN         @map("1")
+  OWNER         @map("2")
+  COMMISSIONER  @map("3")
+
+  @@map("user_role_enum")
+}
+
+enum UserStatus {
+  ACTIVE    @map("1")
+  INACTIVE  @map("2")
+
+  @@map("user_status_enum")
+}
