@@ -104,9 +104,10 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  # the 'link' stuff basically lets us overwrite the migrations subfolder every time: https://stackoverflow.com/questions/7933680/remove-directory-structure-when-extracting-tar-archive
                   script: |
                       cd /opt/Apps/StagingTradeMachine
-                      tar -xzf out-staging-prisma.tar.gz --overwrite
+                      tar -xzf out-staging-prisma.tar.gz --unlink-first --recursive-unlink
                       rm out-staging-prisma.tar.gz
 
             - name: Check if we need to do migrations
