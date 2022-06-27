@@ -90,7 +90,7 @@ jobs:
           username: ${{ secrets.BACKUP_USERNAME }}
           password: ${{ secrets.BACKUP_PASSWORD }}
           port: ${{ secrets.SSH_PORT }}
-          script: bash tm_backup.sh trade_machine production tm_backup ${{ secrets.BACKUP_PASSWORD }}
+          script: bash tm_backup.sh trade_machine public tm_backup ${{ secrets.BACKUP_PASSWORD }}
 
       - name: Unzip and restart the server
         uses: appleboy/ssh-action@master
