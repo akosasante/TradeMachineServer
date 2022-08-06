@@ -130,9 +130,26 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
                 .join(", ");
         }
 
+        function tradeUpholdTime() {
+            const now = new Date();
+            let upholdTime = new Date();
+            const addDaysToDate = (dateToModify, dateToAddTo, days) => new Date(dateToModify.setDate(dateToAddTo.getDate() + days));
+
+            if (now.getHours() < 23) {
+                // It is before 11PM, so trade will be upheld by tomorrow at 11pm.
+                upholdTime = addDaysToDate(upholdTime, now, 1);
+            } else {
+                // It is after 11PM, so trade won't be upheld until the day-after-tomorrow at 11pm.
+                upholdTime = addDaysToDate(upholdTime, now, 2);
+            }
+            upholdTime.setHours(23, 0, 0, 0);
+            return upholdTime.toLocaleString("en-CA");
+        }
+
         return `*${new Date().toDateString()}* \
 | Trade requested by ${getSlackUsernamesForOwners(trade.creator!.owners!)} \
-- Trading with: ${getSlackUsernamesForOwners(trade.recipients.flatMap(r => r.owners!))}`;
+- Trading with: ${getSlackUsernamesForOwners(trade.recipients.flatMap(r => r.owners!))} \
+| Trade will be reviewed by: ${tradeUpholdTime()} (Eastern)`;
     },
 
     getNotificationText: (trade: Trade) => {

@@ -7,6 +7,7 @@ import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import { TeamFactory } from "../../factories/TeamFactory";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import { LeagueLevel } from "../../../src/models/draftPick";
+import {advanceTo, clear} from "jest-date-mock";
 
 beforeAll(() => {
     logger.debug("~~~~~~SLACK TRADE FORMATTER TESTS BEGIN~~~~~~");
@@ -45,6 +46,8 @@ afterEach(() => {
 });
 
 describe("Trade Formatter methods", () => {
+    afterEach(() => clear());
+
     it("getTitleText/0 should return the expected title text", () => {
         expect(TradeFormatter.getTitleText()).toBe(":loud_sound:  *A Trade Has Been Submitted*  :loud_sound:");
     });
@@ -70,6 +73,27 @@ describe("Trade Formatter methods", () => {
         expect(text).toMatch(`<@${trade.creator!.owners![0].slackUsername}>`);
         expect(text).toMatch(`<@${trade.recipients[0].owners![0].slackUsername}>`);
         expect(text).toMatch("Trading with: ");
+        expect(text).toMatch("Trade will be reviewed by:");
+    });
+    it("getSubtitleText/1 should correctly format the 'trade upheld by' part", () => {
+        // Note to self: JS Date uses 0-indexed month value.
+        // mock date at 11am
+        advanceTo(new Date(2018, 5, 27, 11, 0, 0));
+        const textBefore11 = TradeFormatter.getSubtitleText(trade);
+        // trade will be upheld by next day at 11pm
+        expect(textBefore11).toMatch("2018-06-28, 11:00:00 p.m. (Eastern)");
+
+        // mock date at 11:01pm
+        advanceTo(new Date(2018, 5, 27, 23, 1, 0));
+        const textAfter11 = TradeFormatter.getSubtitleText(trade);
+        // trade will be upheld the day after next at 11pm
+        expect(textAfter11).toMatch("2018-06-29, 11:00:00 p.m. (Eastern)");
+
+        // mock date at 11:00pm on the dot
+        advanceTo(new Date(2018, 5, 27, 23, 0, 0, 0));
+        const textAt11 = TradeFormatter.getSubtitleText(trade);
+        // trade will be upheld the day after next at 11pm
+        expect(textAt11).toMatch("2018-06-29, 11:00:00 p.m. (Eastern)");
     });
     it("prepPickText/3 should format a bullet point list of picks", async () => {
         const text = await TradeFormatter.prepPickText(true, TradeItem.filterPicks(trade.tradeItems), mockPickDao);
