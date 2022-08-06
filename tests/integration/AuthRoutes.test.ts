@@ -8,7 +8,7 @@ import startServer from "../../src/bootstrap/app";
 import { clearDb, makeLoggedInRequest, makePostRequest } from "./helpers";
 import { getConnection } from "typeorm";
 import { generateHashedPassword } from "../../src/authentication/auth";
-import { advanceBy } from "jest-date-mock";
+import { advanceBy, clear } from "jest-date-mock";
 
 let app: Server;
 let userDAO: UserDAO;
@@ -168,6 +168,7 @@ describe("Auth API endpoints", () => {
             const hashedPass = await generateHashedPassword(testUser.password);
             return await userDAO.createUsers([{ email: testUser.email, password: hashedPass }]);
         });
+        afterEach(() => clear());
 
         it("should successfully update the user with the hashed password", async () => {
             const { id } = (await userDAO.findUser({ email: testUser.email }, true)) as User;
