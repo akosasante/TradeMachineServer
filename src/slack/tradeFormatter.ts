@@ -133,7 +133,8 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
         function tradeUpholdTime() {
             const now = new Date();
             let upholdTime = new Date();
-            const addDaysToDate = (dateToModify, dateToAddTo, days) => new Date(dateToModify.setDate(dateToAddTo.getDate() + days));
+            const addDaysToDate = (dateToModify: Date, dateToAddTo: Date, days: number) =>
+                new Date(dateToModify.setDate(dateToAddTo.getDate() + days));
 
             if (now.getHours() < 23) {
                 // It is before 11PM, so trade will be upheld by tomorrow at 11pm.

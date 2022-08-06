@@ -7,7 +7,7 @@ import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import { TeamFactory } from "../../factories/TeamFactory";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import { LeagueLevel } from "../../../src/models/draftPick";
-import {advanceTo, clear} from "jest-date-mock";
+import { advanceTo, clear } from "jest-date-mock";
 
 beforeAll(() => {
     logger.debug("~~~~~~SLACK TRADE FORMATTER TESTS BEGIN~~~~~~");
