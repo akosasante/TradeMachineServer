@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
+dotenvConfig({ path: resolvePath(__dirname, "../../../.env") });
 import initializeDb from "../../bootstrap/db";
 import { registerUser } from "./helpers/authHelper";
 import { createAdminUser, createGenericUser, createInactiveUser, saveUser } from "./helpers/userCreator";
@@ -8,7 +9,6 @@ import User from "../../models/user";
 import logger from "../../bootstrap/logger";
 import { inspect } from "util";
 
-dotenvConfig({ path: resolvePath(__dirname, "../../../.env") });
 
 async function run() {
     const args = process.argv.slice(2);
@@ -45,6 +45,10 @@ function getUserObj(args: any[]) {
     }
 }
 
+/**
+ * Call with: DB_LOGS=<optional_boolean> ts-node src/db/seed/seedUser.ts <admin|inactive|null> (to create an admin-role user, inactive-status user, or owner-role user)
+ * Call with: DB_LOGS=<optional_boolean> ts-node src/db/seed/seedUser.ts custom <user_obj_json> to create a user with the specific shape passed in
+ */
 run()
     .then(user => {
         logger.info(inspect(user));

@@ -4,6 +4,7 @@ import UserDAO from "../../../DAO/UserDAO";
 import TeamDAO from "../../../DAO/TeamDAO";
 import User from "../../../models/user";
 import { sample } from "lodash";
+import {randomUUID} from "crypto";
 
 let dao: TeamDAO | null;
 let allUsers: User[] | null;
@@ -20,7 +21,7 @@ async function init() {
 export function createGenericTeam() {
     const name = `Team ${random.word()}`;
     const status = TeamStatus.ACTIVE;
-    return new Team({ name, status });
+    return new Team({ id: randomUUID(), name, status });
 }
 
 export function createInactiveTeam() {
