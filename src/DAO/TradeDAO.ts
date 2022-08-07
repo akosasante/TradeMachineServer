@@ -1,4 +1,4 @@
-import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
+import { DeleteResult, FindManyOptions, getConnection, In, Repository } from "typeorm";
 import Trade, { TradeStatus } from "../models/trade";
 import TradeItem, { TradeItemType } from "../models/tradeItem";
 import TradeParticipant from "../models/tradeParticipant";
@@ -36,12 +36,24 @@ export default class TradeDAO {
         return await this.tradeDb.find(options);
     }
 
-    public async returnHydratedTrades(pageSize = 25, pageNumber = 1): Promise<HydratedTrade[]> {
+    public async returnHydratedTrades(
+        statuses?: TradeStatus[],
+        pageSize = 25,
+        pageNumber = 1
+    ): Promise<HydratedTrade[]> {
         const pagingOptions = {
             skip: (pageNumber - 1) * pageSize,
             take: pageSize,
         };
-        return await this.hydratedTradeDb.find({ order: { dateCreated: "DESC" }, ...pagingOptions });
+        if (statuses) {
+            return await this.hydratedTradeDb.find({
+                where: { tradeStatus: In(statuses) },
+                order: { dateCreated: "DESC" },
+                ...pagingOptions,
+            });
+        } else {
+            return await this.hydratedTradeDb.find({ order: { dateCreated: "DESC" }, ...pagingOptions });
+        }
     }
 
     public async getTradeById(id: string): Promise<Trade> {

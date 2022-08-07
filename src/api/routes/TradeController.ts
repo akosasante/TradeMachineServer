@@ -136,13 +136,9 @@ async function acceptTradeIfValid(dao: TradeDAO, acceptingUser: User, trade: Tra
 @JsonController("/trades")
 export default class TradeController {
     private readonly dao: TradeDAO;
-    private emailPublisher: EmailPublisher;
-    private slackPublisher: SlackPublisher;
 
-    constructor(dao?: TradeDAO, publisher?: EmailPublisher, slackPublisher?: SlackPublisher) {
+    constructor(dao?: TradeDAO) {
         this.dao = dao || new TradeDAO();
-        this.emailPublisher = publisher || EmailPublisher.getInstance();
-        this.slackPublisher = slackPublisher || SlackPublisher.getInstance();
     }
 
     @Get("/")
@@ -150,13 +146,14 @@ export default class TradeController {
         @QueryParam("hydrated") hydrated?: boolean,
         @QueryParam("pageSize") pageSize?: number,
         @QueryParam("pageNumber") pageNumber?: number,
+        @QueryParam("statuses") statuses?: TradeStatus[],
         @Req() request?: Request
     ): Promise<Trade[] | HydratedTrade[]> {
-        logger.debug(`get all trades endpoint; ${inspect({ hydrated, pageSize, pageNumber })}`);
+        logger.debug(`get all trades endpoint; ${inspect({ hydrated, pageSize, pageNumber, statuses })}`);
         rollbar.info("getAllTrades", { hydrated, pageSize, pageNumber }, request);
         if (hydrated) {
             // return await Promise.all(trades.map(t => this.dao.hydrateTrade(t)));
-            const hydratedTrades = await this.dao.returnHydratedTrades(pageSize, pageNumber);
+            const hydratedTrades = await this.dao.returnHydratedTrades(statuses, pageSize, pageNumber);
             logger.debug(`got ${hydratedTrades.length} hydrated trades`);
             return hydratedTrades;
         } else {

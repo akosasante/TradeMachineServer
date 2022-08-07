@@ -18,13 +18,13 @@ export class Publisher {
         return this.queue!.clean(100, "wait");
     }
 
-    public async closeQueue(): Promise<void> {
-        return this.queue!.close()
+    public async closeQueue(wait = false): Promise<void> {
+        return this.queue!.close(wait)
             .then(() => {
                 logger.info(`Closing the queue. ${this.queue!.name}`);
             })
             .catch(() => {
-                logger.error(`Erorr closing queue. ${this.queue!.name}`);
+                logger.error(`Error closing queue. ${this.queue!.name}`);
             });
     }
 }

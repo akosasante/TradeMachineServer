@@ -69,6 +69,25 @@ describe("TradeDAO", () => {
         expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({ order: { dateCreated: "DESC" }, take: 25, skip: 0 });
     });
 
+    it("returnHydratedTrades - with status should include a where query", async () => {
+        const pendingStatuses = [TradeStatus.PENDING, TradeStatus.REQUESTED];
+        await tradeDAO.returnHydratedTrades(pendingStatuses);
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({
+            where: {
+                tradeStatus: {
+                    _multipleParameters: true,
+                    _type: "in",
+                    _useParameter: true,
+                    _value: pendingStatuses,
+                },
+            },
+            order: { dateCreated: "DESC" },
+            take: 25,
+            skip: 0,
+        });
+    });
+
     it("getTradeById - should call the db findOneOrFail once with id", async () => {
         mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
         const res = await tradeDAO.getTradeById(testTrade.id!);

@@ -11,8 +11,6 @@ import { TeamFactory } from "../../../factories/TeamFactory";
 import { TradeItemType } from "../../../../src/models/tradeItem";
 import * as TradeTracker from "../../../../src/csv/TradeTracker";
 import { HydratedTrade } from "../../../../src/models/views/hydratedTrades";
-import { SlackPublisher } from "../../../../src/slack/publishers";
-import { EmailPublisher } from "../../../../src/email/publishers";
 
 describe("TradeController", () => {
     const mockTradeDAO = {
@@ -43,24 +41,11 @@ describe("TradeController", () => {
     recipient!.team.owners = [tradeRecipient];
     const tradeController = new TradeController(mockTradeDAO as unknown as TradeDAO);
 
-    const emailPublisher = EmailPublisher.getInstance();
-    const slackPublisher = SlackPublisher.getInstance();
-
-    async function shutdown() {
-        try {
-            await emailPublisher.closeQueue();
-            await slackPublisher.closeQueue();
-        } catch (err) {
-            logger.error(`Error while closing redis: ${err}`);
-        }
-    }
-
     beforeAll(() => {
         logger.debug("~~~~~~TRADE CONTROLLER TESTS BEGIN~~~~~~");
     });
     afterAll(async () => {
         logger.debug("~~~~~~TRADE CONTROLLER TESTS COMPLETE~~~~~~");
-        return await shutdown();
     });
     afterEach(() => {
         Object.values(mockTradeDAO).forEach(mockFn => mockFn.mockReset());
@@ -81,7 +66,7 @@ describe("TradeController", () => {
             const res = await tradeController.getAllTrades(true);
 
             expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(undefined, undefined);
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(undefined, undefined, undefined);
             expect(mockTradeDAO.getAllTrades).toHaveBeenCalledTimes(0);
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(0);
             expect(res).toEqual([testTrade as HydratedTrade]);
@@ -91,7 +76,16 @@ describe("TradeController", () => {
             const res = await tradeController.getAllTrades(true, 50, 1);
 
             expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(50, 1);
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(undefined, 50, 1);
+            expect(res).toEqual([testTrade as HydratedTrade]);
+        });
+        it("should pass in an array of trade statuses if present", async () => {
+            const pendingStatuses = [TradeStatus.PENDING, TradeStatus.REQUESTED];
+            mockTradeDAO.returnHydratedTrades.mockResolvedValueOnce([testTrade as HydratedTrade]); // TODO: update this test properly to use a mock hydrated trade instead of a test trade
+            const res = await tradeController.getAllTrades(true, 50, 1, pendingStatuses);
+
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledTimes(1);
+            expect(mockTradeDAO.returnHydratedTrades).toHaveBeenCalledWith(pendingStatuses, 50, 1);
             expect(res).toEqual([testTrade as HydratedTrade]);
         });
         it("should bubble up any errors from the DAO", async () => {

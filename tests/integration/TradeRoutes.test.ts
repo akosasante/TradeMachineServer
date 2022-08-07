@@ -200,6 +200,22 @@ describe("Trade API endpoints", () => {
                 prospectIds.includes(player.id)
             );
         }, 2000);
+        it("should only return hydrated trades that match the statuses given", async () => {
+            const _draftTrade = await tradeDAO.createTrade(TradeFactory.getTrade());
+            const pendingTrade = await tradeDAO.createTrade(
+                TradeFactory.getTrade(undefined, undefined, TradeStatus.PENDING)
+            );
+            const requestedTrade = await tradeDAO.createTrade(
+                TradeFactory.getTrade(undefined, undefined, TradeStatus.REQUESTED)
+            );
+
+            const { body } = await getAllRequest(
+                `?hydrated=true&statuses[]=${TradeStatus.REQUESTED}&statuses[]=${TradeStatus.PENDING}`
+            );
+
+            expect(body).toBeArrayOfSize(2);
+            expect(body).toIncludeAllPartialMembers([{ tradeId: pendingTrade.id }, { tradeId: requestedTrade.id }]);
+        });
     });
 
     describe("GET /trades/:id (get one trade)", () => {
