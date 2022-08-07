@@ -67,7 +67,11 @@ describe("Trade Formatter methods", () => {
         expect(text).toMatch(`${trade.creator!.name} & ${trade.recipients[0]!.name}`);
     });
     it("getSubtitleText/1 should format the subtitle with the correct date and slack tags", () => {
+        // Note to self: JS Date uses 0-indexed month value.
+        // mock date at 11am
+        advanceTo(new Date(2018, 5, 27, 11, 0, 0));
         const text = TradeFormatter.getSubtitleText(trade);
+        expect(text).toMatch("*Wed Jun 27 2018*");
         expect(text).toMatch("Trade requested by");
         expect(text).toMatch("Trading with: ");
         expect(text).toMatch(`<@${trade.creator!.owners![0].slackUsername}>`);
@@ -81,19 +85,19 @@ describe("Trade Formatter methods", () => {
         advanceTo(new Date(2018, 5, 27, 11, 0, 0));
         const textBefore11 = TradeFormatter.getSubtitleText(trade);
         // trade will be upheld by next day at 11pm
-        expect(textBefore11).toMatch("2018-06-28, 11:00:00 p.m. (Eastern)");
+        expect(textBefore11).toMatch("Thu Jun 28 2018, 11:00 p.m. EDT");
 
         // mock date at 11:01pm
         advanceTo(new Date(2018, 5, 27, 23, 1, 0));
         const textAfter11 = TradeFormatter.getSubtitleText(trade);
         // trade will be upheld the day after next at 11pm
-        expect(textAfter11).toMatch("2018-06-29, 11:00:00 p.m. (Eastern)");
+        expect(textAfter11).toMatch("Fri Jun 29 2018, 11:00 p.m. EDT");
 
         // mock date at 11:00pm on the dot
         advanceTo(new Date(2018, 5, 27, 23, 0, 0, 0));
         const textAt11 = TradeFormatter.getSubtitleText(trade);
         // trade will be upheld the day after next at 11pm
-        expect(textAt11).toMatch("2018-06-29, 11:00:00 p.m. (Eastern)");
+        expect(textAt11).toMatch("Fri Jun 29 2018, 11:00 p.m. EDT");
     });
     it("prepPickText/3 should format a bullet point list of picks", async () => {
         const text = await TradeFormatter.prepPickText(true, TradeItem.filterPicks(trade.tradeItems), mockPickDao);
