@@ -20,7 +20,7 @@ import {
     makePutRequest,
     ownerLoggedIn,
     setupOwnerAndAdminUsers,
-    stringifyQuery
+    stringifyQuery,
 } from "./helpers";
 import startServer from "../../src/bootstrap/app";
 import User from "../../src/models/user";
