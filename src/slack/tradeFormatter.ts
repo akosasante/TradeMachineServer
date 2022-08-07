@@ -10,6 +10,8 @@ import logger from "../bootstrap/logger";
 import Team from "../models/team";
 import User from "../models/user";
 import { partition, zip } from "lodash";
+import {addDays, isBefore, set} from "date-fns";
+import {utcToZonedTime, format} from "date-fns-tz";
 
 interface TradeFormatterDeps {
     playerDao: PlayerDAO;
@@ -131,27 +133,25 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
         }
 
         function tradeUpholdTime() {
-            const nowUTC = new Date();
-            const now = new Date(nowUTC.toLocaleString("en-US", { timeZone: "America/Toronto" }));
-            let upholdTime = new Date();
-            const addDaysToDate = (dateToModify: Date, dateToAddTo: Date, days: number) =>
-                new Date(dateToModify.setDate(dateToAddTo.getDate() + days));
+            const nowEastern = utcToZonedTime(new Date(), "America/Toronto");
+            const todayAt11 = set(new Date(nowEastern.valueOf()), {hours: 23, minutes: 0, seconds: 0, milliseconds: 0});
+            let upholdTime = new Date(nowEastern.valueOf());
 
-            if (now.getHours() < 23) {
+            if (isBefore(nowEastern, todayAt11)) {
                 // It is before 11PM, so trade will be upheld by tomorrow at 11pm.
-                upholdTime = addDaysToDate(upholdTime, now, 1);
+                upholdTime = addDays(upholdTime, 1);
             } else {
                 // It is after 11PM, so trade won't be upheld until the day-after-tomorrow at 11pm.
-                upholdTime = addDaysToDate(upholdTime, now, 2);
+                upholdTime = addDays(upholdTime, 2);
             }
-            upholdTime.setHours(23, 0, 0, 0);
-            return upholdTime.toLocaleString("en-CA");
+            upholdTime = set(upholdTime, {hours: 23, minutes: 0, seconds: 0, milliseconds: 0});
+            return format(upholdTime, "eee MMM d yyyy, h':'mm aaaa z");
         }
 
-        return `*${new Date().toDateString()}* \
+        return `*${format(new Date(), "eee MMM d yyyy", {timeZone: "America/Toronto"})}* \
 | Trade requested by ${getSlackUsernamesForOwners(trade.creator!.owners!)} \
 - Trading with: ${getSlackUsernamesForOwners(trade.recipients.flatMap(r => r.owners!))} \
-| Trade will be upheld after: ${tradeUpholdTime()} (Eastern)`;
+| Trade will be upheld after: ${tradeUpholdTime()}`;
     },
 
     getNotificationText: (trade: Trade) => {
