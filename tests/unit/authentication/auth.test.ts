@@ -9,7 +9,7 @@ import {
     passwordResetDateIsValid,
     serializeUser,
     signInAuthentication,
-    signUpAuthentication
+    signUpAuthentication,
 } from "../../../src/authentication/auth";
 import UserDAO from "../../../src/DAO/UserDAO";
 import User, { Role } from "../../../src/models/user";
