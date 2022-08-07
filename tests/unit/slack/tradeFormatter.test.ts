@@ -73,7 +73,7 @@ describe("Trade Formatter methods", () => {
         expect(text).toMatch(`<@${trade.creator!.owners![0].slackUsername}>`);
         expect(text).toMatch(`<@${trade.recipients[0].owners![0].slackUsername}>`);
         expect(text).toMatch("Trading with: ");
-        expect(text).toMatch("Trade will be reviewed by:");
+        expect(text).toMatch("Trade will be upheld after:");
     });
     it("getSubtitleText/1 should correctly format the 'trade upheld by' part", () => {
         // Note to self: JS Date uses 0-indexed month value.
