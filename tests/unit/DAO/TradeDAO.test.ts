@@ -1,7 +1,8 @@
 import "jest-extended";
-import { Repository } from "typeorm";
+import { FindOperator, Repository } from "typeorm";
 import TradeDAO from "../../../src/DAO/TradeDAO";
 import { TradeFactory } from "../../factories/TradeFactory";
+import { TeamFactory } from "../../factories/TeamFactory";
 import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
 import Trade, { TradeStatus } from "../../../src/models/trade";
 import logger from "../../../src/bootstrap/logger";
@@ -69,7 +70,7 @@ describe("TradeDAO", () => {
         expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({ order: { dateCreated: "DESC" }, take: 25, skip: 0 });
     });
 
-    it("returnHydratedTrades - with status should include a where query", async () => {
+    it("returnHydratedTrades - with status should include a valid where query", async () => {
         const pendingStatuses = [TradeStatus.PENDING, TradeStatus.REQUESTED];
         await tradeDAO.returnHydratedTrades(pendingStatuses);
         expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
@@ -82,6 +83,58 @@ describe("TradeDAO", () => {
                     _value: pendingStatuses,
                 },
             },
+            order: { dateCreated: "DESC" },
+            take: 25,
+            skip: 0,
+        });
+    });
+
+    it("returnHydratedTrades - with teams should include a valid where query", async () => {
+        const team = TeamFactory.getTeam();
+        const expectedParticipantsClause = [
+            { tradeCreator: team.name },
+            {
+                tradeRecipients: new FindOperator("raw", expect.toBeArray(), true, true, expect.toBeFunction(), {
+                    teamName: team.name,
+                }),
+            },
+        ];
+        await tradeDAO.returnHydratedTrades(undefined, team.name);
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({
+            where: expectedParticipantsClause,
+            order: { dateCreated: "DESC" },
+            take: 25,
+            skip: 0,
+        });
+    });
+
+    it("returnHydratedTrades - with teams AND status should include a valid where query", async () => {
+        const pendingStatuses = [TradeStatus.PENDING, TradeStatus.REQUESTED];
+        const team = TeamFactory.getTeam();
+        const expectedParticipantsAndStatusClause = [
+            { tradeCreator: team.name, tradeStatus: {
+                    _multipleParameters: true,
+                    _type: "in",
+                    _useParameter: true,
+                    _value: pendingStatuses,
+                } },
+            {
+                tradeStatus: {
+                    _multipleParameters: true,
+                    _type: "in",
+                    _useParameter: true,
+                    _value: pendingStatuses,
+                },
+                tradeRecipients: new FindOperator("raw", expect.toBeArray(), true, true, expect.toBeFunction(), {
+                    teamName: team.name,
+                }),
+            },
+        ];
+        await tradeDAO.returnHydratedTrades(pendingStatuses, team.name);
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
+        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({
+            where: expectedParticipantsAndStatusClause,
             order: { dateCreated: "DESC" },
             take: 25,
             skip: 0,

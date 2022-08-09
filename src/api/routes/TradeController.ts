@@ -147,13 +147,13 @@ export default class TradeController {
         @QueryParam("pageSize") pageSize?: number,
         @QueryParam("pageNumber") pageNumber?: number,
         @QueryParam("statuses") statuses?: TradeStatus[],
+        @QueryParam("includesTeam") includeTeam?: string,
         @Req() request?: Request
     ): Promise<Trade[] | HydratedTrade[]> {
-        logger.debug(`get all trades endpoint; ${inspect({ hydrated, pageSize, pageNumber, statuses })}`);
-        rollbar.info("getAllTrades", { hydrated, pageSize, pageNumber }, request);
+        logger.debug(`get all trades endpoint; ${inspect({ hydrated, pageSize, pageNumber, statuses, includeTeam })}`);
+        rollbar.info("getAllTrades", { hydrated, pageSize, pageNumber, statuses, includeTeam }, request);
         if (hydrated) {
-            // return await Promise.all(trades.map(t => this.dao.hydrateTrade(t)));
-            const hydratedTrades = await this.dao.returnHydratedTrades(statuses, pageSize, pageNumber);
+            const hydratedTrades = await this.dao.returnHydratedTrades(statuses, includeTeam, pageSize, pageNumber);
             logger.debug(`got ${hydratedTrades.length} hydrated trades`);
             return hydratedTrades;
         } else {
