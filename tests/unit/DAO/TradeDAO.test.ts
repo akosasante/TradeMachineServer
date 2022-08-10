@@ -22,7 +22,7 @@ describe("TradeDAO", () => {
         update: jest.fn(),
     };
     const mockHydratedTradeDb: MockObj = {
-        find: jest.fn(),
+        findAndCount: jest.fn(),
     };
     const mockPlayerDao: MockObj = {
         getPlayerById: jest.fn(),
@@ -66,15 +66,15 @@ describe("TradeDAO", () => {
 
     it("returnHydratedTrades - should call find on the hydrated trades repo", async () => {
         await tradeDAO.returnHydratedTrades();
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({ order: { dateCreated: "DESC" }, take: 25, skip: 0 });
+        expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledTimes(1);
+        expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledWith({ order: { dateCreated: "DESC" }, take: 25, skip: 0 });
     });
 
     it("returnHydratedTrades - with status should include a valid where query", async () => {
         const pendingStatuses = [TradeStatus.PENDING, TradeStatus.REQUESTED];
         await tradeDAO.returnHydratedTrades(pendingStatuses);
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({
+        expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledTimes(1);
+        expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledWith({
             where: {
                 tradeStatus: {
                     _multipleParameters: true,
@@ -100,8 +100,8 @@ describe("TradeDAO", () => {
             },
         ];
         await tradeDAO.returnHydratedTrades(undefined, team.name);
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({
+        expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledTimes(1);
+        expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledWith({
             where: expectedParticipantsClause,
             order: { dateCreated: "DESC" },
             take: 25,
@@ -132,8 +132,8 @@ describe("TradeDAO", () => {
             },
         ];
         await tradeDAO.returnHydratedTrades(pendingStatuses, team.name);
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledTimes(1);
-        expect(mockHydratedTradeDb.find).toHaveBeenCalledWith({
+        expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledTimes(1);
+        expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledWith({
             where: expectedParticipantsAndStatusClause,
             order: { dateCreated: "DESC" },
             take: 25,

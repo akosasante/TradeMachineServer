@@ -22,7 +22,7 @@ import {
     makePostRequest,
     makePutRequest,
     ownerLoggedIn,
-    setupOwnerAndAdminUsers,
+    setupOwnerAndAdminUsers
 } from "./helpers";
 import {v4 as uuid} from "uuid";
 import * as TradeTracker from "../../src/csv/TradeTracker";
@@ -187,16 +187,17 @@ describe("Trade API endpoints", () => {
                 tradeCreator: testTrade.creator?.name,
                 tradeRecipients: testTrade.recipients.map(t => t.name),
             };
-            expect(body).toBeArrayOfSize(1);
-            expect(body[0]).toMatchObject(expected);
-            expect(body[0].tradeStatus).toEqual(testTrade.status?.toString());
-            expect((body[0] as HydratedTrade).tradedPicks).toSatisfyAll((pick: HydratedPick) =>
+            expect(body.total).toBe(1);
+            expect(body.trades).toBeArrayOfSize(1);
+            expect(body.trades[0]).toMatchObject(expected);
+            expect(body.trades[0].tradeStatus).toEqual(testTrade.status?.toString());
+            expect((body.trades[0] as HydratedTrade).tradedPicks).toSatisfyAll((pick: HydratedPick) =>
                 pickIds.includes(pick.id)
             );
-            expect((body[0] as HydratedTrade).tradedMajors).toSatisfyAll((player: HydratedMajorLeaguer) =>
+            expect((body.trades[0] as HydratedTrade).tradedMajors).toSatisfyAll((player: HydratedMajorLeaguer) =>
                 playerIds.includes(player.id)
             );
-            expect((body[0] as HydratedTrade).tradedMinors).toSatisfyAll((player: HydratedMinorLeaguer) =>
+            expect((body.trades[0] as HydratedTrade).tradedMinors).toSatisfyAll((player: HydratedMinorLeaguer) =>
                 prospectIds.includes(player.id)
             );
         }, 2000);
@@ -213,8 +214,9 @@ describe("Trade API endpoints", () => {
                 `?hydrated=true&statuses[]=${TradeStatus.REQUESTED}&statuses[]=${TradeStatus.PENDING}`
             );
 
-            expect(body).toBeArrayOfSize(2);
-            expect(body).toIncludeAllPartialMembers([{ tradeId: pendingTrade.id }, { tradeId: requestedTrade.id }]);
+            expect(body.total).toBe(2);
+            expect(body.trades).toBeArrayOfSize(2);
+            expect(body.trades).toIncludeAllPartialMembers([{ tradeId: pendingTrade.id }, { tradeId: requestedTrade.id }]);
         });
         it("should only return hydrated trades that the team given is involved in", async () => {
             const [teamA, teamB, teamC] = TeamFactory.getTeams(3);
@@ -234,8 +236,9 @@ describe("Trade API endpoints", () => {
                 `?hydrated=true&includesTeam=${teamA.name}`
             );
 
-            expect(body).toBeArrayOfSize(2);
-            expect(body).toIncludeAllPartialMembers([{ tradeId: tradeAB.id }, { tradeId: tradeBA.id }]);
+            expect(body.total).toBe(2);
+            expect(body.trades).toBeArrayOfSize(2);
+            expect(body.trades).toIncludeAllPartialMembers([{ tradeId: tradeAB.id }, { tradeId: tradeBA.id }]);
         });
         it("should handle returning hydrated trades with both team and status query filters", async () => {
             const [teamA, teamB, teamC] = TeamFactory.getTeams(3);
@@ -255,8 +258,9 @@ describe("Trade API endpoints", () => {
                 `?hydrated=true&includesTeam=${teamA.name}&statuses[]=${TradeStatus.REQUESTED}&statuses[]=${TradeStatus.PENDING}`
             );
 
-            expect(body).toBeArrayOfSize(1);
-            expect(body).toIncludeAllPartialMembers([{ tradeId: tradeBA.id }]);
+            expect(body.total).toBe(1);
+            expect(body.trades).toBeArrayOfSize(1);
+            expect(body.trades).toIncludeAllPartialMembers([{ tradeId: tradeBA.id }]);
         });
     });
 

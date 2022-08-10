@@ -42,7 +42,7 @@ export default class TradeDAO {
         includeTeam?: string,
         pageSize = 25,
         pageNumber = 1
-    ): Promise<HydratedTrade[]> {
+    ): Promise<[HydratedTrade[], number]> {
         let where: FindConditions<HydratedTrade>[] | FindConditions<HydratedTrade> | undefined;
 
         if (statuses && includeTeam) {
@@ -70,12 +70,12 @@ export default class TradeDAO {
         };
 
         return await (whereClause
-            ? this.hydratedTradeDb.find({
+            ? this.hydratedTradeDb.findAndCount({
                 order: { dateCreated: "DESC" },
                 ...pagingOptions,
                   where,
               })
-            : this.hydratedTradeDb.find({ order: { dateCreated: "DESC" }, ...pagingOptions }));
+            : this.hydratedTradeDb.findAndCount({ order: { dateCreated: "DESC" }, ...pagingOptions }));
     }
 
     public async getTradeById(id: string): Promise<Trade> {
