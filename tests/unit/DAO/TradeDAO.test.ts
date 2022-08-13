@@ -67,7 +67,11 @@ describe("TradeDAO", () => {
     it("returnHydratedTrades - should call find on the hydrated trades repo", async () => {
         await tradeDAO.returnHydratedTrades();
         expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledTimes(1);
-        expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledWith({ order: { dateCreated: "DESC" }, take: 25, skip: 0 });
+        expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledWith({
+            order: { dateCreated: "DESC" },
+            take: 25,
+            skip: 0,
+        });
     });
 
     it("returnHydratedTrades - with status should include a valid where query", async () => {
@@ -113,12 +117,15 @@ describe("TradeDAO", () => {
         const pendingStatuses = [TradeStatus.PENDING, TradeStatus.REQUESTED];
         const team = TeamFactory.getTeam();
         const expectedParticipantsAndStatusClause = [
-            { tradeCreator: team.name, tradeStatus: {
+            {
+                tradeCreator: team.name,
+                tradeStatus: {
                     _multipleParameters: true,
                     _type: "in",
                     _useParameter: true,
                     _value: pendingStatuses,
-                } },
+                },
+            },
             {
                 tradeStatus: {
                     _multipleParameters: true,

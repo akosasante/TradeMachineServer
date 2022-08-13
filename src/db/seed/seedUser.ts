@@ -9,7 +9,6 @@ import User from "../../models/user";
 import logger from "../../bootstrap/logger";
 import { inspect } from "util";
 
-
 async function run() {
     const args = process.argv.slice(2);
     await initializeDb(process.env.DB_LOGS === "true");

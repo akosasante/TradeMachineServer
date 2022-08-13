@@ -16,8 +16,7 @@ import TradeDAO from "../../DAO/TradeDAO";
 import logger from "../../bootstrap/logger";
 import { inspect } from "util";
 import Team from "../../models/team";
-import {randomUUID} from "crypto";
-
+import { randomUUID } from "crypto";
 
 async function run() {
     const args = process.argv.slice(2);

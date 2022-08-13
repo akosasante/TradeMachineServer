@@ -16,7 +16,7 @@ export function createGenericUser() {
     const slackUsername = internet.userName();
     const email = internet.email();
     const displayName = fakeName.findName();
-    return new User({id: randomUUID(), slackUsername, email, displayName, role: Role.OWNER});
+    return new User({ id: randomUUID(), slackUsername, email, displayName, role: Role.OWNER });
 }
 
 export function createAdminUser() {

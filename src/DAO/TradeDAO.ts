@@ -1,4 +1,4 @@
-import {DeleteResult, FindManyOptions, getConnection, In, Raw, Repository} from "typeorm";
+import { DeleteResult, FindManyOptions, getConnection, In, Raw, Repository } from "typeorm";
 import Trade, { TradeStatus } from "../models/trade";
 import TradeItem, { TradeItemType } from "../models/tradeItem";
 import TradeParticipant from "../models/tradeParticipant";
@@ -71,8 +71,8 @@ export default class TradeDAO {
 
         return await (whereClause
             ? this.hydratedTradeDb.findAndCount({
-                order: { dateCreated: "DESC" },
-                ...pagingOptions,
+                  order: { dateCreated: "DESC" },
+                  ...pagingOptions,
                   where,
               })
             : this.hydratedTradeDb.findAndCount({ order: { dateCreated: "DESC" }, ...pagingOptions }));

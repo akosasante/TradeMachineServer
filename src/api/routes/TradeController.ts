@@ -13,7 +13,7 @@ import {
     Put,
     QueryParam,
     Req,
-    UnauthorizedError
+    UnauthorizedError,
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -153,9 +153,14 @@ export default class TradeController {
         logger.debug(`get all trades endpoint; ${inspect({ hydrated, pageSize, pageNumber, statuses, includeTeam })}`);
         rollbar.info("getAllTrades", { hydrated, pageSize, pageNumber, statuses, includeTeam }, request);
         if (hydrated) {
-            const [hydratedTrades, total] = await this.dao.returnHydratedTrades(statuses, includeTeam, pageSize, pageNumber);
+            const [hydratedTrades, total] = await this.dao.returnHydratedTrades(
+                statuses,
+                includeTeam,
+                pageSize,
+                pageNumber
+            );
             logger.debug(`got ${hydratedTrades.length} hydrated trades`);
-            return {trades: hydratedTrades, total};
+            return { trades: hydratedTrades, total };
         } else {
             const trades = await this.dao.getAllTrades();
             logger.debug(`got ${trades.length} trades`);
