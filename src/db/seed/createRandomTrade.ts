@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { config as dotenvConfig } from "dotenv";
 import { resolve as resolvePath } from "path";
+dotenvConfig({ path: resolvePath(__dirname, "../../../.env") });
 import initializeDb from "../../bootstrap/db";
 import TradeParticipant, { TradeParticipantType } from "../../models/tradeParticipant";
 import TeamDAO from "../../DAO/TeamDAO";
@@ -14,25 +15,25 @@ import Trade from "../../models/trade";
 import TradeDAO from "../../DAO/TradeDAO";
 import logger from "../../bootstrap/logger";
 import { inspect } from "util";
-
-dotenvConfig({ path: resolvePath(__dirname, "../../../.env") });
+import Team from "../../models/team";
+import { randomUUID } from "crypto";
 
 async function run() {
     const args = process.argv.slice(2);
-    const numTeams = parseInt(args[0], 10);
-    const numMajors = parseInt(args[1], 10);
-    const numMinors = parseInt(args[2], 10);
-    const numPicks = parseInt(args[3], 10);
+    const numTeams = args[0] ? parseInt(args[0], 10) : 2;
+    const numMajors = args[1] ? parseInt(args[1], 10) : 1;
+    const numMinors = args[2] ? parseInt(args[2], 10) : 1;
+    const numPicks = args[3] ? parseInt(args[3], 10) : 1;
     await initializeDb(process.env.DB_LOGS === "true");
 
     const teamDao = new TeamDAO();
     const playerDao = new PlayerDAO();
     const pickDao = new DraftPickDAO();
     const tradeDao = new TradeDAO();
-    const allTeams = shuffle(await teamDao.getAllTeams());
+    const allTeams = shuffle<Team>(await teamDao.getAllTeams());
     const allMajorPlayers = await playerDao.findPlayers({ league: PlayerLeagueType.MAJOR });
     const allMinorPlayers = await playerDao.findPlayers({ league: PlayerLeagueType.MINOR });
-    const allPicks = await pickDao.getAllPicks();
+    const allPicks = await pickDao.getAllPicks(true);
 
     const creator = new TradeParticipant({
         id: uuid(),
@@ -92,10 +93,14 @@ async function run() {
 
     const items = [...tradedMajors, ...tradedMinors, ...tradedPicks];
 
-    const trade = new Trade({ tradeParticipants: participants, tradeItems: items });
+    const trade = new Trade({ id: randomUUID(), tradeParticipants: participants, tradeItems: items });
     return await tradeDao.createTrade(trade);
 }
 
+/**
+ * Call with: DB_LOGS=<optional_boolean> ts-node src/db/seed/createRandomTrade.ts <num_teams_involved:2> <num_majors_involved:1> <num_minors_involved:1> <num_picks_involved:1>
+ *     - all args are optional and have defaults
+ */
 run()
     .then(trade => {
         logger.info(`${trade.id}`);

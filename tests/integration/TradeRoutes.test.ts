@@ -187,19 +187,82 @@ describe("Trade API endpoints", () => {
                 tradeCreator: testTrade.creator?.name,
                 tradeRecipients: testTrade.recipients.map(t => t.name),
             };
-            expect(body).toBeArrayOfSize(1);
-            expect(body[0]).toMatchObject(expected);
-            expect(body[0].tradeStatus).toEqual(testTrade.status?.toString());
-            expect((body[0] as HydratedTrade).tradedPicks).toSatisfyAll((pick: HydratedPick) =>
+            expect(body.total).toBe(1);
+            expect(body.trades).toBeArrayOfSize(1);
+            expect(body.trades[0]).toMatchObject(expected);
+            expect(body.trades[0].tradeStatus).toEqual(testTrade.status?.toString());
+            expect((body.trades[0] as HydratedTrade).tradedPicks).toSatisfyAll((pick: HydratedPick) =>
                 pickIds.includes(pick.id)
             );
-            expect((body[0] as HydratedTrade).tradedMajors).toSatisfyAll((player: HydratedMajorLeaguer) =>
+            expect((body.trades[0] as HydratedTrade).tradedMajors).toSatisfyAll((player: HydratedMajorLeaguer) =>
                 playerIds.includes(player.id)
             );
-            expect((body[0] as HydratedTrade).tradedMinors).toSatisfyAll((player: HydratedMinorLeaguer) =>
+            expect((body.trades[0] as HydratedTrade).tradedMinors).toSatisfyAll((player: HydratedMinorLeaguer) =>
                 prospectIds.includes(player.id)
             );
         }, 2000);
+        it("should only return hydrated trades that match the statuses given", async () => {
+            const _draftTrade = await tradeDAO.createTrade(TradeFactory.getTrade());
+            const pendingTrade = await tradeDAO.createTrade(
+                TradeFactory.getTrade(undefined, undefined, TradeStatus.PENDING)
+            );
+            const requestedTrade = await tradeDAO.createTrade(
+                TradeFactory.getTrade(undefined, undefined, TradeStatus.REQUESTED)
+            );
+
+            const { body } = await getAllRequest(
+                `?hydrated=true&statuses[]=${TradeStatus.REQUESTED}&statuses[]=${TradeStatus.PENDING}`
+            );
+
+            expect(body.total).toBe(2);
+            expect(body.trades).toBeArrayOfSize(2);
+            expect(body.trades).toIncludeAllPartialMembers([
+                { tradeId: pendingTrade.id },
+                { tradeId: requestedTrade.id },
+            ]);
+        });
+        it("should only return hydrated trades that the team given is involved in", async () => {
+            const [teamA, teamB, teamC] = TeamFactory.getTeams(3);
+            const [teamACreator, teamBRecipient] = TradeFactory.getTradeParticipants(teamA, teamB);
+            const [teamBCreator, teamARecipient] = TradeFactory.getTradeParticipants(teamB, teamA);
+            const [_teamBCreatorAgain, teamCRecipient] = TradeFactory.getTradeParticipants(teamB, teamC);
+            const tradeAB = TradeFactory.getTrade(undefined, [teamACreator, teamBRecipient]);
+            const tradeBA = TradeFactory.getTrade(undefined, [teamBCreator, teamARecipient]);
+            const tradeBC = TradeFactory.getTrade(undefined, [teamBCreator, teamCRecipient]);
+
+            await teamDAO.createTeams([teamA, teamB, teamC]);
+            await tradeDAO.createTrade(tradeAB);
+            await tradeDAO.createTrade(tradeBA);
+            await tradeDAO.createTrade(tradeBC);
+
+            const { body } = await getAllRequest(`?hydrated=true&includesTeam=${teamA.name}`);
+
+            expect(body.total).toBe(2);
+            expect(body.trades).toBeArrayOfSize(2);
+            expect(body.trades).toIncludeAllPartialMembers([{ tradeId: tradeAB.id }, { tradeId: tradeBA.id }]);
+        });
+        it("should handle returning hydrated trades with both team and status query filters", async () => {
+            const [teamA, teamB, teamC] = TeamFactory.getTeams(3);
+            const [teamACreator, teamBRecipient] = TradeFactory.getTradeParticipants(teamA, teamB);
+            const [teamBCreator, teamARecipient] = TradeFactory.getTradeParticipants(teamB, teamA);
+            const [_teamBCreatorAgain, teamCRecipient] = TradeFactory.getTradeParticipants(teamB, teamC);
+            const tradeAB = TradeFactory.getTrade(undefined, [teamACreator, teamBRecipient]);
+            const tradeBA = TradeFactory.getTrade(undefined, [teamBCreator, teamARecipient]);
+            const tradeBC = TradeFactory.getTrade(undefined, [teamBCreator, teamCRecipient]);
+
+            await teamDAO.createTeams([teamA, teamB, teamC]);
+            await tradeDAO.createTrade(tradeAB);
+            await tradeDAO.createTrade({ ...tradeBA, status: TradeStatus.PENDING });
+            await tradeDAO.createTrade(tradeBC);
+
+            const { body } = await getAllRequest(
+                `?hydrated=true&includesTeam=${teamA.name}&statuses[]=${TradeStatus.REQUESTED}&statuses[]=${TradeStatus.PENDING}`
+            );
+
+            expect(body.total).toBe(1);
+            expect(body.trades).toBeArrayOfSize(1);
+            expect(body.trades).toIncludeAllPartialMembers([{ tradeId: tradeBA.id }]);
+        });
     });
 
     describe("GET /trades/:id (get one trade)", () => {

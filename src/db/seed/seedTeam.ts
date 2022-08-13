@@ -1,4 +1,7 @@
 /* eslint-disable */
+import { config as dotenvConfig } from "dotenv";
+import { resolve as resolvePath } from "path";
+dotenvConfig({ path: resolvePath(__dirname, "../../../.env") });
 import initializeDb from "../../bootstrap/db";
 import { createGenericTeam, createInactiveTeam, saveOwners, saveTeam } from "./helpers/teamCreator";
 import Team from "../../models/team";
@@ -67,6 +70,12 @@ function getTeamObj(args: any[]) {
     }
 }
 
+/**
+ * Call with: DB_LOGS=<optional_boolean> ts-node src/db/seed/seedTeam.ts <inactive|owned|null> <owner_user_id> to create a disabled-status team owned team or an active-status team
+ *   - if owned was passed, script will check second argument for a user id that's in the db and set the created team's owner to that user (only accepts one currently)
+ * Call with: DB_LOGS=<optional_boolean> ts-node src/db/seed/seedUser.ts custom <team_obj_json> to create a team with the passed in json definition
+ *   - if the json argument has an `owners` field, it will set the owners of the newly created team to that (can be an array of more than one owner)
+ */
 run()
     .then(user => {
         logger.info(inspect(user));

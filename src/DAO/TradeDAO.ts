@@ -1,4 +1,4 @@
-import { DeleteResult, FindManyOptions, getConnection, Repository } from "typeorm";
+import { DeleteResult, FindManyOptions, getConnection, In, Raw, Repository } from "typeorm";
 import Trade, { TradeStatus } from "../models/trade";
 import TradeItem, { TradeItemType } from "../models/tradeItem";
 import TradeParticipant from "../models/tradeParticipant";
@@ -6,6 +6,7 @@ import { BadRequestError } from "routing-controllers";
 import PlayerDAO from "./PlayerDAO";
 import DraftPickDAO from "./DraftPickDAO";
 import { HydratedTrade } from "../models/views/hydratedTrades";
+import { FindConditions } from "typeorm/find-options/FindConditions";
 
 interface TradeDeleteResult extends DeleteResult {
     raw: Trade[];
@@ -36,12 +37,45 @@ export default class TradeDAO {
         return await this.tradeDb.find(options);
     }
 
-    public async returnHydratedTrades(pageSize = 25, pageNumber = 1): Promise<HydratedTrade[]> {
+    public async returnHydratedTrades(
+        statuses?: TradeStatus[],
+        includeTeam?: string,
+        pageSize = 25,
+        pageNumber = 1
+    ): Promise<[HydratedTrade[], number]> {
+        let where: FindConditions<HydratedTrade>[] | FindConditions<HydratedTrade> | undefined;
+
+        if (statuses && includeTeam) {
+            where = [
+                { tradeCreator: includeTeam, tradeStatus: In(statuses) },
+                {
+                    tradeRecipients: Raw(tp => ':teamName = ANY("tradeRecipients")', { teamName: includeTeam }),
+                    tradeStatus: In(statuses),
+                },
+            ];
+        } else if (statuses) {
+            where = { tradeStatus: In(statuses) };
+        } else if (includeTeam) {
+            where = [
+                { tradeCreator: includeTeam },
+                { tradeRecipients: Raw(tp => ':teamName = ANY("tradeRecipients")', { teamName: includeTeam }) },
+            ];
+        }
+
+        const whereClause = where ? { where } : undefined;
+
         const pagingOptions = {
             skip: (pageNumber - 1) * pageSize,
             take: pageSize,
         };
-        return await this.hydratedTradeDb.find({ order: { dateCreated: "DESC" }, ...pagingOptions });
+
+        return await (whereClause
+            ? this.hydratedTradeDb.findAndCount({
+                  order: { dateCreated: "DESC" },
+                  ...pagingOptions,
+                  where,
+              })
+            : this.hydratedTradeDb.findAndCount({ order: { dateCreated: "DESC" }, ...pagingOptions }));
     }
 
     public async getTradeById(id: string): Promise<Trade> {
