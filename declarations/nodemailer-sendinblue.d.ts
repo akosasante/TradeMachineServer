@@ -1,9 +1,9 @@
-declare module "nodemailer-sendinblue-transport" {
+declare module "nodemailer-sendinblue" {
 declare function _exports(options: sendInBlueTransportOptions): SendinBlueTransport;
 export = _exports;
 export interface SendInBlueTransportOptions {
-	apiUrl?: string;
-	apiKey?: string | null;
+    apiUrl?: string;
+    apiKey?: string | null;
 }
 // eslint-disable-next-line @typescript-eslint/naming-convention
 declare function SendinBlueTransport(options: SendInBlueTransportOptions): SendinBlueTransport;
