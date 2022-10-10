@@ -35,8 +35,8 @@ export interface SendInBlueSendResponse {
 }
 
 const SEND_IN_BLUE_OPTS: SendInBlueTransportOptions = {
-    apiKey: process.env.EMAIL_KEY || "",
-    apiUrl: process.env.EMAIL_API_URL || "",
+    apiKey: process.env.EMAIL_KEY_V3 || "",
+    apiUrl: process.env.EMAIL_API_URL_V3 || "",
 };
 
 const sendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SEND_IN_BLUE_OPTS));
