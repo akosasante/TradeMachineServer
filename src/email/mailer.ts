@@ -1,6 +1,6 @@
 import Email from "email-templates";
 import nodemailer from "nodemailer";
-import SendinBlueTransport, { SendInBlueTransportOptions } from "nodemailer-sendinblue-transport";
+import SendinBlueTransport, { SendInBlueTransportOptions } from "nodemailer-sendinblue";
 import path from "path";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
@@ -14,7 +14,6 @@ import ordinal from "ordinal";
 import { rollbar } from "../bootstrap/rollbar";
 import EmailDAO from "../DAO/EmailDAO";
 import DbEmail from "../models/email";
-import TradeParticipant from "../models/tradeParticipant";
 
 export interface SendInBlueSendResponse {
     envelope: {
