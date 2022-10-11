@@ -1,4 +1,4 @@
-declare module "nodemailer-sendinblue" {
+declare module "nodemailer-sendinblue-v3-transport" {
 declare function _exports(options: sendInBlueTransportOptions): SendinBlueTransport;
 export = _exports;
 export interface SendInBlueTransportOptions {
