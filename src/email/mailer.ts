@@ -1,6 +1,6 @@
 import Email from "email-templates";
 import nodemailer from "nodemailer";
-import SendinBlueTransport, { SendInBlueTransportOptions } from "nodemailer-sendinblue";
+import SendinBlueTransport, { SendInBlueTransportOptions } from "nodemailer-sendinblue-v3-transport";
 import path from "path";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
@@ -38,7 +38,7 @@ const SEND_IN_BLUE_OPTS: SendInBlueTransportOptions = {
     apiUrl: process.env.EMAIL_API_URL_V3 || "",
 };
 
-const sendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SEND_IN_BLUE_OPTS));
+const sendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SEND_IN_BLUE_OPTS), {debug: true, logger: true, transactionLog: true});
 
 const baseDomain = process.env.BASE_URL;
 
