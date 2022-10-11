@@ -38,7 +38,14 @@ const SEND_IN_BLUE_OPTS: SendInBlueTransportOptions = {
     apiUrl: process.env.EMAIL_API_URL_V3 || "",
 };
 
-const sendInBlueTransport = nodemailer.createTransport(SendinBlueTransport(SEND_IN_BLUE_OPTS), {debug: true, logger: true, transactionLog: true});
+const sendInBlueTransport = nodemailer.createTransport({
+    host: "smtp-relay.sendinblue.com",
+    port: 587,
+    auth: {
+        user: "akosuaasante@gmail.com",
+        pass: process.env.SENDINBLUE_SMTP_PASS,
+    },
+});
 
 const baseDomain = process.env.BASE_URL;
 
