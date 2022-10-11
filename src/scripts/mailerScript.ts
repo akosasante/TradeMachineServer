@@ -6,6 +6,7 @@ import TradeDAO from "../DAO/TradeDAO";
 import { TradeItemType } from "../models/tradeItem";
 import DraftPickDAO from "../DAO/DraftPickDAO";
 import PlayerDAO from "../DAO/PlayerDAO";
+import { TradeStatus } from "../models/trade";
 
 // async function test() {
 //     const mailer = EMAILER;
@@ -30,7 +31,14 @@ async function testTrade() {
             item.entity = await playerDao.getPlayerById(item.tradeItemId);
         }
     }
-    return await mailer.sendTradeSubmissionEmail(args[1] || "tripleabatt@gmail.com", trade);
+
+    if (trade.status === TradeStatus.REQUESTED) {
+        return await mailer.sendTradeRequestEmail(args[1] || "tripleabatt@gmail.com", trade);
+    } else if (trade.status === TradeStatus.REJECTED) {
+        return await mailer.sendTradeDeclinedEmail(args[1] || "tripleabatt@gmail.com", trade);
+    } else if (trade.status === TradeStatus.ACCEPTED) {
+        return await mailer.sendTradeSubmissionEmail(args[1] || "tripleabatt@gmail.com", trade);
+    }
 }
 
 initializeDb(true).then(() => {
