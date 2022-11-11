@@ -32,7 +32,6 @@ module.exports = {
     },
     "ignorePatterns": ['.eslintrc.js', 'src/db/*', './src/scripts/**/*.ts', './tests/*'],
     "plugins": [
-        "eslint-plugin-no-null",
         "eslint-plugin-jsdoc",
         "eslint-plugin-prefer-arrow",
         "@typescript-eslint",
@@ -224,7 +223,6 @@ module.exports = {
         "no-implied-eval": "off",
         "no-invalid-this": "off",
         "no-new-wrappers": "error",
-        "no-null/no-null": "warn",
         "no-shadow": "warn",
         "no-throw-literal": "error",
         "no-trailing-spaces": "error",
