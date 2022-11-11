@@ -82,7 +82,7 @@ jobs:
 
         steps:
             - name: Download prisma folder
-              uses: actions/download-artifact@v3.0.0
+              uses: actions/download-artifact@v3.0.1
               with:
                   name: prisma_folder
 
@@ -143,7 +143,7 @@ jobs:
 
         steps:
             - name: Download dist folder
-              uses: actions/download-artifact@v3.0.0
+              uses: actions/download-artifact@v3.0.1
               with:
                   name: transpiled_app_folder
 
