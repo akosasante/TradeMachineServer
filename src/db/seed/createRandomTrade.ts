@@ -9,7 +9,7 @@ import { random, shuffle } from "lodash";
 import PlayerDAO from "../../DAO/PlayerDAO";
 import { PlayerLeagueType } from "../../models/player";
 import TradeItem, { TradeItemType } from "../../models/tradeItem";
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import DraftPickDAO from "../../DAO/DraftPickDAO";
 import Trade from "../../models/trade";
 import TradeDAO from "../../DAO/TradeDAO";

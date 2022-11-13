@@ -72,7 +72,7 @@ describe("TeamDAO", () => {
         const res = await teamDAO.getTeamById(testTeam.id!);
 
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id);
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTeam.id } });
         expect(res).toEqual(testTeam);
     });
 
@@ -95,11 +95,13 @@ describe("TeamDAO", () => {
         expect(mockTeamDb.insert).toHaveBeenCalledWith([testTeam.parse()]);
         expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.find).toHaveBeenCalledWith({
-            id: {
-                _multipleParameters: true,
-                _type: "in",
-                _useParameter: true,
-                _value: [testTeam.id],
+            where: {
+                id: expect.objectContaining({
+                    _multipleParameters: true,
+                    _type: "in",
+                    _useParameter: true,
+                    _value: [testTeam.id],
+                }),
             },
         });
         expect(res).toEqual([testTeam]);
@@ -112,7 +114,7 @@ describe("TeamDAO", () => {
         expect(mockTeamDb.update).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.update).toHaveBeenCalledWith({ id: testTeam.id }, testTeam.parse());
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id);
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTeam.id } });
         expect(res).toEqual(testTeam);
     });
 
@@ -124,7 +126,7 @@ describe("TeamDAO", () => {
         const res = await teamDAO.deleteTeam(testTeam.id!);
 
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id!);
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTeam.id! } });
         expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockWhereInIds).toHaveBeenCalledWith(testTeam.id!);
         expect(res).toEqual(deleteResult);
@@ -145,7 +147,7 @@ describe("TeamDAO", () => {
         expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledWith();
         expect(mockTeamDb.findOneOrFail).toHaveBeenCalledTimes(2);
-        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith(testTeam.id);
+        expect(mockTeamDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTeam.id } });
         expect(res).toEqual(testTeam);
     });
 });

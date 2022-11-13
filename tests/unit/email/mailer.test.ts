@@ -1,4 +1,3 @@
-import "jest-extended";
 import { EMAILER } from "../../../src/email/mailer";
 import { UserFactory } from "../../factories/UserFactory";
 import logger from "../../../src/bootstrap/logger";

@@ -1,4 +1,3 @@
-import { mocked } from "ts-jest/utils";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import PlayerController from "../../../../src/api/routes/PlayerController";
 import { processMinorLeagueCsv } from "../../../../src/csv/PlayerParser";
@@ -11,7 +10,7 @@ import logger from "../../../../src/bootstrap/logger";
 import { v4 as uuid } from "uuid";
 
 jest.mock("../../../../src/csv/PlayerParser");
-const mockedCsvParser = mocked(processMinorLeagueCsv);
+const mockedCsvParser = processMinorLeagueCsv as jest.MockedFunction<typeof processMinorLeagueCsv>;
 
 describe("PlayerController", () => {
     const mockPlayerDAO = {

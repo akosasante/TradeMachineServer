@@ -178,7 +178,7 @@ describe("Trade API endpoints", () => {
 
             const { body } = await getAllRequest("?hydrated=true");
 
-            const expected: HydratedTrade = {
+            const expected: { [key in keyof HydratedTrade]: any } = {
                 tradedPicks: expect.toBeArrayOfSize(pickIds.length),
                 tradedMajors: expect.toBeArrayOfSize(playerIds.length),
                 tradedMinors: expect.toBeArrayOfSize(prospectIds.length),

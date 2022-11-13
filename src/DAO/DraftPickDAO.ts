@@ -1,4 +1,13 @@
-import { DeleteResult, FindConditions, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
+import {
+    DeleteResult,
+    FindOptionsWhere,
+    FindManyOptions,
+    getConnection,
+    In,
+    InsertResult,
+    Repository,
+    FindOneOptions,
+} from "typeorm";
 import DraftPick from "../models/draftPick";
 
 interface DraftPickDeleteResult extends DeleteResult {
@@ -23,16 +32,23 @@ export default class DraftPickDAO {
     }
 
     public async getPickById(id: string): Promise<DraftPick> {
-        return await this.draftPickDb.findOneOrFail(id, { cache: this.cacheExpiryMilliseconds });
+        return await this.draftPickDb.findOneOrFail({
+            where: { id },
+            cache: this.cacheExpiryMilliseconds,
+        } as FindOneOptions<DraftPick>);
     }
 
-    public async findPicks(query: FindConditions<DraftPick>): Promise<DraftPick[]> {
+    public async findPicks(query: FindOptionsWhere<DraftPick>): Promise<DraftPick[]> {
         return await this.draftPickDb.find({ where: query, cache: this.cacheExpiryMilliseconds });
     }
 
     public async createPicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
         const result: InsertResult = await this.draftPickDb.insert(pickObjs);
-        return await this.draftPickDb.find({ id: In(result.identifiers.map(({ id }) => id as string)) });
+        return await this.draftPickDb.find({
+            where: {
+                id: In(result.identifiers.map(({ id }) => id as string)),
+            },
+        } as FindManyOptions<DraftPick>);
     }
 
     public async batchCreatePicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
@@ -52,8 +68,10 @@ export default class DraftPickDAO {
                 .execute();
 
             return await this.draftPickDb.find({
-                id: In(result.identifiers.filter(res => !!res).map(({ id }) => id as string)),
-            });
+                where: {
+                    id: In(result.identifiers.filter(res => !!res).map(({ id }) => id as string)),
+                },
+            } as FindManyOptions<DraftPick>);
         } else {
             return [];
         }
@@ -72,7 +90,7 @@ export default class DraftPickDAO {
     public async deleteAllPicks(query?: Partial<DraftPick>): Promise<void> {
         let allPicks: DraftPick[];
         if (query) {
-            allPicks = await this.findPicks(query);
+            allPicks = await this.findPicks(query as FindOptionsWhere<DraftPick>);
         } else {
             allPicks = await this.getAllPicks();
         }

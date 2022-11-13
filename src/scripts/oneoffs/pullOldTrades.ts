@@ -1,8 +1,9 @@
 /* eslint-disable */
+// noinspection DuplicatedCode
 
 import Trade, { TradeStatus } from "../../models/trade";
 import TradeParticipant, { TradeParticipantType } from "../../models/tradeParticipant";
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import DraftPick, { LeagueLevel } from "../../models/draftPick";
 import TradeItem, { TradeItemType } from "../../models/tradeItem";
 import Player, { PlayerLeagueType } from "../../models/player";
@@ -126,7 +127,9 @@ async function getOwnerFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise
     // console.log(`looking for user with name ${owner.name} id ${myMapper[owner.name]}`)
     return (
         await getConnection(process.env.ORM_CONFIG).query(
-            `SELECT * FROM "${schema}"."user" WHERE id::text = $1 LIMIT 1`,
+            `-- noinspection SqlResolve
+
+SELECT * FROM "${schema}"."user" WHERE id::text = $1 LIMIT 1`,
             [myMapper[owner.name]]
         )
     )[0];
@@ -216,7 +219,7 @@ async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
                 try {
                     const findPick = await getConnection(process.env.ORM_CONFIG)
                         .getRepository("DraftPick")
-                        .findOne(pick);
+                        .findOne({ where: { ...pick } });
                     if (findPick) {
                         // console.log(`found pick: ${inspect(findPick)}`)
                         pickId = (findPick as DraftPick).id!;
@@ -258,7 +261,9 @@ async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
                 });
                 // console.log(`CHECKING PL ${JSON.stringify(oldPlayer)} AND ${JSON.stringify(player)}`)
 
-                const findPlayer = await getConnection(process.env.ORM_CONFIG).getRepository("Player").findOne(player);
+                const findPlayer = await getConnection(process.env.ORM_CONFIG)
+                    .getRepository("Player")
+                    .findOne({ where: { ...player } });
                 if (findPlayer) {
                     // console.log(`found player: ${inspect(findPlayer)}`)
                     playerId = (findPlayer as Player).id!;
@@ -296,7 +301,9 @@ async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
                 });
                 // console.log(`CHECKING PR ${JSON.stringify(oldProspect)} and ${JSON.stringify(player)}`)
 
-                const findPlayer = await getConnection(process.env.ORM_CONFIG).getRepository("Player").findOne(player);
+                const findPlayer = await getConnection(process.env.ORM_CONFIG)
+                    .getRepository("Player")
+                    .findOne({ where: { ...player } });
                 if (findPlayer) {
                     // console.log(`found player: ${inspect(findPlayer)}`)
                     playerId = (findPlayer as Player).id!;

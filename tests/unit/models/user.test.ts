@@ -2,7 +2,7 @@ import logger from "../../../src/bootstrap/logger";
 import User, { Role } from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
 // @ts-ignore
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 
 describe("User Class", () => {
     beforeAll(() => {

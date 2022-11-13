@@ -10,10 +10,18 @@ export class addPartialIndexes1629692499374 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP INDEX "dev"."trade_creator_index"`);
-        await queryRunner.query(`DROP INDEX "dev"."trade_recipient_index"`);
-        await queryRunner.query(`DROP INDEX "dev"."player_trade_item_index"`);
-        await queryRunner.query(`DROP INDEX "dev"."pick_trade_item_index"`);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+DROP INDEX "dev"."trade_creator_index"`);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+DROP INDEX "dev"."trade_recipient_index"`);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+DROP INDEX "dev"."player_trade_item_index"`);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+DROP INDEX "dev"."pick_trade_item_index"`);
 
     }
 

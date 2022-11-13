@@ -1,4 +1,4 @@
-import { internet, name as fakeName } from "faker";
+import { faker } from "@faker-js/faker";
 import UserDAO from "../../../DAO/UserDAO";
 import User, { Role, UserStatus } from "../../../models/user";
 import { randomUUID } from "crypto";
@@ -13,9 +13,9 @@ async function init() {
 }
 
 export function createGenericUser() {
-    const slackUsername = internet.userName();
-    const email = internet.email();
-    const displayName = fakeName.findName();
+    const slackUsername = faker.internet.userName();
+    const email = faker.internet.email();
+    const displayName = faker.name.fullName();
     return new User({ id: randomUUID(), slackUsername, email, displayName, role: Role.OWNER });
 }
 

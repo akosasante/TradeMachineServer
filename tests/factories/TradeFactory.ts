@@ -7,7 +7,6 @@ import { PlayerFactory } from "./PlayerFactory";
 import { TeamFactory } from "./TeamFactory";
 import { v4 as uuid } from "uuid";
 import Team from "../../src/models/team";
-import { espnIdCounter } from "./Counter";
 
 export class TradeFactory {
     public static getTradeObject(

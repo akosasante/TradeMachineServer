@@ -5,7 +5,9 @@ import { HydratedMajorLeaguer } from "./hydratedMajorLeaguers";
 import { HydratedMinorLeaguer } from "./hydratedMinorLeaguers";
 
 const expression = `
-    WITH trade_creator AS (
+    -- noinspection SqlResolve
+
+WITH trade_creator AS (
         SELECT p."tradeId", (SELECT "name" FROM ${process.env.PG_SCHEMA}."team" tm WHERE tm.id = p."teamId")
         FROM ${process.env.PG_SCHEMA}.trade_participant p
         WHERE p."participantType" = '1'::${process.env.PG_SCHEMA}."trade_participant_participanttype_enum"

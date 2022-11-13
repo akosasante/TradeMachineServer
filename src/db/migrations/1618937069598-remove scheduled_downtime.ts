@@ -3,7 +3,9 @@ import {MigrationInterface, QueryRunner} from "typeorm";
 export class removeScheduledDowntime1618937069598 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP TABLE "dev"."scheduled_downtime"`, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+DROP TABLE "dev"."scheduled_downtime"`, undefined);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

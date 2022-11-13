@@ -2,14 +2,12 @@ import "jest-extended";
 import { TradeFactory } from "../../factories/TradeFactory";
 import { appendNewTrade } from "../../../src/csv/TradeTracker";
 import { google } from "googleapis";
-import { mocked } from "ts-jest/utils";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import { PlayerLeagueType } from "../../../src/models/player";
 import { TeamFactory } from "../../factories/TeamFactory";
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
 jest.mock("googleapis");
-const mockedGoogleSheets = mocked(google);
+const mockedGoogleSheets = google as jest.MockedObject<typeof google>;
 const mockBatchUpdate = jest.fn();
 // @ts-ignore
 mockedGoogleSheets.sheets = jest.fn(() => {
@@ -134,7 +132,7 @@ describe("TradeTracker.appendNewTrade/1", () => {
     });
 
     it("should format picks received correctly", () => {
-        const expectedPick = trade.picks[0];
+        const _expectedPick = trade.picks[0];
         const receivedMinors = values[9];
         const expectedText = "2020 Low Minors - round 1 - Squirtle Squad's pick FROM CREATOR_TEAM";
         expect(receivedMinors).toEqual({ userEnteredValue: { stringValue: expectedText } });
@@ -160,4 +158,3 @@ describe("TradeTracker.appendNewTrade/1", () => {
         expect(values).toBeArrayOfSize(21);
     });
 });
-/* eslint-enable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */

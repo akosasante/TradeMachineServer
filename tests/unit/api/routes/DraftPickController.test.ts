@@ -1,4 +1,3 @@
-import { mocked } from "ts-jest/utils";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import DraftPickController from "../../../../src/api/routes/DraftPickController";
 import { processDraftPickCsv } from "../../../../src/csv/DraftPickParser";
@@ -11,7 +10,7 @@ import { v4 as uuid } from "uuid";
 import { TeamFactory } from "../../../factories/TeamFactory";
 
 jest.mock("../../../../src/csv/DraftPickParser");
-const mockedCsvParser = mocked(processDraftPickCsv);
+const mockedCsvParser = processDraftPickCsv as jest.MockedFunction<typeof processDraftPickCsv>;
 
 describe("DraftPickController", () => {
     const mockDraftPickDAO = {

@@ -10,8 +10,8 @@ import logger from "../bootstrap/logger";
 import Team from "../models/team";
 import User from "../models/user";
 import { partition, zip } from "lodash";
-import {addDays, isBefore, set} from "date-fns";
-import {utcToZonedTime, format} from "date-fns-tz";
+import { addDays, isBefore, set } from "date-fns";
+import { utcToZonedTime, format } from "date-fns-tz";
 
 interface TradeFormatterDeps {
     playerDao: PlayerDAO;
@@ -134,7 +134,12 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
 
         function tradeUpholdTime() {
             const nowEastern = utcToZonedTime(new Date(), "America/Toronto");
-            const todayAt11 = set(new Date(nowEastern.valueOf()), {hours: 23, minutes: 0, seconds: 0, milliseconds: 0});
+            const todayAt11 = set(new Date(nowEastern.valueOf()), {
+                hours: 23,
+                minutes: 0,
+                seconds: 0,
+                milliseconds: 0,
+            });
             let upholdTime = new Date(nowEastern.valueOf());
 
             if (isBefore(nowEastern, todayAt11)) {
@@ -144,11 +149,11 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
                 // It is after 11PM, so trade won't be upheld until the day-after-tomorrow at 11pm.
                 upholdTime = addDays(upholdTime, 2);
             }
-            upholdTime = set(upholdTime, {hours: 23, minutes: 0, seconds: 0, milliseconds: 0});
+            upholdTime = set(upholdTime, { hours: 23, minutes: 0, seconds: 0, milliseconds: 0 });
             return format(upholdTime, "eee MMM d yyyy, h':'mm aaaa z");
         }
 
-        return `*${format(new Date(), "eee MMM d yyyy", {timeZone: "America/Toronto"})}* \
+        return `*${format(new Date(), "eee MMM d yyyy", { timeZone: "America/Toronto" })}* \
 | Trade requested by ${getSlackUsernamesForOwners(trade.creator!.owners!)} \
 - Trading with: ${getSlackUsernamesForOwners(trade.recipients.flatMap(r => r.owners!))} \
 | Trade will be upheld after: ${tradeUpholdTime()}`;

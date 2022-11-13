@@ -10,7 +10,9 @@ export class newInit1583688409179 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "dev"."trade" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "dateCreated" TIMESTAMP NOT NULL DEFAULT now(), "dateModified" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_8a1cea805d050478a2482f0960e" PRIMARY KEY ("id"))`, undefined);
         await queryRunner.query(`CREATE TYPE "dev"."trade_item_tradeitemtype_enum" AS ENUM('Player', 'Pick')`, undefined);
         await queryRunner.query(`CREATE TABLE "dev"."trade_item" ("tradeItemId" SERIAL NOT NULL, "tradeItemType" "dev"."trade_item_tradeitemtype_enum" NOT NULL DEFAULT 'Player', "tradeId" uuid, "playerId" uuid, "pickId" uuid, "senderId" uuid, "recipientId" uuid, CONSTRAINT "PK_1d90e81ec4d3fc587b884b55f15" PRIMARY KEY ("tradeItemId"))`, undefined);
-        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_cbff369d9b0f3e749d8895fbbb" ON "dev"."trade_item" ("tradeId", "senderId", "recipientId", "playerId", "pickId") `, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+CREATE UNIQUE INDEX "IDX_cbff369d9b0f3e749d8895fbbb" ON "dev"."trade_item" ("tradeId", "senderId", "recipientId", "playerId", "pickId") `, undefined);
         await queryRunner.query(`CREATE TYPE "dev"."team_status_enum" AS ENUM('active', 'inactive')`, undefined);
         await queryRunner.query(`CREATE TABLE "dev"."team" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "dateCreated" TIMESTAMP NOT NULL DEFAULT now(), "dateModified" TIMESTAMP NOT NULL DEFAULT now(), "espnId" integer, "name" character varying NOT NULL, "status" "dev"."team_status_enum" NOT NULL DEFAULT 'inactive', CONSTRAINT "PK_d4c9ceb4d198d0214d982242c10" PRIMARY KEY ("id"))`, undefined);
         await queryRunner.query(`CREATE TYPE "dev"."player_league_enum" AS ENUM('Majors', 'High Minors', 'Low Minors')`, undefined);
@@ -27,8 +29,12 @@ export class newInit1583688409179 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "dev"."trade_participant" ADD CONSTRAINT "FK_55814676906f1f2c458fa255042" FOREIGN KEY ("tradeId") REFERENCES "dev"."trade"("id") ON DELETE CASCADE ON UPDATE NO ACTION`, undefined);
         await queryRunner.query(`ALTER TABLE "dev"."trade_participant" ADD CONSTRAINT "FK_6f42978de8c286663f97f12c9dc" FOREIGN KEY ("teamId") REFERENCES "dev"."team"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`, undefined);
         await queryRunner.query(`ALTER TABLE "dev"."trade_item" ADD CONSTRAINT "FK_b0526160a5fca917459d481e202" FOREIGN KEY ("tradeId") REFERENCES "dev"."trade"("id") ON DELETE CASCADE ON UPDATE NO ACTION`, undefined);
-        await queryRunner.query(`ALTER TABLE "dev"."trade_item" ADD CONSTRAINT "FK_ef0ef7a58e2c64ceac8ea314d74" FOREIGN KEY ("playerId") REFERENCES "dev"."player"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`, undefined);
-        await queryRunner.query(`ALTER TABLE "dev"."trade_item" ADD CONSTRAINT "FK_502401fd6c09572aee8fb1d5ac7" FOREIGN KEY ("pickId") REFERENCES "dev"."draft_pick"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+ALTER TABLE "dev"."trade_item" ADD CONSTRAINT "FK_ef0ef7a58e2c64ceac8ea314d74" FOREIGN KEY ("playerId") REFERENCES "dev"."player"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+ALTER TABLE "dev"."trade_item" ADD CONSTRAINT "FK_502401fd6c09572aee8fb1d5ac7" FOREIGN KEY ("pickId") REFERENCES "dev"."draft_pick"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`, undefined);
         await queryRunner.query(`ALTER TABLE "dev"."trade_item" ADD CONSTRAINT "FK_93c36c896adc55ffa2fde088079" FOREIGN KEY ("senderId") REFERENCES "dev"."team"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`, undefined);
         await queryRunner.query(`ALTER TABLE "dev"."trade_item" ADD CONSTRAINT "FK_1abdf634a91dc15221fecbd2535" FOREIGN KEY ("recipientId") REFERENCES "dev"."team"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`, undefined);
         await queryRunner.query(`ALTER TABLE "dev"."player" ADD CONSTRAINT "FK_1aad05b09bda2079429cd8ba9d8" FOREIGN KEY ("leagueTeamId") REFERENCES "dev"."team"("id") ON DELETE SET NULL ON UPDATE NO ACTION`, undefined);
@@ -42,17 +48,27 @@ export class newInit1583688409179 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "dev"."player" DROP CONSTRAINT "FK_1aad05b09bda2079429cd8ba9d8"`, undefined);
         await queryRunner.query(`ALTER TABLE "dev"."trade_item" DROP CONSTRAINT "FK_1abdf634a91dc15221fecbd2535"`, undefined);
         await queryRunner.query(`ALTER TABLE "dev"."trade_item" DROP CONSTRAINT "FK_93c36c896adc55ffa2fde088079"`, undefined);
-        await queryRunner.query(`ALTER TABLE "dev"."trade_item" DROP CONSTRAINT "FK_502401fd6c09572aee8fb1d5ac7"`, undefined);
-        await queryRunner.query(`ALTER TABLE "dev"."trade_item" DROP CONSTRAINT "FK_ef0ef7a58e2c64ceac8ea314d74"`, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+ALTER TABLE "dev"."trade_item" DROP CONSTRAINT "FK_502401fd6c09572aee8fb1d5ac7"`, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+ALTER TABLE "dev"."trade_item" DROP CONSTRAINT "FK_ef0ef7a58e2c64ceac8ea314d74"`, undefined);
         await queryRunner.query(`ALTER TABLE "dev"."trade_item" DROP CONSTRAINT "FK_b0526160a5fca917459d481e202"`, undefined);
         await queryRunner.query(`ALTER TABLE "dev"."trade_participant" DROP CONSTRAINT "FK_6f42978de8c286663f97f12c9dc"`, undefined);
         await queryRunner.query(`ALTER TABLE "dev"."trade_participant" DROP CONSTRAINT "FK_55814676906f1f2c458fa255042"`, undefined);
         await queryRunner.query(`DROP TABLE "dev"."user"`, undefined);
         await queryRunner.query(`DROP TYPE "dev"."user_status_enum"`, undefined);
         await queryRunner.query(`DROP TYPE "dev"."user_role_enum"`, undefined);
-        await queryRunner.query(`DROP TABLE "dev"."scheduled_downtime"`, undefined);
-        await queryRunner.query(`DROP TABLE "dev"."general_settings"`, undefined);
-        await queryRunner.query(`DROP INDEX "dev"."IDX_71715a4e4ab6bea1e8167d85c3"`, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+DROP TABLE "dev"."scheduled_downtime"`, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+DROP TABLE "dev"."general_settings"`, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+DROP INDEX "dev"."IDX_71715a4e4ab6bea1e8167d85c3"`, undefined);
         await queryRunner.query(`DROP TABLE "dev"."draft_pick"`, undefined);
         await queryRunner.query(`DROP TYPE "dev"."draft_pick_type_enum"`, undefined);
         await queryRunner.query(`DROP INDEX "dev"."IDX_40e3ad1d41d05dda60e9ba76cc"`, undefined);
@@ -60,7 +76,9 @@ export class newInit1583688409179 implements MigrationInterface {
         await queryRunner.query(`DROP TYPE "dev"."player_league_enum"`, undefined);
         await queryRunner.query(`DROP TABLE "dev"."team"`, undefined);
         await queryRunner.query(`DROP TYPE "dev"."team_status_enum"`, undefined);
-        await queryRunner.query(`DROP INDEX "dev"."IDX_cbff369d9b0f3e749d8895fbbb"`, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+DROP INDEX "dev"."IDX_cbff369d9b0f3e749d8895fbbb"`, undefined);
         await queryRunner.query(`DROP TABLE "dev"."trade_item"`, undefined);
         await queryRunner.query(`DROP TYPE "dev"."trade_item_tradeitemtype_enum"`, undefined);
         await queryRunner.query(`DROP TABLE "dev"."trade"`, undefined);

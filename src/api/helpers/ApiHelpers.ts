@@ -17,7 +17,7 @@ const storage: multer.DiskStorageOptions = {
 
 export const fileUploadOptions = {
     storage: multer.diskStorage(storage),
-    fileFilter: (req: Request, file: Express.Multer.File, cb: FileFilterCallback) =>
+    fileFilter: (req: Request, file: Express.Multer.File, cb: FileFilterCallback): void =>
         cb(null, file.mimetype === "text/csv"),
     limits: { fieldNameSize: 255, fileSize: 1024 * 1024 * 2 },
 };

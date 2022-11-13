@@ -131,7 +131,7 @@ async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO(
     return userId ? await deserializeUser(userId, userDAO) : undefined;
 }
 
-async function isPasswordMatching(password: string, userPasssword: string): Promise<boolean> {
-    logger.debug(`comparing ${password} to user=${userPasssword}`);
-    return compare(password, userPasssword || "");
+async function isPasswordMatching(password: string, userPassword: string): Promise<boolean> {
+    logger.debug(`comparing ${password} to user=${userPassword}`);
+    return compare(password, userPassword || "");
 }

@@ -92,6 +92,7 @@ footer {
     margin-right: auto;
 }
 
+/*noinspection CssUnusedSymbol*/
 a.button-link {
     background-color: #3b459a;
     display: inline-block;
@@ -106,7 +107,6 @@ a.button-link {
     font-size: 1rem;
     text-decoration: none;
     /*margin-left: 25%;*/
-    white-space: nowrap;
     height: 1.5em;
     vertical-align: top;
     line-height: 1.5;
@@ -121,6 +121,7 @@ a.button-link {
         font-size: 1.8rem !important;
     }
 
+    /*noinspection CssUnusedSymbol*/
     a.button-link {
         margin: 1rem 0 !important;
         text-decoration: underline !important;

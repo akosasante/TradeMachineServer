@@ -54,7 +54,7 @@ module.exports = {
     // Make calling deprecated APIs throw helpful error messages
     // errorOnDeprecated: false,
 
-    // Force coverage collection from ignored files usin a array of glob patterns
+    // Force coverage collection from ignored files using an array of glob patterns
     // forceCoverageMatch: [],
 
     // A path to a module which exports an async function that is triggered once before all test suites
@@ -64,15 +64,15 @@ module.exports = {
     // globalTeardown: null,
 
     // A set of global variables that need to be available in all test environments
-    globals: {
-        "ts-jest": {
-            tsconfig: 'tests/tsconfig.json'
-            // diagnostics: {
-            //     warnOnly: true,
-            //     pathRegex: /\.test\.ts/
-            // }
-        }
-    },
+    // globals: {
+    //     "ts-jest": {
+    //         tsconfig: 'tests/tsconfig.json'
+    //         // diagnostics: {
+    //         //     warnOnly: true,
+    //         //     pathRegex: /\.test\.ts/
+    //         // }
+    //     }
+    // },
 
     // An array of directory names to be searched recursively up from the requiring module's location
     // modulePaths: [
@@ -178,7 +178,7 @@ module.exports = {
 
     // A map from regular expressions to paths to transformers
     transform: {
-        "^.+\\.ts?$": "ts-jest"
+        "^.+\\.ts?$": ["ts-jest", { tsconfig: 'tests/tsconfig.json' }]
     },
 
     // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation

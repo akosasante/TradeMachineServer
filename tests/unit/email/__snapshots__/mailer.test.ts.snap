@@ -1,23 +1,23 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`EMAILER Class email snapshots sendPasswordResetEmail 1`] = `
-Object {
-  "envelope": Object {
+{
+  "envelope": {
     "from": "tradebot@flexfoxfantasy.com",
-    "to": Array [
+    "to": [
       "test@example.com",
     ],
   },
-  "originalMessage": Object {
-    "attachments": Array [],
+  "originalMessage": {
+    "attachments": [],
     "from": "tradebot@flexfoxfantasy.com",
-    "html": "<!DOCTYPE html PUBLIC \\"-//W3C//DTD XHTML 1.0 Strict//EN\\" \\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\\">
-<html xmlns=\\"http://www.w3.org/1999/xhtml\\" style=\\"height: 100%; background: #f7f7f7;\\">
+    "html": "<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" style="height: 100%; background: #f7f7f7;">
   <head>
-    <meta charset=\\"utf-8\\">
-    <meta name=\\"viewport\\" content=\\"width=device-width; initial-scale=1.0;\\">
-    <meta http-equiv=\\"X-UA-Compatible\\" content=\\"IE=edge\\">
-    <meta name=\\"x-apple-disable-message-reformatting\\">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width; initial-scale=1.0;">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
     
     <style>
 @media screen and (max-width: 600px) {
@@ -40,7 +40,6 @@ a.button-link {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   font-size: 1rem;
   text-decoration: none;
-  white-space: nowrap;
   height: 1.5em;
   vertical-align: top;
   line-height: 1.5;
@@ -62,21 +61,21 @@ a.button-link {
   }
 }
 </style>
-    <link href=\\"./reset_password/styles.css\\" rel=\\"stylesheet\\">
+    <link href="./reset_password/styles.css" rel="stylesheet">
     <title>Trade Machine Password Reset</title>
   </head>
-  <body style=\\"font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;\\">
-    <header class=\\"title\\" style=\\"height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;\\"></header>
-    <div class=\\"main\\" style=\\"height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;\\">
-      <div class=\\"container\\" style=\\"width: 70%; margin-left: 10%; padding: 5% 0;\\">
-        <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;">
+    <header class="title" style="height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;"></header>
+    <div class="main" style="height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;">
+      <div class="container" style="width: 70%; margin-left: 10%; padding: 5% 0;">
+        <h1 style="line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;">TradeMachine</h1>
         <h2>Forgot Your Password?</h2>
-        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Hi Jatheesh, you are receiving this email because you have requested a password reset for your account. <br><br></p>
-        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Please click on the following link to complete the process:</p><a class=\\"button-link\\" href=\\"http://localhost:8080/reset_password?u=random-token\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5;\\"><span>Reset Password</span></a>
-        <div class=\\"divider\\"></div>
+        <p style="line-height: 1.6em; margin: 1em 0;">Hi Jatheesh, you are receiving this email because you have requested a password reset for your account. <br><br></p>
+        <p style="line-height: 1.6em; margin: 1em 0;">Please click on the following link to complete the process:</p><a class="button-link" href="http://localhost:8080/reset_password?u=random-token" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5;"><span>Reset Password</span></a>
+        <div class="divider"></div>
       </div>
     </div>
-    <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
+    <footer style="height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;"></footer>
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - Password reset requested",
@@ -101,23 +100,23 @@ Reset Password [http://localhost:8080/reset_password?u=random-token]
 `;
 
 exports[`EMAILER Class email snapshots sendRegistrationEmail 1`] = `
-Object {
-  "envelope": Object {
+{
+  "envelope": {
     "from": "tradebot@flexfoxfantasy.com",
-    "to": Array [
+    "to": [
       "test@example.com",
     ],
   },
-  "originalMessage": Object {
-    "attachments": Array [],
+  "originalMessage": {
+    "attachments": [],
     "from": "tradebot@flexfoxfantasy.com",
-    "html": "<!DOCTYPE html PUBLIC \\"-//W3C//DTD XHTML 1.0 Strict//EN\\" \\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\\">
-<html xmlns=\\"http://www.w3.org/1999/xhtml\\" style=\\"height: 100%; background: #f7f7f7;\\">
+    "html": "<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" style="height: 100%; background: #f7f7f7;">
   <head>
-    <meta charset=\\"utf-8\\">
-    <meta name=\\"viewport\\" content=\\"width=device-width; initial-scale=1.0;\\">
-    <meta http-equiv=\\"X-UA-Compatible\\" content=\\"IE=edge\\">
-    <meta name=\\"x-apple-disable-message-reformatting\\">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width; initial-scale=1.0;">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
     
     <style>
 @media screen and (max-width: 600px) {
@@ -140,7 +139,6 @@ a.button-link {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   font-size: 1rem;
   text-decoration: none;
-  white-space: nowrap;
   height: 1.5em;
   vertical-align: top;
   line-height: 1.5;
@@ -162,21 +160,21 @@ a.button-link {
   }
 }
 </style>
-    <link href=\\"./registration_email/styles.css\\" rel=\\"stylesheet\\">
+    <link href="./registration_email/styles.css" rel="stylesheet">
     <title>Trade Machine Registration Invite</title>
   </head>
-  <body style=\\"font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;\\">
-    <header class=\\"title\\" style=\\"height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;\\"></header>
-    <div class=\\"main\\" style=\\"height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;\\">
-      <div class=\\"container\\" style=\\"width: 70%; margin-left: 10%; padding: 5% 0;\\">
-        <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;">
+    <header class="title" style="height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;"></header>
+    <div class="main" style="height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;">
+      <div class="container" style="width: 70%; margin-left: 10%; padding: 5% 0;">
+        <h1 style="line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;">TradeMachine</h1>
         <h2>Invitation to Register</h2>
-        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Hi Jatheesh, you have been invited to register on Trade Machine. This will allow you to submit trades with other members of the Flex Fox Fantasy Baseball League.</p>
-        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Please click on the following link to complete the process:</p><a class=\\"button-link\\" href=\\"http://localhost:8080/register?e=dGVzdEBleGFtcGxlLmNvbQ==\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5;\\"><span>Register</span></a>
-        <div class=\\"divider\\"></div>
+        <p style="line-height: 1.6em; margin: 1em 0;">Hi Jatheesh, you have been invited to register on Trade Machine. This will allow you to submit trades with other members of the Flex Fox Fantasy Baseball League.</p>
+        <p style="line-height: 1.6em; margin: 1em 0;">Please click on the following link to complete the process:</p><a class="button-link" href="http://localhost:8080/register?e=dGVzdEBleGFtcGxlLmNvbQ==" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5;"><span>Register</span></a>
+        <div class="divider"></div>
       </div>
     </div>
-    <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
+    <footer style="height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;"></footer>
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - You have been invited to register on FFF Trade Machine",
@@ -199,23 +197,23 @@ Register [http://localhost:8080/register?e=dGVzdEBleGFtcGxlLmNvbQ==]
 `;
 
 exports[`EMAILER Class email snapshots sendTestEmail 1`] = `
-Object {
-  "envelope": Object {
+{
+  "envelope": {
     "from": "tradebot@flexfoxfantasy.com",
-    "to": Array [
+    "to": [
       "test@example.com",
     ],
   },
-  "originalMessage": Object {
-    "attachments": Array [],
+  "originalMessage": {
+    "attachments": [],
     "from": "tradebot@flexfoxfantasy.com",
-    "html": "<!DOCTYPE html PUBLIC \\"-//W3C//DTD XHTML 1.0 Strict//EN\\" \\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\\">
-<html xmlns=\\"http://www.w3.org/1999/xhtml\\" style=\\"height: 100%; background: #f7f7f7;\\">
+    "html": "<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" style="height: 100%; background: #f7f7f7;">
   <head>
-    <meta charset=\\"utf-8\\">
-    <meta name=\\"viewport\\" content=\\"width=device-width; initial-scale=1.0;\\">
-    <meta http-equiv=\\"X-UA-Compatible\\" content=\\"IE=edge\\">
-    <meta name=\\"x-apple-disable-message-reformatting\\">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width; initial-scale=1.0;">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
     
     <style>
 @media screen and (max-width: 600px) {
@@ -238,7 +236,6 @@ a.button-link {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   font-size: 1rem;
   text-decoration: none;
-  white-space: nowrap;
   height: 1.5em;
   vertical-align: top;
   line-height: 1.5;
@@ -262,16 +259,16 @@ a.button-link {
 </style>
     <title>Trade Machine Test Email</title>
   </head>
-  <body style=\\"font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;\\">
-    <header class=\\"title\\" style=\\"height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;\\"></header>
-    <div class=\\"main\\" style=\\"height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;\\">
-      <div class=\\"container\\" style=\\"width: 70%; margin-left: 10%; padding: 5% 0;\\">
-        <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;">
+    <header class="title" style="height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;"></header>
+    <div class="main" style="height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;">
+      <div class="container" style="width: 70%; margin-left: 10%; padding: 5% 0;">
+        <h1 style="line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;">TradeMachine</h1>
         <h2>Testing... Testing...</h2>
-        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Hi Jatheesh, this is a test email from the Flex Fox Fantasy Trade Machine.</p>
+        <p style="line-height: 1.6em; margin: 1em 0;">Hi Jatheesh, this is a test email from the Flex Fox Fantasy Trade Machine.</p>
       </div>
     </div>
-    <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
+    <footer style="height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;"></footer>
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - Test Email",
@@ -289,23 +286,23 @@ Hi Jatheesh, this is a test email from the Flex Fox Fantasy Trade Machine.
 `;
 
 exports[`EMAILER Class email snapshots sendTradeDeclinedEmail 1`] = `
-Object {
-  "envelope": Object {
+{
+  "envelope": {
     "from": "tradebot@flexfoxfantasy.com",
-    "to": Array [
+    "to": [
       "test@example.com",
     ],
   },
-  "originalMessage": Object {
-    "attachments": Array [],
+  "originalMessage": {
+    "attachments": [],
     "from": "tradebot@flexfoxfantasy.com",
-    "html": "<!DOCTYPE html PUBLIC \\"-//W3C//DTD XHTML 1.0 Strict//EN\\" \\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\\">
-<html xmlns=\\"http://www.w3.org/1999/xhtml\\" style=\\"height: 100%; background: #f7f7f7;\\">
+    "html": "<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" style="height: 100%; background: #f7f7f7;">
   <head>
-    <meta charset=\\"utf-8\\">
-    <meta name=\\"viewport\\" content=\\"width=device-width; initial-scale=1.0;\\">
-    <meta http-equiv=\\"X-UA-Compatible\\" content=\\"IE=edge\\">
-    <meta name=\\"x-apple-disable-message-reformatting\\">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width; initial-scale=1.0;">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
     
     <style>
 @media screen and (max-width: 600px) {
@@ -328,7 +325,6 @@ a.button-link {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   font-size: 1rem;
   text-decoration: none;
-  white-space: nowrap;
   height: 1.5em;
   vertical-align: top;
   line-height: 1.5;
@@ -350,33 +346,33 @@ a.button-link {
   }
 }
 </style>
-    <link href=\\"./trade_declined/styles.css\\" rel=\\"stylesheet\\">
+    <link href="./trade_declined/styles.css" rel="stylesheet">
     <title></title>
   </head>
-  <body style=\\"font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;\\">
-    <header class=\\"title\\" style=\\"height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;\\"></header>
-    <div class=\\"main\\" style=\\"height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;\\">
-      <div class=\\"container\\" style=\\"width: 70%; margin-left: 10%; padding: 5% 0;\\">
-        <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;">
+    <header class="title" style="height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;"></header>
+    <div class="main" style="height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;">
+      <div class="container" style="width: 70%; margin-left: 10%; padding: 5% 0;">
+        <h1 style="line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;">TradeMachine</h1>
         <h2>RECIPIENT_TEAM has declined a trade offer involving you:</h2>
-        <div class=\\"divider\\"></div>
+        <div class="divider"></div>
         <div>
-          <p style=\\"line-height: 1.6em; margin: 1em 0;\\"><strong>Reason:</strong> horrible mismatch for me</p>
+          <p style="line-height: 1.6em; margin: 1em 0;"><strong>Reason:</strong> horrible mismatch for me</p>
         </div>
         <div>
           <h2>Declined trade was:</h2>
           <h3>CREATOR_TEAM would have received:</h3>
-          <ul class=\\"picks\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
+          <ul class="picks" style="margin-top: 1em; margin-bottom: 2em;"></ul>
           <li>Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM</li>
           <h3>RECIPIENT_TEAM would have received:</h3>
-          <ul class=\\"majors\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
+          <ul class="majors" style="margin-top: 1em; margin-bottom: 2em;"></ul>
           <li>Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM</li>
-          <ul class=\\"minors\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
+          <ul class="minors" style="margin-top: 1em; margin-bottom: 2em;"></ul>
           <li>MiniMe (Jays - P - Low Minors) from CREATOR_TEAM</li>
         </div>
       </div>
     </div>
-    <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
+    <footer style="height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;"></footer>
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - Trade declined by RECIPIENT_TEAM",
@@ -409,23 +405,23 @@ from CREATOR_TEAM
 `;
 
 exports[`EMAILER Class email snapshots sendTradeRequestEmail 1`] = `
-Object {
-  "envelope": Object {
+{
+  "envelope": {
     "from": "tradebot@flexfoxfantasy.com",
-    "to": Array [
+    "to": [
       "test@example.com",
     ],
   },
-  "originalMessage": Object {
-    "attachments": Array [],
+  "originalMessage": {
+    "attachments": [],
     "from": "tradebot@flexfoxfantasy.com",
-    "html": "<!DOCTYPE html PUBLIC \\"-//W3C//DTD XHTML 1.0 Strict//EN\\" \\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\\">
-<html xmlns=\\"http://www.w3.org/1999/xhtml\\" style=\\"height: 100%; background: #f7f7f7;\\">
+    "html": "<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" style="height: 100%; background: #f7f7f7;">
   <head>
-    <meta charset=\\"utf-8\\">
-    <meta name=\\"viewport\\" content=\\"width=device-width; initial-scale=1.0;\\">
-    <meta http-equiv=\\"X-UA-Compatible\\" content=\\"IE=edge\\">
-    <meta name=\\"x-apple-disable-message-reformatting\\">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width; initial-scale=1.0;">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
     
     <style>
 @media screen and (max-width: 600px) {
@@ -448,7 +444,6 @@ a.button-link {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   font-size: 1rem;
   text-decoration: none;
-  white-space: nowrap;
   height: 1.5em;
   vertical-align: top;
   line-height: 1.5;
@@ -477,28 +472,28 @@ a.button-link {
 </style>
     <title></title>
   </head>
-  <body style=\\"font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;\\">
-    <header class=\\"title\\" style=\\"height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;\\"></header>
-    <div class=\\"main\\" style=\\"height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;\\">
-      <div class=\\"container\\" style=\\"width: 70%; margin-left: 10%; padding: 5% 0;\\">
-        <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;">
+    <header class="title" style="height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;"></header>
+    <div class="main" style="height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;">
+      <div class="container" style="width: 70%; margin-left: 10%; padding: 5% 0;">
+        <h1 style="line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;">TradeMachine</h1>
         <h2>CREATOR_TEAM requested a trade with you:</h2>
-        <div class=\\"divider\\"></div>
+        <div class="divider"></div>
         <h3>CREATOR_TEAM would receive:</h3>
-        <ul class=\\"picks\\" style=\\"margin-top: initial !important; margin-bottom: initial !important;\\"></ul>
+        <ul class="picks" style="margin-top: initial !important; margin-bottom: initial !important;"></ul>
         <li>Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM</li>
         <hr>
         <h3>RECIPIENT_TEAM would receive:</h3>
-        <ul class=\\"majors\\" style=\\"margin-top: initial !important; margin-bottom: initial !important;\\"></ul>
+        <ul class="majors" style="margin-top: initial !important; margin-bottom: initial !important;"></ul>
         <li>Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM</li>
-        <ul class=\\"minors\\" style=\\"margin-top: initial !important; margin-bottom: initial !important;\\"></ul>
+        <ul class="minors" style="margin-top: initial !important; margin-bottom: initial !important;"></ul>
         <li>MiniMe (Jays - P - Low Minors) from CREATOR_TEAM</li>
         <hr>
-        <div class=\\"button-container\\"><a class=\\"button-link\\" href=\\"http://localhost:8080/trade/test-uuid/accept\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;\\"><span>Accept Trade</span></a><a class=\\"button-link\\" href=\\"http://localhost:8080/trade/test-uuid/reject\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;\\"><span>Reject Trade</span></a>
+        <div class="button-container"><a class="button-link" href="http://localhost:8080/trade/test-uuid/accept" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;"><span>Accept Trade</span></a><a class="button-link" href="http://localhost:8080/trade/test-uuid/reject" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;"><span>Reject Trade</span></a>
         </div>
       </div>
     </div>
-    <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
+    <footer style="height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;"></footer>
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - Trade Proposal from CREATOR_TEAM",
@@ -533,23 +528,23 @@ Accept Trade [http://localhost:8080/trade/test-uuid/accept]Reject Trade
 `;
 
 exports[`EMAILER Class email snapshots sendTradeSubmissionEmail 1`] = `
-Object {
-  "envelope": Object {
+{
+  "envelope": {
     "from": "tradebot@flexfoxfantasy.com",
-    "to": Array [
+    "to": [
       "test@example.com",
     ],
   },
-  "originalMessage": Object {
-    "attachments": Array [],
+  "originalMessage": {
+    "attachments": [],
     "from": "tradebot@flexfoxfantasy.com",
-    "html": "<!DOCTYPE html PUBLIC \\"-//W3C//DTD XHTML 1.0 Strict//EN\\" \\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\\">
-<html xmlns=\\"http://www.w3.org/1999/xhtml\\" style=\\"height: 100%; background: #f7f7f7;\\">
+    "html": "<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" style="height: 100%; background: #f7f7f7;">
   <head>
-    <meta charset=\\"utf-8\\">
-    <meta name=\\"viewport\\" content=\\"width=device-width; initial-scale=1.0;\\">
-    <meta http-equiv=\\"X-UA-Compatible\\" content=\\"IE=edge\\">
-    <meta name=\\"x-apple-disable-message-reformatting\\">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width; initial-scale=1.0;">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
     
     <style>
 @media screen and (max-width: 600px) {
@@ -572,7 +567,6 @@ a.button-link {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   font-size: 1rem;
   text-decoration: none;
-  white-space: nowrap;
   height: 1.5em;
   vertical-align: top;
   line-height: 1.5;
@@ -601,27 +595,27 @@ a.button-link {
 </style>
     <title></title>
   </head>
-  <body style=\\"font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;\\">
-    <header class=\\"title\\" style=\\"height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;\\"></header>
-    <div class=\\"main\\" style=\\"height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;\\">
-      <div class=\\"container\\" style=\\"width: 70%; margin-left: 10%; padding: 5% 0;\\">
-        <h1 style=\\"line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;\\">TradeMachine</h1>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: black; height: 100%; background: #f7f7f7;">
+    <header class="title" style="height: 100px; background-color: #a9c07c; background-image: url('https://imgur.com/VKEupAm.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; width: 75%; margin: auto;"></header>
+    <div class="main" style="height: 80%; background: #fff; width: 75%; margin-left: auto; margin-right: auto;">
+      <div class="container" style="width: 70%; margin-left: 10%; padding: 5% 0;">
+        <h1 style="line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;">TradeMachine</h1>
         <h2>Your trade offer has been accepted by all recipients:</h2>
         <div>
           <h3>CREATOR_TEAM will receive:</h3>
-          <ul class=\\"picks\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
+          <ul class="picks" style="margin-top: 1em; margin-bottom: 2em;"></ul>
           <li>Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM</li>
           <h3>RECIPIENT_TEAM will receive:</h3>
-          <ul class=\\"majors\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
+          <ul class="majors" style="margin-top: 1em; margin-bottom: 2em;"></ul>
           <li>Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM</li>
-          <ul class=\\"minors\\" style=\\"margin-top: 1em; margin-bottom: 2em;\\"></ul>
+          <ul class="minors" style="margin-top: 1em; margin-bottom: 2em;"></ul>
           <li>MiniMe (Jays - P - Low Minors) from CREATOR_TEAM</li>
         </div>
-        <p style=\\"line-height: 1.6em; margin: 1em 0;\\">Upon submission of this trade, it will be announced in the <a href=\\"https://flexfoxfantasy.slack.com/archives/C84UJAX5Y\\" style=\\"text-decoration: none; border-bottom: #d3d6f0 1px solid; color: #2837b8 !important;\\">#trade_announcements</a> channel.</p>
-        <div class=\\"button-container\\"><a class=\\"button-link\\" href=\\"http://localhost:8080/trade/test-uuid/submit\\" style=\\"background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; white-space: nowrap; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;\\"><span>Submit Trade</span></a></div>
+        <p style="line-height: 1.6em; margin: 1em 0;">Upon submission of this trade, it will be announced in the <a href="https://flexfoxfantasy.slack.com/archives/C84UJAX5Y" style="text-decoration: none; border-bottom: #d3d6f0 1px solid; color: #2837b8 !important;">#trade_announcements</a> channel.</p>
+        <div class="button-container"><a class="button-link" href="http://localhost:8080/trade/test-uuid/submit" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;"><span>Submit Trade</span></a></div>
       </div>
     </div>
-    <footer style=\\"height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;\\"></footer>
+    <footer style="height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;"></footer>
   </body>
 </html>",
     "subject": "FlexFoxFantasy TradeMachine - Your Trade Has Been Accepted!",

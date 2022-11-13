@@ -143,7 +143,7 @@ describe("MessengerController", () => {
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledWith(declinedTrade);
 
             // Trade has a creator and 2 recipients. Each with two owners.
-            // We're gonna send an email to everyone except the decliner
+            // We're going to email everyone except the decliner
             expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledTimes(5);
             expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledWith(
                 declinedTrade,

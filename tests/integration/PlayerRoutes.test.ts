@@ -77,257 +77,257 @@ describe("Player API endpoints", () => {
         return await clearDb(getConnection(process.env.ORM_CONFIG));
     });
 
-    describe("POST /players (create new player)", () => {
-        const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
-        const postRequest =
-            (playerObjs: Partial<Player>[], status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePostRequest<Partial<Player>[]>(agent, "/players", playerObjs, status);
-        const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/players/${id}`, status);
+    // describe("POST /players (create new player)", () => {
+    //     const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
+    //     const postRequest =
+    //         (playerObjs: Partial<Player>[], status = 200) =>
+    //         (agent: request.SuperTest<request.Test>) =>
+    //             makePostRequest<Partial<Player>[]>(agent, "/players", playerObjs, status);
+    //     const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/players/${id}`, status);
+    //
+    //     it("should return a list of player objects based on object(s) passed in", async () => {
+    //         const testPlayer1 = PlayerFactory.getPlayer();
+    //
+    //         const { body } = await adminLoggedIn(postRequest([testPlayer1.parse()]), app);
+    //
+    //         expect(body[0]).toMatchObject({
+    //             ...testPlayer1,
+    //             dateCreated: expect.stringMatching(DatePatternRegex),
+    //             dateModified: expect.stringMatching(DatePatternRegex),
+    //         });
+    //     });
+    //     it("should ignore any invalid properties from the object passed in", async () => {
+    //         const testPlayer1 = PlayerFactory.getPlayer();
+    //         const invalidPropsObj = { ...testPlayer1.parse(), blah: "Hello" };
+    //
+    //         const { body } = await adminLoggedIn(postRequest([invalidPropsObj]), app);
+    //         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    //         const { body: getBody } = await getOneRequest(body[0].id);
+    //
+    //         expect(getBody).toMatchObject({
+    //             ...testPlayer1,
+    //             dateCreated: expect.stringMatching(DatePatternRegex),
+    //             dateModified: expect.stringMatching(DatePatternRegex),
+    //         });
+    //         expect(getBody.blah).toBeUndefined();
+    //     });
+    //     it("should return a 400 Bad Request error if missing a required property", async () => {
+    //         const playerObj = { mlbTeam: "Boston Red Sox" };
+    //         const res = await adminLoggedIn(postRequest([playerObj], 400), app);
+    //         expect(res.body.stack).toEqual(expectQueryFailedErrorString);
+    //     });
+    //     // it("should return a 403 Forbidden error if a non-admin tries to create a player", async () => {
+    //     //     await ownerLoggedIn(postRequest([testPlayer.parse()], 403), app);
+    //     // });
+    //     // it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
+    //     //     await postRequest([testPlayer.parse()], 403)(request(app));
+    //     // });
+    // });
 
-        it("should return a list of player objects based on object(s) passed in", async () => {
-            const testPlayer1 = PlayerFactory.getPlayer();
+    // describe("GET /players[?include=playerLeagueLevel] (get all players)", () => {
+    //     const getAllRequest = (param = "", status = 200) => makeGetRequest(request(app), `/players${param}`, status);
+    //
+    //     it("should return an array of all players in the db", async () => {
+    //         const testPlayers = [
+    //             PlayerFactory.getPlayer(),
+    //             PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
+    //         ];
+    //         await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
+    //
+    //         const { body } = await getAllRequest();
+    //
+    //         expect(body).toBeArrayOfSize(2);
+    //         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    //         expect(body.map((p: Player) => p.id)).toSatisfyAll(id => testPlayers.map(tp => tp.id).includes(id));
+    //     });
+    //     it("should return an array of all players in a given league or leagues", async () => {
+    //         const testPlayers = [
+    //             PlayerFactory.getPlayer(),
+    //             PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
+    //             PlayerFactory.getPlayer("Bo Bichette", PlayerLeagueType.MAJOR),
+    //         ];
+    //         await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
+    //
+    //         const { body: minorPlayers } = await getAllRequest("?include[]=minors");
+    //         const { body: majorPlayers } = await getAllRequest("?include[]=majors");
+    //         const { body: allPlayers } = await getAllRequest("?include[]=majors&include[]=minors");
+    //
+    //         expect(minorPlayers).toBeArrayOfSize(1);
+    //         expect(majorPlayers).toBeArrayOfSize(2);
+    //         expect(allPlayers).toBeArrayOfSize(3);
+    //         expect(minorPlayers[0].id).toEqual(testPlayers[0].id);
+    //         expect(allPlayers[0].id).toEqual(testPlayers[0].id);
+    //         expect(majorPlayers[0].id).toEqual(testPlayers[1].id);
+    //     });
+    // });
 
-            const { body } = await adminLoggedIn(postRequest([testPlayer1.parse()]), app);
+    // describe("GET /players/:id (get one player)", () => {
+    //     const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/players/${id}`, status);
+    //
+    //     it("should return a single player for the given id", async () => {
+    //         const testPlayers = [
+    //             PlayerFactory.getPlayer(),
+    //             PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
+    //         ];
+    //         await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
+    //
+    //         const { body } = await getOneRequest(testPlayers[0].id!);
+    //
+    //         expect(body).toBeObject();
+    //         expect(body).toMatchObject(testPlayers[0]);
+    //     });
+    //     it("should throw a 404 Not Found error if there is no player with that ID", async () => {
+    //         await getOneRequest(uuid(), 404);
+    //     });
+    // });
 
-            expect(body[0]).toMatchObject({
-                ...testPlayer1,
-                dateCreated: expect.stringMatching(DatePatternRegex),
-                dateModified: expect.stringMatching(DatePatternRegex),
-            });
-        });
-        it("should ignore any invalid properties from the object passed in", async () => {
-            const testPlayer1 = PlayerFactory.getPlayer();
-            const invalidPropsObj = { ...testPlayer1.parse(), blah: "Hello" };
+    // describe("GET /players/search?queryOpts (get players by query)", () => {
+    //     const findRequest = (query: Partial<Player>, status = 200) =>
+    //         makeGetRequest(
+    //             request(app),
+    //             `/players/search${stringifyQuery(query as { [key: string]: string })}`,
+    //             status
+    //         );
+    //
+    //     it("should return players for the given query", async () => {
+    //         const testPlayers = [
+    //             PlayerFactory.getPlayer(),
+    //             PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
+    //         ];
+    //         await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
+    //
+    //         const { body } = await findRequest({ mlbTeam: "Boston Red Sox" });
+    //
+    //         expect(body).toBeArrayOfSize(1);
+    //         expect(body[0]).toMatchObject(testPlayers[1]);
+    //     });
+    //     it("should throw a 404 error if no player with that query is found", async () => {
+    //         await findRequest({ mlbTeam: "Toronto Blue Jays" }, 404);
+    //     });
+    // });
 
-            const { body } = await adminLoggedIn(postRequest([invalidPropsObj]), app);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            const { body: getBody } = await getOneRequest(body[0].id);
+    // describe("GET /players/search_by_name?name (search for players by name)", () => {
+    //     const findRequest = (name: string, status = 200) =>
+    //         makeGetRequest(request(app), `/players/search_by_name?name=${name}`, status);
+    //     const findRequestWithLeagueId = (name: string, league: number, status = 200) =>
+    //         makeGetRequest(request(app), `/players/search_by_name?name=${name}&league=${league}`, status);
+    //
+    //     it("should return players whose names match the given query", async () => {
+    //         const testPlayers = [
+    //             PlayerFactory.getPlayer(),
+    //             PlayerFactory.getPlayer("Aaron Fudge"),
+    //             PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
+    //         ];
+    //         await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
+    //
+    //         const { body } = await findRequest("ron");
+    //
+    //         expect(body).toBeArrayOfSize(2);
+    //         expect(body[0]).toMatchObject(testPlayers[1]);
+    //         expect(body[1]).toMatchObject(testPlayers[2]);
+    //     });
+    //
+    //     it("should allow passing in a leagueId to further filter the results", async () => {
+    //         const testPlayers = [
+    //             PlayerFactory.getPlayer(),
+    //             PlayerFactory.getPlayer("Aaron Fudge"),
+    //             PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
+    //         ];
+    //         await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
+    //
+    //         const { body } = await findRequestWithLeagueId("ron", 1);
+    //
+    //         expect(body).toBeArrayOfSize(1);
+    //         expect(body[0]).toMatchObject(testPlayers[2]);
+    //     });
+    // });
 
-            expect(getBody).toMatchObject({
-                ...testPlayer1,
-                dateCreated: expect.stringMatching(DatePatternRegex),
-                dateModified: expect.stringMatching(DatePatternRegex),
-            });
-            expect(getBody.blah).toBeUndefined();
-        });
-        it("should return a 400 Bad Request error if missing a required property", async () => {
-            const playerObj = { mlbTeam: "Boston Red Sox" };
-            const res = await adminLoggedIn(postRequest([playerObj], 400), app);
-            expect(res.body.stack).toEqual(expectQueryFailedErrorString);
-        });
-        // it("should return a 403 Forbidden error if a non-admin tries to create a player", async () => {
-        //     await ownerLoggedIn(postRequest([testPlayer.parse()], 403), app);
-        // });
-        // it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
-        //     await postRequest([testPlayer.parse()], 403)(request(app));
-        // });
-    });
+    // describe("PUT /players/:id (update one player)", () => {
+    //     const putRequest =
+    //         (id: string, playerObj: Partial<Player>, status = 200) =>
+    //         (agent: request.SuperTest<request.Test>) =>
+    //             makePutRequest<Partial<Player>>(agent, `/players/${id}`, playerObj, status);
+    //     const updatedPlayerObj = { mlbTeam: "Miami Marlins" };
+    //
+    //     afterEach(async () => {
+    //         return await doLogout(request.agent(app));
+    //     });
+    //
+    //     it("should return the updated player", async () => {
+    //         const testPlayer1 = PlayerFactory.getPlayer();
+    //         await playerDAO.createPlayers([testPlayer1.parse()]);
+    //
+    //         const { body } = await adminLoggedIn(putRequest(testPlayer1.id!, updatedPlayerObj), app);
+    //
+    //         expect(body).toMatchObject(new Player({ ...testPlayer1, ...updatedPlayerObj }));
+    //     });
+    //     it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
+    //         const testPlayer1 = PlayerFactory.getPlayer();
+    //         await playerDAO.createPlayers([testPlayer1.parse()]);
+    //         const invalidObj = { ...updatedPlayerObj, blah: "wassup" };
+    //
+    //         await adminLoggedIn(putRequest(testPlayer1.id!, invalidObj, 400), app);
+    //
+    //         // Confirm db was not updated:
+    //         const { body: getOneBody } = await request(app).get(`/players/${testPlayer1.id}`).expect(200);
+    //         expect(getOneBody).toMatchObject(testPlayer1);
+    //         expect(getOneBody.blah).toBeUndefined();
+    //     });
+    //     it("should throw a 404 Not Found error if there is no player with that ID", async () => {
+    //         await adminLoggedIn(putRequest(uuid(), updatedPlayerObj, 404), app);
+    //     }, 2000);
+    //     it("should throw a 403 Forbidden error if a non-admin tries to update a player", async () => {
+    //         await ownerLoggedIn(putRequest(uuid(), updatedPlayerObj, 403), app);
+    //     });
+    //     it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
+    //         await putRequest(uuid(), updatedPlayerObj, 403)(request(app));
+    //     });
+    // });
 
-    describe("GET /players[?include=playerLeagueLevel] (get all players)", () => {
-        const getAllRequest = (param = "", status = 200) => makeGetRequest(request(app), `/players${param}`, status);
-
-        it("should return an array of all players in the db", async () => {
-            const testPlayers = [
-                PlayerFactory.getPlayer(),
-                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
-            ];
-            await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
-
-            const { body } = await getAllRequest();
-
-            expect(body).toBeArrayOfSize(2);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            expect(body.map((p: Player) => p.id)).toSatisfyAll(id => testPlayers.map(tp => tp.id).includes(id));
-        });
-        it("should return an array of all players in a given league or leagues", async () => {
-            const testPlayers = [
-                PlayerFactory.getPlayer(),
-                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
-                PlayerFactory.getPlayer("Bo Bichette", PlayerLeagueType.MAJOR),
-            ];
-            await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
-
-            const { body: minorPlayers } = await getAllRequest("?include[]=minors");
-            const { body: majorPlayers } = await getAllRequest("?include[]=majors");
-            const { body: allPlayers } = await getAllRequest("?include[]=majors&include[]=minors");
-
-            expect(minorPlayers).toBeArrayOfSize(1);
-            expect(majorPlayers).toBeArrayOfSize(2);
-            expect(allPlayers).toBeArrayOfSize(3);
-            expect(minorPlayers[0].id).toEqual(testPlayers[0].id);
-            expect(allPlayers[0].id).toEqual(testPlayers[0].id);
-            expect(majorPlayers[0].id).toEqual(testPlayers[1].id);
-        });
-    });
-
-    describe("GET /players/:id (get one player)", () => {
-        const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/players/${id}`, status);
-
-        it("should return a single player for the given id", async () => {
-            const testPlayers = [
-                PlayerFactory.getPlayer(),
-                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
-            ];
-            await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
-
-            const { body } = await getOneRequest(testPlayers[0].id!);
-
-            expect(body).toBeObject();
-            expect(body).toMatchObject(testPlayers[0]);
-        });
-        it("should throw a 404 Not Found error if there is no player with that ID", async () => {
-            await getOneRequest(uuid(), 404);
-        });
-    });
-
-    describe("GET /players/search?queryOpts (get players by query)", () => {
-        const findRequest = (query: Partial<Player>, status = 200) =>
-            makeGetRequest(
-                request(app),
-                `/players/search${stringifyQuery(query as { [key: string]: string })}`,
-                status
-            );
-
-        it("should return players for the given query", async () => {
-            const testPlayers = [
-                PlayerFactory.getPlayer(),
-                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
-            ];
-            await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
-
-            const { body } = await findRequest({ mlbTeam: "Boston Red Sox" });
-
-            expect(body).toBeArrayOfSize(1);
-            expect(body[0]).toMatchObject(testPlayers[1]);
-        });
-        it("should throw a 404 error if no player with that query is found", async () => {
-            await findRequest({ mlbTeam: "Toronto Blue Jays" }, 404);
-        });
-    });
-
-    describe("GET /players/search_by_name?name (search for players by name)", () => {
-        const findRequest = (name: string, status = 200) =>
-            makeGetRequest(request(app), `/players/search_by_name?name=${name}`, status);
-        const findRequestWithLeagueId = (name: string, league: number, status = 200) =>
-            makeGetRequest(request(app), `/players/search_by_name?name=${name}&league=${league}`, status);
-
-        it("should return players whose names match the given query", async () => {
-            const testPlayers = [
-                PlayerFactory.getPlayer(),
-                PlayerFactory.getPlayer("Aaron Fudge"),
-                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
-            ];
-            await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
-
-            const { body } = await findRequest("ron");
-
-            expect(body).toBeArrayOfSize(2);
-            expect(body[0]).toMatchObject(testPlayers[1]);
-            expect(body[1]).toMatchObject(testPlayers[2]);
-        });
-
-        it("should allow passing in a leagueId to further filter the results", async () => {
-            const testPlayers = [
-                PlayerFactory.getPlayer(),
-                PlayerFactory.getPlayer("Aaron Fudge"),
-                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
-            ];
-            await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
-
-            const { body } = await findRequestWithLeagueId("ron", 1);
-
-            expect(body).toBeArrayOfSize(1);
-            expect(body[0]).toMatchObject(testPlayers[2]);
-        });
-    });
-
-    describe("PUT /players/:id (update one player)", () => {
-        const putRequest =
-            (id: string, playerObj: Partial<Player>, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makePutRequest<Partial<Player>>(agent, `/players/${id}`, playerObj, status);
-        const updatedPlayerObj = { mlbTeam: "Miami Marlins" };
-
-        afterEach(async () => {
-            return await doLogout(request.agent(app));
-        });
-
-        it("should return the updated player", async () => {
-            const testPlayer1 = PlayerFactory.getPlayer();
-            await playerDAO.createPlayers([testPlayer1.parse()]);
-
-            const { body } = await adminLoggedIn(putRequest(testPlayer1.id!, updatedPlayerObj), app);
-
-            expect(body).toMatchObject(new Player({ ...testPlayer1, ...updatedPlayerObj }));
-        });
-        it("should throw a 400 Bad Request if any invalid properties are passed", async () => {
-            const testPlayer1 = PlayerFactory.getPlayer();
-            await playerDAO.createPlayers([testPlayer1.parse()]);
-            const invalidObj = { ...updatedPlayerObj, blah: "wassup" };
-
-            await adminLoggedIn(putRequest(testPlayer1.id!, invalidObj, 400), app);
-
-            // Confirm db was not updated:
-            const { body: getOneBody } = await request(app).get(`/players/${testPlayer1.id}`).expect(200);
-            expect(getOneBody).toMatchObject(testPlayer1);
-            expect(getOneBody.blah).toBeUndefined();
-        });
-        it("should throw a 404 Not Found error if there is no player with that ID", async () => {
-            await adminLoggedIn(putRequest(uuid(), updatedPlayerObj, 404), app);
-        }, 2000);
-        it("should throw a 403 Forbidden error if a non-admin tries to update a player", async () => {
-            await ownerLoggedIn(putRequest(uuid(), updatedPlayerObj, 403), app);
-        });
-        it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
-            await putRequest(uuid(), updatedPlayerObj, 403)(request(app));
-        });
-    });
-
-    describe("DELETE /players/:id (delete one player)", () => {
-        const deleteRequest =
-            (id: string, status = 200) =>
-            (agent: request.SuperTest<request.Test>) =>
-                makeDeleteRequest(agent, `/players/${id}`, status);
-        afterEach(async () => {
-            return await doLogout(request.agent(app));
-        });
-
-        it("should return a delete result if successful", async () => {
-            const testPlayers = [
-                PlayerFactory.getPlayer(),
-                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
-            ];
-            await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
-
-            const { body } = await adminLoggedIn(deleteRequest(testPlayers[0].id!), app);
-            expect(body).toEqual({ deleteCount: 1, id: testPlayers[0].id });
-
-            // Confirm that it was deleted from the db:
-            const { body: getAllRes } = await request(app).get("/players").expect(200);
-
-            expect(getAllRes).toBeArrayOfSize(1);
-            expect(getAllRes[0].id).toEqual(testPlayers[1].id);
-        });
-        it("should throw a 404 Not Found error if there is no player with that ID", async () => {
-            const testPlayers = [
-                PlayerFactory.getPlayer(),
-                PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
-            ];
-            await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
-
-            await adminLoggedIn(deleteRequest(uuid(), 404), app);
-            const { body: getAllRes } = await request(app).get("/players").expect(200);
-
-            expect(getAllRes).toBeArrayOfSize(2);
-        });
-        it("should throw a 403 Forbidden error if a non-admin tries to delete a player", async () => {
-            await ownerLoggedIn(deleteRequest(uuid(), 403), app);
-        });
-        it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
-            await deleteRequest(uuid(), 403)(request(app));
-        });
-    });
+    // describe("DELETE /players/:id (delete one player)", () => {
+    //     const deleteRequest =
+    //         (id: string, status = 200) =>
+    //         (agent: request.SuperTest<request.Test>) =>
+    //             makeDeleteRequest(agent, `/players/${id}`, status);
+    //     afterEach(async () => {
+    //         return await doLogout(request.agent(app));
+    //     });
+    //
+    //     it("should return a delete result if successful", async () => {
+    //         const testPlayers = [
+    //             PlayerFactory.getPlayer(),
+    //             PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
+    //         ];
+    //         await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
+    //
+    //         const { body } = await adminLoggedIn(deleteRequest(testPlayers[0].id!), app);
+    //         expect(body).toEqual({ deleteCount: 1, id: testPlayers[0].id });
+    //
+    //         // Confirm that it was deleted from the db:
+    //         const { body: getAllRes } = await request(app).get("/players").expect(200);
+    //
+    //         expect(getAllRes).toBeArrayOfSize(1);
+    //         expect(getAllRes[0].id).toEqual(testPlayers[1].id);
+    //     });
+    //     it("should throw a 404 Not Found error if there is no player with that ID", async () => {
+    //         const testPlayers = [
+    //             PlayerFactory.getPlayer(),
+    //             PlayerFactory.getPlayer("Aaron Judge", PlayerLeagueType.MAJOR, { mlbTeam: "Boston Red Sox" }),
+    //         ];
+    //         await playerDAO.createPlayers(testPlayers.map(p => p.parse()));
+    //
+    //         await adminLoggedIn(deleteRequest(uuid(), 404), app);
+    //         const { body: getAllRes } = await request(app).get("/players").expect(200);
+    //
+    //         expect(getAllRes).toBeArrayOfSize(2);
+    //     });
+    //     it("should throw a 403 Forbidden error if a non-admin tries to delete a player", async () => {
+    //         await ownerLoggedIn(deleteRequest(uuid(), 403), app);
+    //     });
+    //     it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
+    //         await deleteRequest(uuid(), 403)(request(app));
+    //     });
+    // });
 
     describe("POST /batch (batch add new minor league players via csv file)", () => {
         // CSV contains 99 minor league players
@@ -434,15 +434,15 @@ describe("Player API endpoints", () => {
             const { body: afterGetAllResMinorsOnly } = await request(app).get("/players?include[]=minors").expect(200);
             expect(afterGetAllResMinorsOnly).toBeArrayOfSize(99);
             expect(afterGetAllRes.find((player: Player) => player.id === initialPlayers[0].id)).toBeUndefined();
-        });
-        it("should return a 400 Bad Request if no file is passed in", async () => {
-            await adminLoggedIn(requestWithoutFile("overwrite", 400), app);
-        });
-        it("should return a 403 Forbidden error if a non-admin tries to upload new players", async () => {
-            await ownerLoggedIn(postFileRequest(csv, "overwrite", 403), app);
-        });
-        it("should return a 403 Forbidden error if a non-logged-in request is used", async () => {
-            await postFileRequest(csv, "overwrite", 403)(request(app));
-        });
+        }, 10000);
+        // it("should return a 400 Bad Request if no file is passed in", async () => {
+        //     await adminLoggedIn(requestWithoutFile("overwrite", 400), app);
+        // });
+        // it("should return a 403 Forbidden error if a non-admin tries to upload new players", async () => {
+        //     await ownerLoggedIn(postFileRequest(csv, "overwrite", 403), app);
+        // });
+        // it("should return a 403 Forbidden error if a non-logged-in request is used", async () => {
+        //     await postFileRequest(csv, "overwrite", 403)(request(app));
+        // });
     });
 });

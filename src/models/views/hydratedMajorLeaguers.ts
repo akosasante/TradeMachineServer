@@ -9,7 +9,9 @@ interface OwnerTeamMap {
 @ViewEntity({
     name: "hydrated_majors",
     expression: `
-        SELECT id,
+        -- noinspection SqlResolve
+
+SELECT id,
                name,
                league,
                COALESCE("mlbTeam", meta ->> 'proTeamId')           AS "mlbTeam",

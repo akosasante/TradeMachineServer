@@ -24,8 +24,6 @@ import { UUID_PATTERN } from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
 import { HydratedTrade } from "../../models/views/hydratedTrades";
 import { appendNewTrade } from "../../csv/TradeTracker";
-import { EmailPublisher } from "../../email/publishers";
-import { SlackPublisher } from "../../slack/publishers";
 import { rollbar } from "../../bootstrap/rollbar";
 import { Request } from "express";
 

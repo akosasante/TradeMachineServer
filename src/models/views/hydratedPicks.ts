@@ -9,7 +9,9 @@ interface OwnerTeamMap {
 @ViewEntity({
     name: "hydrated_picks",
     expression: `
-        SELECT id,
+        -- noinspection SqlResolve
+
+SELECT id,
                season,
                "type",
                round,

@@ -31,7 +31,7 @@ export default class Settings extends BaseModel {
     @Column({ nullable: true, type: "jsonb" })
     public downtime?: DowntimeSettings;
 
-    @ManyToOne(type => User, user => user.updatedSettings, { onDelete: "SET NULL", eager: true })
+    @ManyToOne(_type => User, user => user.updatedSettings, { onDelete: "SET NULL", eager: true })
     public modifiedBy!: User;
 
     constructor(props: Partial<Settings> & Required<Pick<Settings, "modifiedBy">>) {

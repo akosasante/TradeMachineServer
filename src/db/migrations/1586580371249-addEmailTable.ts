@@ -10,6 +10,8 @@ export class addEmailTable1586580371249 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`DROP TABLE "dev"."email"`, undefined);
-        await queryRunner.query(`DROP INDEX "dev"."IDX_945a167cdde65d4fb6bf5508d9f75584"`, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+DROP INDEX "dev"."IDX_945a167cdde65d4fb6bf5508d9f75584"`, undefined);
     }
 }

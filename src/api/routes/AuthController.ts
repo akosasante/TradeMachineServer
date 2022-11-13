@@ -93,7 +93,7 @@ export default class AuthController {
     }
 
     @Post("/logout")
-    public async logout(@Req() request: Request, @Session() session: SessionData) {
+    public async logout(@Req() request: Request, @Session() session: SessionData): Promise<any> {
         rollbar.info("logout", request);
         return new Promise((resolve, reject) => {
             if (session && session.user && request.session) {
@@ -110,7 +110,7 @@ export default class AuthController {
                     }
                 });
             } else {
-                // Assumedly, there's nothing to log out of. We're all good.
+                // Assumed-ly, there's nothing to log out of. We're all good.
                 // I don't think it's necessary to throw an error here
                 logger.debug("Resolving empty session logout");
                 resolve(true);
@@ -153,9 +153,9 @@ export default class AuthController {
     }
 
     @Get("/session_check")
-    public async sessionCheck(@CurrentUser({ required: true }) user: User): Promise<User> {
+    public sessionCheck(@CurrentUser({ required: true }) user: User): Promise<User> {
         logger.debug(`session check worked ${user}`);
         // rollbar.info("sessionCheck", { user });
-        return user;
+        return Promise.resolve(user);
     }
 }

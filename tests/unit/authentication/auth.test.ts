@@ -224,7 +224,7 @@ describe("Authorization helper methods", () => {
     });
 
     describe("generateHashedPassword", () => {
-        it("should return the hashed string", async () => {
+        it("should return the hashed string", () => {
             expect(testUser.password).not.toEqual(hashedPassword);
         });
     });
