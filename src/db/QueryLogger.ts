@@ -13,7 +13,7 @@ export default class CustomQueryLogger implements Logger {
     /**
      * Logs query and parameters used in it.
      */
-    public logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner): void {
+    public logQuery(query: string, parameters?: any[], _queryRunner?: QueryRunner): void {
         const sql = this.sqlString(query, parameters);
         this.winstonLogger.info(`QUERY: ${sql}`);
     }
@@ -21,7 +21,7 @@ export default class CustomQueryLogger implements Logger {
     /**
      * Logs query that is failed.
      */
-    public logQueryError(error: string, query: string, parameters?: any[], queryRunner?: QueryRunner): void {
+    public logQueryError(error: string, query: string, parameters?: any[], _queryRunner?: QueryRunner): void {
         const sql = this.sqlString(query, parameters);
         this.winstonLogger.info(`QUERY FAILED: ${sql}`);
         this.winstonLogger.error(`QUERY ERROR: ${error}`);
@@ -31,7 +31,7 @@ export default class CustomQueryLogger implements Logger {
     /**
      * Logs query that is slow.
      */
-    public logQuerySlow(time: number, query: string, parameters?: any[], queryRunner?: QueryRunner): void {
+    public logQuerySlow(time: number, query: string, parameters?: any[], _queryRunner?: QueryRunner): void {
         const sql = this.sqlString(query, parameters);
         this.winstonLogger.info(`SLOW QUERY: ${sql}`);
         this.winstonLogger.warn(`SLOW QUERY EXECUTION TIME: ${time}`);
@@ -41,14 +41,14 @@ export default class CustomQueryLogger implements Logger {
     /**
      * Logs events from the schema build process.
      */
-    public logSchemaBuild(message: string, queryRunner?: QueryRunner): void {
+    public logSchemaBuild(message: string, _queryRunner?: QueryRunner): void {
         this.winstonLogger.info(`SCHEMA BUILD MESSAGE: ${message}`);
     }
 
     /**
      * Logs events from the migrations run process.
      */
-    public logMigration(message: string, queryRunner?: QueryRunner): void {
+    public logMigration(message: string, _queryRunner?: QueryRunner): void {
         this.winstonLogger.debug(`MIGRATION MESSAGE: ${message}`);
     }
 
@@ -56,7 +56,7 @@ export default class CustomQueryLogger implements Logger {
      * Perform logging using given logger, or by default to the console.
      * Log has its own level and message.
      */
-    public log(level: "log" | "info" | "warn", message: any, queryRunner?: QueryRunner): void {
+    public log(level: "log" | "info" | "warn", message: any, _queryRunner?: QueryRunner): void {
         const winstonLevel: "debug" | "info" | "warn" = level === "log" ? "debug" : level;
         this.winstonLogger.log(winstonLevel, message);
     }

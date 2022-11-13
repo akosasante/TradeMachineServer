@@ -1,4 +1,3 @@
-import "jest-extended";
 import DraftPick from "../../../src/models/draftPick";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import logger from "../../../src/bootstrap/logger";

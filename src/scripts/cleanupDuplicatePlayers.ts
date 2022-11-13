@@ -68,7 +68,7 @@ SELECT * FROM player WHERE name in (SELECT dupes.name FROM dupes) ORDER by name`
             // @ts-ignore
             const majorLeaguer = dupePlayers.find(p => p.league === "1");
             if (!majorLeaguer.leagueTeamId && !!minorLeaguer.leagueTeamId) {
-                // We have a major leaguer that's not owned and a minor leaguer that _is_ owned. Let's delete the major leaguer and give the minor leaguer it's playerDataId
+                // We have a major-leaguer that's not owned and a minor leaguer that _is_ owned. Let's delete the major-leaguer and give the minor leaguer it's playerDataId
                 const playerDataIdToCopyOver = majorLeaguer.playerDataId;
                 console.log(
                     "deleting major league player because it doesnt have a team and the dupe minor leaguer does",

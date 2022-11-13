@@ -8,7 +8,9 @@ export class teamUpdates1583785005004 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "dev"."user" DROP CONSTRAINT "FK_edbfdecf43bec56ee160c9ba6bd", DROP COLUMN "teamId"`, undefined);
+        await queryRunner.query(`-- noinspection SqlResolve
+
+ALTER TABLE "dev"."user" DROP CONSTRAINT "FK_edbfdecf43bec56ee160c9ba6bd", DROP COLUMN "teamId"`, undefined);
     }
 
 }

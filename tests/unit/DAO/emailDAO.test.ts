@@ -28,7 +28,7 @@ describe("EmailDAO", () => {
         const res = await emailDAO.getEmailByMessageId(testEmail.messageId);
 
         expect(mockEmailDb.findOne).toHaveBeenCalledTimes(1);
-        expect(mockEmailDb.findOne).toHaveBeenCalledWith(testEmail.messageId);
+        expect(mockEmailDb.findOne).toHaveBeenCalledWith({ where: { messageId: testEmail.messageId } });
         expect(res).toEqual(testEmail);
     });
 

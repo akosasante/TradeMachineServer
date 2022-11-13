@@ -1,4 +1,4 @@
-import { getConnection, Repository } from "typeorm";
+import { FindOneOptions, getConnection, Repository } from "typeorm";
 import Email from "../models/email";
 
 export default class EmailDAO {
@@ -12,8 +12,8 @@ export default class EmailDAO {
         return await this.emailDb.save(email);
     }
 
-    public async getEmailByMessageId(id: string): Promise<Email | undefined> {
-        return await this.emailDb.findOne(id);
+    public async getEmailByMessageId(id: string): Promise<Email | null> {
+        return await this.emailDb.findOne({ where: { messageId: id } } as FindOneOptions<Email>);
     }
 
     public async updateEmail(email: Partial<Email>): Promise<Email> {

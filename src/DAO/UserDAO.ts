@@ -1,4 +1,4 @@
-import { DeleteResult, FindManyOptions, getConnection, In, InsertResult, Repository } from "typeorm";
+import { DeleteResult, FindManyOptions, FindOneOptions, getConnection, In, InsertResult, Repository } from "typeorm";
 import User from "../models/user";
 import { v4 as uuid } from "uuid";
 
@@ -26,17 +26,17 @@ export default class UserDAO {
 
     public async getUserById(id: string, withUser = false): Promise<User> {
         const options = withUser ? { relations: ["team"] } : {};
-        return await this.userDb.findOneOrFail(id, options);
+        return await this.userDb.findOneOrFail({ where: { id }, ...options });
     }
 
-    public async findUser(query: Partial<User>, failIfNotFound = true): Promise<User | undefined> {
+    public async findUser(query: Partial<User>, failIfNotFound = true): Promise<User | null> {
         const findFn = failIfNotFound
             ? this.userDb.findOneOrFail.bind(this.userDb)
             : this.userDb.findOne.bind(this.userDb);
-        return findFn(query);
+        return findFn({ where: { ...query } } as FindOneOptions<User>);
     }
 
-    public async findUserWithPasswordByEmail(email: string): Promise<User | undefined> {
+    public async findUserWithPasswordByEmail(email: string): Promise<User | null> {
         return await this.userDb
             .createQueryBuilder("user")
             .select("user.id")
@@ -47,12 +47,16 @@ export default class UserDAO {
     }
 
     public async findUsers(query: Partial<User>): Promise<User[]> {
-        return await this.userDb.find({ where: query });
+        return await this.userDb.find({ where: { ...query } } as FindManyOptions<User>);
     }
 
     public async createUsers(userObjs: Partial<User>[]): Promise<User[]> {
         const result: InsertResult = await this.userDb.insert(userObjs);
-        return await this.userDb.find({ id: In(result.identifiers.map(({ id }) => id as string)) });
+        return await this.userDb.find({
+            where: {
+                id: In(result.identifiers.map(({ id }) => id as string)),
+            },
+        } as FindManyOptions<User>);
     }
 
     public async updateUser(id: string, userObj: Partial<User>): Promise<User> {

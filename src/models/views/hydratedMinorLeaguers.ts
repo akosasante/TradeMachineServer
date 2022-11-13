@@ -17,7 +17,9 @@ enum MinorLeagueLevel {
 @ViewEntity({
     name: "hydrated_minors",
     expression: `
-        SELECT id,
+        -- noinspection SqlResolve
+
+SELECT id,
                name,
                league,
                (SELECT json_build_object('id', "id", 'name', "name")

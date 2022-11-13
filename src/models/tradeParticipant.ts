@@ -20,10 +20,10 @@ export default class TradeParticipant extends BaseModel {
     @Column({ type: "enum", enum: TradeParticipantType, default: TradeParticipantType.RECIPIENT })
     public participantType!: TradeParticipantType;
 
-    @ManyToOne(type => Trade, trade => trade.tradeParticipants, { onDelete: "CASCADE" })
+    @ManyToOne(_type => Trade, trade => trade.tradeParticipants, { onDelete: "CASCADE" })
     public trade!: Trade;
 
-    @ManyToOne(type => Team, team => team.tradeParticipants, { cascade: true, eager: true })
+    @ManyToOne(_type => Team, team => team.tradeParticipants, { cascade: true, eager: true })
     public team!: Team;
 
     constructor(props: Partial<TradeParticipant> = {}) {

@@ -13,6 +13,7 @@ describe("Player Class", () => {
 
     const playerObj = PlayerFactory.getPlayerObject();
     const player = new Player(playerObj);
+    /* eslint-disable @typescript-eslint/naming-convention */
     const espnPlayer = {
         id: 2966,
         lineupLocked: true,
@@ -42,6 +43,7 @@ describe("Player Class", () => {
         status: "FREEAGENT",
         tradeLocked: false,
     };
+    /* eslint-enable @typescript-eslint/naming-convention */
 
     describe("constructor", () => {
         it("should construct the object as expected", () => {

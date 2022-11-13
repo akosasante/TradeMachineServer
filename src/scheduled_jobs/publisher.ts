@@ -14,7 +14,7 @@ export class Publisher {
         );
     }
 
-    public async cleanWaitQueue(): Promise<Bull.Job<any>[]> {
+    public async cleanWaitQueue(): Promise<Bull.Job[]> {
         return this.queue!.clean(100, "wait");
     }
 

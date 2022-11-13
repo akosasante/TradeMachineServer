@@ -1,4 +1,3 @@
-import "jest-extended";
 import logger from "../../../src/bootstrap/logger";
 import Team from "../../../src/models/team";
 import { TeamFactory } from "../../factories/TeamFactory";

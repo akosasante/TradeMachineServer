@@ -1,4 +1,4 @@
-import { random } from "faker";
+import { faker } from "@faker-js/faker";
 import Team, { TeamStatus } from "../../../models/team";
 import UserDAO from "../../../DAO/UserDAO";
 import TeamDAO from "../../../DAO/TeamDAO";
@@ -19,7 +19,7 @@ async function init() {
 }
 
 export function createGenericTeam() {
-    const name = `Team ${random.word()}`;
+    const name = `Team ${faker.random.word()}`;
     const status = TeamStatus.ACTIVE;
     return new Team({ id: randomUUID(), name, status });
 }

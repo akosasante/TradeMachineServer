@@ -1,12 +1,13 @@
 import {
     DeleteResult,
-    FindConditions,
+    FindOptionsWhere,
     FindManyOptions,
     getConnection,
     ILike,
     In,
     InsertResult,
     Repository,
+    FindOneOptions,
 } from "typeorm";
 import Player from "../models/player";
 
@@ -28,11 +29,11 @@ export default class PlayerDAO {
     }
 
     public async getPlayerById(id: string): Promise<Player> {
-        return await this.playerDb.findOneOrFail(id);
+        return await this.playerDb.findOneOrFail({ where: { id } } as FindOneOptions<Player>);
     }
 
-    public async getPlayerByName(name: string): Promise<Player | undefined> {
-        return await this.playerDb.findOne({ name });
+    public async getPlayerByName(name: string): Promise<Player | null> {
+        return await this.playerDb.findOne({ where: { name } } as FindOneOptions<Player>);
     }
 
     public async findPlayers(query: Partial<Player>, limit?: number): Promise<Player[]> {
@@ -43,7 +44,7 @@ export default class PlayerDAO {
     public async queryPlayersByName(query: string, league?: number): Promise<Player[]> {
         const defaultLimit = 50;
         const cacheExpiryMilliseconds = 60000;
-        const where: FindConditions<Player> = { name: ILike(`%${query}%`) };
+        const where: FindOptionsWhere<Player> = { name: ILike(`%${query}%`) };
         if (league) {
             where.league = league;
         }
@@ -57,7 +58,11 @@ export default class PlayerDAO {
 
     public async createPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
         const result: InsertResult = await this.playerDb.insert(playerObjs);
-        return await this.playerDb.find({ id: In(result.identifiers.map(({ id }) => id as string)) });
+        return await this.playerDb.find({
+            where: {
+                id: In(result.identifiers.map(({ id }) => id as string)),
+            },
+        } as FindManyOptions<Player>);
     }
 
     public async batchCreatePlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
@@ -71,13 +76,15 @@ export default class PlayerDAO {
                 .insert()
                 .values(playerObjs)
                 .onConflict(
-                    '("name", "playerDataId") DO UPDATE SET "meta" = player.meta || EXCLUDED.meta, "leagueTeamId" = EXCLUDED."leagueTeamId", "mlbTeam" = EXCLUDED."mlbTeam"'
+                    '("name", "playerDataId") DO UPDATE SET "meta" = "Player".meta || EXCLUDED.meta, "leagueTeamId" = EXCLUDED."leagueTeamId", "mlbTeam" = EXCLUDED."mlbTeam"'
                 )
                 .execute();
 
             return await this.playerDb.find({
-                id: In(result.identifiers.filter(res => !!res).map(({ id }) => id as string)),
-            });
+                where: {
+                    id: In(result.identifiers.filter(res => !!res).map(({ id }) => id as string)),
+                },
+            } as FindManyOptions<Player>);
         } else {
             return [];
         }

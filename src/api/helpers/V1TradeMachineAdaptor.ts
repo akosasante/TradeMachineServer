@@ -11,6 +11,7 @@ import DraftPick, { LeagueLevel } from "../../models/draftPick";
 import TradeParticipant, { TradeParticipantType } from "../../models/tradeParticipant";
 import logger from "../../bootstrap/logger";
 import { inspect } from "util";
+import { FindOptionsWhere } from "typeorm";
 
 type MemberMapKey = keyof typeof v1MemberMap;
 
@@ -128,7 +129,7 @@ async function getTradeItemPicksFromSet(
             type: getPickType(p.type),
             originalOwner: originalOwnerTeam,
         };
-        let pick = (await pickDao.findPicks(v1Pick))[0];
+        let pick = (await pickDao.findPicks({ where: { ...v1Pick } } as FindOptionsWhere<DraftPick>))[0];
         if (pick) {
             logger.debug("updating pick with current owner");
             pick = await pickDao.updatePick(pick.id!, { season: 2020, currentOwner: recipientTeam });

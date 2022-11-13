@@ -1,4 +1,5 @@
 import { Authorized, Body, Get, JsonController, Param, Post, Req } from "routing-controllers";
+import { inspect } from "util";
 import logger from "../../bootstrap/logger";
 import SettingsDAO from "../../DAO/SettingsDAO";
 import Settings from "../../models/settings";
@@ -31,7 +32,7 @@ export default class SettingsController {
         rollbar.info("getCurrentSettings", request);
         logger.debug("get most recent settings endpoint");
         const settings = await this.dao.getMostRecentSettings();
-        logger.debug(`got settings: ${settings}`);
+        logger.debug(`got settings: ${inspect(settings)}`);
         return settings;
     }
 
@@ -41,7 +42,7 @@ export default class SettingsController {
         rollbar.info("getOneSettingsLine", { settingsLineId: id }, request);
         logger.debug("get one settings line by id endpoint");
         const settings = await this.dao.getSettingsById(id);
-        logger.debug(`got settings: ${settings}`);
+        logger.debug(`got settings: ${inspect(settings)}`);
         return settings;
     }
 
@@ -54,7 +55,7 @@ export default class SettingsController {
         logger.debug("create new settings entry");
         rollbar.info("appendNewSettingsLine", settingsObj, request);
         const settings = await this.dao.insertNewSettings(settingsObj);
-        logger.debug(`created new settings entry: ${settings}`);
+        logger.debug(`created new settings entry: ${inspect(settings)}`);
         return settings;
     }
 }

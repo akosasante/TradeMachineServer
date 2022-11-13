@@ -1,3 +1,4 @@
+import "jest-extended";
 import { processMinorLeagueCsv } from "../../../src/csv/PlayerParser";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import Player, { PlayerLeagueType } from "../../../src/models/player";

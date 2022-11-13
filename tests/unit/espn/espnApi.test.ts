@@ -15,6 +15,7 @@ import logger from "../../../src/bootstrap/logger";
 
 const mockedGet = jest.fn();
 const headers = {
+    /* eslint-disable-next-line @typescript-eslint/naming-convention */
     "x-fantasy-filter-player-count": 1,
 };
 

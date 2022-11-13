@@ -214,9 +214,9 @@ describe("TradeController", () => {
             expect(mockTradeDAO.updateParticipants).toHaveBeenCalledWith(testTrade.id, [newCreator], [creator]);
             expect(res).toMatchObject({
                 id: updatedTrade.id,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
                 tradeItems: expect.toIncludeSameMembers(testTrade.tradeItems!),
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
                 tradeParticipants: expect.toIncludeSameMembers([newCreator, recipient]),
             });
         });
@@ -238,9 +238,9 @@ describe("TradeController", () => {
             expect(mockTradeDAO.updateItems).toHaveBeenCalledWith(testTrade.id, [newPick], [existingPick]);
             expect(res).toMatchObject({
                 id: updatedTrade.id,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
                 tradeParticipants: expect.toIncludeSameMembers(testTrade.tradeParticipants!),
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
                 tradeItems: expect.toIncludeSameMembers([newPick, ...existingPlayers]),
             });
         });

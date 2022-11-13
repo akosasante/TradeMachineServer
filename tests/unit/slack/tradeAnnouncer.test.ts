@@ -1,6 +1,5 @@
 import logger from "../../../src/bootstrap/logger";
 import TradeFormatter from "../../../src/slack/tradeFormatter";
-import { mocked } from "ts-jest/utils";
 import { TradeFactory } from "../../factories/TradeFactory";
 import { SlackTradeAnnouncer } from "../../../src/slack/tradeAnnouncer";
 import { IncomingWebhook } from "@slack/webhook";
@@ -8,9 +7,9 @@ import { IncomingWebhook } from "@slack/webhook";
 jest.mock("../../../src/slack/tradeFormatter");
 jest.mock("@slack/webhook");
 
-const mockedIncomingWebhook = mocked(IncomingWebhook);
+const mockedIncomingWebhook = IncomingWebhook as jest.MockedClass<typeof IncomingWebhook>;
 const trade = TradeFactory.getTrade();
-const mockedTradeFormatter = mocked(TradeFormatter);
+const mockedTradeFormatter = TradeFormatter as jest.MockedObject<typeof TradeFormatter>;
 mockedTradeFormatter.getTradeTextForParticipant.mockResolvedValue("trade participant text");
 mockedTradeFormatter.getNotificationText.mockReturnValue("notification text");
 mockedTradeFormatter.getTitleText.mockReturnValue("title text");

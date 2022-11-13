@@ -1,4 +1,3 @@
-import "jest-extended";
 import { FindOperator, Repository } from "typeorm";
 import TradeDAO from "../../../src/DAO/TradeDAO";
 import { TradeFactory } from "../../factories/TradeFactory";
@@ -80,12 +79,7 @@ describe("TradeDAO", () => {
         expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledTimes(1);
         expect(mockHydratedTradeDb.findAndCount).toHaveBeenCalledWith({
             where: {
-                tradeStatus: {
-                    _multipleParameters: true,
-                    _type: "in",
-                    _useParameter: true,
-                    _value: pendingStatuses,
-                },
+                tradeStatus: new FindOperator("in", pendingStatuses, true, true, undefined),
             },
             order: { dateCreated: "DESC" },
             take: 25,
@@ -98,7 +92,7 @@ describe("TradeDAO", () => {
         const expectedParticipantsClause = [
             { tradeCreator: team.name },
             {
-                tradeRecipients: new FindOperator("raw", expect.toBeArray(), true, true, expect.toBeFunction(), {
+                tradeRecipients: new FindOperator("raw", expect.any(Array), true, true, expect.any(Function), {
                     teamName: team.name,
                 }),
             },
@@ -119,21 +113,11 @@ describe("TradeDAO", () => {
         const expectedParticipantsAndStatusClause = [
             {
                 tradeCreator: team.name,
-                tradeStatus: {
-                    _multipleParameters: true,
-                    _type: "in",
-                    _useParameter: true,
-                    _value: pendingStatuses,
-                },
+                tradeStatus: new FindOperator("in", pendingStatuses, true, true, undefined),
             },
             {
-                tradeStatus: {
-                    _multipleParameters: true,
-                    _type: "in",
-                    _useParameter: true,
-                    _value: pendingStatuses,
-                },
-                tradeRecipients: new FindOperator("raw", expect.toBeArray(), true, true, expect.toBeFunction(), {
+                tradeStatus: new FindOperator("in", pendingStatuses, true, true, undefined),
+                tradeRecipients: new FindOperator("raw", [], true, true, expect.any(Function), {
                     teamName: team.name,
                 }),
             },
@@ -153,7 +137,7 @@ describe("TradeDAO", () => {
         const res = await tradeDAO.getTradeById(testTrade.id!);
 
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id);
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTrade.id } });
         expect(res).toEqual(testTrade);
     });
 
@@ -165,7 +149,7 @@ describe("TradeDAO", () => {
         expect(mockTradeDb.save).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.save).toHaveBeenCalledWith(testTrade.parse());
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTrade.id! } });
         expect(res).toEqual(testTrade);
     });
 
@@ -177,7 +161,7 @@ describe("TradeDAO", () => {
         expect(mockTradeDb.update).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.update).toHaveBeenCalledWith({ id: testTrade.id! }, { status });
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTrade.id! } });
         expect(res).toEqual(testTrade);
     });
 
@@ -195,7 +179,7 @@ describe("TradeDAO", () => {
             }
         );
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTrade.id! } });
         expect(res).toEqual(testTrade);
     });
 
@@ -214,7 +198,7 @@ describe("TradeDAO", () => {
             }
         );
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTrade.id! } });
         expect(res).toEqual(testTrade);
     });
 
@@ -234,7 +218,7 @@ describe("TradeDAO", () => {
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledWith();
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(2);
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTrade.id! } });
         expect(res).toEqual(testTrade);
     });
 
@@ -250,7 +234,7 @@ describe("TradeDAO", () => {
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledWith();
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(2);
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTrade.id! } });
         expect(res).toEqual(testTrade);
     });
 
@@ -262,7 +246,7 @@ describe("TradeDAO", () => {
         const res = await tradeDAO.deleteTrade(testTrade.id!);
 
         expect(mockTradeDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith(testTrade.id!);
+        expect(mockTradeDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testTrade.id! } });
         expect(mockTradeDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockWhereInIds).toHaveBeenCalledWith(testTrade.id!);
         expect(res).toEqual(deleteResult);

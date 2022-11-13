@@ -49,7 +49,7 @@ describe("PlayerDAO", () => {
         const res = await playerDAO.getPlayerById(testPlayer1.id!);
 
         expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledWith(testPlayer1.id);
+        expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testPlayer1.id } });
         expect(res).toEqual(testPlayer1);
     });
 
@@ -58,7 +58,7 @@ describe("PlayerDAO", () => {
         const res = await playerDAO.getPlayerByName(testPlayer1.name);
 
         expect(mockPlayerDb.findOne).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.findOne).toHaveBeenCalledWith({ name: testPlayer1.name });
+        expect(mockPlayerDb.findOne).toHaveBeenCalledWith({ where: { name: testPlayer1.name } });
         expect(res).toEqual(testPlayer1);
     });
 
@@ -85,11 +85,13 @@ describe("PlayerDAO", () => {
         expect(mockPlayerDb.insert).toHaveBeenCalledWith([testPlayer1.parse()]);
         expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
         expect(mockPlayerDb.find).toHaveBeenCalledWith({
-            id: {
-                _multipleParameters: true,
-                _type: "in",
-                _useParameter: true,
-                _value: [testPlayer1.id],
+            where: {
+                id: expect.objectContaining({
+                    _multipleParameters: true,
+                    _type: "in",
+                    _useParameter: true,
+                    _value: [testPlayer1.id],
+                }),
             },
         });
 
@@ -103,7 +105,7 @@ describe("PlayerDAO", () => {
         expect(mockPlayerDb.update).toHaveBeenCalledTimes(1);
         expect(mockPlayerDb.update).toHaveBeenCalledWith({ id: testPlayer1.id }, testPlayer1.parse());
         expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledWith(testPlayer1.id);
+        expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testPlayer1.id } });
         expect(res).toEqual(testPlayer1);
     });
 
@@ -115,7 +117,7 @@ describe("PlayerDAO", () => {
         const res = await playerDAO.deletePlayer(testPlayer1.id!);
 
         expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledWith(testPlayer1.id!);
+        expect(mockPlayerDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testPlayer1.id! } });
         expect(mockPlayerDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockWhereInIds).toHaveBeenCalledWith(testPlayer1.id!);
 
@@ -169,11 +171,13 @@ describe("PlayerDAO", () => {
         expect(mockValues).toHaveBeenCalledWith([testPlayer1]);
         expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
         expect(mockPlayerDb.find).toHaveBeenCalledWith({
-            id: {
-                _multipleParameters: true,
-                _type: "in",
-                _useParameter: true,
-                _value: [testPlayer1.id],
+            where: {
+                id: expect.objectContaining({
+                    _multipleParameters: true,
+                    _type: "in",
+                    _useParameter: true,
+                    _value: [testPlayer1.id],
+                }),
             },
         });
         expect(res).toEqual([testPlayer1]);

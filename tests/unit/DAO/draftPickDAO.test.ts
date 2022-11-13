@@ -59,7 +59,10 @@ describe("DraftPickDAO", () => {
         const res = await draftPickDAO.getPickById(testPick1.id!);
 
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id, { cache: defaultCacheTimeout });
+        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith({
+            where: { id: testPick1.id },
+            cache: defaultCacheTimeout,
+        });
         expect(res).toEqual(testPick1);
     });
 
@@ -82,11 +85,13 @@ describe("DraftPickDAO", () => {
         expect(mockPickDb.insert).toHaveBeenCalledWith([testPick1.parse()]);
         expect(mockPickDb.find).toHaveBeenCalledTimes(1);
         expect(mockPickDb.find).toHaveBeenCalledWith({
-            id: {
-                _multipleParameters: true,
-                _type: "in",
-                _useParameter: true,
-                _value: [testPick1.id],
+            where: {
+                id: expect.objectContaining({
+                    _multipleParameters: true,
+                    _type: "in",
+                    _useParameter: true,
+                    _value: [testPick1.id],
+                }),
             },
         });
 
@@ -100,7 +105,10 @@ describe("DraftPickDAO", () => {
         expect(mockPickDb.update).toHaveBeenCalledTimes(1);
         expect(mockPickDb.update).toHaveBeenCalledWith({ id: testPick1.id }, testPick1.parse());
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id, { cache: defaultCacheTimeout });
+        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith({
+            where: { id: testPick1.id },
+            cache: defaultCacheTimeout,
+        });
         expect(res).toEqual(testPick1);
     });
 
@@ -112,7 +120,10 @@ describe("DraftPickDAO", () => {
         const res = await draftPickDAO.deletePick(testPick1.id!);
 
         expect(mockPickDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith(testPick1.id!, { cache: defaultCacheTimeout });
+        expect(mockPickDb.findOneOrFail).toHaveBeenCalledWith({
+            where: { id: testPick1.id! },
+            cache: defaultCacheTimeout,
+        });
         expect(mockPickDb.createQueryBuilder).toHaveBeenCalledTimes(1);
         expect(mockWhereInIds).toHaveBeenCalledWith(testPick1.id!);
 
@@ -166,11 +177,13 @@ describe("DraftPickDAO", () => {
         expect(mockValues).toHaveBeenCalledWith([testPick1]);
         expect(mockPickDb.find).toHaveBeenCalledTimes(1);
         expect(mockPickDb.find).toHaveBeenCalledWith({
-            id: {
-                _multipleParameters: true,
-                _type: "in",
-                _useParameter: true,
-                _value: [testPick1.id],
+            where: {
+                id: expect.objectContaining({
+                    _multipleParameters: true,
+                    _type: "in",
+                    _useParameter: true,
+                    _value: [testPick1.id],
+                }),
             },
         });
         expect(res).toEqual([testPick1]);

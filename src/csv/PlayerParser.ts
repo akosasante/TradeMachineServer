@@ -127,7 +127,7 @@ async function formatForDb(
         return player;
     });
 
-    // If we chose to overwrite, then take the unique list of players and if there's an existing player with the same name and player Id, reject it from the list
+    // If we chose to overwrite, then take the unique list of players and if there's an existing player with the same name and player ID, reject it from the list
     return append
         ? uniqueWithIds
         : uniqueWithIds.filter(player => {

@@ -1,4 +1,4 @@
-import { name as fakeName } from "faker";
+import { faker } from "@faker-js/faker";
 import Team from "../../src/models/team";
 import { v4 as uuid } from "uuid";
 import { espnIdCounter } from "./Counter";
@@ -21,7 +21,7 @@ export class TeamFactory {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         return [...Array(num)].map((_, i) => {
             if (i + 1 > names.length) {
-                name = fakeName.firstName();
+                name = faker.name.firstName();
             } else {
                 name = names[i];
             }

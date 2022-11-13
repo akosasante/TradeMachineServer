@@ -1,4 +1,3 @@
-import "jest-extended";
 import TradeItem, { TradeItemType } from "../../../src/models/tradeItem";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import { PlayerFactory } from "../../factories/PlayerFactory";

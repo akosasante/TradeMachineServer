@@ -3,7 +3,7 @@ import UserDAO from "../../../src/DAO/UserDAO";
 import User from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
 import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
-import { Repository } from "typeorm";
+import { Repository, FindOperator } from "typeorm";
 
 describe("UserDAO", () => {
     const mockUserDb: MockObj = {
@@ -63,7 +63,7 @@ describe("UserDAO", () => {
             const res = await userDAO.getUserById(testUser.id!);
 
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id, {});
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testUser.id } });
 
             expect(res).toEqual(testUser);
         });
@@ -76,7 +76,7 @@ describe("UserDAO", () => {
             const res = await userDAO.findUser(condition);
 
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(condition);
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({ where: { ...condition } });
 
             expect(res).toEqual(testUser);
             expect(res).toBeInstanceOf(User);
@@ -86,7 +86,7 @@ describe("UserDAO", () => {
             const res = await userDAO.findUser(condition, false);
 
             expect(mockUserDb.findOne).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOne).toHaveBeenCalledWith(condition);
+            expect(mockUserDb.findOne).toHaveBeenCalledWith({ where: { ...condition } });
 
             expect(res).toEqual(testUser);
         });
@@ -145,11 +145,13 @@ describe("UserDAO", () => {
             expect(mockUserDb.insert).toHaveBeenCalledWith([testUser.parse()]);
             expect(mockUserDb.find).toHaveBeenCalledTimes(1);
             expect(mockUserDb.find).toHaveBeenCalledWith({
-                id: {
-                    _multipleParameters: true,
-                    _type: "in",
-                    _useParameter: true,
-                    _value: [testUser.id],
+                where: {
+                    id: expect.objectContaining({
+                        _multipleParameters: true,
+                        _type: "in",
+                        _useParameter: true,
+                        _value: [testUser.id],
+                    }),
                 },
             });
 
@@ -165,7 +167,7 @@ describe("UserDAO", () => {
             expect(mockUserDb.update).toHaveBeenCalledTimes(1);
             expect(mockUserDb.update).toHaveBeenCalledWith({ id: testUser.id }, testUser.parse());
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id, {});
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testUser.id } });
 
             expect(res).toEqual(testUser);
         });
@@ -180,7 +182,7 @@ describe("UserDAO", () => {
             const res = await userDAO.deleteUser(testUser.id!);
 
             expect(mockUserDb.findOneOrFail).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith(testUser.id!, {});
+            expect(mockUserDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testUser.id! } });
             expect(mockUserDb.createQueryBuilder).toHaveBeenCalledTimes(1);
             expect(mockWhereInIds).toHaveBeenCalledWith(testUser.id!);
 

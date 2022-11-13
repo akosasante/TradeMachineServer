@@ -41,12 +41,12 @@ describe("SettingsDAO", () => {
     });
 
     it("getMostRecentSettings - should call the db findOne method", async () => {
-        mockSettingsDb.findOne.mockResolvedValueOnce(testSettings);
-        const defaultOpts = { order: { dateCreated: "DESC" } };
+        mockSettingsDb.find.mockResolvedValueOnce([testSettings]);
+        const defaultOpts = { order: { dateCreated: "DESC" }, skip: 0, take: 1 };
         const res = await settingsDAO.getMostRecentSettings();
 
-        expect(mockSettingsDb.findOne).toHaveBeenCalledTimes(1);
-        expect(mockSettingsDb.findOne).toHaveBeenCalledWith(defaultOpts);
+        expect(mockSettingsDb.find).toHaveBeenCalledTimes(1);
+        expect(mockSettingsDb.find).toHaveBeenCalledWith(defaultOpts);
         expect(res).toEqual(testSettings);
     });
 
@@ -55,12 +55,12 @@ describe("SettingsDAO", () => {
         const res = await settingsDAO.getSettingsById(testSettings.id);
 
         expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith(testSettings.id);
+        expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testSettings.id } });
         expect(res).toEqual(testSettings);
     });
 
     it("insertNewSettings - should first get most recent settings and then insert and return the new value", async () => {
-        mockSettingsDb.findOne.mockResolvedValueOnce(testSettings);
+        mockSettingsDb.find.mockResolvedValueOnce([testSettings]);
         mockSettingsDb.insert.mockResolvedValueOnce({
             identifiers: [{ id: testSettings.id }],
             generatedMaps: [],
@@ -80,7 +80,7 @@ describe("SettingsDAO", () => {
         mockSettingsDb.findOneOrFail.mockResolvedValueOnce(expectedSettings);
         const res = await settingsDAO.insertNewSettings(newSettings);
 
-        expect(mockSettingsDb.findOne).toHaveBeenCalledTimes(1);
+        expect(mockSettingsDb.find).toHaveBeenCalledTimes(1);
         expect(mockSettingsDb.insert).toHaveBeenCalledTimes(1);
         expect(mockSettingsDb.insert).toHaveBeenCalledWith({
             ...expectedSettings,
@@ -89,7 +89,7 @@ describe("SettingsDAO", () => {
             dateModified: undefined,
         });
         expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith({ id: testSettings.id });
+        expect(mockSettingsDb.findOneOrFail).toHaveBeenCalledWith({ where: { id: testSettings.id } });
         expect(res).toEqual(expectedSettings);
     });
 });

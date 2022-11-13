@@ -1,4 +1,4 @@
-import { DeleteResult, FindManyOptions, getConnection, In, Raw, Repository } from "typeorm";
+import { DeleteResult, FindManyOptions, FindOneOptions, getConnection, In, Raw, Repository } from "typeorm";
 import Trade, { TradeStatus } from "../models/trade";
 import TradeItem, { TradeItemType } from "../models/tradeItem";
 import TradeParticipant from "../models/tradeParticipant";
@@ -6,7 +6,7 @@ import { BadRequestError } from "routing-controllers";
 import PlayerDAO from "./PlayerDAO";
 import DraftPickDAO from "./DraftPickDAO";
 import { HydratedTrade } from "../models/views/hydratedTrades";
-import { FindConditions } from "typeorm/find-options/FindConditions";
+import { FindOptionsWhere } from "typeorm/find-options/FindOptionsWhere";
 
 interface TradeDeleteResult extends DeleteResult {
     raw: Trade[];
@@ -43,13 +43,13 @@ export default class TradeDAO {
         pageSize = 25,
         pageNumber = 1
     ): Promise<[HydratedTrade[], number]> {
-        let where: FindConditions<HydratedTrade>[] | FindConditions<HydratedTrade> | undefined;
+        let where: FindOptionsWhere<HydratedTrade>[] | FindOptionsWhere<HydratedTrade> | undefined;
 
         if (statuses && includeTeam) {
             where = [
                 { tradeCreator: includeTeam, tradeStatus: In(statuses) },
                 {
-                    tradeRecipients: Raw(tp => ':teamName = ANY("tradeRecipients")', { teamName: includeTeam }),
+                    tradeRecipients: Raw(_tp => ':teamName = ANY("tradeRecipients")', { teamName: includeTeam }),
                     tradeStatus: In(statuses),
                 },
             ];
@@ -58,7 +58,7 @@ export default class TradeDAO {
         } else if (includeTeam) {
             where = [
                 { tradeCreator: includeTeam },
-                { tradeRecipients: Raw(tp => ':teamName = ANY("tradeRecipients")', { teamName: includeTeam }) },
+                { tradeRecipients: Raw(_tp => ':teamName = ANY("tradeRecipients")', { teamName: includeTeam }) },
             ];
         }
 
@@ -79,7 +79,7 @@ export default class TradeDAO {
     }
 
     public async getTradeById(id: string): Promise<Trade> {
-        return await this.tradeDb.findOneOrFail(id);
+        return await this.tradeDb.findOneOrFail({ where: { id } } as FindOneOptions<Trade>);
     }
 
     public async hydrateTrade(trade: Trade): Promise<Trade> {
@@ -101,11 +101,11 @@ export default class TradeDAO {
 
         const saved = await this.tradeDb.save(tradeObj);
 
-        return this.tradeDb.findOneOrFail(saved.id);
+        return this.tradeDb.findOneOrFail({ where: { id: saved.id } } as FindOneOptions<Trade>);
     }
 
     public async deleteTrade(id: string): Promise<TradeDeleteResult> {
-        await this.tradeDb.findOneOrFail(id);
+        await this.tradeDb.findOneOrFail({ where: { id } });
         return await this.tradeDb.createQueryBuilder().delete().whereInIds(id).returning("id").execute();
     }
 
@@ -114,19 +114,19 @@ export default class TradeDAO {
         participantsToAdd: TradeParticipant[],
         participantsToRemove: TradeParticipant[]
     ): Promise<Trade> {
-        await this.tradeDb.findOneOrFail(id);
+        await this.tradeDb.findOneOrFail({ where: { id } });
         await this.tradeDb
             .createQueryBuilder()
             .relation("tradeParticipants")
             .of(id)
             .addAndRemove(participantsToAdd, participantsToRemove);
-        return await this.tradeDb.findOneOrFail(id);
+        return await this.tradeDb.findOneOrFail({ where: { id } });
     }
 
     public async updateItems(id: string, itemsToAdd: TradeItem[], itemsToRemove: TradeItem[]): Promise<Trade> {
-        await this.tradeDb.findOneOrFail(id);
+        await this.tradeDb.findOneOrFail({ where: { id } });
         await this.tradeDb.createQueryBuilder().relation("tradeItems").of(id).addAndRemove(itemsToAdd, itemsToRemove);
-        return await this.tradeDb.findOneOrFail(id);
+        return await this.tradeDb.findOneOrFail({ where: { id } });
     }
 
     public async updateStatus(id: string, status: TradeStatus): Promise<Trade> {

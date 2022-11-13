@@ -32,10 +32,19 @@ export class SlackTradeAnnouncer {
     private static url: string = process.env.SLACK_WEBHOOK_URL || "";
     private static webhook = new IncomingWebhook(SlackTradeAnnouncer.url);
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    // eslint-disable-next-line @typescript-eslint/no-empty-function, no-empty-function
     constructor() {}
 
-    public static async buildTradeAnnouncementMsg(trade: Trade) {
+    public static async buildTradeAnnouncementMsg(
+        trade: Trade
+    ): Promise<{
+        blocks: (
+            | { text: { text: string; type: string }; type: string }
+            | { elements: { text: string; type: string }[]; type: string }
+            | { type: string }
+        )[];
+        text: string;
+    }> {
         logger.info("building trade announcement mesasge");
         const twoPlayerTrade = trade.tradeParticipants!.length === 2;
         const tradeText = await Promise.all(

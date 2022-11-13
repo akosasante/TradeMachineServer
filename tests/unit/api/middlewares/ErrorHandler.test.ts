@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { HttpError } from "routing-controllers";
-import { QueryFailedError } from "typeorm";
-import { EntityColumnNotFound } from "typeorm/error/EntityColumnNotFound";
+import { EntityMetadata, QueryFailedError } from "typeorm";
+import { EntityPropertyNotFoundError } from "typeorm/error/EntityPropertyNotFoundError";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import CustomErrorHandler from "../../../../src/api/middlewares/ErrorHandler";
 import logger from "../../../../src/bootstrap/logger";
@@ -66,8 +66,8 @@ describe("Error handler middleware", () => {
         expect(response.status).toHaveBeenCalledWith(400);
         expect(response.json).toHaveBeenCalledWith(errorObjectExpect);
     });
-    it("should call response with 400 and error object if EntityColumnNotFound", async () => {
-        const error = new EntityColumnNotFound("User.name");
+    it("should call response with 400 and error object if EntityPropertyNotFoundError", async () => {
+        const error = new EntityPropertyNotFoundError("User.name", {} as EntityMetadata);
 
         errorHandler.error(error, request, response, next);
         expect(response.status).toHaveBeenCalledTimes(1);

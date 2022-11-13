@@ -1,4 +1,3 @@
-import "jest-extended";
 import { validateRow } from "../../../src/csv/CsvUtils";
 import logger from "../../../src/bootstrap/logger";
 

@@ -1,4 +1,3 @@
-import "jest-extended";
 import { processDraftPickCsv } from "../../../src/csv/DraftPickParser";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import DraftPick from "../../../src/models/draftPick";
