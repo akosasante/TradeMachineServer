@@ -20,7 +20,7 @@
     /* Generates corresponding '.map' file. */
     // "outFile": "./",                       /* Concatenate and emit output to single file. */
     //    "outDir": "./dist",                        /* Redirect output structure to the directory. */
-    "rootDirs":[ "../tests", "../src"],
+    "rootDirs":[ "../tests", "../src", "../node_modules"],
     /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
     // "composite": true,            "resolveJsonModule": true         /* Enable project compilation */
     // "removeComments": true,                /* Do not emit comments to output. */
