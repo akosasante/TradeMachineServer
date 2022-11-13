@@ -35,9 +35,7 @@ export class SlackTradeAnnouncer {
     // eslint-disable-next-line @typescript-eslint/no-empty-function, no-empty-function
     constructor() {}
 
-    public static async buildTradeAnnouncementMsg(
-        trade: Trade
-    ): Promise<{
+    public static async buildTradeAnnouncementMsg(trade: Trade): Promise<{
         blocks: (
             | { text: { text: string; type: string }; type: string }
             | { elements: { text: string; type: string }[]; type: string }
