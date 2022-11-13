@@ -3,6 +3,7 @@ import "reflect-metadata";
 import { useExpressServer } from "routing-controllers";
 import { authorizationChecker, currentUserChecker } from "../authentication/auth";
 import initializeDb from "./db";
+import initializePrisma from "./prisma-db";
 import expressApp, { redisClient } from "./express";
 import logger from "./logger";
 import { inspect } from "util";
@@ -13,6 +14,9 @@ export async function setupExpressApp(): Promise<Express> {
     // Set up db
     logger.debug("setting up database");
     await initializeDb(process.env.DB_LOGS === "true");
+    logger.debug("setting up prisma db");
+    const prisma = initializePrisma(true);
+    expressApp.set("prisma", prisma);
     logger.debug("database setup complete");
 
     logger.debug("setting up consumers");
