@@ -1,3 +1,4 @@
+import "jest-extended";
 import { Server } from "http";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
