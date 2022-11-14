@@ -3,16 +3,32 @@ import "reflect-metadata";
 import { useExpressServer } from "routing-controllers";
 import { authorizationChecker, currentUserChecker } from "../authentication/auth";
 import initializeDb from "./db";
+import initializePrisma from "./prisma-db";
 import expressApp, { redisClient } from "./express";
 import logger from "./logger";
 import { inspect } from "util";
 import { rollbar } from "./rollbar";
 import { Server } from "http";
 
-export async function setupExpressApp(): Promise<Express> {
+export interface ExpressAppOptions {
+    startTypeORM: boolean;
+    startPrismaORM: boolean;
+}
+
+export async function setupExpressApp(
+    opts: ExpressAppOptions = { startTypeORM: true, startPrismaORM: true }
+): Promise<Express> {
     // Set up db
     logger.debug("setting up database");
-    await initializeDb(process.env.DB_LOGS === "true");
+    if (opts.startTypeORM) {
+        logger.debug("setting up typeorm db");
+        await initializeDb(process.env.DB_LOGS === "true");
+    }
+    if (opts.startPrismaORM) {
+        logger.debug("setting up prisma db");
+        const prisma = initializePrisma(true);
+        expressApp.set("prisma", prisma);
+    }
     logger.debug("database setup complete");
 
     logger.debug("setting up consumers");
