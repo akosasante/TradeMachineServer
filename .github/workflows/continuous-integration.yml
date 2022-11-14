@@ -69,6 +69,7 @@ jobs:
           TRADE_WORKSHEET_ID: 9999
           TRADE_SPREADSHEET_ID: test_spreadsheet
           V2_EMAILS: test@example.com
+          ROLLBAR_TOKEN: test
 
       - name: Run typechecking and linting
         run: make typecheck && make lint
