@@ -150,7 +150,7 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
                 upholdTime = addDays(upholdTime, 2);
             }
             upholdTime = set(upholdTime, { hours: 23, minutes: 0, seconds: 0, milliseconds: 0 });
-            return format(upholdTime, "eee MMM d yyyy, h':'mm aaaa z");
+            return format(upholdTime, "eee MMM d yyyy, h':'mm aaaa z", { timeZone: "America/Toronto" });
         }
 
         return `*${format(new Date(), "eee MMM d yyyy", { timeZone: "America/Toronto" })}* \
