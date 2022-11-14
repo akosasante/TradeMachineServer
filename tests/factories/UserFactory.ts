@@ -1,4 +1,5 @@
 import User, { Role } from "../../src/models/user";
+import { User as PrismaUser, UserRole } from "@prisma/client";
 import { v4 as uuid } from "uuid";
 
 export class UserFactory {
@@ -8,6 +9,7 @@ export class UserFactory {
     public static ADMIN_EMAIL = "admin@example+test.com";
     public static OWNER_EMAIL = "owner@example+test.com";
     public static GENERIC_NAME = "John Smith";
+
     /* eslint-enable @typescript-eslint/naming-convention */
 
     public static getUserObject(
@@ -18,6 +20,33 @@ export class UserFactory {
         rest = {}
     ) {
         return { id: uuid(), email, displayName, password, role, ...rest };
+    }
+
+    public static getPrismaUser(
+        email = UserFactory.TEST_EMAIL,
+        displayName = UserFactory.GENERIC_NAME,
+        password = UserFactory.GENERIC_PASSWORD,
+        role = UserRole.ADMIN,
+        rest = {}
+    ): PrismaUser {
+        return {
+            id: uuid(),
+            email,
+            displayName,
+            password,
+            role,
+            dateCreated: new Date(),
+            dateModified: new Date(),
+            slackUsername: null,
+            lastLoggedIn: null,
+            passwordResetExpiresOn: null,
+            passwordResetToken: null,
+            status: "ACTIVE",
+            csvName: null,
+            espnMember: null,
+            teamId: null,
+            ...rest,
+        };
     }
 
     public static getUser(
