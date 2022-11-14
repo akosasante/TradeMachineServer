@@ -84,6 +84,7 @@
     "jest": "^29.3.1",
     "jest-date-mock": "latest",
     "jest-extended": "latest",
+    "jest-mock-extended": "^3.0.1",
     "node-notifier": "^10.0.1",
     "nodemon": "latest",
     "prettier": "^2.5.1",

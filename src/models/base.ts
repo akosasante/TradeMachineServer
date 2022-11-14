@@ -17,4 +17,16 @@ export class BaseModel {
     public parse<T extends BaseModel>(): Partial<T> {
         return Object.assign({}, this);
     }
+
+    static getKeyByValue(enumField: { [s: string]: unknown; }, value: unknown): string | undefined {
+        if (value) {
+            const indexOfS = Object.values(enumField).indexOf(value as unknown as typeof enumField);
+
+            const enumKey = Object.keys(enumField)[indexOfS];
+
+            return enumKey;
+        } else {
+            return undefined;
+        }
+    }
 }
