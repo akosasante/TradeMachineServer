@@ -1,10 +1,10 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from "@prisma/client";
 
 export default function initializeDb(log = false): PrismaClient {
-    const options: Prisma.PrismaClientOptions = {}
+    const options: Prisma.PrismaClientOptions = {};
     if (log) {
-        options.log = ['query', 'info', 'warn', 'error'];
-        options.errorFormat = 'pretty';
+        options.log = ["query", "info", "warn", "error"];
+        options.errorFormat = "pretty";
     }
-    return new PrismaClient(options)
+    return new PrismaClient(options);
 }

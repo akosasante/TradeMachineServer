@@ -5,10 +5,10 @@ import { redisClient } from "../../../src/bootstrap/express";
 import logger from "../../../src/bootstrap/logger";
 import initializeDb from "../../../src/bootstrap/prisma-db";
 import startServer from "../../../src/bootstrap/app";
-import {clearDb, clearPrismaDb, DatePatternRegex, makeGetRequest, setupOwnerAndAdminUsers} from "../helpers";
-import { PrismaClient, Prisma } from '@prisma/client';
+import { clearDb, clearPrismaDb, DatePatternRegex, makeGetRequest, setupOwnerAndAdminUsers } from "../helpers";
+import { PrismaClient, Prisma } from "@prisma/client";
 import User, { UserStatus, Role as UserRole } from "../../../src/models/user";
-import {UserFactory} from "../../factories/UserFactory";
+import { UserFactory } from "../../factories/UserFactory";
 import UserDAO from "../../../src/DAO/UserDAO";
 
 let app: Server;
@@ -28,12 +28,12 @@ async function shutdown() {
 beforeAll(async () => {
     logger.debug("~~~~~~[V2] USER ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
-    logger.debug("server started")
+    logger.debug("server started");
     prismaConn = initializeDb(true);
     logger.debug("prisma conn started");
     // Create admin and owner users in db for rest of this suite's use
     [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
-    logger.debug("users created")
+    logger.debug("users created");
 
     // TODO: Replace with Prisma dao once we've implemented creating users
     userDao = new UserDAO();
@@ -54,16 +54,16 @@ afterAll(async () => {
 
 describe("User V2 API Endpoints", () => {
     afterEach(async () => {
-        logger.debug("aftereach test!")
+        logger.debug("aftereach test!");
         return await clearPrismaDb(prismaConn);
     });
 
     describe("GET /v2/users (get all users)", () => {
-        logger.debug("GET test!")
+        logger.debug("GET test!");
         const getAllRequest = (status = 200) => makeGetRequest(request(app), "/v2/users", status);
 
         it("should return an array of all the users in the db", async () => {
-            logger.debug("inside test!")
+            logger.debug("inside test!");
             // admin and owner user are inserted in beforeEach block; here we insert two additional users
             await userDao.createUsers([UserFactory.getUser("akos@example.com"), UserFactory.getUser()]);
 
@@ -80,7 +80,5 @@ describe("User V2 API Endpoints", () => {
             });
             expect(returnedAdmin.password).toBeUndefined();
         });
-    })
-})
-
-
+    });
+});

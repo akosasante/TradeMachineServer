@@ -1,3 +1,4 @@
+import { PrismaClient } from "@prisma/client";
 import compression from "compression";
 import connectRedis from "connect-redis";
 import express from "express";
@@ -22,6 +23,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev", { stream: { write: message => logger.info(message.trim()) } }));
 app.use(responseTime());
 app.use(rollbar.errorHandler());
+
+export interface ExpressAppSettings {
+    prisma: PrismaClient | undefined;
+}
 
 // Session tracking
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 60 sec * 60 min * 24hr * 7 = 7 days
