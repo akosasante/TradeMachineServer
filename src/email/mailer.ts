@@ -195,12 +195,12 @@ export const EMAILER = {
             })
             .then((res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent password reset email: ${inspect(res.messageId)}`);
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending password reset email: ${inspect(err)}`);
                 rollbar.error(err);
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 
@@ -225,12 +225,12 @@ export const EMAILER = {
                 } else {
                     logger.error("No message id found, not saving email to db.");
                 }
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending test email: ${inspect(err)}`);
                 rollbar.error(err);
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 
@@ -257,12 +257,12 @@ export const EMAILER = {
                 } else {
                     logger.error("No message id found, not saving email to db.");
                 }
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending registration email: ${inspect(err)}`);
                 rollbar.error(err);
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 
@@ -303,12 +303,12 @@ export const EMAILER = {
                     rollbar.error("sendTradeRequestEmail_NoEmailId", { recipient, id: trade.id });
                     logger.error("No message id found, not saving email to db.");
                 }
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade request email: ${inspect(err)}`);
                 rollbar.error(err, { recipient, id: trade.id });
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 
@@ -343,12 +343,12 @@ export const EMAILER = {
 
                     logger.error("No message id found, not saving email to db.");
                 }
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade declined email: ${inspect(err)}`);
                 rollbar.error(err, { recipient, id: trade.id });
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 
@@ -383,12 +383,12 @@ export const EMAILER = {
                     rollbar.error("sendTradeSubmissionEmail_NoEmailId", { recipient, id: trade.id });
                     logger.error("No message id found, not saving email to db.");
                 }
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade submission email: ${inspect(err)}`);
                 rollbar.error(err, { recipient, id: trade.id });
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 };
