@@ -39,7 +39,7 @@ jobs:
               run: make build
 
             - name: Compress built folders
-              uses: master-atul/tar-action@v1.1.0
+              uses: master-atul/tar-action@v1.1.2
               id: compress
               with:
                   command: c
@@ -63,7 +63,7 @@ jobs:
                   path: ./out-staging.tar.gz
 
             - name: Compress migration folder
-              uses: master-atul/tar-action@v1.1.0
+              uses: master-atul/tar-action@v1.1.2
               id: compress_migration
               with:
                   command: c
