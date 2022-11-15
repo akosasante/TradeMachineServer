@@ -8,7 +8,7 @@ on:
 jobs:
     build:
         name: Transpile typescript code and upload artifacts
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-22.04
 
         steps:
             - name: Notify Rollbar of deploy start
@@ -78,7 +78,7 @@ jobs:
     migrate:
         name: Backup db (if needed) and migarte to latest schema (if available)
         needs: build
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-22.04
 
         steps:
             - name: Download prisma folder
@@ -139,7 +139,7 @@ jobs:
     deploy:
         name: Deploy to digital ocean server
         needs: [build, migrate]
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-22.04
 
         steps:
             - name: Download dist folder
