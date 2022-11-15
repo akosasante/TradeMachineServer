@@ -56,6 +56,9 @@ jobs:
           PGPASSWORD: ${{ secrets.PG_PASSWORD }}
           PGDATABASE: ${{ secrets.PG_DB }}
 
+      - name: Run typechecking and linting
+        run: make typecheck && make lint
+
       - name: Run integration tests
         run: make test-ci-integration
         env:
@@ -87,7 +90,4 @@ jobs:
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
           DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-
-      - name: Run typechecking and linting
-        run: make typecheck && make lint
 
