@@ -56,8 +56,24 @@ jobs:
           PGPASSWORD: ${{ secrets.PG_PASSWORD }}
           PGDATABASE: ${{ secrets.PG_DB }}
 
-      - name: Run unit and integration tests
-        run: make test-ci
+      - name: Run integration tests
+        run: make test-ci-integration
+        env:
+          PG_USER: ${{ secrets.PG_USER }}
+          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          PG_DB: ${{ secrets.PG_DB }}
+          BASE_DIR: ${{ github.workspace }}
+          ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
+          BASE_URL: http://localhost:8080
+          TRADE_WORKSHEET_ID: 9999
+          TRADE_SPREADSHEET_ID: test_spreadsheet
+          V2_EMAILS: test@example.com
+          ROLLBAR_TOKEN: test
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+
+      - name: Run unit tests
+        run: make test-ci-unit
         env:
           PG_USER: ${{ secrets.PG_USER }}
           PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
