@@ -64,10 +64,10 @@ export async function handleEmailJob(emailJob: Job<EmailJob>): Promise<SendInBlu
     if (emailJob.name === "handle_webhook" && emailJob.data.event) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const event = JSON.parse(emailJob.data.event);
-        return await (emailTask as WebhookEmailFunction)(event);
+        return (emailTask as WebhookEmailFunction)(event);
     } else if (authEmailTasks.includes(emailJob.name) && emailJob.data.user) {
         const user = new User(JSON.parse(emailJob.data.user) as Partial<User> & Required<Pick<User, "email">>);
-        return await (emailTask as AuthEmailFunction)(user);
+        return (emailTask as AuthEmailFunction)(user);
     }
 }
 
@@ -87,7 +87,7 @@ export async function handleTradeEmailJob(emailJob: Job<TradeEmail>): Promise<Se
                 );
             }
         }
-        return await emailTask(emailJob.data.recipient, trade);
+        return emailTask(emailJob.data.recipient, trade);
     }
 }
 
