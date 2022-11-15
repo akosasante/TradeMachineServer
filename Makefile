@@ -1,6 +1,6 @@
 # List any targets that are not an actual file here to ensure they are always run
 .PHONY: help
-.PHONY: test-ci test-ci-local test-ci-integration test-unit test-integration test-update-snapshots test-local
+.PHONY: test-ci test-ci-unit test-ci-integration test-unit test-integration test-update-snapshots test-local
 .PHONY: watch-ts-files watch-js-server dev-server watch-js-debug-server debug-server
 .PHONY: lint lint-fix format compile-ts copy-email-templates build serve typecheck
 .PHONY: generate-migration run-migration revert-migration
@@ -17,7 +17,7 @@ test-ci: ## run tests using CI config, and no logging
 	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testTimeout=25000
 
-test-ci-local: ## run tests using CI config, and no logging
+test-ci-unit: ## run tests using CI config, and no logging
 	NODE_ENV=test ORM_CONFIG=test PG_SCHEMA=test \
 	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=unit/ --testTimeout=25000
