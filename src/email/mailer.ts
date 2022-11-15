@@ -178,7 +178,7 @@ export const EMAILER = {
 
     dao: new EmailDAO(),
 
-    sendPasswordResetEmail(this: void, user: User): Promise<SendInBlueSendResponse> {
+    sendPasswordResetEmail(this: void, user: User): Promise<SendInBlueSendResponse | undefined> {
         const resetPassPage = `${baseDomain}/reset_password?u=${encodeURI(user.passwordResetToken!)}`;
         logger.debug("sending password reset email");
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
@@ -204,7 +204,7 @@ export const EMAILER = {
             });
     },
 
-    sendTestEmail(this: void, user: User): Promise<SendInBlueSendResponse> {
+    sendTestEmail(this: void, user: User): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`sending test email to user: ${user}`);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
         return EMAILER.emailer
@@ -234,7 +234,7 @@ export const EMAILER = {
             });
     },
 
-    sendRegistrationEmail(this: void, user: User): Promise<SendInBlueSendResponse> {
+    sendRegistrationEmail(this: void, user: User): Promise<SendInBlueSendResponse | undefined> {
         logger.debug("sending registration email");
         const userEmailEncoded = Buffer.from(user.email).toString("base64");
         const registrationLink = `${baseDomain}/register?e=${userEmailEncoded}`;
@@ -266,7 +266,7 @@ export const EMAILER = {
             });
     },
 
-    sendTradeRequestEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+    sendTradeRequestEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`preparing trade req email for tradeId: ${trade.id}.`);
 
         const acceptUrl = `${baseDomain}/trade/${trade.id}/accept`;
@@ -312,7 +312,7 @@ export const EMAILER = {
             });
     },
 
-    sendTradeDeclinedEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+    sendTradeDeclinedEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`got a trade decline email request for tradeId: ${trade.id}, declined by: ${trade.declinedById}`);
         rollbar.info("sendTradeDeclinedEmail", { recipient, id: trade.id });
 
@@ -352,7 +352,7 @@ export const EMAILER = {
             });
     },
 
-    sendTradeSubmissionEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+    sendTradeSubmissionEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`got a trade submission email request for tradeId: ${trade.id}.`);
         const acceptUrl = `${baseDomain}/trade/${trade.id}/submit`;
         // const discardUrl = `${baseDomain}/trade/${trade!.id}/discard`

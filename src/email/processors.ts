@@ -19,8 +19,8 @@ export type EmailJobName =
     | "trade_declined"
     | "trade_accepted";
 
-type AuthEmailFunction = (u: User) => Promise<SendInBlueSendResponse>;
-type TradeEmailFunction = (r: string, t: Trade) => Promise<SendInBlueSendResponse>;
+type AuthEmailFunction = (u: User) => Promise<SendInBlueSendResponse | undefined>;
+type TradeEmailFunction = (r: string, t: Trade) => Promise<SendInBlueSendResponse | undefined>;
 type WebhookEmailFunction = (event: any, dao?: any) => Promise<void>;
 
 export interface EmailJob {
