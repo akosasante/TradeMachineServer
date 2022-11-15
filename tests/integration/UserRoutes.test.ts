@@ -81,11 +81,10 @@ describe("User API endpoints", () => {
 
         it("should return a list of user objects instance to the object(s) passed in", async () => {
             const { body } = await adminLoggedIn(postRequest([jatheeshUser.parse()]), app);
-            const expected = {
+            const expected: Partial<User> | Omit<User, "password"> = {
                 ...jatheeshUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
-                password: undefined,
             };
             delete expected.password;
 
@@ -100,7 +99,7 @@ describe("User API endpoints", () => {
             const { body } = await adminLoggedIn(postRequest([invalidPropsObj]), app);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             const { body: getBody } = await getOneRequest(body[0].id);
-            const expected = {
+            const expected: Partial<User> | Omit<User, "password"> = {
                 ...akosUser,
                 dateCreated: expect.stringMatching(DatePatternRegex),
                 dateModified: expect.stringMatching(DatePatternRegex),
@@ -260,7 +259,7 @@ describe("User API endpoints", () => {
 
             // Confirm db was actually updated:
             const { body: getOneBody } = await getOneRequest(adminUser.id!);
-            const expected = {
+            const expected: Partial<User> | Omit<User, "password"> = {
                 ...updatedAdmin(adminUser),
                 password: expect.any(String),
                 dateCreated: expect.stringMatching(DatePatternRegex),
@@ -276,7 +275,7 @@ describe("User API endpoints", () => {
 
             // Confirm db was NOT updated:
             const { body: getOneRes } = await getOneRequest(adminUser.id!);
-            const expected = {
+            const expected: Partial<User> | Omit<User, "password"> = {
                 ...adminUser,
                 password: expect.any(String),
                 dateCreated: expect.stringMatching(DatePatternRegex),
