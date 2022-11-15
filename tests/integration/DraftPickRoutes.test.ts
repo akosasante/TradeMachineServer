@@ -72,7 +72,7 @@ describe("Pick API endpoints", () => {
 
     afterEach(async () => {
         return await clearDb(getConnection(process.env.ORM_CONFIG));
-    });
+    }, 40000);
 
     describe("POST /picks (create new pick)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
@@ -202,7 +202,7 @@ describe("Pick API endpoints", () => {
             expect(highMajorPicks.map((returnedPick: DraftPick) => returnedPick.id)).toIncludeSameMembers(
                 picks.slice(3).map(p => p.id)
             );
-        });
+        }, 40000);
     });
 
     describe("GET /picks/:id (get one pick)", () => {

@@ -75,7 +75,7 @@ describe("Player API endpoints", () => {
 
     afterEach(async () => {
         return await clearDb(getConnection(process.env.ORM_CONFIG));
-    });
+    }, 40000);
 
     // describe("POST /players (create new player)", () => {
     //     const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
