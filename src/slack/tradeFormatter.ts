@@ -133,7 +133,8 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
         }
 
         function tradeUpholdTime() {
-            const nowEastern = utcToZonedTime(new Date(), "America/Toronto");
+            const nowUTC = new Date().toISOString();
+            const nowEastern = utcToZonedTime(nowUTC, "America/Toronto");
             const todayAt11 = set(new Date(nowEastern.valueOf()), {
                 hours: 23,
                 minutes: 0,
