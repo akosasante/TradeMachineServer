@@ -109,13 +109,13 @@ describe("Trade Formatter methods", () => {
         advanceTo(new Date("2018-12-27T23:01:00.000-04:00"));
         const textAfter11EST = TradeFormatter.getSubtitleText(trade);
         // trade will be upheld the day after next at 11pm
-        expect(textAfter11EST).toMatch("Sat Dec 29 2018, 11:00 p.m. EDT");
+        expect(textAfter11EST).toMatch("Sat Dec 29 2018, 11:00 p.m. EST");
 
         // mock date at 11:00pm on the dot, EDT
         advanceTo(new Date("2018-12-27T23:00:00.000-04:00"));
         const textAt11EST = TradeFormatter.getSubtitleText(trade);
         // trade will be upheld the day after next at 11pm
-        expect(textAt11EST).toMatch("Sat Dec 29 2018, 11:00 p.m. EDT");
+        expect(textAt11EST).toMatch("Sat Dec 29 2018, 11:00 p.m. EST");
     });
     it("prepPickText/3 should format a bullet point list of picks", async () => {
         const text = await TradeFormatter.prepPickText(true, TradeItem.filterPicks(trade.tradeItems), mockPickDao);
