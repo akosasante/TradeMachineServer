@@ -6,7 +6,7 @@ import { generateHashedPassword } from "../../src/authentication/auth";
 import { Connection } from "typeorm";
 import User from "../../src/models/user";
 import { PrismaClient } from "@prisma/client";
-import logger from "../bootstrap/logger";
+import logger from "../../src/bootstrap/logger";
 
 export async function makeLoggedInRequest(
     agent: request.SuperTest<request.Test>,
