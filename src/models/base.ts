@@ -22,9 +22,7 @@ export class BaseModel {
         if (value) {
             const indexOfS = Object.values(enumField).indexOf(value as unknown as typeof enumField);
 
-            const enumKey = Object.keys(enumField)[indexOfS];
-
-            return enumKey;
+            return Object.keys(enumField)[indexOfS];
         } else {
             return undefined;
         }
