@@ -99,20 +99,20 @@ describe("Trade Formatter methods", () => {
         expect(textAt11).toMatch("Fri Jun 29 2018, 11:00 p.m. EDT");
 
         // TESTING TIMES IN STANDARD TIME
-        // mock date at 11am on the dot, in EDT
-        advanceTo(new Date("2018-12-27T11:00:00.000-04:00"));
+        // mock date at 11am on the dot, in EST
+        advanceTo(new Date("2018-12-27T11:00:00.000-05:00"));
         const textBefore11EST = TradeFormatter.getSubtitleText(trade);
         // trade will be upheld by next day at 11pm
         expect(textBefore11EST).toMatch("Fri Dec 28 2018, 11:00 p.m. EST");
 
-        // mock date at 11:01pm, EDT
-        advanceTo(new Date("2018-12-27T23:01:00.000-04:00"));
+        // mock date at 11:01pm, EST
+        advanceTo(new Date("2018-12-27T23:01:00.000-05:00"));
         const textAfter11EST = TradeFormatter.getSubtitleText(trade);
         // trade will be upheld the day after next at 11pm
         expect(textAfter11EST).toMatch("Sat Dec 29 2018, 11:00 p.m. EST");
 
-        // mock date at 11:00pm on the dot, EDT
-        advanceTo(new Date("2018-12-27T23:00:00.000-04:00"));
+        // mock date at 11:00pm on the dot, EST
+        advanceTo(new Date("2018-12-27T23:00:00.000-05:00"));
         const textAt11EST = TradeFormatter.getSubtitleText(trade);
         // trade will be upheld the day after next at 11pm
         expect(textAt11EST).toMatch("Sat Dec 29 2018, 11:00 p.m. EST");
