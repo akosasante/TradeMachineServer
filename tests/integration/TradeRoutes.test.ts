@@ -84,7 +84,7 @@ describe("Trade API endpoints", () => {
 
     afterEach(async () => {
         return await clearDb(getConnection(process.env.ORM_CONFIG));
-    });
+    }, 40000);
 
     describe("POST /trades (create new trade)", () => {
         const expectErrorString = expect.stringMatching(/Trade is not valid/);
@@ -200,7 +200,7 @@ describe("Trade API endpoints", () => {
             expect((body.trades[0] as HydratedTrade).tradedMinors).toSatisfyAll((player: HydratedMinorLeaguer) =>
                 prospectIds.includes(player.id)
             );
-        }, 2000);
+        }, 40000);
         it("should only return hydrated trades that match the statuses given", async () => {
             const _draftTrade = await tradeDAO.createTrade(TradeFactory.getTrade());
             const pendingTrade = await tradeDAO.createTrade(

@@ -42,7 +42,7 @@ beforeAll(async () => {
     userDao = new UserDAO();
 
     return app;
-}, 5000);
+}, 15000);
 
 afterAll(async () => {
     logger.debug("~~~~~~USER ROUTES AFTER ALL~~~~~~");
@@ -63,7 +63,7 @@ describe("User API endpoints", () => {
     });
     afterEach(async () => {
         return await clearDb(getConnection(process.env.ORM_CONFIG));
-    });
+    }, 40000);
 
     describe("POST /users (create new user)", () => {
         const jatheeshUser = UserFactory.getUser("jatheesh@example.com");
@@ -120,7 +120,7 @@ describe("User API endpoints", () => {
             await userDao.createUsers([UserFactory.getUser(jatheeshUser.email).parse()]);
             const { body } = await adminLoggedIn(postRequest([jatheeshUser.parse()], 400), app);
             expect(body.stack).toEqual(expectQueryFailedErrorString);
-        });
+        }, 10000);
         it("should throw a 403 Forbidden Error if a non-admin tries to create a user", async () => {
             await ownerLoggedIn(postRequest([jatheeshUser.parse()], 403), app);
         });

@@ -58,7 +58,7 @@ test-integration: ## run tests using local testing config, only run tests in `in
 test-update-snapshots: ## update the jest snapshots (currently only targeted to mailer folder)
 	NODE_ENV=test ORM_CONFIG=local-test \
 	npx jest --config ./jest.ci-config.js \
-	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=mailer --update-snapshot
+	--testTimeout=25000 --detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=mailer --update-snapshot
 
 test-watch: ## Watch for changes and run tests for git changed files
 	@read -r -p $$'\e[4m\e[96m Do you want to enable logging? [Y/n]\e[0m: ' GENERAL_LOGGING_ENABLED; \

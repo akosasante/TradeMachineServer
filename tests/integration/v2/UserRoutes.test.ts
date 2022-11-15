@@ -39,7 +39,8 @@ beforeAll(async () => {
     userDao = new UserDAO();
 
     return app;
-}, 20000);
+    // TODO: Hopefully we can remove the timeout after not relying on TypeORM
+}, 40000);
 
 afterAll(async () => {
     logger.debug("~~~~~~[V2] USER ROUTES AFTER ALL~~~~~~");

@@ -42,7 +42,7 @@ describe("Email API endpoints", () => {
     });
     afterEach(async () => {
         return await clearDb(getConnection(process.env.ORM_CONFIG));
-    });
+    }, 40000);
 
     const emailPostRequest =
         (email: string, url: string, status = 202) =>

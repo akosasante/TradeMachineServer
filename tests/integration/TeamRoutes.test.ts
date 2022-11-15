@@ -49,7 +49,7 @@ beforeAll(async () => {
     userDAO = new UserDAO();
     teamDAO = new TeamDAO();
     return app;
-}, 5000);
+}, 25000);
 
 afterAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES AFTER ALL~~~~~~");
@@ -72,7 +72,7 @@ describe("Team API endpoints", () => {
 
     afterEach(async () => {
         return await clearDb(getConnection(process.env.ORM_CONFIG));
-    });
+    }, 40000);
 
     describe("POST /teams (create new team)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);

@@ -84,7 +84,7 @@ describe("Messenger API endpoints", () => {
 
     afterEach(async () => {
         return await clearDb(getConnection(process.env.ORM_CONFIG));
-    });
+    }, 40000);
 
     describe("POST /requestTrade/:id (send trade request email)", () => {
         const req =
