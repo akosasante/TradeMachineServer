@@ -17,7 +17,6 @@ import { UserFactory } from "../../factories/UserFactory";
 import logger from "../../../src/bootstrap/logger";
 import { MockObj } from "../DAO/daoHelpers";
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, Role.OWNER);
 const hashedPassword = generateHashedPassword(testUser.password!);
 const passwordlessUser = new User({ ...testUser });
@@ -229,4 +228,3 @@ describe("Authorization helper methods", () => {
         });
     });
 });
-/* eslint-enable @typescript-eslint/no-unsafe-assignment */

@@ -194,7 +194,7 @@ describe("TradeDAO", () => {
             { id: testTrade.id! },
             {
                 acceptedBy: [participant],
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
                 acceptedOnDate: expect.any(Date),
             }
         );
