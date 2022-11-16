@@ -8,7 +8,7 @@ datasource db {
 }
 
 model DraftPick {
-  id              String          @id(map: "PK_173c858141c28aba85f3f2b66bb") @db.Uuid @default(uuid())
+  id              String          @id(map: "PK_173c858141c28aba85f3f2b66bb") @default(uuid()) @db.Uuid
   dateCreated     DateTime        @default(now()) @db.Timestamp(6)
   dateModified    DateTime        @default(now()) @db.Timestamp(6)
   // The draft round for this pick (can be decimal because sometimes they have something like round 1.5 for additional picks)
@@ -26,7 +26,6 @@ model DraftPick {
   // [n-1] Maps to the FFF team that owned this pick at the start of the season. TODO: Should this field be marked as mandatory?
   originalOwnerId String?         @db.Uuid
   originalOwner   Team?           @relation("draft_pick_originalOwnerIdToteam", fields: [originalOwnerId], references: [id], onUpdate: NoAction, map: "FK_5e448065a1f32514925e8045b61")
-
 
   @@unique([type, season, round, originalOwnerId], map: "UQ_b0ee29a2eed55b5c4739873e3cd")
   @@index([currentOwnerId, originalOwnerId], map: "IDX_0de9414ff65ab246290e2793ac")
@@ -46,7 +45,6 @@ model Email {
   tradeId      String?  @db.Uuid
   trade        Trade?   @relation(fields: [tradeId], references: [id], onUpdate: NoAction, map: "FK_9140a2b1ba9cdc4e9c273f0eb21")
 
-
   @@index([status], map: "IDX_7d64d8e03978e61c58c436ec31")
   @@map("email")
 }
@@ -61,7 +59,7 @@ model migrations {
 }
 
 model Player {
-  id           String             @id(map: "PK_9fd0dba262c28fb584448f6ec12") @db.Uuid @default(uuid())
+  id           String             @id(map: "PK_9fd0dba262c28fb584448f6ec12") @default(uuid()) @db.Uuid
   dateCreated  DateTime           @default(now()) @db.Timestamp(6)
   dateModified DateTime           @default(now()) @db.Timestamp(6)
   // Name of the baseball player
@@ -77,7 +75,6 @@ model Player {
   // [n-1] The team in FFF who currently owns this player, if any.
   leagueTeamId String?            @db.Uuid
   ownerTeam    Team?              @relation(fields: [leagueTeamId], references: [id], onUpdate: NoAction, map: "FK_1aad05b09bda2079429cd8ba9d8")
-
 
   @@unique([name, playerDataId], map: "UQ_b3fd08fd2ba540e6fc2b6946e2c")
   @@index([leagueTeamId], map: "IDX_1aad05b09bda2079429cd8ba9d")
@@ -109,7 +106,7 @@ model schema_migrations {
 }
 
 model Settings {
-  id               String    @id(map: "PK_173c858141c28aba85f3f2b66cc") @db.Uuid @default(uuid())
+  id               String    @id(map: "PK_173c858141c28aba85f3f2b66cc") @default(uuid()) @db.Uuid
   dateCreated      DateTime  @default(now()) @db.Timestamp(6)
   dateModified     DateTime  @default(now()) @db.Timestamp(6)
   // Not currently really used, but in theory would allow us to set a flag on the website for when trades can/cannot be made (time of day).
@@ -121,7 +118,6 @@ model Settings {
   modifiedById     String?   @db.Uuid
   modifiedBy       User?     @relation(fields: [modifiedById], references: [id], onUpdate: NoAction, map: "FK_cb5f64b730072c78ba13d5db952")
 
-
   @@index([downtime, modifiedById], map: "IDX_032a9a86a6ea1ccd874a452f62")
   @@index([tradeWindowStart, tradeWindowEnd, modifiedById], map: "IDX_3fa40f2df01d35d0bbed8264ca")
   @@index([modifiedById], map: "IDX_cb5f64b730072c78ba13d5db95")
@@ -129,7 +125,7 @@ model Settings {
 }
 
 model Team {
-  id                 String             @id(map: "PK_d4c9ceb4d198d0214d982242c10") @db.Uuid @default(uuid())
+  id                 String             @id(map: "PK_d4c9ceb4d198d0214d982242c10") @default(uuid()) @db.Uuid
   dateCreated        DateTime           @default(now()) @db.Timestamp(6)
   dateModified       DateTime           @default(now()) @db.Timestamp(6)
   // The id of the FFF team in ESPN, used for pulling ESPN data like the team name for display or synch
@@ -140,10 +136,10 @@ model Team {
   status             TeamStatus         @default(DISABLED)
   // Unstructured data pulled from ESPN; mostly not currently used
   espnTeam           Json?
-  // [1-n] A list of the draft picks that this team currently owns (not filtered by year or anything)
-  currentDraftPicks  DraftPick[]        @relation("draft_pick_currentOwnerIdToteam")
   // [1-n] A list of the draft picks that this team owned at the beginning of a season (not filtered by year or anything)
   originalDraftPicks DraftPick[]        @relation("draft_pick_originalOwnerIdToteam")
+  // [1-n] A list of the draft picks that this team currently owns (not filtered by year or anything)
+  currentDraftPicks  DraftPick[]        @relation("draft_pick_currentOwnerIdToteam")
   // [1-n] A list of players that this team currently owns
   players            Player[]
   // [1-n] A list of tradeItems received by this team (all-time)
@@ -159,7 +155,7 @@ model Team {
 }
 
 model Trade {
-  id                String             @id(map: "PK_8a1cea805d050478a2482f0960e") @db.Uuid @default(uuid())
+  id                String             @id(map: "PK_8a1cea805d050478a2482f0960e") @default(uuid()) @db.Uuid
   dateCreated       DateTime           @default(now()) @db.Timestamp(6)
   dateModified      DateTime           @default(now()) @db.Timestamp(6)
   // What state the trade is curerntly in (draft, submitted, etc)
@@ -179,13 +175,12 @@ model Trade {
   // [1-n] List of trade participants that took part in this trade (always at least 2, constrained at app-level)
   tradeParticipants TradeParticipant[]
 
-
   @@index([declinedById], map: "IDX_33ece5157bae9642f83f4e69e6")
   @@map("trade")
 }
 
 model TradeItem {
-  id            String        @id @db.Uuid @default(uuid())
+  id            String        @id @default(uuid()) @db.Uuid
   dateCreated   DateTime      @default(now()) @db.Timestamp(6)
   dateModified  DateTime      @default(now()) @db.Timestamp(6)
   // this is the primary key id of a draft pick or player. TODO is there a way to represent this polymorphic column in prisma?
@@ -202,11 +197,9 @@ model TradeItem {
   recipientId   String?       @db.Uuid
   recipient     Team?         @relation("teamTotrade_item_recipientId", fields: [recipientId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_1abdf634a91dc15221fecbd2535")
 
-
   // TODO From typeorm, should these be in the db too?
   // @Index("player_trade_item_index", { synchronize: false })
   //@Index("pick_trade_item_index", { synchronize: false })
-
   @@unique([tradeId, tradeItemId, tradeItemType, senderId, recipientId], map: "IDX_e052cf9b5b061404e7d9757a5f")
   @@index([recipientId], map: "IDX_1abdf634a91dc15221fecbd253")
   @@index([senderId, recipientId], map: "IDX_5183edace8d48f41e21706f3de")
@@ -216,7 +209,7 @@ model TradeItem {
 }
 
 model TradeParticipant {
-  id              String               @id(map: "PK_60f29eec159bc8b923a8ebda680") @db.Uuid @default(uuid())
+  id              String               @id(map: "PK_60f29eec159bc8b923a8ebda680") @default(uuid()) @db.Uuid
   dateCreated     DateTime             @default(now()) @db.Timestamp(6)
   dateModified    DateTime             @default(now()) @db.Timestamp(6)
   // Indicates whether this participant created/initiated/requested the trade or if they're a 'receiver'
@@ -232,7 +225,6 @@ model TradeParticipant {
   // From typeorm should these be in the db too?
   // @Index("trade_creator_index", { synchronize: false })
   //@Index("trade_recipient_index", { synchronize: false })
-
   @@unique([tradeId, teamId], map: "IDX_6cefad40c0c9cbb34500c9f2b5")
   @@index([participantType], map: "IDX_4790898869f46e4f7714c23f4e")
   @@index([teamId], map: "IDX_6f42978de8c286663f97f12c9d")
@@ -251,7 +243,7 @@ model typeorm_metadata {
 }
 
 model User {
-  id                     String     @id(map: "PK_46a8d3f2767f238737f7bbde32a") @db.Uuid @default(uuid())
+  id                     String     @id(map: "PK_46a8d3f2767f238737f7bbde32a") @default(uuid()) @db.Uuid
   dateCreated            DateTime   @default(now()) @db.Timestamp(6)
   dateModified           DateTime   @default(now()) @db.Timestamp(6)
   // email address used for login and for trademachine to send emails to
@@ -277,50 +269,19 @@ model User {
   // unstructured data from ESPN mapping to this user; not sure if this currently used at all
   espnMember             Json?
   // [n-1] each user can only be a member of 0-1 teams but teams can have multiple users
-  team                   Team?      @relation(fields: [teamId], references: [id], onUpdate: NoAction, map: "FK_77f62757967de516e50ff134e35") // TODO: does this cover ondelete: set null?
   teamId                 String?    @db.Uuid
+  // TODO: does this cover ondelete: set null?
+  team                   Team?      @relation(fields: [teamId], references: [id], onUpdate: NoAction, map: "FK_77f62757967de516e50ff134e35")
   // [1-n] settings modified by this user
   modifiedSettings       Settings[]
 
   @@map("user")
 }
 
-model xc_knex_migrations {
-  id             Int       @id @default(autoincrement())
-  name           String?   @db.VarChar(255)
-  batch          Int?
-  migration_time DateTime? @db.Timestamptz(6)
-
-  @@ignore()
-}
-
-model xc_knex_migrations_lock {
-  index     Int  @id @default(autoincrement())
-  is_locked Int?
-
-  @@ignore()
-}
-
-model xc_knex_migrationsv2 {
-  id             Int       @id @default(autoincrement())
-  name           String?   @db.VarChar(255)
-  batch          Int?
-  migration_time DateTime? @db.Timestamptz(6)
-
-  @@ignore()
-}
-
-model xc_knex_migrationsv2_lock {
-  index     Int  @id @default(autoincrement())
-  is_locked Int?
-
-  @@ignore()
-}
-
 enum PickLeagueLevel {
-  MAJORS      @map("1")
-  HIGHMINORS  @map("2")
-  LOWMINORS   @map("3")
+  MAJORS     @map("1")
+  HIGHMINORS @map("2")
+  LOWMINORS  @map("3")
 
   @@map("draft_pick_type_enum")
 }
@@ -336,55 +297,55 @@ enum oban_job_state {
 }
 
 enum PlayerLeagueLevel {
-  MAJORS  @map("1")
-  MINORS  @map("2")
+  MAJORS @map("1")
+  MINORS @map("2")
 
   @@map("player_league_enum")
 }
 
 enum TeamStatus {
-  ACTIVE    @map("1")
-  DISABLED  @map("2")
+  ACTIVE   @map("1")
+  DISABLED @map("2")
 
   @@map("team_status_enum")
 }
 
 enum TradeItemType {
-  PLAYER  @map("1")
-  PICK    @map("2")
+  PLAYER @map("1")
+  PICK   @map("2")
 
   @@map("trade_item_tradeitemtype_enum")
 }
 
 enum TradeParticipantType {
-  CREATOR    @map("1")
-  RECIPIENT  @map("2")
+  CREATOR   @map("1")
+  RECIPIENT @map("2")
 
   @@map("trade_participant_participanttype_enum")
 }
 
 enum TradeStatus {
-  DRAFT      @map("1")
-  REQUESTED  @map("2")
-  PENDING    @map("3")
-  ACCEPTED   @map("4")
-  REJECTED   @map("5")
-  SUBMITTED  @map("6")
+  DRAFT     @map("1")
+  REQUESTED @map("2")
+  PENDING   @map("3")
+  ACCEPTED  @map("4")
+  REJECTED  @map("5")
+  SUBMITTED @map("6")
 
   @@map("trade_status_enum")
 }
 
 enum UserRole {
-  ADMIN         @map("1")
-  OWNER         @map("2")
-  COMMISSIONER  @map("3")
+  ADMIN        @map("1")
+  OWNER        @map("2")
+  COMMISSIONER @map("3")
 
   @@map("user_role_enum")
 }
 
 enum UserStatus {
-  ACTIVE    @map("1")
-  INACTIVE  @map("2")
+  ACTIVE   @map("1")
+  INACTIVE @map("2")
 
   @@map("user_status_enum")
 }
