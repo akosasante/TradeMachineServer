@@ -2,7 +2,7 @@
 .PHONY: help
 .PHONY: test-ci test-ci-unit test-ci-integration test-unit test-integration test-update-snapshots test-local
 .PHONY: watch-ts-files watch-js-server dev-server watch-js-debug-server debug-server
-.PHONY: lint lint-fix format compile-ts copy-email-templates build serve typecheck
+.PHONY: lint lint-fix format compile-ts copy-email-templates build serve typecheck fullcheck
 .PHONY: generate-migration run-migration revert-migration
 
 help: ## show make commands
@@ -159,6 +159,8 @@ serve: ## Serve the node server statically (no restarting on file changes)
 
 typecheck: ## Check for type errors that would cause failures to build
 	npx tsc --noEmit --incremental false
+
+fullcheck: lint-fix format typecheck lint
 
 # |----------- DATABASE MIGRATION SCRIPTS ---------|
 generate-migration: ## Generate a new migration file with name=MIGRATION_NAME and using config for ENV
