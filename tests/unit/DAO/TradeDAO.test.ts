@@ -1,4 +1,5 @@
-import { FindOperator, Repository } from "typeorm";
+import "jest-extended";
+import { FindOperator, Repository, Raw } from "typeorm";
 import TradeDAO from "../../../src/DAO/TradeDAO";
 import { TradeFactory } from "../../factories/TradeFactory";
 import { TeamFactory } from "../../factories/TeamFactory";
@@ -92,7 +93,7 @@ describe("TradeDAO", () => {
         const expectedParticipantsClause = [
             { tradeCreator: team.name },
             {
-                tradeRecipients: new FindOperator("raw", expect.any(Array), true, true, expect.any(Function), {
+                tradeRecipients: new FindOperator("raw", [], true, true, expect.any(Function) as any, {
                     teamName: team.name,
                 }),
             },
@@ -117,7 +118,7 @@ describe("TradeDAO", () => {
             },
             {
                 tradeStatus: new FindOperator("in", pendingStatuses, true, true, undefined),
-                tradeRecipients: new FindOperator("raw", [], true, true, expect.any(Function), {
+                tradeRecipients: new FindOperator("raw", [], true, true, expect.any(Function) as any, {
                     teamName: team.name,
                 }),
             },
