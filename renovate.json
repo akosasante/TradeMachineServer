@@ -3,6 +3,7 @@
   "extends": [
     "config:base"
   ],
+  "timezone": "America/Toronto",
   "packageRules": [
     {
       "groupName": "devDependencies (non-major)",
