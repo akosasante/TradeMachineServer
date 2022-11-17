@@ -9,7 +9,7 @@
   "dependencies": {
     "@fast-csv/parse": "^4.3.6",
     "@prisma/client": "^4.0.0",
-    "@slack/webhook": "^5.0.4",
+    "@slack/webhook": "^6.0.0",
     "axios": "^0.27.0",
     "bcryptjs": "^2.4.3",
     "bull": "^4.10.1",
