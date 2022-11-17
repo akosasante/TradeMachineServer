@@ -12,7 +12,8 @@
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["patch", "minor"],
       "automerge": true,
-      "automergeSchedule": "before 8am on Saturday"
+      "automergeSchedule": "before 8am on Saturday",
+      "excludePackageNames": ["typescript"]
     },
     {
       "groupName": "npm dependencies (patch-only)",
