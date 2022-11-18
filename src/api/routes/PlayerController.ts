@@ -59,7 +59,7 @@ export default class PlayerController {
 
     @Get("/search")
     public async findPlayersByQuery(
-        @QueryParams() query: Partial<Player>,
+        @QueryParams() query: Partial<Player> & { leagueTeamId?: string },
         @Req() request?: Request
     ): Promise<Player[]> {
         logger.debug(`searching for player with props: ${inspect(query)}`);

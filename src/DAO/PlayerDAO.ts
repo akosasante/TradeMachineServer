@@ -10,6 +10,7 @@ import {
     FindOneOptions,
 } from "typeorm";
 import Player from "../models/player";
+import Team from "../models/team";
 
 interface PlayerDeleteResult extends DeleteResult {
     raw: Player[];
@@ -36,8 +37,22 @@ export default class PlayerDAO {
         return await this.playerDb.findOne({ where: { name } } as FindOneOptions<Player>);
     }
 
-    public async findPlayers(query: Partial<Player>, limit?: number): Promise<Player[]> {
-        const options: FindManyOptions = limit ? { where: query, take: limit } : { where: query };
+    public async findPlayers(
+        query: FindOptionsWhere<Player> & { leagueTeamId?: string },
+        limit?: number
+    ): Promise<Player[]> {
+        const leagueTeamId = query.leagueTeamId;
+        let options: FindManyOptions<Player> = {};
+        let where;
+        if (leagueTeamId) {
+            delete query.leagueTeamId;
+            const leagueTeam: FindOptionsWhere<Team> = { id: leagueTeamId };
+            where = { ...query, leagueTeam };
+        } else {
+            where = { ...query };
+        }
+
+        options = limit ? { where, take: limit } : { where };
         return await this.playerDb.find(options);
     }
 
@@ -103,7 +118,7 @@ export default class PlayerDAO {
     public async deleteAllPlayers(query?: Partial<Player>): Promise<void> {
         let allPlayers: Player[];
         if (query) {
-            allPlayers = await this.findPlayers(query);
+            allPlayers = await this.findPlayers(query as FindOptionsWhere<Player> & { leagueTeamId?: string });
         } else {
             allPlayers = await this.getAllPlayers();
         }
