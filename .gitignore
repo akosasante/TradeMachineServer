@@ -11,6 +11,7 @@ dist
 *.njsproj
 *.sln
 .vscode
+*.iml
 
 # Logs
 logs
