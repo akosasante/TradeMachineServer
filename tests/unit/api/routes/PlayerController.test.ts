@@ -61,10 +61,7 @@ describe("PlayerController", () => {
 
             expect(mockPlayerDAO.getAllPlayers).toHaveBeenCalledTimes(0);
             expect(mockPlayerDAO.findPlayers).toHaveBeenCalledTimes(1);
-            expect(mockPlayerDAO.findPlayers).toHaveBeenCalledWith([
-                { league: PlayerLeagueType.MINOR },
-                { league: PlayerLeagueType.MAJOR },
-            ]);
+            expect(mockPlayerDAO.findPlayers.mock.calls[0][0].league).toMatchObject({"_multipleParameters": true, "_type": "in", "_value": [2, 1]});
             expect(res).toEqual([testPlayer]);
         });
         it("should bubble up any errors from the DAO", async () => {
