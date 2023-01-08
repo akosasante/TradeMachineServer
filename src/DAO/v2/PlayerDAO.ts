@@ -30,7 +30,7 @@ export default class PlayerDAO {
     }
 }
 
-function normalizePlayerQuery(query: { [field: string]: string }[]) {
+function normalizePlayerQuery(query: { [field: string]: string }[]): { [field: string]: string }[] {
     return query.reduce((queryAcc: { [field: string]: string }[], kvp: { [field: string]: string }) => {
         const fields = Object.keys(kvp);
         if (fields.length > 1) {
