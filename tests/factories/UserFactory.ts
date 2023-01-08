@@ -1,6 +1,6 @@
-import User, {Role} from "../../src/models/user";
-import {User as PrismaUser, UserRole} from '@prisma/client';
-import {v4 as uuid} from "uuid";
+import User, { Role } from "../../src/models/user";
+import { User as PrismaUser, UserRole } from "@prisma/client";
+import { v4 as uuid } from "uuid";
 
 export class UserFactory {
     /* eslint-disable @typescript-eslint/naming-convention */
@@ -19,7 +19,7 @@ export class UserFactory {
         role = Role.ADMIN,
         rest = {}
     ) {
-        return {id: uuid(), email, displayName, password, role, ...rest};
+        return { id: uuid(), email, displayName, password, role, ...rest };
     }
 
     public static getPrismaUser(
@@ -27,20 +27,25 @@ export class UserFactory {
         displayName = UserFactory.GENERIC_NAME,
         password = UserFactory.GENERIC_PASSWORD,
         role = UserRole.ADMIN,
-        rest = {}): PrismaUser {
+        rest = {}
+    ): PrismaUser {
         return {
-            id: uuid(), email, displayName, password, role,
+            id: uuid(),
+            email,
+            displayName,
+            password,
+            role,
             dateCreated: new Date(),
             dateModified: new Date(),
             slackUsername: null,
             lastLoggedIn: null,
             passwordResetExpiresOn: null,
             passwordResetToken: null,
-            status: 'ACTIVE',
+            status: "ACTIVE",
             csvName: null,
             espnMember: null,
             teamId: null,
-            ...rest
+            ...rest,
         };
     }
 
@@ -63,6 +68,6 @@ export class UserFactory {
     }
 
     public static getPasswordlessOwner() {
-        return new User({email: UserFactory.OWNER_EMAIL, displayName: "Len Mitch", role: Role.OWNER});
+        return new User({ email: UserFactory.OWNER_EMAIL, displayName: "Len Mitch", role: Role.OWNER });
     }
 }

@@ -192,7 +192,6 @@ describe("UserDAO", () => {
 
     describe("setPasswordExpires", () => {
         it("should return successfully if db call has on errors", async () => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const updatePartial = { passwordResetExpiresOn: expect.any(Date), passwordResetToken: expect.any(String) };
             const res = await userDAO.setPasswordExpires(testUser.id!);
 

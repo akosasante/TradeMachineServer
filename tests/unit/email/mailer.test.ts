@@ -44,27 +44,47 @@ describe("EMAILER Class", () => {
     describe("email snapshots", () => {
         // each test removes dynamic message/messageId values that we don't want to match on in our snapshots
         it("sendTestEmail", async () => {
-            const { message, messageId, ...res } = await EMAILER.sendTestEmail(testUser);
+            const email = await EMAILER.sendTestEmail(testUser);
+            if (!email) {
+                throw new Error("sendTestEmail returned undefined");
+            }
+            const { message, messageId, ...res } = email;
             expect(res).toMatchSnapshot();
         });
 
         it("sendRegistrationEmail", async () => {
-            const { message, messageId, ...res } = await EMAILER.sendRegistrationEmail(testUser);
+            const email = await EMAILER.sendRegistrationEmail(testUser);
+            if (!email) {
+                throw new Error("sendRegistrationEmail returned undefined");
+            }
+            const { message, messageId, ...res } = email;
             expect(res).toMatchSnapshot();
         });
 
         it("sendPasswordResetEmail", async () => {
-            const { message, messageId, ...res } = await EMAILER.sendPasswordResetEmail(testUser);
+            const email = await EMAILER.sendPasswordResetEmail(testUser);
+            if (!email) {
+                throw new Error("sendPasswordResetEmail returned undefined");
+            }
+            const { message, messageId, ...res } = email;
             expect(res).toMatchSnapshot();
         });
 
         it("sendTradeRequestEmail", async () => {
-            const { message, messageId, ...res } = await EMAILER.sendTradeRequestEmail(testUser.email, testTrade);
+            const email = await EMAILER.sendTradeRequestEmail(testUser.email, testTrade);
+            if (!email) {
+                throw new Error("sendTradeRequestEmail returned undefined");
+            }
+            const { message, messageId, ...res } = email;
             expect(res).toMatchSnapshot();
         });
 
         it("sendTradeSubmissionEmail", async () => {
-            const { message, messageId, ...res } = await EMAILER.sendTradeSubmissionEmail(testUser.email, testTrade);
+            const email = await EMAILER.sendTradeSubmissionEmail(testUser.email, testTrade);
+            if (!email) {
+                throw new Error("sendTradeSubmissionEmail returned undefined");
+            }
+            const { message, messageId, ...res } = email;
             expect(res).toMatchSnapshot();
         });
 
@@ -72,7 +92,11 @@ describe("EMAILER Class", () => {
             testTrade.recipients[0].owners = [UserFactory.getOwnerUser()];
             testTrade.declinedById = testTrade.recipients[0].owners?.[0].id;
             testTrade.declinedReason = "horrible mismatch for me";
-            const { message, messageId, ...res } = await EMAILER.sendTradeDeclinedEmail(testUser.email, testTrade);
+            const email = await EMAILER.sendTradeDeclinedEmail(testUser.email, testTrade);
+            if (!email) {
+                throw new Error("sendTradeDeclinedEmail returned undefined");
+            }
+            const { message, messageId, ...res } = email;
             expect(res).toMatchSnapshot();
         });
     });

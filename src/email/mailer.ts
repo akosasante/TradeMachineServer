@@ -178,10 +178,10 @@ export const EMAILER = {
 
     dao: new EmailDAO(),
 
-    sendPasswordResetEmail(this: void, user: User): Promise<SendInBlueSendResponse> {
+    sendPasswordResetEmail(this: void, user: User): Promise<SendInBlueSendResponse | undefined> {
         const resetPassPage = `${baseDomain}/reset_password?u=${encodeURI(user.passwordResetToken!)}`;
         logger.debug("sending password reset email");
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+
         return EMAILER.emailer
             .send({
                 template: "reset_password",
@@ -195,18 +195,18 @@ export const EMAILER = {
             })
             .then((res: SendInBlueSendResponse) => {
                 logger.info(`Successfully sent password reset email: ${inspect(res.messageId)}`);
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending password reset email: ${inspect(err)}`);
                 rollbar.error(err);
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 
-    sendTestEmail(this: void, user: User): Promise<SendInBlueSendResponse> {
+    sendTestEmail(this: void, user: User): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`sending test email to user: ${user}`);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+
         return EMAILER.emailer
             .send({
                 template: "test_email",
@@ -225,20 +225,20 @@ export const EMAILER = {
                 } else {
                     logger.error("No message id found, not saving email to db.");
                 }
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending test email: ${inspect(err)}`);
                 rollbar.error(err);
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 
-    sendRegistrationEmail(this: void, user: User): Promise<SendInBlueSendResponse> {
+    sendRegistrationEmail(this: void, user: User): Promise<SendInBlueSendResponse | undefined> {
         logger.debug("sending registration email");
         const userEmailEncoded = Buffer.from(user.email).toString("base64");
         const registrationLink = `${baseDomain}/register?e=${userEmailEncoded}`;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+
         return EMAILER.emailer
             .send({
                 template: "registration_email",
@@ -257,16 +257,16 @@ export const EMAILER = {
                 } else {
                     logger.error("No message id found, not saving email to db.");
                 }
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending registration email: ${inspect(err)}`);
                 rollbar.error(err);
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 
-    sendTradeRequestEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+    sendTradeRequestEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`preparing trade req email for tradeId: ${trade.id}.`);
 
         const acceptUrl = `${baseDomain}/trade/${trade.id}/accept`;
@@ -276,7 +276,6 @@ export const EMAILER = {
         logger.debug(`sending trade request email to=${recipient}, acceptUrl=${acceptUrl}, rejectUrl=${rejectUrl}`);
         rollbar.info("sendTradeRequestEmail", { recipient, id: trade.id });
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
         return EMAILER.emailer
             .send({
                 template: "trade_request",
@@ -303,20 +302,19 @@ export const EMAILER = {
                     rollbar.error("sendTradeRequestEmail_NoEmailId", { recipient, id: trade.id });
                     logger.error("No message id found, not saving email to db.");
                 }
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade request email: ${inspect(err)}`);
                 rollbar.error(err, { recipient, id: trade.id });
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 
-    sendTradeDeclinedEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+    sendTradeDeclinedEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`got a trade decline email request for tradeId: ${trade.id}, declined by: ${trade.declinedById}`);
         rollbar.info("sendTradeDeclinedEmail", { recipient, id: trade.id });
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
         return EMAILER.emailer
             .send({
                 template: "trade_declined",
@@ -343,23 +341,22 @@ export const EMAILER = {
 
                     logger.error("No message id found, not saving email to db.");
                 }
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade declined email: ${inspect(err)}`);
                 rollbar.error(err, { recipient, id: trade.id });
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 
-    sendTradeSubmissionEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse> {
+    sendTradeSubmissionEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`got a trade submission email request for tradeId: ${trade.id}.`);
         const acceptUrl = `${baseDomain}/trade/${trade.id}/submit`;
         // const discardUrl = `${baseDomain}/trade/${trade!.id}/discard`
         logger.debug(`sending trade submission email to=${recipient}, acceptUrl=${acceptUrl}, discardUrl=""`);
         rollbar.info("sendTradeSubmissionEmail", { recipient, id: trade.id });
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
         return EMAILER.emailer
             .send({
                 template: "trade_accepted",
@@ -383,12 +380,12 @@ export const EMAILER = {
                     rollbar.error("sendTradeSubmissionEmail_NoEmailId", { recipient, id: trade.id });
                     logger.error("No message id found, not saving email to db.");
                 }
-                return res;
+                return Promise.resolve(res);
             })
             .catch((err: Error) => {
                 logger.error(`Ran into an error while sending trade submission email: ${inspect(err)}`);
                 rollbar.error(err, { recipient, id: trade.id });
-                return undefined;
+                return Promise.resolve(undefined);
             });
     },
 };

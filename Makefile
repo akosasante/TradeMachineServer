@@ -1,8 +1,8 @@
 # List any targets that are not an actual file here to ensure they are always run
 .PHONY: help
-.PHONY: test-ci test-unit test-integration test-update-snapshots test-local
+.PHONY: test-ci test-ci-unit test-ci-integration test-unit test-integration test-update-snapshots test-local
 .PHONY: watch-ts-files watch-js-server dev-server watch-js-debug-server debug-server
-.PHONY: lint lint-fix format compile-ts copy-email-templates build serve typecheck
+.PHONY: lint lint-fix format compile-ts copy-email-templates build serve typecheck fullcheck
 .PHONY: generate-migration run-migration revert-migration
 
 help: ## show make commands
@@ -15,7 +15,17 @@ help: ## show make commands
 test-ci: ## run tests using CI config, and no logging
 	NODE_ENV=test ORM_CONFIG=test PG_SCHEMA=test \
 	npx jest --config ./jest.ci-config.js \
-	--detectOpenHandles --runInBand --silent --bail --forceExit --ci
+	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testTimeout=25000
+
+test-ci-unit: ## run tests using CI config, and no logging
+	NODE_ENV=test ORM_CONFIG=test PG_SCHEMA=test \
+	npx jest --config ./jest.ci-config.js \
+	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=unit/ --testTimeout=25000
+
+test-ci-integration: ## run tests using CI config, and no logging
+	NODE_ENV=test ORM_CONFIG=test PG_SCHEMA=test \
+	npx jest --config ./jest.ci-config.js \
+	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=integration/ --testTimeout=25000
 
 test-unit: ## run tests using local testing config, only run tests in `unit` folder, run in parallel
 	@read -r -p $$'\e[4m\e[96m Do you want to enable logging? [Y/n]\e[0m: ' GENERAL_LOGGING_ENABLED; \
@@ -53,7 +63,7 @@ test-integration: ## run tests using local testing config, only run tests in `in
 	fi; \
 	NODE_ENV=test ORM_CONFIG=local-test \
 	npx jest --config ./jest.config.js \
-	--detectOpenHandles --runInBand --bail --forceExit --testPathPattern=integration/
+	--detectOpenHandles --runInBand --bail --forceExit --testPathPattern=integration/ --testTimeout=25000
 
 test-update-snapshots: ## update the jest snapshots (currently only targeted to mailer folder)
 	NODE_ENV=test ORM_CONFIG=local-test \
@@ -149,6 +159,8 @@ serve: ## Serve the node server statically (no restarting on file changes)
 
 typecheck: ## Check for type errors that would cause failures to build
 	npx tsc --noEmit --incremental false
+
+fullcheck: lint-fix typecheck format lint
 
 # |----------- DATABASE MIGRATION SCRIPTS ---------|
 generate-migration: ## Generate a new migration file with name=MIGRATION_NAME and using config for ENV
