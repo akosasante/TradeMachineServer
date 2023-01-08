@@ -5,7 +5,8 @@ import { UserFactory } from "../factories/UserFactory";
 import { generateHashedPassword } from "../../src/authentication/auth";
 import { Connection } from "typeorm";
 import User from "../../src/models/user";
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
+import logger from "../../src/bootstrap/logger";
 
 export async function makeLoggedInRequest(
     agent: request.SuperTest<request.Test>,
@@ -111,18 +112,20 @@ export const clearDb: (connection: Connection) => Promise<void> = async (connect
     return await connection.synchronize(true);
 };
 
-export const clearPrismaDb = async (prisma: PrismaClient, schema: string = "test") => {
-    const tableNames = await prisma.$queryRaw<Array<{ tablename: string }>>`SELECT tablename FROM pg_tables WHERE schemaname=${schema};`;
+export const clearPrismaDb = async (prisma: PrismaClient, schema = "test") => {
+    const tableNames = await prisma.$queryRaw<
+        { tablename: string }[]
+    >`SELECT tablename FROM pg_tables WHERE schemaname=${schema};`;
 
     const tables = tableNames
         .map(({ tablename }) => tablename)
-        .filter((name) => !['typeorm_metadata', '_prisma_migrations', 'query-result-cache', 'oban_jobs'].includes(name))
-        .map((name) => `"${schema}"."${name}"`)
-        .join(', ')
+        .filter(name => !["typeorm_metadata", "_prisma_migrations", "query-result-cache", "oban_jobs"].includes(name))
+        .map(name => `"${schema}"."${name}"`)
+        .join(", ");
 
     try {
-        return await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`)
+        return await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);
     } catch (error) {
-        console.log({ error })
+        logger.error({ error });
     }
-}
+};

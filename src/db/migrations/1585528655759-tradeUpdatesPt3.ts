@@ -1,3 +1,5 @@
+// noinspection SyntaxError
+
 import {MigrationInterface, QueryRunner} from "typeorm";
 
 export class tradeUpdatesPt31585528655759 implements MigrationInterface {

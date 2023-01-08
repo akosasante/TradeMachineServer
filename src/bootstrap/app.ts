@@ -15,7 +15,9 @@ export interface ExpressAppOptions {
     startPrismaORM: boolean;
 }
 
-export async function setupExpressApp(opts: ExpressAppOptions = {startTypeORM: true, startPrismaORM: true}): Promise<Express> {
+export async function setupExpressApp(
+    opts: ExpressAppOptions = { startTypeORM: true, startPrismaORM: true }
+): Promise<Express> {
     // Set up db
     logger.debug("setting up database");
     if (opts.startTypeORM) {

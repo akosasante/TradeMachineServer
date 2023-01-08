@@ -24,6 +24,7 @@ import { Role } from "../../models/user";
 import { cleanupQuery, fileUploadOptions as uploadOpts, UUID_PATTERN } from "../helpers/ApiHelpers";
 import { rollbar } from "../../bootstrap/rollbar";
 import { Request } from "express";
+import { In } from "typeorm";
 
 @JsonController("/players")
 export default class PlayerController {
@@ -38,9 +39,9 @@ export default class PlayerController {
     @Get("/")
     public async getAllPlayers(@QueryParam("include") include?: string[], @Req() request?: Request): Promise<Player[]> {
         rollbar.info("getAllPlayers", { include }, request);
-        logger.debug("get all players endpoint" + `${include ? ` with params: ${include}` : ""}`);
+        logger.debug("get all players endpoint" + `${include ? ` with params: ${inspect(include)}` : ""}`);
         let players: Player[] = [];
-        if (include) {
+        if (include?.length) {
             const params = getAllPlayersQuery(include);
             players = (await this.dao.findPlayers(params)) || players;
         } else {
@@ -59,7 +60,7 @@ export default class PlayerController {
 
     @Get("/search")
     public async findPlayersByQuery(
-        @QueryParams() query: Partial<Player>,
+        @QueryParams() query: Partial<Player> & { leagueTeamId?: string },
         @Req() request?: Request
     ): Promise<Player[]> {
         logger.debug(`searching for player with props: ${inspect(query)}`);
@@ -135,5 +136,10 @@ function getAllPlayersQuery(includes: string[]) {
         minors: PlayerLeagueType.MINOR,
         majors: PlayerLeagueType.MAJOR,
     };
-    return includes.map(include => ({ league: keywordToLevelMap[include] }));
+
+    if (includes.length === 1) {
+        return { league: keywordToLevelMap[includes[0]] };
+    } else {
+        return { league: In(includes.map(include => keywordToLevelMap[include])) };
+    }
 }

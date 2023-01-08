@@ -8,7 +8,7 @@ on:
 jobs:
     build:
         name: Transpile typescript code and upload artifacts
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-22.04
 
         steps:
             - name: Notify Rollbar of deploy start
@@ -24,9 +24,9 @@ jobs:
                   ROLLBAR_USERNAME: "aaasante"
 
             - name: Check out repository code
-              uses: actions/checkout@v3.0.2
+              uses: actions/checkout@v3.1.0
 
-            - uses: actions/setup-node@v3.3.0
+            - uses: actions/setup-node@v3.5.1
               with:
                   node-version: "16.x"
                   cache: "npm"
@@ -38,7 +38,7 @@ jobs:
               run: make build
 
             - name: Compress built folders
-              uses: master-atul/tar-action@v1.1.0
+              uses: master-atul/tar-action@v1.1.2
               id: compress
               with:
                   command: c
@@ -62,7 +62,7 @@ jobs:
                   path: ./out.tar.gz
 
             - name: Compress migration folder
-              uses: master-atul/tar-action@v1.1.0
+              uses: master-atul/tar-action@v1.1.2
               id: compress_migration
               with:
                   command: c
@@ -78,7 +78,7 @@ jobs:
     migrate:
         name: Backup db (if needed) and migarte to latest schema (if available)
         needs: build
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-22.04
 
         steps:
             - name: Download prisma folder
@@ -139,7 +139,7 @@ jobs:
     deploy:
         name: Deploy to digital ocean server
         needs: [build, migrate]
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-22.04
 
         steps:
             - name: Download dist folder

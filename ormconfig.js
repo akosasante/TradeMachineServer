@@ -38,9 +38,9 @@ module.exports = [
         synchronize: true,
         dropSchema: true,
         maxQueryExecutionTime: 500, // lets us log slow queries (over 0.5 sec to execute)
-        connectTimeoutMS: 2000, // not sure if this works/does anything
+        connectTimeoutMS: 6000, // not sure if this works/does anything
         extra: {
-            connectionTimeoutMillis: 1000, // return an error after 1 second if connection could not be established, makes it clear in test timeouts what the issue is
+            connectionTimeoutMillis: 5000, // return an error after 1 second if connection could not be established, makes it clear in test timeouts what the issue is
             idleTimeoutMillis: 750, // close connections after idle 0.75sec
             max: 50 // in tests, we're running a lot of queries/sessions/connections. Default pool size is 10.
         }

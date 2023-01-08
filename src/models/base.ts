@@ -18,13 +18,11 @@ export class BaseModel {
         return Object.assign({}, this);
     }
 
-    static getKeyByValue(enumField: { [s: string]: unknown; }, value: unknown): string | undefined {
+    static getKeyByValue(enumField: { [s: string]: unknown }, value: unknown): string | undefined {
         if (value) {
             const indexOfS = Object.values(enumField).indexOf(value as unknown as typeof enumField);
 
-            const enumKey = Object.keys(enumField)[indexOfS];
-
-            return enumKey;
+            return Object.keys(enumField)[indexOfS];
         } else {
             return undefined;
         }
