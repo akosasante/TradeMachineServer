@@ -160,7 +160,7 @@ serve: ## Serve the node server statically (no restarting on file changes)
 typecheck: ## Check for type errors that would cause failures to build
 	npx tsc --noEmit --incremental false
 
-fullcheck: lint-fix format typecheck lint
+fullcheck: lint-fix typecheck format lint
 
 # |----------- DATABASE MIGRATION SCRIPTS ---------|
 generate-migration: ## Generate a new migration file with name=MIGRATION_NAME and using config for ENV
