@@ -22,7 +22,9 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev", { stream: { write: message => logger.info(message.trim()) } }));
 app.use(responseTime());
-app.use(rollbar.errorHandler());
+if (process.env.NODE_ENV !== "test") {
+    app.use(rollbar.errorHandler());
+}
 
 export interface ExpressAppSettings {
     prisma: PrismaClient | undefined;

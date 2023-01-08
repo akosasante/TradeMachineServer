@@ -34,7 +34,7 @@ export default class EspnController {
         @Req() request?: Request
     ): Promise<EspnFantasyTeam[]> {
         rollbar.info("getAllEspnTeams", { year }, request);
-        logger.debug("get all ESPN teams endpoint");
+        logger.debug(`get all ESPN teams endpoint (year=${year || new Date().getFullYear()})`);
         const teams = await this.api.getAllLeagueTeams(year || new Date().getFullYear());
         logger.debug(`got ${teams.length} teams`);
         return teams;

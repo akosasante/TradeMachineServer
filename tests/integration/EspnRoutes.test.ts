@@ -1,3 +1,4 @@
+import "jest-extended";
 import { Server } from "http";
 import request from "supertest";
 import { redisClient } from "../../src/bootstrap/express";
@@ -53,7 +54,8 @@ describe("ESPN API endpoints", () => {
                 return makeGetRequest(agent, `/espn/teams${yearParam}`, status);
             };
 
-        it("should return all teams in the default year", async () => {
+        // TODO: Skip for now because default year would be 2023, and there's no season on espn for that yet.
+        it.skip("should return all teams in the default year", async () => {
             const { body } = await adminLoggedIn(getAllRequest(), app);
             expect(body).toBeArray();
             // There are other keys, but these are the ones we definitely want to know if they're gone
@@ -81,7 +83,8 @@ describe("ESPN API endpoints", () => {
                 return makeGetRequest(agent, `/espn/members${yearParam}`, status);
             };
 
-        it("should return all members in the default year", async () => {
+        // TODO: Skip for now because default year would be 2023, and there's no season on espn for that yet.
+        it.skip("should return all members in the default year", async () => {
             const { body } = await adminLoggedIn(getAllRequest(), app);
             expect(body).toBeArray();
             expect(body[0]).toContainAllKeys(["id", "isLeagueManager", "displayName"]);

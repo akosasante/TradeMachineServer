@@ -11,6 +11,8 @@ import {
 } from "typeorm";
 import Player from "../models/player";
 import Team from "../models/team";
+import logger from "../bootstrap/logger";
+import { inspect } from "util";
 
 interface PlayerDeleteResult extends DeleteResult {
     raw: Player[];
@@ -44,6 +46,8 @@ export default class PlayerDAO {
         const leagueTeamId = query.leagueTeamId;
         let options: FindManyOptions<Player> = {};
         let where;
+        logger.debug(`initial query: ${inspect(query)}`);
+
         if (leagueTeamId) {
             delete query.leagueTeamId;
             const leagueTeam: FindOptionsWhere<Team> = { id: leagueTeamId };
@@ -53,6 +57,7 @@ export default class PlayerDAO {
         }
 
         options = limit ? { where, take: limit } : { where };
+        logger.debug(`initial options: ${inspect(options)}`);
         return await this.playerDb.find(options);
     }
 

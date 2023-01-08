@@ -1,5 +1,5 @@
 import { PrismaClient, User } from "@prisma/client";
-import exclude from "./helpers";
+import { exclude } from "./helpers";
 
 export type PublicUser = Omit<User, "password">;
 
@@ -14,11 +14,11 @@ export default class UserDAO {
     }
 
     // TODO: Possibly these static functions would go into their own class at some point; or maybe we keep it flat like this
-    static publicUser(user: User) {
+    static publicUser(user: User): Omit<User, "password"> {
         return exclude(user, "password");
     }
 
-    static publicUsers(users: User[]) {
+    static publicUsers(users: User[]): Omit<User, "password">[] {
         return users.map(user => UserDAO.publicUser(user));
     }
 
