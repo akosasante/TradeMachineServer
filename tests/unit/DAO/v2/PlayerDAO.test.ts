@@ -50,7 +50,7 @@ describe("[PRISMA] PlayerDAO", () => {
         it("should return pass in an array of WHERE AND objects if multiple input params are given", async () => {
             prisma.findMany.mockResolvedValueOnce([testPlayer]);
             const sortOptions = { orderBy: { id: "asc" } };
-            const expectedWhere = { where: { AND: [{ mlbTeam: "LAD"}, {name: "Joseph" }] } };
+            const expectedWhere = { where: { AND: [{ mlbTeam: "LAD" }, { name: "Joseph" }] } };
             const inputParam = ["mlbTeam.LAD", "name.Joseph"];
 
             const res = await Players.findPlayers(inputParam);
