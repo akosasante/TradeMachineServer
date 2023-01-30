@@ -80,13 +80,29 @@ export default async function startServer(): Promise<Server> {
             logger.error(`Redis Client Error: ${inspect(err)}`);
         });
 
+        redisClient.on("connect", () => {
+            logger.info(`Redis Client Connected Successfully: ${inspect(arguments)}`);
+        });
+
+        redisClient.on("ready", () => {
+            logger.info(`Redis Client Ready: ${inspect(arguments)}`);
+        });
+
+        redisClient.on("end", () => {
+            logger.info(`Redis Client Connection Ended: ${inspect(arguments)}`);
+        });
+
+        redisClient.on("reconnecting", () => {
+            logger.info(`Redis Client Reconnecting: ${inspect(arguments)}`);
+        });
+
         srv.on("error", err => {
             logger.error(`Server Error: ${inspect(err)}`);
         });
 
         srv.on("close", () => {
             const serverCloseHandler = async () => {
-                logger.debug("closing server");
+                logger.info("closing server");
                 if (process.env.NODE_ENV !== "test") {
                     await redisClient.quit();
                 }
