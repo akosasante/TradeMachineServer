@@ -80,20 +80,20 @@ export default async function startServer(): Promise<Server> {
             logger.error(`Redis Client Error: ${inspect(err)}`);
         });
 
-        redisClient.on("connect", () => {
-            logger.info(`Redis Client Connected Successfully: ${inspect(arguments)}`);
+        redisClient.on("connect", (...args) => {
+            logger.info(`Redis Client Connected Successfully: ${inspect(args)}`);
         });
 
-        redisClient.on("ready", () => {
-            logger.info(`Redis Client Ready: ${inspect(arguments)}`);
+        redisClient.on("ready", (...args) => {
+            logger.info(`Redis Client Ready: ${inspect(args)}`);
         });
 
-        redisClient.on("end", () => {
-            logger.info(`Redis Client Connection Ended: ${inspect(arguments)}`);
+        redisClient.on("end", (...args) => {
+            logger.info(`Redis Client Connection Ended: ${inspect(args)}`);
         });
 
-        redisClient.on("reconnecting", () => {
-            logger.info(`Redis Client Reconnecting: ${inspect(arguments)}`);
+        redisClient.on("reconnecting", (...args) => {
+            logger.info(`Redis Client Reconnecting: ${inspect(args)}`);
         });
 
         srv.on("error", err => {
