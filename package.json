@@ -40,7 +40,7 @@
     "rollbar": "^2.21.1",
     "routing-controllers": "0.9.0",
     "typedi": "^0.10.0",
-    "typeorm": "^0.3.10",
+    "typeorm": "^0.3.14",
     "uuid": "^9.0.0",
     "winston": "^3.3.3"
   },
