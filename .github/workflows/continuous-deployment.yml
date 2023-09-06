@@ -56,7 +56,7 @@ jobs:
                   outPath: out.tar.gz
 
             - name: Upload built folders to artifacts
-              uses: actions/upload-artifact@v3.1.1
+              uses: actions/upload-artifact@v3.1.3
               with:
                   name: transpiled_app_folder
                   path: ./out.tar.gz
@@ -70,7 +70,7 @@ jobs:
                   outPath: out-prisma.tar.gz
 
             - name: Upload migration folder to artifacts
-              uses: actions/upload-artifact@v3.1.1
+              uses: actions/upload-artifact@v3.1.3
               with:
                   name: prisma_folder
                   path: ./out-prisma.tar.gz
