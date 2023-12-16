@@ -3,6 +3,7 @@ import Settings from "../models/settings";
 import { BadRequestError } from "routing-controllers";
 import logger from "../bootstrap/logger";
 import { inspect } from "util";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 export default class SettingsDAO {
     private settingsDb: Repository<Settings>;
@@ -43,7 +44,7 @@ export default class SettingsDAO {
             dateCreated: undefined,
         };
 
-        const result: InsertResult = await this.settingsDb.insert(newLine);
+        const result: InsertResult = await this.settingsDb.insert(newLine as QueryDeepPartialEntity<Settings>);
 
         return await this.settingsDb.findOneOrFail({ where: result.identifiers[0] } as FindOneOptions<Settings>);
     }

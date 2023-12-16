@@ -14,6 +14,7 @@ import Player from "../models/player";
 import Team from "../models/team";
 import logger from "../bootstrap/logger";
 import { inspect } from "util";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 interface PlayerDeleteResult extends DeleteResult {
     raw: Player[];
@@ -122,7 +123,7 @@ export default class PlayerDAO {
         }
     }
 
-    public async updatePlayer(id: string, playerObj: Partial<Player>): Promise<Player> {
+    public async updatePlayer(id: string, playerObj: QueryDeepPartialEntity<Player>): Promise<Player> {
         await this.playerDb.update({ id }, playerObj);
         return await this.getPlayerById(id);
     }

@@ -1,4 +1,5 @@
 import { DeleteResult, FindManyOptions, FindOneOptions, getConnection, In, InsertResult, Repository } from "typeorm";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import Team from "../models/team";
 import User from "../models/user";
 
@@ -49,7 +50,7 @@ export default class TeamDAO {
     }
 
     public async updateTeam(id: string, teamObj: Partial<Team>): Promise<Team> {
-        await this.teamDb.update({ id }, teamObj);
+        await this.teamDb.update({ id }, teamObj as QueryDeepPartialEntity<Team>);
         return await this.getTeamById(id);
     }
 

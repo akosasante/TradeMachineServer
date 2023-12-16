@@ -8,6 +8,7 @@ import { inspect } from "util";
 import { cleanJobForLogging } from "./job_utils";
 import { v4 as uuid } from "uuid";
 import { rollbar } from "../bootstrap/rollbar";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 export function setupScheduledMlbMinorLeagueUpdates(): void {
     const cron = "22 7 * * *"; // daily at 3:22AM ET
@@ -121,7 +122,9 @@ async function insertParsedPlayers(dao: PlayerDAO, parsedPlayers: Player[]) {
     const [playersToUpdate, playersToInsert] = await formatForDb(parsedPlayers, dao);
     logger.debug(`Updating ${playersToUpdate.length}. Inserting ${playersToInsert.length}`);
     const insertedPlayers = await dao.batchUpsertPlayers(playersToInsert);
-    const updatedPlayers = await Promise.all(playersToUpdate.map(p => dao.updatePlayer(p.id!, p)));
+    const updatedPlayers = await Promise.all(
+        playersToUpdate.map(p => dao.updatePlayer(p.id!, p as QueryDeepPartialEntity<Player>))
+    );
     return insertedPlayers.concat(updatedPlayers);
 }
 
