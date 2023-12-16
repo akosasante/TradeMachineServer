@@ -25,6 +25,7 @@ import { cleanupQuery, fileUploadOptions as uploadOpts, UUID_PATTERN } from "../
 import { rollbar } from "../../bootstrap/rollbar";
 import { Request } from "express";
 import { In } from "typeorm";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 @JsonController("/players")
 export default class PlayerController {
@@ -109,7 +110,7 @@ export default class PlayerController {
     @Put(UUID_PATTERN)
     public async updatePlayer(
         @Param("id") id: string,
-        @Body() playerObj: Partial<Player>,
+        @Body() playerObj: QueryDeepPartialEntity<Player>,
         @Req() request?: Request
     ): Promise<Player> {
         logger.debug("update player endpoint");

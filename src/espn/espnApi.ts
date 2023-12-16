@@ -12,25 +12,6 @@ export interface EspnLeagueMember {
     displayName: string;
 }
 
-interface EspnRecord {
-    gamesBack: number;
-    losses: number;
-    percentage: number;
-    pointsAgainst: number;
-    pointsFor: number;
-    streakLength: number;
-    streakType: "WIN" | "LOSS" | string;
-    ties: number;
-    wins: number;
-}
-
-interface EspnRecordObj {
-    away: EspnRecord;
-    home: EspnRecord;
-    division: EspnRecord;
-    overall: EspnRecord;
-}
-
 export interface EspnProTeam {
     id: number;
     abbrev: string;
@@ -40,23 +21,72 @@ export interface EspnProTeam {
     universeId?: number;
 }
 
-export interface EspnFantasyTeam {
+type DraftStrategy = {
+    futureKeeperPlayerIds: number[];
+    keeperPlayerIds: number[];
+};
+
+type RecordStats = {
+    gamesBack: number;
+    losses: number;
+    percentage: number;
+    pointsAgainst: number;
+    pointsFor: number;
+    streakLength: number;
+    streakType: "WIN" | "LOSS";
+    ties: number;
+    wins: number;
+};
+
+type EspnRecord = {
+    away: RecordStats;
+    division: RecordStats;
+    home: RecordStats;
+    overall: RecordStats;
+};
+
+type MatchupAcquisitionTotals = { [key: string]: number };
+
+type TransactionCounter = {
+    acquisitionBudgetSpent: number;
+    acquisitions: number;
+    drops: number;
+    matchupAcquisitionTotals: MatchupAcquisitionTotals;
+    misc: number;
+    moveToActive: number;
+    moveToIR: number;
+    paid: number;
+    teamCharges: number;
+    trades: number;
+};
+
+type ValuesByStat = { [key: string]: number };
+
+export type EspnFantasyTeam = {
     id: number;
     abbrev?: string;
-    location?: string;
-    nickname?: string;
-    owners?: string[];
+    currentProjectedRank?: number;
     divisionId?: number;
+    draftDayProjectedRank?: number;
+    draftStrategy?: DraftStrategy;
     isActive?: boolean;
     logo?: string;
-    record?: EspnRecordObj;
+    logoType?: string;
+    name?: string;
+    owners?: string[];
     playoffSeed?: number;
-    rankFinal?: number;
-    rankCalculatedFinal?: number;
     points?: number;
     pointsAdjusted?: number;
     pointsDelta?: number;
-}
+    primaryOwner?: string;
+    rankCalculatedFinal?: number;
+    rankFinal?: number;
+    record?: EspnRecord;
+    tradeBlock?: Record<string, unknown>;
+    transactionCounter?: TransactionCounter;
+    valuesByStat?: ValuesByStat;
+    waiverRank?: number;
+};
 
 interface EspnPlayerInfo {
     id: number;
@@ -255,7 +285,7 @@ export default class EspnAPI {
             if (associatedEspnTeam) {
                 await teamDao.updateTeam(team.id!, {
                     espnTeam: associatedEspnTeam,
-                    name: `${associatedEspnTeam.location} ${associatedEspnTeam.nickname}` || team.name,
+                    name: associatedEspnTeam.name || team.name,
                 });
             }
         }
