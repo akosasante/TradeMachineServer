@@ -13,7 +13,7 @@ jobs:
 
         steps:
             - name: Notify Rollbar of deploy start
-              uses: rollbar/github-deploy-action@2.1.1
+              uses: rollbar/github-deploy-action@2.1.2
               id: rollbar_pre_deploy
               with:
                   environment: "staging"
@@ -174,7 +174,7 @@ jobs:
                       rm out-staging.tar.gz
 
             - name: Notify Rollbar of deploy finish
-              uses: rollbar/github-deploy-action@2.1.1
+              uses: rollbar/github-deploy-action@2.1.2
               id: rollbar_post_deploy
               with:
                   environment: "staging"
