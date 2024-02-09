@@ -78,7 +78,7 @@ export default class UserController {
 
     /* Only league admins can directly edit/delete/create users */
 
-    @Authorized(Role.ADMIN)
+    @Authorized([Role.ADMIN, Role.COMMISSIONER])
     @Post("/")
     public async createUsers(@Body() userObjs: Partial<User>[], @Req() request?: Request): Promise<User[]> {
         logger.debug(`create user endpoint: ${inspect(userObjs)}`);
@@ -90,7 +90,7 @@ export default class UserController {
         return users;
     }
 
-    @Authorized(Role.ADMIN)
+    @Authorized([Role.ADMIN, Role.COMMISSIONER])
     @Put(UUID_PATTERN)
     public async updateUser(
         @Param("id") id: string,
