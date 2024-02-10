@@ -72,7 +72,7 @@ export default class TeamController {
 
     /* Only the league admins can edit/delete/create teams at the moment */
 
-    @Authorized(Role.ADMIN)
+    @Authorized([Role.ADMIN, Role.COMMISSIONER])
     @Post("/")
     public async createTeam(@Body() teamObjs: Partial<Team>[], @Req() request?: Request): Promise<Team[]> {
         logger.debug("create team endpoint");
@@ -82,7 +82,7 @@ export default class TeamController {
         return teams;
     }
 
-    @Authorized(Role.ADMIN)
+    @Authorized([Role.ADMIN, Role.COMMISSIONER])
     @Put(UUID_PATTERN)
     public async updateTeam(
         @Param("id") id: string,
@@ -96,7 +96,7 @@ export default class TeamController {
         return team;
     }
 
-    @Authorized(Role.ADMIN)
+    @Authorized([Role.ADMIN])
     @Delete(UUID_PATTERN)
     public async deleteTeam(
         @Param("id") id: string,
@@ -109,7 +109,7 @@ export default class TeamController {
         return { deleteCount: result.affected, id: result.raw[0].id };
     }
 
-    @Authorized(Role.ADMIN)
+    @Authorized([Role.ADMIN, Role.COMMISSIONER])
     @Patch(UUID_PATTERN)
     public async updateTeamOwners(
         @Param("id") id: string,
