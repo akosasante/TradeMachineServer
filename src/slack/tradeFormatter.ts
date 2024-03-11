@@ -80,7 +80,7 @@ const TradeFormatter = {
         if (!twoPlayerTrade) {
             return zip(tradedPicks, picks)
                 .map(([tradedPick, pick]) => {
-                    return `• *${pick!.originalOwner?.name}'s* ${pick!.season} \
+                    return `• *${pick!.originalOwner?.name}'s* \
 ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
                         pick?.pickNumber ? ` (#${pick.pickNumber})` : ""
                     } from _${tradedPick!.sender.name}_`;
@@ -90,7 +90,7 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick${
         } else {
             return picks
                 .map((pick: DraftPick) => {
-                    return `• *${pick.originalOwner?.name}'s* ${pick.season} ${ordinal(
+                    return `• *${pick.originalOwner?.name}'s* ${ordinal(
                         pick.round
                     )} round ${this.getPickTypeString(pick.type)} pick${
                         pick?.pickNumber ? ` (#${pick.pickNumber})` : ""
