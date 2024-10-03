@@ -129,11 +129,9 @@ function getTradeTextForRequest(trade: Trade): TradeTextObject[] | undefined {
             ),
             picks: receivedPicks.map(
                 ([pick, sender]) =>
-                    `${(pick as DraftPick).originalOwner?.name}'s ${(pick as DraftPick).season} ${ordinal(
+                    `${(pick as DraftPick).originalOwner?.name}'s ${ordinal(
                         (pick as DraftPick).round
-                    )} round ${getPickTypeString((pick as DraftPick).type)} pick${
-                        (pick as DraftPick)?.pickNumber ? ` (#${(pick as DraftPick).pickNumber})` : ""
-                    } from ${sender}`
+                    )} round ${getPickTypeString((pick as DraftPick).type)} pick from ${sender}`
             ),
         };
     });
