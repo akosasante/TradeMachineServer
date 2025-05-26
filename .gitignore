@@ -3,7 +3,6 @@
 .env
 *.env
 dist
-.idea
 
 # Editor directories and files
 .idea
@@ -13,6 +12,7 @@ dist
 *.sln
 .vscode
 *.iml
+sbt.xml
 
 # Logs
 logs
