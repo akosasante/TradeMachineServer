@@ -113,30 +113,25 @@ jobs:
                       tar -xzf out-staging-prisma.tar.gz --unlink-first --recursive-unlink
                       rm out-staging-prisma.tar.gz
 
-            - name: Check if we need to do migrations
-              id: check_migrations
-              continue-on-error: true # makes the "conclusion" of this step always TRUE. But the "outcome" depends on the exit value of the last command in `script`
-              uses: appleboy/ssh-action@master
-              with:
-                  host: ${{ secrets.HOST }}
-                  username: ${{ secrets.USERNAME }}
-                  password: ${{ secrets.PASSWORD }}
-                  port: ${{ secrets.SSH_PORT }}
-                  key: ${{ secrets.SSH_PRIVATE_KEY }}
-                  script: |
-                      # Print default PATH
-                      echo "Default PATH: $PATH"
-                      source /home/dev_deployer/.bashrc
-                      echo "Sourcing .bashrc completed: $PATH"
-                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/bin:$PATH"
-                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
-                      export PATH="$HOME/bin:$PATH"
-                      export PATH="$HOME/.local/bin:$PATH"
-                      echo "Updated PATH: $PATH"
-                      cd /opt/Apps/StagingTradeMachine
-                      export DATABASE_URL='${{ secrets.STAGING_DATABASE_URL }}'
-                      ls -la prisma/migrations
-                      npx -y prisma migrate status | grep -e 'Database schema is up to date!' -e 'No migration found in prisma/migrations'
+#            - name: Check if we need to do migrations
+#              id: check_migrations
+#              continue-on-error: true # makes the "conclusion" of this step always TRUE. But the "outcome" depends on the exit value of the last command in `script`
+#              uses: appleboy/ssh-action@master
+#              with:
+#                  host: ${{ secrets.HOST }}
+#                  username: ${{ secrets.USERNAME }}
+#                  password: ${{ secrets.PASSWORD }}
+#                  port: ${{ secrets.SSH_PORT }}
+#                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+#                  script: |
+#                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/bin:$PATH"
+#                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+#                      export PATH="$HOME/bin:$PATH"
+#                      export PATH="$HOME/.local/bin:$PATH"
+#                      cd /opt/Apps/StagingTradeMachine
+#                      export DATABASE_URL='${{ secrets.STAGING_DATABASE_URL }}'
+#                      ls -la prisma/migrations
+#                      npx -y prisma migrate status | grep -e 'Database schema is up to date!' -e 'No migration found in prisma/migrations'
 
 #            - name: Make a logical backup of the staging db and upload to Google Drive (ONLY IF we're about to run a migration)
 #              if: steps.check_migrations.outcome == 'failure' # if the check_migrations step exited with a non-successful (non-zero) code. That means grep found that there are prisma migrations to be run. In which case, we want to back up our data just in case before proceeding.
@@ -182,6 +177,10 @@ jobs:
                   port: ${{ secrets.SSH_PORT }}
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
+                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/bin:$PATH"
+                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+                      export PATH="$HOME/bin:$PATH"
+                      export PATH="$HOME/.local/bin:$PATH"
                       cd /opt/Apps/StagingTradeMachine
                       tar -xzf out-staging.tar.gz --overwrite
                       npm install --omit=dev
