@@ -126,8 +126,7 @@ jobs:
                   script: |
                       bash
                       source /etc/profile
-                      source ~/.bashrc
-                      echo $PATH
+                      source '~/.bashrc; echo $PATH'
                       cd /opt/Apps/StagingTradeMachine
                       export DATABASE_URL='${{ secrets.STAGING_DATABASE_URL }}'
                       ls -la prisma/migrations
