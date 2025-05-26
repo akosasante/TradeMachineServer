@@ -42,6 +42,7 @@ export const redisClient = createClient({
         host: process.env.REDIS_IP || "localhost",
         port: Number(process.env.REDIS_PORT || 6379),
     },
+    password: process.env.REDISPASS,
 });
 
 const REDIS_OPTS = {
