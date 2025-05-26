@@ -12,7 +12,10 @@ import { recordJobMetrics } from "../scheduled_jobs/metrics";
 export function setupEmailConsumers(): void {
     logger.info("registering email consumers");
     const queueName = process.env.ORM_CONFIG === "staging" ? "stg_email_queue" : "email_queue"; // TODO: Should this also have a conditional for test env queue?
-    const emailQueue = new Bull(queueName, { redis: { password: process.env.REDISPASS }, settings: { maxStalledCount: 0, lockDuration: 60000 } });
+    const emailQueue = new Bull(queueName, {
+        redis: { password: process.env.REDISPASS },
+        settings: { maxStalledCount: 0, lockDuration: 60000 },
+    });
     const cleanLoggedData = (data: any) => {
         if (data.user) {
             const user: User = JSON.parse((data.user as string) || "{}");
