@@ -126,12 +126,12 @@ jobs:
                   script: |
                       # Print default PATH
                       echo "Default PATH: $PATH"
-                      # Source profile files correctly
-                      source /etc/profile 2>/dev/null || true
-                      source ~/.bashrc 2>/dev/null || true
-                      source ~/.profile 2>/dev/null || true
-                      source ~/.nvm/nvm.sh 2>/dev/null || true
-                      # Print PATH after sourcing
+                      source /home/dev_deployer/.bashrc
+                      echo "Sourcing .bashrc completed: $PATH"
+                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/bin:$PATH"
+                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+                      export PATH="$HOME/bin:$PATH"
+                      export PATH="$HOME/.local/bin:$PATH"
                       echo "Updated PATH: $PATH"
                       cd /opt/Apps/StagingTradeMachine
                       export DATABASE_URL='${{ secrets.STAGING_DATABASE_URL }}'
