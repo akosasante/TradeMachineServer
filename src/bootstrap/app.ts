@@ -9,6 +9,7 @@ import logger from "./logger";
 import { inspect } from "util";
 import { rollbar } from "./rollbar";
 import { Server } from "http";
+import { registerCleanupCallback, setupSignalHandlers } from "./shutdownHandler";
 
 export interface ExpressAppOptions {
     startTypeORM: boolean;
@@ -110,6 +111,26 @@ export default async function startServer(): Promise<Server> {
             };
             serverCloseHandler().catch(logger.error);
         });
+
+        registerCleanupCallback(
+            () => {
+                logger.info("cleanup callback called, closing server");
+                return new Promise<void>(resolve => {
+                        if (!srv || !srv.listening) {
+                            resolve();
+                        }
+                        return srv.close(err => {
+                            if (err) {
+                                logger.error(`Error closing server: ${inspect(err)}`);
+                            }
+                            resolve();
+                        });
+                    }
+                );
+            }
+        );
+
+        setupSignalHandlers();
         return srv;
     } catch (err) {
         logger.error(`fatal error when starting server: ${inspect(err)}`);

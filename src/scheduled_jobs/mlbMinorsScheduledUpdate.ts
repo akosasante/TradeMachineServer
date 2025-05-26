@@ -9,6 +9,7 @@ import { cleanJobForLogging } from "./job_utils";
 import { v4 as uuid } from "uuid";
 import { rollbar } from "../bootstrap/rollbar";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
+import { recordJobMetrics } from "./metrics";
 
 export function setupScheduledMlbMinorLeagueUpdates(): void {
     const cron = "22 7 * * *"; // daily at 3:22AM ET
@@ -68,6 +69,9 @@ export function setupScheduledMlbMinorLeagueUpdates(): void {
         );
         rollbar.error(err);
     });
+
+    recordJobMetrics(mlbQueue);
+    logger.info(`Scheduled minor league updates job setup complete with queue: ${queueName}`);
 }
 
 export interface MinorLeagueUpdateDeps {

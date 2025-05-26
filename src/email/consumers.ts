@@ -6,6 +6,7 @@ import Trade from "../models/trade";
 import { cleanJobForLogging } from "../scheduled_jobs/job_utils";
 import User from "../models/user";
 import { rollbar } from "../bootstrap/rollbar";
+import { recordJobMetrics } from "../scheduled_jobs/metrics";
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
 export function setupEmailConsumers(): void {
@@ -85,5 +86,9 @@ export function setupEmailConsumers(): void {
         );
         rollbar.error("Email Worker job failed", err);
     });
+
+    recordJobMetrics(emailQueue);
+
+    logger.info("email consumers registered");
 }
 /* eslint-enable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
