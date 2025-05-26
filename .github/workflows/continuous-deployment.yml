@@ -93,6 +93,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   source: "out-prisma.tar.gz"
                   target: "/opt/Apps/TradeMachine"
 
