@@ -124,7 +124,10 @@ jobs:
                   port: ${{ secrets.SSH_PORT }}
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
+                      bash
+                      source /etc/profile
                       source ~/.bashrc
+                      echo $PATH
                       cd /opt/Apps/StagingTradeMachine
                       export DATABASE_URL='${{ secrets.STAGING_DATABASE_URL }}'
                       ls -la prisma/migrations
