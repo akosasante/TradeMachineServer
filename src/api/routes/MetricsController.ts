@@ -11,6 +11,7 @@ export default class MetricsController {
         this.registry = registry || metricsRegistry;
     }
 
+    // hello i s it me you're looking for?
     @Get("/")
     public async getMetrics(@Res() response: Response): Promise<Response> {
         const metrics = await this.registry.metrics();
