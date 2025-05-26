@@ -125,3 +125,11 @@ const initializeJobMetrics = (registry: promClient.Registry) => {
 export const availableJobMetrics = (() => {
     return initializeJobMetrics(metricsRegistry);
 })();
+
+export const activeUserMetric = (() => {
+    return new promClient.Gauge({
+        name: "trade_machine_active_sessions",
+        help: "Number of active user sessions",
+        registers: [metricsRegistry],
+    });
+})();
