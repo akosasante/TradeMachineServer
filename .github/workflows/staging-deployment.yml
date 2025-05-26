@@ -125,9 +125,15 @@ jobs:
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       bash
-                      source '/etc/profile; echo $PATH'
-                      source '~/.bashrc; echo $PATH'
-                      cd /opt/Apps/StagingTradeMachine
+                      # Print default PATH
+                      echo "Default PATH: $PATH"
+                      # Source profile files correctly
+                      source /etc/profile 2>/dev/null || true
+                      source ~/.bashrc 2>/dev/null || true
+                      source ~/.profile 2>/dev/null || true
+                      source ~/.nvm/nvm.sh 2>/dev/null || true
+                      # Print PATH after sourcing
+                      echo "Updated PATH: $PATH"
                       export DATABASE_URL='${{ secrets.STAGING_DATABASE_URL }}'
                       ls -la prisma/migrations
                       npx -y prisma migrate status | grep -e 'Database schema is up to date!' -e 'No migration found in prisma/migrations'
