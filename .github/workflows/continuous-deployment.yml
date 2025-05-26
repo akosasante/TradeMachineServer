@@ -104,6 +104,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   # the 'link' stuff basically lets us overwrite the migrations' sub-folder every time: https://stackoverflow.com/questions/7933680/remove-directory-structure-when-extracting-tar-archive
                   script: |
                       cd /opt/Apps/TradeMachine
@@ -119,6 +120,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       cd /opt/Apps/TradeMachine
                       export DATABASE_URL='${{ secrets.PROD_DATABASE_URL }}'
@@ -130,9 +132,10 @@ jobs:
               uses: appleboy/ssh-action@master
               with:
                   host: ${{ secrets.HOST }}
-                  username: ${{ secrets.BACKUP_USERNAME }}
-                  password: ${{ secrets.BACKUP_PASSWORD }}
+                  username: ${{ secrets.USERNAME }}
+                  password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       echo "last command returned: ${{ steps.check_migrations.outcome }}"
                       bash tm_backup.sh trade_machine public tm_backup ${{ secrets.BACKUP_PASSWORD }}
@@ -155,6 +158,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   source: "out.tar.gz"
                   target: "/opt/Apps/TradeMachine"
 
@@ -165,6 +169,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       cd /opt/Apps/TradeMachine
                       tar -xzf out.tar.gz --overwrite

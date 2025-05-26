@@ -77,7 +77,7 @@ jobs:
                   path: ./out-staging-prisma.tar.gz
 
     migrate:
-        name: Backup db (if needed) and migarte to latest schema (if available)
+        name: Backup db (if needed) and migrate to latest schema (if available)
         needs: build
         runs-on: ubuntu-22.04
 
@@ -94,6 +94,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   source: "out-staging-prisma.tar.gz"
                   target: "/opt/Apps/StagingTradeMachine"
 
@@ -120,6 +121,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       cd /opt/Apps/StagingTradeMachine
                       export DATABASE_URL='${{ secrets.STAGING_DATABASE_URL }}'
@@ -131,9 +133,10 @@ jobs:
               uses: appleboy/ssh-action@master
               with:
                   host: ${{ secrets.HOST }}
-                  username: ${{ secrets.BACKUP_USERNAME }}
-                  password: ${{ secrets.BACKUP_PASSWORD }}
+                  username: ${{ secrets.USERNAME }}
+                  password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       echo "last command returned: ${{ steps.check_migrations.outcome }}"
                       bash tm_backup.sh trade_machine staging tm_backup ${{ secrets.BACKUP_PASSWORD }}
@@ -156,6 +159,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   source: "out-staging.tar.gz"
                   target: "/opt/Apps/StagingTradeMachine"
 
@@ -166,6 +170,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       cd /opt/Apps/StagingTradeMachine
                       tar -xzf out-staging.tar.gz --overwrite
