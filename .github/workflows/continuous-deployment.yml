@@ -26,10 +26,11 @@ jobs:
             - name: Check out repository code
               uses: actions/checkout@v3.6.0
 
-            - uses: actions/setup-node@v3.8.2
+            - uses: actions/setup-node@v4
               with:
                   node-version: "16.x"
                   cache: "npm"
+                  cache-dependency-path: 'package-lock.json'
 
             - name: Install all packages
               run: npm install
@@ -93,6 +94,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   source: "out-prisma.tar.gz"
                   target: "/opt/Apps/TradeMachine"
 
@@ -103,6 +105,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   # the 'link' stuff basically lets us overwrite the migrations' sub-folder every time: https://stackoverflow.com/questions/7933680/remove-directory-structure-when-extracting-tar-archive
                   script: |
                       cd /opt/Apps/TradeMachine
@@ -118,23 +121,25 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       cd /opt/Apps/TradeMachine
                       export DATABASE_URL='${{ secrets.PROD_DATABASE_URL }}'
                       ls -la prisma/migrations
                       /home/dev_deployer/.asdf/shims/npx -y prisma migrate status | grep -e 'Database schema is up to date!' -e 'No migration found in prisma/migrations'
 
-            - name: Make a logical backup of the production db and upload to Google Drive (ONLY IF we're about to run a migration)
-              if: steps.check_migrations.outcome == 'failure' # if the check_migrations step exited with a non-successful (non-zero) code. That means grep found that there are prisma migrations to be run. In which case, we want to back up our data just in case before proceeding.
-              uses: appleboy/ssh-action@master
-              with:
-                  host: ${{ secrets.HOST }}
-                  username: ${{ secrets.BACKUP_USERNAME }}
-                  password: ${{ secrets.BACKUP_PASSWORD }}
-                  port: ${{ secrets.SSH_PORT }}
-                  script: |
-                      echo "last command returned: ${{ steps.check_migrations.outcome }}"
-                      bash tm_backup.sh trade_machine public tm_backup ${{ secrets.BACKUP_PASSWORD }}
+#            - name: Make a logical backup of the production db and upload to Google Drive (ONLY IF we're about to run a migration)
+#              if: steps.check_migrations.outcome == 'failure' # if the check_migrations step exited with a non-successful (non-zero) code. That means grep found that there are prisma migrations to be run. In which case, we want to back up our data just in case before proceeding.
+#              uses: appleboy/ssh-action@master
+#              with:
+#                  host: ${{ secrets.HOST }}
+#                  username: ${{ secrets.USERNAME }}
+#                  password: ${{ secrets.PASSWORD }}
+#                  port: ${{ secrets.SSH_PORT }}
+#                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+#                  script: |
+#                      echo "last command returned: ${{ steps.check_migrations.outcome }}"
+#                      bash tm_backup.sh trade_machine public tm_backup ${{ secrets.BACKUP_PASSWORD }}
 
     deploy:
         name: Deploy to digital ocean server
@@ -154,6 +159,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   source: "out.tar.gz"
                   target: "/opt/Apps/TradeMachine"
 
@@ -164,6 +170,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       cd /opt/Apps/TradeMachine
                       tar -xzf out.tar.gz --overwrite
