@@ -12,6 +12,8 @@ import TradeParticipant, { TradeParticipantType } from "../../models/tradePartic
 import logger from "../../bootstrap/logger";
 import { inspect } from "util";
 import { FindOptionsWhere } from "typeorm";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
+import Team from "src/models/team";
 
 type MemberMapKey = keyof typeof v1MemberMap;
 
@@ -122,9 +124,11 @@ async function getTradeItemPicksFromSet(
     const picks = tradeItemSet.picks || [];
     return picks.map(async p => {
         const originalOwner = await userDao.getUserById(v1PickMap[p.pick].v2UserId, true);
-        const originalOwnerTeam = originalOwner?.team;
-        const recipientTeam = await teamDao.getTeamById(v1MemberMap[p.rec as MemberMapKey].v2TeamId);
-        const v1Pick: Partial<DraftPick> = {
+        const originalOwnerTeam = originalOwner?.team as QueryDeepPartialEntity<Team | undefined>;
+        const recipientTeam = (await teamDao.getTeamById(
+            v1MemberMap[p.rec as MemberMapKey].v2TeamId
+        )) as QueryDeepPartialEntity<Team | undefined>;
+        const v1Pick: QueryDeepPartialEntity<DraftPick> = {
             round: p.round,
             type: getPickType(p.type),
             originalOwner: originalOwnerTeam,
@@ -135,14 +139,18 @@ async function getTradeItemPicksFromSet(
             pick = await pickDao.updatePick(pick.id!, { season: 2020, currentOwner: recipientTeam });
         } else {
             logger.debug("creating new pick");
-            pick = (await pickDao.createPicks([{ ...v1Pick, season: 2020, currentOwner: recipientTeam }]))[0];
+            pick = (
+                await pickDao.createPicks([
+                    { ...(v1Pick as Partial<DraftPick>), season: 2020, currentOwner: recipientTeam as Team },
+                ])
+            )[0];
         }
         logger.debug(`got pick: ${inspect(pick)}`);
         return new TradeItem({
             tradeItemType: TradeItemType.PICK,
             tradeItemId: pick?.id,
             sender: senderTeam,
-            recipient: recipientTeam,
+            recipient: recipientTeam as Team | undefined,
         });
     });
 }

@@ -24,6 +24,7 @@ import { Role } from "../../models/user";
 import { cleanupQuery, fileUploadOptions as uploadOpts, UUID_PATTERN } from "../helpers/ApiHelpers";
 import { rollbar } from "../../bootstrap/rollbar";
 import { Request } from "express";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 @JsonController("/picks")
 export default class DraftPickController {
@@ -100,7 +101,7 @@ export default class DraftPickController {
     @Put(UUID_PATTERN)
     public async updateDraftPick(
         @Param("id") id: string,
-        @Body() draftPickObj: Partial<DraftPick>
+        @Body() draftPickObj: QueryDeepPartialEntity<DraftPick>
     ): Promise<DraftPick> {
         logger.debug("update draftPick endpoint");
         rollbar.info("updateDraftPick", { id, draftPickObj });

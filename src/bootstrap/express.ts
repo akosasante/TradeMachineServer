@@ -8,6 +8,7 @@ import { createClient } from "redis";
 import responseTime from "response-time";
 import logger from "./logger";
 import { rollbar } from "./rollbar";
+import { metricsMiddleware } from "./metrics";
 
 const app = express();
 
@@ -66,5 +67,7 @@ app.use(
         },
     })
 );
+
+app.use(metricsMiddleware as any);
 
 export default app;

@@ -1,18 +1,20 @@
 import {
     DeleteResult,
-    FindOptionsWhere,
     FindManyOptions,
+    FindOneOptions,
+    FindOptionsWhere,
     getConnection,
     ILike,
     In,
     InsertResult,
+    QueryFailedError,
     Repository,
-    FindOneOptions,
 } from "typeorm";
 import Player from "../models/player";
 import Team from "../models/team";
 import logger from "../bootstrap/logger";
 import { inspect } from "util";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 interface PlayerDeleteResult extends DeleteResult {
     raw: Player[];
@@ -77,12 +79,23 @@ export default class PlayerDAO {
     }
 
     public async createPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
-        const result: InsertResult = await this.playerDb.insert(playerObjs);
-        return await this.playerDb.find({
-            where: {
-                id: In(result.identifiers.map(({ id }) => id as string)),
-            },
-        } as FindManyOptions<Player>);
+        try {
+            const result: InsertResult = await this.playerDb.insert(playerObjs);
+            return await this.playerDb.find({
+                where: {
+                    id: In(result.identifiers.map(({ id }) => id as string)),
+                },
+            } as FindManyOptions<Player>);
+        } catch (error) {
+            if (
+                error instanceof QueryFailedError &&
+                error.message.includes("duplicate key value violates unique constraint")
+            ) {
+                return [];
+            } else {
+                throw error;
+            }
+        }
     }
 
     public async batchCreatePlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
@@ -110,7 +123,7 @@ export default class PlayerDAO {
         }
     }
 
-    public async updatePlayer(id: string, playerObj: Partial<Player>): Promise<Player> {
+    public async updatePlayer(id: string, playerObj: QueryDeepPartialEntity<Player>): Promise<Player> {
         await this.playerDb.update({ id }, playerObj);
         return await this.getPlayerById(id);
     }

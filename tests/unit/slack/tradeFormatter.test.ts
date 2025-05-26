@@ -122,7 +122,7 @@ describe("Trade Formatter methods", () => {
         expect(text).toMatch("'s");
         // expect(text).toMatch("round pick");
         expect(text).toMatch(tradedPick.originalOwner!.name);
-        expect(text).toMatch(tradedPick.season.toString());
+        // expect(text).toMatch(tradedPick.season.toString());
         expect(text).toMatch(tradedPick.round.toString());
         expect(text).not.toMatch("from");
     });
@@ -130,7 +130,7 @@ describe("Trade Formatter methods", () => {
         const text = await TradeFormatter.prepPickText(false, TradeItem.filterPicks(trade.tradeItems), mockPickDao);
         // expect(text).toMatch("round pick");
         expect(text).toMatch(tradedPick.originalOwner!.name);
-        expect(text).toMatch(tradedPick.season.toString());
+        // expect(text).toMatch(tradedPick.season.toString());
         expect(text).toMatch(tradedPick.round.toString());
         expect(text).toMatch("from");
     });
