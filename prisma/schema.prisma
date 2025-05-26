@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["metrics"]
 }
 
 datasource db {
@@ -220,7 +221,6 @@ model TradeParticipant {
   // [n-1] The team that this participant is associated with. TODO: Should this be mandatory?
   teamId          String?              @db.Uuid
   team            Team?                @relation(fields: [teamId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_6f42978de8c286663f97f12c9dc")
-
 
   // From typeorm should these be in the db too?
   // @Index("trade_creator_index", { synchronize: false })
