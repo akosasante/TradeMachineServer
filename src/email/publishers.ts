@@ -25,7 +25,7 @@ export class EmailPublisher extends Publisher {
             } else {
                 queueName = "email_queue";
             }
-            EmailPublisher.instance = new EmailPublisher(queue || new Bull(queueName));
+            EmailPublisher.instance = new EmailPublisher(queue || new Bull(queueName, { redis: { password: process.env.REDISPASS }}));
         }
 
         return EmailPublisher.instance;

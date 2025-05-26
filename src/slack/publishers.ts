@@ -21,7 +21,7 @@ export class SlackPublisher extends Publisher {
             } else {
                 queueName = "slack_queue";
             }
-            SlackPublisher.instance = new SlackPublisher(queue || new Bull(queueName));
+            SlackPublisher.instance = new SlackPublisher(queue || new Bull(queueName, { redis: { password: process.env.REDISPASS }}));
         }
 
         return SlackPublisher.instance;
