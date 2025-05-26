@@ -8,6 +8,7 @@ import {
     Repository,
     FindOneOptions,
 } from "typeorm";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import DraftPick from "../models/draftPick";
 
 interface DraftPickDeleteResult extends DeleteResult {
@@ -77,7 +78,7 @@ export default class DraftPickDAO {
         }
     }
 
-    public async updatePick(id: string, pickObj: Partial<DraftPick>): Promise<DraftPick> {
+    public async updatePick(id: string, pickObj: QueryDeepPartialEntity<DraftPick>): Promise<DraftPick> {
         await this.draftPickDb.update({ id }, pickObj);
         return await this.getPickById(id);
     }

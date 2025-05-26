@@ -7,7 +7,7 @@ import { inspect } from "util";
 
 declare module "express" {
     interface Request {
-        person?: {
+        rollbar_person?: {
             id?: string;
             email?: string;
             username?: string;
@@ -30,7 +30,7 @@ export default class RollbarPeopleHandler implements ExpressMiddlewareInterface 
             if (request.session?.user) {
                 const existingUser = await deserializeUser(request.session.user);
                 logger.debug(`"Found user=", ${inspect(existingUser)}`);
-                request.person = {
+                request.rollbar_person = {
                     id: existingUser.id,
                     email: existingUser.email,
                     username: existingUser.displayName,

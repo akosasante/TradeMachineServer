@@ -94,7 +94,7 @@ module.exports = {
       format: ['camelCase'],
       leadingUnderscore: 'allow',
       trailingUnderscore: 'allow',
-      filter: {regex: "^(AND|OR|Players|Users|Teams)$", match: false}
+      filter: {regex: "^(AND|OR|Players|Users|Teams|rollbar_person)$", match: false}
     },
       {
         selector: 'variable',

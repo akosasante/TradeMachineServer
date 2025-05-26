@@ -1,6 +1,7 @@
 import { DeleteResult, FindManyOptions, FindOneOptions, getConnection, In, InsertResult, Repository } from "typeorm";
 import User from "../models/user";
 import { v4 as uuid } from "uuid";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 interface UserDeleteResult extends DeleteResult {
     raw: User[];
@@ -60,7 +61,7 @@ export default class UserDAO {
     }
 
     public async updateUser(id: string, userObj: Partial<User>): Promise<User> {
-        await this.userDb.update({ id }, userObj);
+        await this.userDb.update({ id }, userObj as QueryDeepPartialEntity<User>);
         return await this.getUserById(id);
     }
 

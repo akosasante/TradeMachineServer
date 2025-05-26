@@ -6,6 +6,6 @@ export class EspnFactory {
     }
 
     public static getTeam(): EspnFantasyTeam {
-        return { id: 1, abbrev: "LAD", location: "Los Angeles", nickname: "Dodgers" };
+        return { id: 1, abbrev: "LAD", name: "Los Angeles Dodgers" };
     }
 }

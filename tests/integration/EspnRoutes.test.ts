@@ -59,13 +59,13 @@ describe("ESPN API endpoints", () => {
             const { body } = await adminLoggedIn(getAllRequest(), app);
             expect(body).toBeArray();
             // There are other keys, but these are the ones we definitely want to know if they're gone
-            expect(body[0]).toContainKeys(["id", "abbrev", "location", "nickname", "owners", "divisionId", "isActive"]);
+            expect(body[0]).toContainKeys(["id", "abbrev", "name", "owners", "divisionId", "isActive"]);
         }, 10000);
 
         it("should return all teams in a given year", async () => {
             const { body } = await adminLoggedIn(getAllRequest(2019), app);
             expect(body).toBeArray();
-            expect(body[0]).toContainKeys(["id", "abbrev", "location", "nickname", "owners", "divisionId", "isActive"]);
+            expect(body[0]).toContainKeys(["id", "abbrev", "name", "owners", "divisionId", "isActive"]);
         }, 10000);
         it("should throw a 403 Forbidden Error if a non-admin tries to call the endpoint", async () => {
             await ownerLoggedIn(getAllRequest(2019, 403), app);
