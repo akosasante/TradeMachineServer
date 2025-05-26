@@ -7,6 +7,7 @@ import { inspect } from "util";
 import { cleanJobForLogging } from "./job_utils";
 import { v4 as uuid } from "uuid";
 import { rollbar } from "../bootstrap/rollbar";
+import { recordJobMetrics } from "./metrics";
 
 export function setupScheduledEspnUpdates(): void {
     const cron = "22 6 * * *"; // daily at 2:22AM ET
@@ -66,6 +67,9 @@ export function setupScheduledEspnUpdates(): void {
         );
         rollbar.error("scheduledEspnUpdate failed", err);
     });
+
+    recordJobMetrics(espnQueue);
+    logger.info(`setupScheduledEspnUpdates complete for queue: ${queueName}`);
 }
 
 export interface EspnUpdateDaos {

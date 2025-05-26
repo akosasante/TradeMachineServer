@@ -6,6 +6,7 @@ import User from "../models/user";
 import { EmailStatusEvent } from "../api/routes/EmailController";
 import Trade from "../models/trade";
 import { Publisher } from "../scheduled_jobs/publisher";
+import { recordJobMetrics } from "../scheduled_jobs/metrics";
 
 export class EmailPublisher extends Publisher {
     private static instance: EmailPublisher;
@@ -25,7 +26,9 @@ export class EmailPublisher extends Publisher {
             } else {
                 queueName = "email_queue";
             }
-            EmailPublisher.instance = new EmailPublisher(queue || new Bull(queueName, { redis: { password: process.env.REDISPASS }}));
+            EmailPublisher.instance = new EmailPublisher(queue || new Bull(queueName));
+            recordJobMetrics(EmailPublisher.instance.queue!);
+            logger.info(`EmailPublisher initialized with queue: ${queueName}`);
         }
 
         return EmailPublisher.instance;

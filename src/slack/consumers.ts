@@ -5,6 +5,7 @@ import { processTradeAnnounceJob } from "./processors";
 import { inspect } from "util";
 import { cleanJobForLogging } from "../scheduled_jobs/job_utils";
 import { rollbar } from "../bootstrap/rollbar";
+import { recordJobMetrics } from "../scheduled_jobs/metrics";
 
 export function setupSlackConsumers(): void {
     logger.info("registering slack consumers");
@@ -59,4 +60,7 @@ export function setupSlackConsumers(): void {
         );
         rollbar.error("Slack Worker failed", err);
     });
+
+    recordJobMetrics(slackQueue);
+    logger.info("Slack consumers registered successfully");
 }
