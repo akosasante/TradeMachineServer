@@ -5,7 +5,7 @@ import { availableJobMetrics } from "../bootstrap/metrics";
 import { registerCleanupCallback } from "../bootstrap/shutdownHandler";
 import logger from "../bootstrap/logger";
 
-export const recordJobMetrics = (queue: Bull.Queue): void => {
+export function recordJobMetrics(queue: Bull.Queue): void {
     const recordDurationMetrics = (job: Bull.Job, status: string) => {
         if (job.finishedOn && job.processedOn) {
             const jobDuration = job.finishedOn - job.processedOn;
@@ -68,6 +68,6 @@ export const recordJobMetrics = (queue: Bull.Queue): void => {
         logger.info(`Cleared job metrics interval for queue ${queue.name}`);
         await queue.close();
     });
-};
+}
 
 /* eslint-enable @typescript-eslint/naming-convention */

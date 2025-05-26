@@ -180,6 +180,7 @@ jobs:
                       cd /opt/Apps/StagingTradeMachine
                       tar -xzf out-staging.tar.gz --overwrite
                       npm install --omit=dev
+                      npx prisma generate
                       bash replace-migration-schema.sh dev staging
                       npx pm2 restart staging_trademachine
                       rm out-staging.tar.gz
