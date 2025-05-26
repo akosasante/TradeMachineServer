@@ -125,7 +125,7 @@ jobs:
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
                       bash
-                      source /etc/profile
+                      source '/etc/profile; echo $PATH'
                       source '~/.bashrc; echo $PATH'
                       cd /opt/Apps/StagingTradeMachine
                       export DATABASE_URL='${{ secrets.STAGING_DATABASE_URL }}'
