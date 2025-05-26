@@ -12,11 +12,6 @@ export const metricsMiddleware = promBundle({
     includeMethod: true,
     includePath: true,
     promRegistry: metricsRegistry,
+    customLabels: { app: "trade_machine", environment: process.env.APP_ENV },
+    autoregister: false,
 });
-
-export function initMetrics(): { metricsRegistry: promClient.Registry; metricsMiddleware: promBundle.Middleware } {
-    return {
-        metricsRegistry,
-        metricsMiddleware,
-    };
-}
