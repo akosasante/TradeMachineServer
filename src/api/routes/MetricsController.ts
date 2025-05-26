@@ -15,9 +15,6 @@ export default class MetricsController {
 
     @Get("/")
     public async getMetrics(@Req() request: Request, @Res() response: Response): Promise<Response> {
-        logger.info("Metrics endpoint hit");
-        logger.info(request);
-
         const metrics = await this.registry.metrics();
 
         if (request?.app?.settings && "prisma" in (request.app.settings as Record<string, unknown>)) {
@@ -28,7 +25,6 @@ export default class MetricsController {
             }
         }
 
-        logger.debug("No Prisma metrics found, returning only registry metrics");
         return response.contentType(this.registry.contentType).send(metrics);
     }
 }
