@@ -3,6 +3,7 @@
 .env
 *.env
 dist
+.idea
 
 # Editor directories and files
 .idea
@@ -40,3 +41,6 @@ sheet_creds.json
 # Ignore workspace files from vscode
 workspace.code-workspace
 trade.iml
+
+**/.claude/settings.local.json
+CLAUDE.md
