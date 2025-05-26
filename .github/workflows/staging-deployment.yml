@@ -104,6 +104,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
                   # the 'link' stuff basically lets us overwrite the migrations' sub-folder every time: https://stackoverflow.com/questions/7933680/remove-directory-structure-when-extracting-tar-archive
                   script: |
                       cd /opt/Apps/StagingTradeMachine
