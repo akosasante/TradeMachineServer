@@ -6,12 +6,16 @@ import Trade from "../models/trade";
 import { cleanJobForLogging } from "../scheduled_jobs/job_utils";
 import User from "../models/user";
 import { rollbar } from "../bootstrap/rollbar";
+import { recordJobMetrics } from "../scheduled_jobs/metrics";
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
 export function setupEmailConsumers(): void {
     logger.info("registering email consumers");
     const queueName = process.env.ORM_CONFIG === "staging" ? "stg_email_queue" : "email_queue"; // TODO: Should this also have a conditional for test env queue?
-    const emailQueue = new Bull(queueName, { settings: { maxStalledCount: 0, lockDuration: 60000 } });
+    const emailQueue = new Bull(queueName, {
+        redis: { password: process.env.REDISPASS },
+        settings: { maxStalledCount: 0, lockDuration: 60000 },
+    });
     const cleanLoggedData = (data: any) => {
         if (data.user) {
             const user: User = JSON.parse((data.user as string) || "{}");
@@ -85,5 +89,9 @@ export function setupEmailConsumers(): void {
         );
         rollbar.error("Email Worker job failed", err);
     });
+
+    recordJobMetrics(emailQueue);
+
+    logger.info("email consumers registered");
 }
 /* eslint-enable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */

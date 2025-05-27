@@ -77,7 +77,7 @@ jobs:
                   path: ./out-prisma.tar.gz
 
     migrate:
-        name: Backup db (if needed) and migarte to latest schema (if available)
+        name: Backup db (if needed) and migrate to latest schema (if available)
         needs: build
         runs-on: ubuntu-22.04
 
@@ -112,21 +112,25 @@ jobs:
                       tar -xzf out-prisma.tar.gz --unlink-first --recursive-unlink
                       rm out-prisma.tar.gz
 
-            - name: Check if we need to do migrations
-              id: check_migrations
-              continue-on-error: true # makes the "conclusion" of this step always TRUE. But the "outcome" depends on the exit value of the last command in `script`
-              uses: appleboy/ssh-action@master
-              with:
-                  host: ${{ secrets.HOST }}
-                  username: ${{ secrets.USERNAME }}
-                  password: ${{ secrets.PASSWORD }}
-                  port: ${{ secrets.SSH_PORT }}
-                  key: ${{ secrets.SSH_PRIVATE_KEY }}
-                  script: |
-                      cd /opt/Apps/TradeMachine
-                      export DATABASE_URL='${{ secrets.PROD_DATABASE_URL }}'
-                      ls -la prisma/migrations
-                      /home/dev_deployer/.asdf/shims/npx -y prisma migrate status | grep -e 'Database schema is up to date!' -e 'No migration found in prisma/migrations'
+#            - name: Check if we need to do migrations
+#              id: check_migrations
+#              continue-on-error: true # makes the "conclusion" of this step always TRUE. But the "outcome" depends on the exit value of the last command in `script`
+#              uses: appleboy/ssh-action@master
+#              with:
+#                  host: ${{ secrets.HOST }}
+#                  username: ${{ secrets.USERNAME }}
+#                  password: ${{ secrets.PASSWORD }}
+#                  port: ${{ secrets.SSH_PORT }}
+#                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+#                  script: |
+#                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/bin:$PATH"
+#                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+#                      export PATH="$HOME/bin:$PATH"
+#                      export PATH="$HOME/.local/bin:$PATH"
+#                      cd /opt/Apps/TradeMachine
+#                      export DATABASE_URL='${{ secrets.PROD_DATABASE_URL }}'
+#                      ls -la prisma/migrations
+#                      npx -y prisma migrate status | grep -e 'Database schema is up to date!' -e 'No migration found in prisma/migrations'
 
 #            - name: Make a logical backup of the production db and upload to Google Drive (ONLY IF we're about to run a migration)
 #              if: steps.check_migrations.outcome == 'failure' # if the check_migrations step exited with a non-successful (non-zero) code. That means grep found that there are prisma migrations to be run. In which case, we want to back up our data just in case before proceeding.
@@ -172,11 +176,16 @@ jobs:
                   port: ${{ secrets.SSH_PORT }}
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
+                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/bin:$PATH"
+                      export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+                      export PATH="$HOME/bin:$PATH"
+                      export PATH="$HOME/.local/bin:$PATH"
                       cd /opt/Apps/TradeMachine
                       tar -xzf out.tar.gz --overwrite
-                      /home/dev_deployer/.asdf/shims/npm install --production
-                      sh replace-migration-schema.sh dev public
-                      /home/dev_deployer/.asdf/shims/npx pm2 restart trademachine
+                      npm install --omit=dev
+                      npx prisma generate
+                      bash replace-migration-schema.sh dev public
+                      npx pm2 restart trademachine
                       rm out.tar.gz
 
             - name: Notify Rollbar of deploy finish

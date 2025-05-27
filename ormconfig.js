@@ -50,8 +50,8 @@ module.exports = [
         name: "local-test",
         port: 5438,
         schema: "test",
-        synchronize: true,
-        dropSchema: true,
+        synchronize: false,
+        dropSchema: false,
         maxQueryExecutionTime: 500, // lets us log slow queries (over 0.5 sec to execute)
         connectTimeoutMS: 2000, // not sure if this works/does anything
         extra: {

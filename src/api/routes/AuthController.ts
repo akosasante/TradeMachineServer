@@ -19,6 +19,7 @@ import User from "../../models/user";
 import { EmailPublisher } from "../../email/publishers";
 import { rollbar } from "../../bootstrap/rollbar";
 import { SessionData } from "express-session";
+import { activeUserMetric } from "../../bootstrap/metrics";
 
 // declare the additional fields that we add to express session (via routing-controllers)
 declare module "express-session" {
@@ -41,6 +42,7 @@ export default class AuthController {
     @UseBefore(LoginHandler)
     public async login(@Req() request: Request, @Session() session: SessionData): Promise<User> {
         rollbar.info("login", request);
+        activeUserMetric.inc();
         return await deserializeUser(session.user!, this.userDao);
     }
 
@@ -70,6 +72,7 @@ export default class AuthController {
     @UseBefore(RegisterHandler)
     public async signup(@Req() request: Request, @Session() session: SessionData): Promise<User> {
         rollbar.info("signup", request);
+        activeUserMetric.inc();
         return await deserializeUser(session.user!, this.userDao);
     }
 
@@ -106,6 +109,7 @@ export default class AuthController {
                         logger.debug(`Destroying user session for userId#${session.user}`);
                         // await this.userDao.updateUser(session.user, {lastLoggedIn: new Date()});
                         delete session.user;
+                        activeUserMetric.dec();
                         resolve(true);
                     }
                 });
