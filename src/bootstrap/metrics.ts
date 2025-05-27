@@ -24,13 +24,13 @@ const initializeJobMetrics = (registry: promClient.Registry) => {
         labelNames: ["queue_name"],
         registers: [registry],
     });
-    const TotalCompletedJobs = new promClient.Counter({
+    const TotalCompletedJobs = new promClient.Gauge({
         name: "jobs_completed_total",
         help: "Total number of completed jobs in the queue",
         labelNames: ["queue_name"],
         registers: [registry],
     });
-    const TotalFailedJobs = new promClient.Counter({
+    const TotalFailedJobs = new promClient.Gauge({
         name: "jobs_failed_total",
         help: "Total number of failed jobs in the queue",
         labelNames: ["queue_name"],
