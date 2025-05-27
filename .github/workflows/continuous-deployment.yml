@@ -183,6 +183,7 @@ jobs:
                       cd /opt/Apps/TradeMachine
                       tar -xzf out.tar.gz --overwrite
                       npm install --omit=dev
+                      npx prisma generate
                       bash replace-migration-schema.sh dev public
                       npx pm2 restart trademachine
                       rm out.tar.gz
