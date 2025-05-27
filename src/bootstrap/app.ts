@@ -29,6 +29,11 @@ export async function setupExpressApp(
         logger.debug("setting up prisma db");
         const prisma = initializePrisma(true);
         expressApp.set("prisma", prisma);
+        registerCleanupCallback(async () => {
+            logger.debug("closing prisma connection");
+            await prisma.$disconnect();
+            logger.debug("prisma connection closed");
+        });
     }
     logger.debug("database setup complete");
 
@@ -112,23 +117,20 @@ export default async function startServer(): Promise<Server> {
             serverCloseHandler().catch(logger.error);
         });
 
-        registerCleanupCallback(
-            () => {
-                logger.info("cleanup callback called, closing server");
-                return new Promise<void>(resolve => {
-                        if (!srv || !srv.listening) {
-                            resolve();
-                        }
-                        return srv.close(err => {
-                            if (err) {
-                                logger.error(`Error closing server: ${inspect(err)}`);
-                            }
-                            resolve();
-                        });
+        registerCleanupCallback(() => {
+            logger.info("cleanup callback called, closing server");
+            return new Promise<void>(resolve => {
+                if (!srv || !srv.listening) {
+                    resolve();
+                }
+                return srv.close(err => {
+                    if (err) {
+                        logger.error(`Error closing server: ${inspect(err)}`);
                     }
-                );
-            }
-        );
+                    resolve();
+                });
+            });
+        });
 
         setupSignalHandlers();
         return srv;
