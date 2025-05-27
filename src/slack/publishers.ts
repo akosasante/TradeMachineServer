@@ -2,6 +2,7 @@ import Bull, { JobOptions, Queue } from "bull";
 import { Publisher } from "../scheduled_jobs/publisher";
 import Trade from "../models/trade";
 import logger from "../bootstrap/logger";
+import { recordJobMetrics } from "../scheduled_jobs/metrics";
 
 export class SlackPublisher extends Publisher {
     private static instance: SlackPublisher;
@@ -21,7 +22,11 @@ export class SlackPublisher extends Publisher {
             } else {
                 queueName = "slack_queue";
             }
-            SlackPublisher.instance = new SlackPublisher(queue || new Bull(queueName));
+            SlackPublisher.instance = new SlackPublisher(
+                queue || new Bull(queueName, { redis: { password: process.env.REDISPASS } })
+            );
+            recordJobMetrics(SlackPublisher.instance.queue!);
+            logger.info(`SlackPublisher initialized with queue: ${queueName}`);
         }
 
         return SlackPublisher.instance;

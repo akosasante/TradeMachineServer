@@ -1,4 +1,4 @@
-import { PrismaClient, User } from "@prisma/client";
+import { Prisma, PrismaClient, User } from "@prisma/client";
 import { exclude } from "./helpers";
 
 export type PublicUser = Omit<User, "password">;
@@ -25,5 +25,40 @@ export default class UserDAO {
     public async getAllUsers(): Promise<PublicUser[]> {
         const users = await this.userDb.findMany({ orderBy: { id: "asc" } });
         return UserDAO.publicUsers(users);
+    }
+
+    public async findUserWithPasswordByEmail(email: string): Promise<User | null> {
+        const user = await this.userDb.findUnique({
+            where: { email },
+            select: { id: true, email: true, password: true, role: true, status: true, lastLoggedIn: true },
+        });
+        if (user) {
+            return user as User;
+        } else {
+            return null;
+        }
+    }
+
+    public async createUsers(userObjs: Partial<User>[]): Promise<PublicUser[]> {
+        await this.userDb.createMany({
+            data: userObjs.map(user => ({
+                ...user,
+                email: user.email || "",
+                espnMember: user.espnMember ?? undefined,
+            })),
+            skipDuplicates: true,
+        });
+        const users = await this.userDb.findMany({
+            where: { email: { in: userObjs.map(user => user.email!) } },
+        });
+        return UserDAO.publicUsers(users);
+    }
+
+    public async updateUser(id: string, userObj: Partial<User>): Promise<PublicUser> {
+        const updatedUser = await this.userDb.update({
+            where: { id },
+            data: userObj as unknown as Prisma.UserUpdateInput,
+        });
+        return UserDAO.publicUser(updatedUser);
     }
 }

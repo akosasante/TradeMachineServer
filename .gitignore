@@ -12,6 +12,7 @@ dist
 *.sln
 .vscode
 *.iml
+sbt.xml
 
 # Logs
 logs
@@ -40,3 +41,6 @@ sheet_creds.json
 # Ignore workspace files from vscode
 workspace.code-workspace
 trade.iml
+
+**/.claude/settings.local.json
+CLAUDE.md

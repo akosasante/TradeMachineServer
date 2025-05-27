@@ -8,6 +8,8 @@ import { createClient } from "redis";
 import responseTime from "response-time";
 import logger from "./logger";
 import { rollbar } from "./rollbar";
+import { metricsMiddleware } from "./metrics";
+import { registerCleanupCallback } from "./shutdownHandler";
 
 const app = express();
 
@@ -44,6 +46,10 @@ export const redisClient = createClient({
     password: process.env.REDISPASS,
 });
 
+registerCleanupCallback(async () => {
+    await redisClient.disconnect();
+});
+
 const REDIS_OPTS = {
     logErrors: true,
     ttl: COOKIE_MAX_AGE_SECONDS,
@@ -67,5 +73,7 @@ app.use(
         },
     })
 );
+
+app.use(metricsMiddleware as any);
 
 export default app;
