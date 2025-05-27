@@ -6,6 +6,7 @@ import { serializeUser, signInAuthentication, signUpAuthentication } from "../..
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import UserDO from "../../models/user";
+import { PublicUser } from "../../DAO/v2/UserDAO";
 
 // declare the additional fields that we add to express session (via routing-controllers)
 declare module "express-session" {
@@ -63,7 +64,7 @@ export class RegisterHandler implements ExpressMiddlewareInterface {
             return next(new Error("Some details are missing. Cannot register user."));
         }
 
-        return signUpAuthentication(email, password, this.userDAO, (err?: Error, user?: UserDO) => {
+        return signUpAuthentication(email, password, this.userDAO, (err?: Error, user?: UserDO | PublicUser) => {
             if (err) {
                 return next(err);
             } else if (!user) {

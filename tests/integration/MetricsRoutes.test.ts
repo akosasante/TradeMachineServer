@@ -9,6 +9,9 @@ import initializeDb from "../../src/bootstrap/prisma-db";
 import { PrismaClient } from "@prisma/client";
 import { EmailPublisher } from "../../src/email/publishers";
 import UserDAO from "../../src/DAO/UserDAO";
+import v2UserDAO from "../../src/DAO/v2/UserDAO";
+import { registerUser } from "../../src/db/seed/helpers/authHelper";
+import { createAdminUser } from "../../src/db/seed/helpers/userCreator";
 
 let app: Server;
 let prismaConn: PrismaClient;
@@ -132,6 +135,43 @@ describe("Metrics API endpoint", () => {
                 10
             );
             expect(updatedJobCount).toBeGreaterThan(initialJobCount);
+        });
+
+        it("should measure active user sessions", async () => {
+            // Create a persistent agent to maintain sessions across requests
+            const agent = request.agent(app);
+
+            const initialMetricsResponse = await agent.get("/metrics").expect(200);
+            expect(initialMetricsResponse.text).toContain("trade_machine_active_sessions");
+
+            // register a new user to create a session
+            const user = createAdminUser();
+            const res = await registerUser(user, new v2UserDAO(prismaConn.user));
+            await agent.post("/auth/login").send({ email: user.email, password: "testing123" }).expect(200);
+
+            const afterLoginMetricsResponse = await agent.get("/metrics").expect(200);
+
+            expect(afterLoginMetricsResponse.text).toContain("trade_machine_active_sessions");
+
+            // log out to decrement session count
+            await agent.post("/auth/logout").expect(200);
+
+            const afterLogoutMetricsResponse = await agent.get("/metrics").expect(200);
+
+            const initialSessionCount = parseInt(
+                /trade_machine_active_sessions\s+(\d+)/.exec(initialMetricsResponse.text)?.[1] || "0",
+                10
+            );
+            const updatedSessionCount = parseInt(
+                /trade_machine_active_sessions\s+(\d+)/.exec(afterLoginMetricsResponse.text)?.[1] || "0",
+                10
+            );
+            const finalSessionCount = parseInt(
+                /trade_machine_active_sessions\s+(\d+)/.exec(afterLogoutMetricsResponse.text)?.[1] || "0",
+                10
+            );
+            expect(updatedSessionCount).toBeGreaterThan(initialSessionCount);
+            expect(finalSessionCount).toBeLessThan(updatedSessionCount);
         });
     });
 });

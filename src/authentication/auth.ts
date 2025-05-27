@@ -5,11 +5,12 @@ import { inspect } from "util";
 import { ConflictError } from "../api/middlewares/ErrorHandler";
 import logger from "../bootstrap/logger";
 import UserDAO from "../DAO/UserDAO";
+import v2UserDAO, { PublicUser } from "../DAO/v2/UserDAO";
 import User, { Role } from "../models/user";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import { rollbar } from "../bootstrap/rollbar";
 
-export function serializeUser(user: User): string | undefined {
+export function serializeUser(user: User | PublicUser): string | undefined {
     logger.debug("serializing user");
     return user?.id;
 }
@@ -22,8 +23,8 @@ export async function deserializeUser(id: string, userDAO: UserDAO = new UserDAO
 export async function signUpAuthentication(
     email: string,
     password: string,
-    userDAO: UserDAO = new UserDAO(),
-    done: (err?: Error, user?: User) => void
+    userDAO: UserDAO | v2UserDAO = new UserDAO(),
+    done: (err?: Error, user?: User | PublicUser) => void
 ): Promise<void> {
     try {
         logger.debug("sign up strategy");
