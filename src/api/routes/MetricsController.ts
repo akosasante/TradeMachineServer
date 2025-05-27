@@ -3,7 +3,6 @@ import { Controller, Get, Req, Res } from "routing-controllers";
 import { Request, Response } from "express";
 import { metricsRegistry } from "../../bootstrap/metrics";
 import { ExpressAppSettings } from "../../bootstrap/express";
-import logger from "../../bootstrap/logger";
 
 @Controller("/metrics")
 export default class MetricsController {
@@ -15,9 +14,6 @@ export default class MetricsController {
 
     @Get("/")
     public async getMetrics(@Req() request: Request, @Res() response: Response): Promise<Response> {
-        logger.info("Metrics endpoint hit");
-        logger.info(request);
-
         const metrics = await this.registry.metrics();
 
         if (request?.app?.settings && "prisma" in (request.app.settings as Record<string, unknown>)) {
@@ -28,7 +24,6 @@ export default class MetricsController {
             }
         }
 
-        logger.debug("No Prisma metrics found, returning only registry metrics");
         return response.contentType(this.registry.contentType).send(metrics);
     }
 }
