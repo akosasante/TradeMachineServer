@@ -10,7 +10,7 @@ import { recordJobMetrics } from "../scheduled_jobs/metrics";
 export function setupSlackConsumers(): void {
     logger.info("registering slack consumers");
     const queueName = process.env.ORM_CONFIG === "staging" ? "stg_slack_queue" : "slack_queue"; // TODO: Should this also have a conditional for test env?
-    const slackQueue = new Bull(queueName);
+    const slackQueue = new Bull(queueName, { redis: { password: process.env.REDISPASS } });
     const cleanLoggedData = (data: any) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
         const trade: Trade = JSON.parse(data.trade || "{}");
