@@ -3,7 +3,6 @@ import { Controller, Get, Req, Res } from "routing-controllers";
 import { Request, Response } from "express";
 import { metricsRegistry } from "../../bootstrap/metrics";
 import { ExpressAppSettings } from "../../bootstrap/express";
-import logger from "../../bootstrap/logger";
 
 @Controller("/metrics")
 export default class MetricsController {

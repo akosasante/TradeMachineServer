@@ -24,3 +24,15 @@ export const setupSignalHandlers = () => {
     process.on("SIGINT", () => void handleExit("SIGINT"));
     process.on("SIGTERM", () => void handleExit("SIGTERM"));
 };
+
+export const handleExitInTest = async () => {
+    logger.info("Shurtting down gracefully in test environment");
+    for (const callback of cleanupCallbacks) {
+        try {
+            logger.info(`Running cleanup callback..., ${callback.name}`);
+            await callback();
+        } catch (error) {
+            logger.error(`Error during cleanup: ${error}`);
+        }
+    }
+};
