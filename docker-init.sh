@@ -22,6 +22,16 @@ echo "UUID extension created or already exists"
 echo "Running Prisma migrations..."
 npx prisma migrate deploy
 
+# Set up email templates directory for development environment
+if [ "$NODE_ENV" = "development" ]; then
+    echo "Setting up email template directories for development..."
+    mkdir -p /app/dist/email
+    if [ -d /app/src/email/templates ] && [ ! -d /app/dist/email/templates ]; then
+        echo "Creating symbolic link from /app/src/email/templates to /app/dist/email/templates"
+        ln -sf /app/src/email/templates /app/dist/email/templates
+    fi
+fi
+
 # If arguments are provided, start the application
 if [ $# -gt 0 ]; then
     echo "Starting the application..."
