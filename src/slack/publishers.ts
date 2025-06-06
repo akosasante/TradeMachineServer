@@ -23,7 +23,14 @@ export class SlackPublisher extends Publisher {
                 queueName = "slack_queue";
             }
             SlackPublisher.instance = new SlackPublisher(
-                queue || new Bull(queueName, { redis: { password: process.env.REDISPASS } })
+                queue ||
+                    new Bull(queueName, {
+                        redis: {
+                            host: process.env.REDIS_IP || "localhost",
+                            port: Number(process.env.REDIS_PORT || 6379),
+                            password: process.env.REDISPASS,
+                        },
+                    })
             );
             recordJobMetrics(SlackPublisher.instance.queue!);
             logger.info(`SlackPublisher initialized with queue: ${queueName}`);
