@@ -16,7 +16,11 @@ export function setupScheduledMlbMinorLeagueUpdates(): void {
     logger.info(`Setting up minor league updates from mlb api to run on schedule ${cron}`);
     const queueName = process.env.ORM_CONFIG === "staging" ? "stg_mlb_api_queue" : "mlb_api_queue"; // TODO: Should this also have a conditional for test env?
     const mlbQueue = new Bull(queueName, {
-        redis: { password: process.env.REDISPASS },
+        redis: {
+            host: process.env.REDIS_IP || "localhost",
+            port: Number(process.env.REDIS_PORT || 6379),
+            password: process.env.REDISPASS,
+        },
         settings: { maxStalledCount: 0 },
     });
     // eslint-disable-next-line @typescript-eslint/naming-convention
