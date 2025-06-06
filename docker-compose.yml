@@ -24,6 +24,7 @@ services:
       - REDIS_PORT=6379
       - SESSION_SECRET=local_dev_secret
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/trade_machine?schema=dev
+      - BASE_URL=http://localhost:3030
       # Help Node.js find modules correctly
       - NODE_PATH=/app:/app/node_modules
     volumes:
