@@ -46,7 +46,7 @@ export async function setupExpressApp(
 
     // Register routes and some global auth middlewares
     logger.debug("setting up route-controllers");
-    const developmentOrigins = [/localhost:3000/, /localhost:8080/, /127\.0\.0\.1/, /ngrok/];
+    const developmentOrigins = [/localhost:3030/, /127\.0\.0\.1/, /ngrok/];
     const prodOrigins = [
         /newtrades\.akosua\.xyz/,
         /staging\.trades\.akosua\.xyz/,
