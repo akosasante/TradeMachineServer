@@ -2,9 +2,9 @@ name: Build and Publish Docker Image
 
 on:
   push:
-    branches: [main, staging]
+    branches: [main, staging, dockerize]
   pull_request:
-    branches: [main, staging]
+    branches: [main, staging, dockerize]
   # Manual trigger
   workflow_dispatch:
     inputs:
