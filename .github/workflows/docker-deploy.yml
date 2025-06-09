@@ -3,7 +3,7 @@ name: Deploy Docker Image
 on:
   workflow_run:
     workflows: ["Build and Publish Docker Image"]
-    branches: [main, staging]
+    branches: [main, staging, dockerize]
     types: [completed]
   # Manual trigger for feature branches
   workflow_dispatch:
