@@ -1,0 +1,19 @@
+name: Build Docker Image Stub
+
+on:
+  push:
+    branches: [ main, staging ]
+  workflow_dispatch:
+    inputs:
+      build_only:
+        description: 'Build image without deploying'
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder step
+        run: echo "This is a stub workflow to register the workflow_dispatch trigger"

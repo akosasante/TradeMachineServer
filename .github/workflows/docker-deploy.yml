@@ -1,0 +1,28 @@
+name: Deploy Docker Image Stub
+
+on:
+  workflow_run:
+    workflows: ["Build Docker Image Stub"]
+    branches: [main, staging]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder step
+        run: echo "This is a stub workflow to register the triggers"
+      
+      - name: Echo selected environment
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "Selected environment is ${{ github.event.inputs.environment }}"
