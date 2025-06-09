@@ -1,9 +1,6 @@
 name: Build and Publish Docker Image
 
 on:
-  push:
-    branches: [ main, staging ]
-  # Manual trigger
   workflow_dispatch:
     inputs:
       build_only:
