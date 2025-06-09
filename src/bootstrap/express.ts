@@ -57,6 +57,8 @@ const REDIS_OPTS = {
     prefix: process.env.ORM_CONFIG === "staging" ? "stg_sess:" : "sess:",
 };
 
+const insecureCookies = process.env.COOKIE_SECURE === "false" || process.env.NODE_ENV === "test";
+
 app.use(
     expressSession({
         resave: false,
@@ -66,10 +68,11 @@ app.use(
         unset: "destroy",
         name: process.env.ORM_CONFIG === "staging" ? "staging_trades.sid" : "trades.sid",
         cookie: {
-            secure: process.env.NODE_ENV !== "test",
+            // Don't set secure cookies in dev/test
+            secure: !insecureCookies,
             httpOnly: true,
             maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
-            sameSite: "none",
+            sameSite: insecureCookies ? "lax" : "none",
         },
     })
 );

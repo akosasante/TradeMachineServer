@@ -55,8 +55,8 @@ export function recordJobMetrics(queue: Bull.Queue): void {
                 availableJobMetrics.TotalActiveJobs.set({ queue_name: queue.name }, jobCounts.active);
                 availableJobMetrics.TotalWaitingJobs.set({ queue_name: queue.name }, jobCounts.waiting);
                 availableJobMetrics.TotalDelayedJobs.set({ queue_name: queue.name }, jobCounts.delayed);
-                availableJobMetrics.TotalCompletedJobs.inc({ queue_name: queue.name }, jobCounts.completed);
-                availableJobMetrics.TotalFailedJobs.inc({ queue_name: queue.name }, jobCounts.failed);
+                availableJobMetrics.TotalCompletedJobs.set({ queue_name: queue.name }, jobCounts.completed);
+                availableJobMetrics.TotalFailedJobs.set({ queue_name: queue.name }, jobCounts.failed);
             } catch (error) {
                 logger.error(`Error updating job metrics for queue ${queue.name}: ${error}`);
             }
