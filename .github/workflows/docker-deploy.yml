@@ -26,24 +26,17 @@ jobs:
         include:
           # Staging deployment conditions
           - environment: staging
-            condition: ${{ 
-              (github.event.workflow_run.head_branch == 'staging') ||
-              (github.event.workflow_run.head_branch == 'main') ||
-              (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
-            }}
+            condition: ${{ (github.event.workflow_run.head_branch == 'staging') || (github.event.workflow_run.head_branch == 'main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging') }}
             app_dir: /opt/Apps/StagingTradeMachine
             image_tag: ${{ github.event.workflow_run.head_branch || github.ref_name }}
-            port: 3001
+            port: 3015
           
           # Production deployment conditions  
           - environment: production
-            condition: ${{ 
-              (github.event.workflow_run.head_branch == 'main') ||
-              (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
-            }}
+            condition: ${{ (github.event.workflow_run.head_branch == 'main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') }}
             app_dir: /opt/Apps/TradeMachine
             image_tag: main
-            port: 3000
+            port: 3005
 
     steps:
       - name: Skip if condition not met
