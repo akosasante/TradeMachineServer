@@ -1,0 +1,111 @@
+name: Deploy Docker Image
+
+on:
+  workflow_run:
+    workflows: ["Build and Publish Docker Image"]
+    branches: [main, staging]
+    types: [completed]
+  # Manual trigger for feature branches
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    strategy:
+      matrix:
+        include:
+          # Staging deployment conditions
+          - environment: staging
+            condition: ${{ 
+              (github.event.workflow_run.head_branch == 'staging') ||
+              (github.event.workflow_run.head_branch == 'main') ||
+              (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+            }}
+            app_dir: /opt/Apps/StagingTradeMachine
+            image_tag: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+            port: 3001
+          
+          # Production deployment conditions  
+          - environment: production
+            condition: ${{ 
+              (github.event.workflow_run.head_branch == 'main') ||
+              (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+            }}
+            app_dir: /opt/Apps/TradeMachine
+            image_tag: main
+            port: 3000
+
+    steps:
+      - name: Skip if condition not met
+        if: ${{ !matrix.condition }}
+        run: echo "Skipping ${{ matrix.environment }} deployment" && exit 0
+
+      - name: Run database migrations for ${{ matrix.environment }}
+        if: ${{ matrix.condition }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ matrix.app_dir }}
+            source .env
+            docker pull ghcr.io/${{ github.repository }}:${{ matrix.image_tag }}
+            docker run --rm --env-file .env ghcr.io/${{ github.repository }}:${{ matrix.image_tag }} npx prisma migrate deploy
+
+      - name: Deploy ${{ matrix.environment }}
+        if: ${{ matrix.condition }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ matrix.app_dir }}
+            
+            # Update IMAGE_TAG in .env
+            sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ matrix.image_tag }}/' .env
+            
+            # Login to registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Deploy
+            docker-compose pull app
+            docker-compose up -d app
+            
+            # Health check
+            timeout=60
+            while [ $timeout -gt 0 ]; do
+              if curl -f http://localhost:${{ matrix.port }}/health; then
+                echo "${{ matrix.environment }} deployment successful"
+                exit 0
+              fi
+              sleep 5
+              timeout=$((timeout-5))
+            done
+            
+            echo "${{ matrix.environment }} health check failed"
+            docker-compose logs app
+            exit 1
+
+      - name: Notify Rollbar of deployment
+        if: ${{ matrix.condition }}
+        uses: rollbar/github-deploy-action@2.1.2
+        with:
+          environment: ${{ matrix.environment }}
+          version: ${{ github.sha }}
+          status: "succeeded"
+          local_username: ${{ github.actor }}
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: "aaasante"

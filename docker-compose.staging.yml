@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    image: ghcr.io/${GITHUB_REPOSITORY}:${IMAGE_TAG}
+    container_name: staging_trademachine
+    restart: always
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3015
+      - IP=0.0.0.0
+      - ORM_CONFIG=staging
+      - APP_ENV=staging
+    ports:
+      - "3015:3015"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3015/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
