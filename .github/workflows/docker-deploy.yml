@@ -120,40 +120,40 @@ services:
       - APP_ENV=${{ matrix.environment }}
     network_mode: host
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${{ matrix.port }}/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:${{ matrix.port }}/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 20s
-EOF
-            
-            # Deploy
-            docker-compose pull app
-            docker-compose up -d app
-            
-            # Health check
-            timeout=60
-            while [ $timeout -gt 0 ]; do
-              if curl -sf http://localhost:${{ matrix.port }}/health; then
-                echo "${{ matrix.environment }} deployment successful"
-                exit 0
-              fi
-              sleep 5
-              timeout=$((timeout-5))
-            done
-            
-            echo "${{ matrix.environment }} health check failed"
-            docker-compose logs app
-            exit 1
+  EOF
+  
+  # Deploy
+  docker-compose pull app
+  docker-compose up -d app
+  
+  # Health check
+  timeout=60
+  while [ $timeout -gt 0 ]; do
+  if curl -sf http://localhost:${{ matrix.port }}/health; then
+  echo "${{ matrix.environment }} deployment successful"
+  exit 0
+  fi
+  sleep 5
+  timeout=$((timeout-5))
+  done
+  
+  echo "${{ matrix.environment }} health check failed"
+  docker-compose logs app
+  exit 1
 
-      - name: Notify Rollbar of deployment
-        if: ${{ matrix.condition }}
-        uses: rollbar/github-deploy-action@2.1.2
-        with:
-          environment: ${{ matrix.environment }}
-          version: ${{ github.sha }}
-          status: "succeeded"
-          local_username: ${{ github.actor }}
-        env:
-          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
-          ROLLBAR_USERNAME: "aaasante"
+- name: Notify Rollbar of deployment
+  if: ${{ matrix.condition }}
+  uses: rollbar/github-deploy-action@2.1.2
+  with:
+    environment: ${{ matrix.environment }}
+    version: ${{ github.sha }}
+    status: "succeeded"
+    local_username: ${{ github.actor }}
+  env:
+    ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+    ROLLBAR_USERNAME: "aaasante"
