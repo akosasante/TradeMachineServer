@@ -26,6 +26,7 @@ echo "Running Prisma migrations..."
 # Run Prisma migrate with explicit .env file
 echo "Using DATABASE_URL: $DATABASE_URL"
 export DATABASE_URL="$DATABASE_URL"
+npx prisma generate
 DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy
 
 # Set up email templates directory for development environment
