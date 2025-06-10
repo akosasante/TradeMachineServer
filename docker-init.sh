@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "HIIIIIII"
+echo "HIIIIIII2"
 echo $DATABASE_URL
 
 # Wait for PostgreSQL to become available
