@@ -10,6 +10,7 @@ import logger from "./logger";
 import { rollbar } from "./rollbar";
 import { metricsMiddleware } from "./metrics";
 import { registerCleanupCallback } from "./shutdownHandler";
+import {inspect} from "util";
 
 const app = express();
 
@@ -35,6 +36,8 @@ export interface ExpressAppSettings {
 // Session tracking
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 60 sec * 60 min * 24hr * 7 = 7 days
 const redisStore = connectRedis(expressSession);
+
+logger.debug(`CREATING REDIS CLIENT: ${inspect(process.env)}`);
 
 export const redisClient = createClient({
     // legacyMode: true is required to work with connect-redis + redis v4: https://github.com/tj/connect-redis/pull/345
