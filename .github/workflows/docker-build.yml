@@ -1,8 +1,8 @@
-name: Build Docker Image Stub
+name: Build and Publish Docker Image
 
 on:
   push:
-    branches: [ main, staging ]
+    branches: [ staging ]
   workflow_dispatch:
     inputs:
       build_only:

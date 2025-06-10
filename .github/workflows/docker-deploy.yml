@@ -1,9 +1,9 @@
-name: Deploy Docker Image Stub
+name: Deploy Docker Image
 
 on:
   workflow_run:
-    workflows: ["Build Docker Image Stub"]
-    branches: [main, staging]
+    workflows: ["Build and Publish Docker Image"]
+    branches: [staging]
     types: [completed]
   workflow_dispatch:
     inputs:
