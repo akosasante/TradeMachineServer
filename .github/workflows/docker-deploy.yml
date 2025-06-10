@@ -2,9 +2,9 @@ name: Deploy Docker Image
 
 on:
   workflow_run:
-    workflows: [ "Build and Publish Docker Image" ]
-    branches: [ main, staging ]
-    types: [ completed ]
+    workflows: ["Build and Publish Docker Image"]
+    branches: [staging]
+    types: [completed]
   workflow_dispatch:
     inputs:
       environment:
@@ -30,7 +30,7 @@ jobs:
             image_tag: ${{ github.ref_name || 'staging' }}
             port: 3015
 
-          # Production deployment conditions  
+          # Production deployment conditions
           - environment: production
             condition: ${{ (github.event.workflow_run.head_branch == 'main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') }}
             app_dir: /opt/Apps/TradeMachine
