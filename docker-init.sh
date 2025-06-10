@@ -23,7 +23,9 @@ if [ "$APP_ENV" = "staging" ]; then
   pwd
   echo $(ls /app/prisma)
   echo $(ls /app/prisma/migrations)
-  RUN npx prisma generate
+  echo $DATABASE_URL
+  echo "$DATABASE_URL"
+  DATABASE_URL="$DATABASE_URL" npx prisma generate
   echo $(ls /app/prisma)
   DATABASE_URL="$DATABASE_URL" npx prisma generate prisma/schema.prisma
   DATABASE_URL="$DATABASE_URL" npx prisma migrate resolve --applied 20220620212611_initial_migration
