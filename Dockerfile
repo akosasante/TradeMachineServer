@@ -1,5 +1,6 @@
 # Base image, in this first stage, we transpile TypeScript to JavaScript
 FROM node:16-slim as build
+ARG CACHBUSTER=1
 
 # Set working directory
 WORKDIR /app
