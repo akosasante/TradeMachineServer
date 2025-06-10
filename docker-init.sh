@@ -20,7 +20,7 @@ fi
 
 if [ "$APP_ENV" = "staging" ]; then
   echo "Setting migrations as resolved in staging environment..."
-  ehco pwd
+  echo pwd
   echo $(ls -la /app/prisma/migrations)
   export DATABASE_URL="$DATABASE_URL"
   npx prisma generate prisma/schema.prisma
