@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-echo "HIIIIIII2"
+echo "HIIIIIII3"
 echo $DATABASE_URL
+printenv
 
 # Wait for PostgreSQL to become available
 echo "Waiting for PostgreSQL to start..."
