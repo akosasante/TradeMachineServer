@@ -55,7 +55,11 @@ jobs:
             # Convert repository name to lowercase for Docker compatibility
             REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
             docker pull ghcr.io/${REPO_LOWERCASE}:${{ matrix.image_tag }}
-            docker run --rm --env-file .env ghcr.io/${REPO_LOWERCASE}:${{ matrix.image_tag }} npx prisma migrate deploy
+            # Run with host network and as root user to access PostgreSQL on the host
+            # Explicitly extract and pass DATABASE_URL to ensure it's properly formatted
+            DB_URL=$(grep DATABASE_URL .env | cut -d '=' -f2-)
+            echo "Using database URL (censored): ${DB_URL//:/***:}" 
+            docker run --rm --network=host --user root -e DATABASE_URL="${DB_URL}" ghcr.io/${REPO_LOWERCASE}:${{ matrix.image_tag }} npx prisma migrate deploy
 
       - name: Deploy ${{ matrix.environment }}
         if: ${{ matrix.condition }}
@@ -73,6 +77,13 @@ jobs:
             # Update IMAGE_TAG and GITHUB_REPOSITORY in .env
             sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ matrix.image_tag }}/' .env
             sed -i 's/^GITHUB_REPOSITORY=.*/GITHUB_REPOSITORY='${REPO_LOWERCASE}'/' .env
+            
+            # Verify the DATABASE_URL is properly formatted
+            DB_URL=$(grep DATABASE_URL .env | cut -d '=' -f2-)
+            if [[ ! "$DB_URL" =~ ^(postgresql|postgres):// ]]; then
+              echo "Warning: DATABASE_URL in .env file doesn't start with postgresql:// or postgres://"
+              echo "Current value (censored): ${DB_URL//:/***:}"
+            fi
             
             # Login to registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
