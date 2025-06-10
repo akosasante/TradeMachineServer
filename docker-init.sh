@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "HIIIIIII5"
+echo "HIIIIIII6"
 
 # Wait for PostgreSQL to become available
 echo "Waiting for PostgreSQL to start..."
@@ -26,8 +26,9 @@ echo "Running Prisma migrations..."
 # Run Prisma migrate with explicit .env file
 echo "Using DATABASE_URL: $DATABASE_URL"
 export DATABASE_URL="$DATABASE_URL"
+npx prisma init
 npx prisma generate
-DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy
+DATABASE_URL="postgresql://trader_dev:blawrie13@localhost:5432/trade_machine?schema=staging&application_name=tm_server_staging" npx prisma migrate deploy
 
 # Set up email templates directory for development environment
 if [ "$NODE_ENV" = "development" ]; then
