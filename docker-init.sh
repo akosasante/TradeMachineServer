@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "HIIIIIII4"
+echo "HIIIIIII5"
 
 # Wait for PostgreSQL to become available
 echo "Waiting for PostgreSQL to start..."
