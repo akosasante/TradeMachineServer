@@ -21,7 +21,10 @@ fi
 if [ "$APP_ENV" = "staging" ]; then
   echo "Setting migrations as resolved in staging environment..."
   pwd
+  echo $(ls /app/prisma)
   echo $(ls /app/prisma/migrations)
+  RUN npx prisma generate
+  echo $(ls /app/prisma)
   DATABASE_URL="$DATABASE_URL" npx prisma generate prisma/schema.prisma
   DATABASE_URL="$DATABASE_URL" npx prisma migrate resolve --applied 20220620212611_initial_migration
   DATABASE_URL="$DATABASE_URL" npx prisma migrate resolve --applied 20250527131119_remove_uneeded
