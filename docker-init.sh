@@ -24,16 +24,9 @@ echo "UUID extension created or already exists"
 
 # Run Prisma migrations (if needed)
 echo "Running Prisma migrations..."
-# Print DATABASE_URL for debugging (censored)
-echo "Database URL for Prisma (censored): ${DATABASE_URL//:[^@]*@/:***@}"
-
-# Create .env.prisma file with explicit DATABASE_URL to ensure Prisma can see it
-echo "DATABASE_URL=\"$DATABASE_URL\"" > .env.prisma
-echo "Created .env.prisma file:"
-cat .env.prisma
 
 # Run Prisma migrate with explicit .env file
-npx prisma migrate deploy --env-file .env.prisma
+npx prisma migrate deploy
 
 # Set up email templates directory for development environment
 if [ "$NODE_ENV" = "development" ]; then
