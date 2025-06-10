@@ -55,14 +55,14 @@ jobs:
             # Login to registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # TODO: Maybe later we'll copy over the docker-compose.yml file each time, but it should be fine for now
+            # TODO: Maybe later we'll copy over the docker compose.yml file each time, but it should be fine for now
             
             # Deploy
             docker compose pull app
             docker compose up -d app
             
             # Health check
-            # TODO We may not need this since I think docker-compose handles health checks automatically
+            # TODO We may not need this since I think docker compose handles health checks automatically
             timeout=60
             while [ $timeout -gt 0 ]; do
               if curl -f http://localhost:${{ matrix.port }}/health; then
@@ -74,7 +74,7 @@ jobs:
             done
             
             echo "${{ matrix.environment }} health check failed"
-            docker-compose logs app
+            docker compose logs app
             exit 1
 
       - name: Notify Rollbar of deployment
