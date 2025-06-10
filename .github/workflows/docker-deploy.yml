@@ -55,11 +55,25 @@ jobs:
             # Convert repository name to lowercase for Docker compatibility
             REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
             docker pull ghcr.io/${REPO_LOWERCASE}:${{ matrix.image_tag }}
-            # Run with host network and as root user to access PostgreSQL on the host
-            # Explicitly extract and pass DATABASE_URL to ensure it's properly formatted
+            # Extract DATABASE_URL first
             DB_URL=$(grep DATABASE_URL .env | cut -d '=' -f2-)
-            echo "Using database URL (censored): ${DB_URL//:/***:}" 
-            docker run --rm --network=host --user root -e DATABASE_URL="${DB_URL}" ghcr.io/${REPO_LOWERCASE}:${{ matrix.image_tag }} npx prisma migrate deploy
+            echo "Using database URL (censored): ${DB_URL//:/***:}"
+            
+            # Verify PostgreSQL can be accessed before attempting migrations
+            echo "Verifying PostgreSQL connectivity..."
+            if ! PGPASSWORD=$(grep -oP '(?<=password=)[^@]+' <<< "$DB_URL") psql -U $(grep -oP '(?<=postgresql://)[^:]+' <<< "$DB_URL") -h $(grep -oP '(?<=@)[^:]+' <<< "$DB_URL") -p $(grep -oP '(?<=@[^:]+:)[^/]+' <<< "$DB_URL") -d $(grep -oP '(?<=/)[^?]+' <<< "$DB_URL") -c '\q'; then
+              echo "ERROR: Cannot connect to PostgreSQL directly from server"
+              echo "Please check your database connection settings"
+              exit 1
+            else
+              echo "PostgreSQL connection successful from host"
+            fi
+            
+            # Run with host network and as root user to access PostgreSQL on the host
+            echo "Running database migrations..."
+            
+            # Run migration with verbose output
+            docker run --rm --network=host --user root -e DATABASE_URL="${DB_URL}" ghcr.io/${REPO_LOWERCASE}:${{ matrix.image_tag }} bash -c "echo 'Current directory:' && pwd && ls -la && echo 'Prisma directory:' && ls -la prisma && npx prisma migrate deploy --verbose"
 
       - name: Deploy ${{ matrix.environment }}
         if: ${{ matrix.condition }}
@@ -88,6 +102,31 @@ jobs:
             # Login to registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
+            # Copy our updated docker-compose file to the server
+            cat > docker-compose.yml << EOF
+version: '3.8'
+
+services:
+  app:
+    image: ghcr.io/\${GITHUB_REPOSITORY}:\${IMAGE_TAG}
+    container_name: ${{ matrix.environment }}_trademachine
+    restart: always
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - PORT=${{ matrix.port }}
+      - IP=0.0.0.0
+      - ORM_CONFIG=${{ matrix.environment }}
+      - APP_ENV=${{ matrix.environment }}
+    network_mode: host
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${{ matrix.port }}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+EOF
+            
             # Deploy
             docker-compose pull app
             docker-compose up -d app
@@ -95,7 +134,7 @@ jobs:
             # Health check
             timeout=60
             while [ $timeout -gt 0 ]; do
-              if curl -f http://localhost:${{ matrix.port }}/health; then
+              if curl -sf http://localhost:${{ matrix.port }}/health; then
                 echo "${{ matrix.environment }} deployment successful"
                 exit 0
               fi
