@@ -52,6 +52,8 @@ jobs:
           script: |
             cd ${{ matrix.app_dir }}
             source .env
+            # Login to registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             # Convert repository name to lowercase for Docker compatibility
             REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
             IMAGE_LOWERCASE=$(echo "${{ matrix.image_tag }}" | tr '[:upper:]' '[:lower:]')
