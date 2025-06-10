@@ -59,7 +59,7 @@ jobs:
             IMAGE_LOWERCASE=$(echo "${{ matrix.image_tag }}" | tr '[:upper:]' '[:lower:]')
             docker rmi ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE} || true
             docker pull ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE}
-            docker run --rm --env-file .env --network=host --user root ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE} echo "HI"
+            docker run --rm --env-file .env --network=host --user root ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE}
 
       - name: Deploy ${{ matrix.environment }}
         if: ${{ matrix.condition }}
