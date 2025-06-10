@@ -22,7 +22,7 @@ echo "UUID extension created or already exists"
 echo "Running Prisma migrations..."
 
 npx prisma generate
-DATABASE_URL="postgresql://trader_dev:blawrie13@localhost:5432/trade_machine?schema=staging&application_name=tm_server_staging" npx prisma migrate deploy
+DATABASE_URL="postgresql://trader_dev:blawrie13@localhost:5432/trade_machine?schema=staging&application_name=tm_server_staging" npx prisma migrate deploy --force
 
 # Set up email templates directory for development environment
 if [ "$NODE_ENV" = "development" ]; then
