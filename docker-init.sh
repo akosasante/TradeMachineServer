@@ -27,10 +27,10 @@ if [ "$APP_ENV" = "staging" ]; then
   echo "$DATABASE_URL"
   DATABASE_URL="$DATABASE_URL" npx prisma generate
   echo $(ls /app/prisma)
-  DATABASE_URL="$DATABASE_URL" npx prisma generate prisma/schema.prisma
-  DATABASE_URL="$DATABASE_URL" npx prisma migrate resolve --applied 20220620212611_initial_migration
-  DATABASE_URL="$DATABASE_URL" npx prisma migrate resolve --applied 20250527131119_remove_uneeded
-  DATABASE_URL="$DATABASE_URL" npx prisma migrate resolve --applied 20250527131228_add_views
+  DATABASE_URL=$DATABASE_URL npx prisma generate prisma/schema.prisma
+  DATABASE_URL=$DATABASE_URL npx prisma migrate resolve --applied 20220620212611_initial_migration
+  DATABASE_URL=$DATABASE_URL npx prisma migrate resolve --applied 20250527131119_remove_uneeded
+  DATABASE_URL=$DATABASE_URL npx prisma migrate resolve --applied 20250527131228_add_views
 
 fi
 
