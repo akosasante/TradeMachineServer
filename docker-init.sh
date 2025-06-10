@@ -11,6 +11,8 @@ done
 echo "PostgreSQL is up - ensuring Prisma client is initialized..."
 # Generate Prisma client
 npx prisma generate
+npx prisma migrate deploy
+npx prisma generate
 
 # Set up email templates directory for development environment
 if [ "$NODE_ENV" = "development" ]; then
