@@ -52,7 +52,10 @@ jobs:
           script: |
             cd ${{ matrix.app_dir }}
             source .env
-            docker pull ghcr.io/${{ github.repository }}:${{ matrix.image_tag }}
+            # Convert repository name to lowercase for Docker compatibility
+            REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_LOWERCASE=$(echo "${{ matrix.image_tag }}" | tr '[:upper:]' '[:lower:]')
+            docker pull ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE}
             docker run --rm --env-file .env --network=host ghcr.io/${{ github.repository }}:${{ matrix.image_tag }} npx prisma migrate deploy
 
       - name: Deploy ${{ matrix.environment }}
