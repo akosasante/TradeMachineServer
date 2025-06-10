@@ -57,6 +57,7 @@ jobs:
             # Convert repository name to lowercase for Docker compatibility
             REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
             IMAGE_LOWERCASE=$(echo "${{ matrix.image_tag }}" | tr '[:upper:]' '[:lower:]')
+            docker rmi ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE} || true
             docker pull ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE}
             docker run --rm --env-file .env --network=host --user root ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE} echo "HI"
 
