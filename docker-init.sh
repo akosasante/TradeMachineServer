@@ -1,32 +1,32 @@
 #!/bin/bash
 set -e
 
-echo "HIIIIIII6"
-
-# Wait for PostgreSQL to become available
-echo "Waiting for PostgreSQL to start..."
-until PGPASSWORD=$PG_PASSWORD psql -h "$PG_HOST" -U "$PG_USER" -d "$PG_DB" -c '\q'; do
-  echo "PostgreSQL is unavailable - sleeping"
-  sleep 1
-done
-
-echo "PostgreSQL is up - executing database setup"
-
-# Create dev schema if it doesn't exist
-PGPASSWORD=$PG_PASSWORD psql -h "$PG_HOST" -U "$PG_USER" -d "$PG_DB" -c "CREATE SCHEMA IF NOT EXISTS dev;"
-echo "Schema 'dev' created or already exists"
-
-# Create uuid extension if doesn't exist
-PGPASSWORD=$PG_PASSWORD psql -h "$PG_HOST" -U "$PG_USER" -d "$PG_DB" -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
-echo "UUID extension created or already exists"
-
-# Run Prisma migrations (if needed)
-echo "Running Prisma migrations..."
+echo "HIIIIIII7"
+#
+## Wait for PostgreSQL to become available
+#echo "Waiting for PostgreSQL to start..."
+#until PGPASSWORD=$PG_PASSWORD psql -h "$PG_HOST" -U "$PG_USER" -d "$PG_DB" -c '\q'; do
+#  echo "PostgreSQL is unavailable - sleeping"
+#  sleep 1
+#done
+#
+#echo "PostgreSQL is up - executing database setup"
+#
+## Create dev schema if it doesn't exist
+#PGPASSWORD=$PG_PASSWORD psql -h "$PG_HOST" -U "$PG_USER" -d "$PG_DB" -c "CREATE SCHEMA IF NOT EXISTS dev;"
+#echo "Schema 'dev' created or already exists"
+#
+## Create uuid extension if doesn't exist
+#PGPASSWORD=$PG_PASSWORD psql -h "$PG_HOST" -U "$PG_USER" -d "$PG_DB" -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+#echo "UUID extension created or already exists"
+#
+## Run Prisma migrations (if needed)
+#echo "Running Prisma migrations..."
 
 # Run Prisma migrate with explicit .env file
 echo "Using DATABASE_URL: $DATABASE_URL"
 export DATABASE_URL="$DATABASE_URL"
-npx prisma init
+#npx prisma init
 npx prisma generate
 DATABASE_URL="postgresql://trader_dev:blawrie13@localhost:5432/trade_machine?schema=staging&application_name=tm_server_staging" npx prisma migrate deploy
 
