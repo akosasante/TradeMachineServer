@@ -2,7 +2,7 @@
 set -e
 
 echo "HIIIIIII"
-echo $PG_DB
+echo $DATABASE_URL
 
 # Wait for PostgreSQL to become available
 echo "Waiting for PostgreSQL to start..."
