@@ -57,7 +57,7 @@ jobs:
             IMAGE_LOWERCASE=$(echo "${{ matrix.image_tag }}" | tr '[:upper:]' '[:lower:]')
             docker rmi ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE} || true
             docker pull ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE}
-            docker run --rm --env-file .env --network=host --user root ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE} npx prisma migrate deploy
+            docker run --rm --env-file .env --network=host --user root ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE} echo "HI"
 
       - name: Deploy ${{ matrix.environment }}
         if: ${{ matrix.condition }}
