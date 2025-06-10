@@ -52,52 +52,8 @@ jobs:
           script: |
             cd ${{ matrix.app_dir }}
             source .env
-            # Convert repository name to lowercase for Docker compatibility
-            REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-            docker pull ghcr.io/${REPO_LOWERCASE}:${{ matrix.image_tag }}
-            # Extract all DB connection parameters from .env file
-            DB_URL=$(grep DATABASE_URL .env | cut -d '=' -f2-)
-            PGUSER=$(grep -oP '(?<=postgresql://)[^:]+' <<< "$DB_URL" || echo "trader_dev")
-            PGPASSWORD=$(grep -oP '(?<=password=)[^@]+' <<< "$DB_URL" || grep -oP '(?<='$PGUSER':)[^@]+' <<< "$DB_URL")
-            PGHOST=$(grep -oP '(?<=@)[^:]+' <<< "$DB_URL" || echo "localhost")
-            PGPORT=$(grep -oP '(?<=@[^:]+:)[^/]+' <<< "$DB_URL" || echo "5432")
-            PGDATABASE=$(grep -oP '(?<=/)[^?]+' <<< "$DB_URL" || echo "trade_machine")
-            SCHEMA=$(grep -oP '(?<=schema=)[^&]+' <<< "$DB_URL" || echo "${{ matrix.environment }}")
-            
-            # Print censored connection info for debugging
-            echo "Using database settings (censored):"
-            echo "- Host: ${PGHOST}"
-            echo "- Port: ${PGPORT}"
-            echo "- User: ${PGUSER}"
-            echo "- Database: ${PGDATABASE}"
-            echo "- Schema: ${SCHEMA}"
-            
-            # Verify PostgreSQL can be accessed directly from host
-            echo "Verifying PostgreSQL connectivity from host..."
-            if ! PGPASSWORD=$PGPASSWORD psql -U $PGUSER -h $PGHOST -p $PGPORT -d $PGDATABASE -c '\conninfo'; then
-              echo "ERROR: Cannot connect to PostgreSQL directly from server"
-              echo "Please check your database connection settings"
-              exit 1
-            else
-              echo "PostgreSQL connection successful from host"
-            fi
-            
-            # Make sure the proper DB URL is formatted for Prisma
-            PRISMA_DB_URL="postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}?schema=${SCHEMA}"
-            
-            # Run migrations with all environment variables explicitly set
-            echo "Running database migrations..."
-            docker run --rm --network=host --user root \
-              -e DATABASE_URL="${PRISMA_DB_URL}" \
-              -e PGUSER="${PGUSER}" \
-              -e PGPASSWORD="${PGPASSWORD}" \
-              -e PGHOST="${PGHOST}" \
-              -e PGPORT="${PGPORT}" \
-              -e PGDATABASE="${PGDATABASE}" \
-              -e NODE_ENV="production" \
-              -e PORT="3000" \
-              -e APP_ENV="${{ matrix.environment }}" \
-              ghcr.io/${REPO_LOWERCASE}:${{ matrix.image_tag }} bash -c "echo 'Current directory:' && pwd && ls -la && echo 'Prisma directory:' && ls -la prisma && npx prisma migrate deploy --verbose"
+            docker pull ghcr.io/${{ github.repository }}:${{ matrix.image_tag }}
+            docker run --rm --env-file .env --network=host ghcr.io/${{ github.repository }}:${{ matrix.image_tag }} npx prisma migrate deploy
 
       - name: Deploy ${{ matrix.environment }}
         if: ${{ matrix.condition }}
@@ -109,65 +65,11 @@ jobs:
           script: |
             cd ${{ matrix.app_dir }}
             
-            # Convert repository name to lowercase for Docker compatibility
-            REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-            
-            # Extract all DB connection parameters from .env file
-            DB_URL=$(grep DATABASE_URL .env | cut -d '=' -f2-)
-            PGUSER=$(grep -oP '(?<=postgresql://)[^:]+' <<< "$DB_URL" || echo "trader_dev")
-            PGPASSWORD=$(grep -oP '(?<=password=)[^@]+' <<< "$DB_URL" || grep -oP '(?<='$PGUSER':)[^@]+' <<< "$DB_URL")
-            PGHOST=$(grep -oP '(?<=@)[^:]+' <<< "$DB_URL" || echo "localhost")
-            PGPORT=$(grep -oP '(?<=@[^:]+:)[^/]+' <<< "$DB_URL" || echo "5432")
-            PGDATABASE=$(grep -oP '(?<=/)[^?]+' <<< "$DB_URL" || echo "trade_machine")
-            SCHEMA=$(grep -oP '(?<=schema=)[^&]+' <<< "$DB_URL" || echo "${{ matrix.environment }}")
-            
-            # Make sure the proper DB URL is formatted for Prisma
-            PRISMA_DB_URL="postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}?schema=${SCHEMA}"
-            
-            # Print censored connection info for debugging
-            echo "Using database settings for Docker container (censored):"
-            echo "- Host: ${PGHOST}"
-            echo "- Port: ${PGPORT}"
-            echo "- User: ${PGUSER}"
-            echo "- Database: ${PGDATABASE}"
-            echo "- Schema: ${SCHEMA}"
-            
-            # Update IMAGE_TAG and GITHUB_REPOSITORY in .env
+            # Update IMAGE_TAG in .env
             sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ matrix.image_tag }}/' .env
-            sed -i 's/^GITHUB_REPOSITORY=.*/GITHUB_REPOSITORY='${REPO_LOWERCASE}'/' .env
             
             # Login to registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Create docker-compose file with explicit environment variables
-            cat > docker-compose.yml << EOF
-version: '3.8'
-
-services:
-  app:
-    image: ghcr.io/${REPO_LOWERCASE}:${{ matrix.image_tag }}
-    container_name: ${{ matrix.environment }}_trademachine
-    restart: always
-    environment:
-      - DATABASE_URL=${PRISMA_DB_URL}
-      - PGUSER=${PGUSER}
-      - PGPASSWORD=${PGPASSWORD}
-      - PGHOST=${PGHOST}
-      - PGPORT=${PGPORT}
-      - PGDATABASE=${PGDATABASE}
-      - NODE_ENV=production
-      - PORT=${{ matrix.port }}
-      - IP=0.0.0.0
-      - ORM_CONFIG=${{ matrix.environment }}
-      - APP_ENV=${{ matrix.environment }}
-    network_mode: host
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${{ matrix.port }}/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-EOF
             
             # Deploy
             docker-compose pull app
