@@ -92,68 +92,36 @@ jobs:
             sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ matrix.image_tag }}/' .env
             sed -i 's/^GITHUB_REPOSITORY=.*/GITHUB_REPOSITORY='${REPO_LOWERCASE}'/' .env
             
-            # Verify the DATABASE_URL is properly formatted
-            DB_URL=$(grep DATABASE_URL .env | cut -d '=' -f2-)
-            if [[ ! "$DB_URL" =~ ^(postgresql|postgres):// ]]; then
-              echo "Warning: DATABASE_URL in .env file doesn't start with postgresql:// or postgres://"
-              echo "Current value (censored): ${DB_URL//:/***:}"
-            fi
-            
             # Login to registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Copy our updated docker-compose file to the server
-            cat > docker-compose.yml << EOF
-version: '3.8'
+            # Deploy
+            docker-compose pull app
+            docker-compose up -d app
+            
+            # Health check
+            timeout=60
+            while [ $timeout -gt 0 ]; do
+              if curl -f http://localhost:${{ matrix.port }}/health; then
+                echo "${{ matrix.environment }} deployment successful"
+                exit 0
+              fi
+              sleep 5
+              timeout=$((timeout-5))
+            done
+            
+            echo "${{ matrix.environment }} health check failed"
+            docker-compose logs app
+            exit 1
 
-services:
-  app:
-    image: ghcr.io/\${GITHUB_REPOSITORY}:\${IMAGE_TAG}
-    container_name: ${{ matrix.environment }}_trademachine
-    restart: always
-    env_file: .env
-    environment:
-      - NODE_ENV=production
-      - PORT=${{ matrix.port }}
-      - IP=0.0.0.0
-      - ORM_CONFIG=${{ matrix.environment }}
-      - APP_ENV=${{ matrix.environment }}
-    network_mode: host
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:${{ matrix.port }}/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
-  EOF
-  
-  # Deploy
-  docker-compose pull app
-  docker-compose up -d app
-  
-  # Health check
-  timeout=60
-  while [ $timeout -gt 0 ]; do
-  if curl -sf http://localhost:${{ matrix.port }}/health; then
-  echo "${{ matrix.environment }} deployment successful"
-  exit 0
-  fi
-  sleep 5
-  timeout=$((timeout-5))
-  done
-  
-  echo "${{ matrix.environment }} health check failed"
-  docker-compose logs app
-  exit 1
-
-- name: Notify Rollbar of deployment
-  if: ${{ matrix.condition }}
-  uses: rollbar/github-deploy-action@2.1.2
-  with:
-    environment: ${{ matrix.environment }}
-    version: ${{ github.sha }}
-    status: "succeeded"
-    local_username: ${{ github.actor }}
-  env:
-    ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
-    ROLLBAR_USERNAME: "aaasante"
+      - name: Notify Rollbar of deployment
+        if: ${{ matrix.condition }}
+        uses: rollbar/github-deploy-action@2.1.2
+        with:
+          environment: ${{ matrix.environment }}
+          version: ${{ github.sha }}
+          status: "succeeded"
+          local_username: ${{ github.actor }}
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: "aaasante"
