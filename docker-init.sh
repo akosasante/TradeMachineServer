@@ -26,7 +26,7 @@ echo "UUID extension created or already exists"
 echo "Running Prisma migrations..."
 
 # Run Prisma migrate with explicit .env file
-npx prisma migrate deploy
+DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy
 
 # Set up email templates directory for development environment
 if [ "$NODE_ENV" = "development" ]; then
