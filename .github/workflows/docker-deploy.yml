@@ -27,7 +27,7 @@ jobs:
           - environment: staging
             condition: ${{ (github.event.workflow_run.head_branch == 'staging') || (github.event.workflow_run.head_branch == 'main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging') }}
             app_dir: /opt/Apps/StagingTradeMachine
-            image_tag: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+            image_tag: ${{ github.ref_name || 'staging' }}
             port: 3015
           
           # Production deployment conditions  
