@@ -56,7 +56,8 @@ jobs:
             REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
             IMAGE_LOWERCASE=$(echo "${{ matrix.image_tag }}" | tr '[:upper:]' '[:lower:]')
             docker pull ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE}
-            docker run --rm --env-file .env --network=host ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE} npx prisma migrate deploy
+            # Run as root user to avoid permission issues with /home/app directory
+            docker run --rm --env-file .env --network=host --user root ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE} npx prisma migrate deploy
 
       - name: Deploy ${{ matrix.environment }}
         if: ${{ matrix.condition }}
@@ -68,11 +69,42 @@ jobs:
           script: |
             cd ${{ matrix.app_dir }}
             
+            # Convert repository name to lowercase for Docker compatibility
+            REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_LOWERCASE=$(echo "${{ matrix.image_tag }}" | tr '[:upper:]' '[:lower:]')
+            
             # Update IMAGE_TAG in .env
-            sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ matrix.image_tag }}/' .env
+            sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_LOWERCASE}/' .env
+            sed -i 's/^GITHUB_REPOSITORY=.*/GITHUB_REPOSITORY=${REPO_LOWERCASE}/' .env
             
             # Login to registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Create docker-compose file with root user to avoid permission issues
+            cat > docker-compose.yml << EOF
+version: '3.8'
+
+services:
+  app:
+    image: ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE}
+    container_name: ${{ matrix.environment }}_trademachine
+    restart: always
+    user: root
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - PORT=${{ matrix.port }}
+      - IP=0.0.0.0
+      - ORM_CONFIG=${{ matrix.environment }}
+      - APP_ENV=${{ matrix.environment }}
+    network_mode: host
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${{ matrix.port }}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+EOF
             
             # Deploy
             docker-compose pull app
