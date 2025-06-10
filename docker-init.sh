@@ -8,12 +8,6 @@ until PGPASSWORD=$PG_PASSWORD psql -h "$PG_HOST" -U "$PG_USER" -d "$PG_DB" -c '\
   sleep 1
 done
 
-echo "PostgreSQL is up - ensuring Prisma client is initialized..."
-# Generate Prisma client
-npx prisma generate
-npx prisma migrate deploy
-npx prisma generate
-
 # Set up email templates directory for development environment
 if [ "$NODE_ENV" = "development" ]; then
     echo "Setting up email template directories for development..."
@@ -22,6 +16,17 @@ if [ "$NODE_ENV" = "development" ]; then
         echo "Creating symbolic link from /app/src/email/templates to /app/dist/email/templates"
         ln -sf /app/src/email/templates /app/dist/email/templates
     fi
+fi
+
+if [ "$APP_ENV" = "staging" ]; then
+  echo "Setting migrations as resolved in staging environment..."
+  ehco pwd
+  echo $(ls -la /app/prisma/migrations)
+  npx prisma generate prisma/schema.prisma
+  npx prisma migrate resolve --applied 20220620212611_initial_migration
+  npx prisma migrate resolve --applied 20250527131119_remove_uneeded
+  npx prisma migrate resolve --applied 20250527131228_add_views
+
 fi
 
 # If arguments are provided, start the application
