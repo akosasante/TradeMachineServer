@@ -42,25 +42,6 @@ jobs:
         if: ${{ !matrix.condition }}
         run: echo "Skipping ${{ matrix.environment }} deployment" && exit 0
 
-      - name: Run database migrations for ${{ matrix.environment }}
-        if: ${{ matrix.condition }}
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ${{ matrix.app_dir }}
-            source .env
-            # Login to registry
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            # Convert repository name to lowercase for Docker compatibility
-            REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-            IMAGE_LOWERCASE=$(echo "${{ matrix.image_tag }}" | tr '[:upper:]' '[:lower:]')
-            docker rmi ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE} || true
-            docker pull ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE}
-            docker run --rm --env-file .env --network=host --user root ghcr.io/${REPO_LOWERCASE}:${IMAGE_LOWERCASE}
-
       - name: Deploy ${{ matrix.environment }}
         if: ${{ matrix.condition }}
         uses: appleboy/ssh-action@master
@@ -71,22 +52,14 @@ jobs:
           script: |
             cd ${{ matrix.app_dir }}
             
-            # Convert repository name to lowercase for Docker compatibility
-            REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-            IMAGE_LOWERCASE=$(echo "${{ matrix.image_tag }}" | tr '[:upper:]' '[:lower:]')
-            
-            # Update IMAGE_TAG in .env
-            sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_LOWERCASE}/' .env
-            sed -i 's/^GITHUB_REPOSITORY=.*/GITHUB_REPOSITORY=${REPO_LOWERCASE}/' .env
-            
             # Login to registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             $ TODO: Maybe later we'll copy over the docker-compose.yml file each time, but it should be fine for now
             
             # Deploy
-            docker-compose pull app
-            docker-compose up -d app
+            docker compose pull app
+            docker compose up -d app
             
             # Health check
             # TODO We may not need this since I think docker-compose handles health checks automatically
