@@ -37,6 +37,17 @@ jobs:
             echo "### Manual build" >> $GITHUB_STEP_SUMMARY
           fi
           
+          # Add workflow inputs to summary if manually triggered
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "#### Workflow Inputs" >> $GITHUB_STEP_SUMMARY
+            echo "- **Deploy after building:** ${{ github.event.inputs.trigger_deploy }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Target environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+            if [ -n "${{ github.event.inputs.message }}" ]; then
+              echo "- **Message:** ${{ github.event.inputs.message }}" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -110,14 +121,14 @@ jobs:
         include:
           # Staging deployment conditions
           - environment: staging
-            condition: ${{ github.ref == 'refs/heads/staging' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging') }}
+            condition: ${{ github.ref == 'refs/heads/staging' || github.event.inputs.environment == 'staging' }}
             app_dir: /opt/Apps/StagingTradeMachine
             image_tag: ${{ github.ref_name || 'staging' }}
             port: 3015
 
           # Production deployment conditions
           - environment: production
-            condition: ${{ github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') }}
+            condition: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production' }}
             app_dir: /opt/Apps/TradeMachine
             image_tag: main
             port: 3005
@@ -133,6 +144,12 @@ jobs:
           else
             echo "### Manual deployment" >> $GITHUB_STEP_SUMMARY
           fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Deployment Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ matrix.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image tag:** ${{ matrix.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment path:** ${{ matrix.app_dir }}" >> $GITHUB_STEP_SUMMARY
       
       - name: Skip if condition not met
         if: ${{ !matrix.condition }}
