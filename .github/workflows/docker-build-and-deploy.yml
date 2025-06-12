@@ -112,10 +112,10 @@ jobs:
             port: 3005
 
     steps:
-      - name: Notify Rollbar of deploy start
-        if: ${{ matrix.condition }}
+      - name: Notify Rollbar of deploy start for staging
+        if: ${{ matrix.condition && matrix.environment == 'staging' }}
         uses: rollbar/github-deploy-action@2.1.2
-        id: rollbar_pre_deploy_${{ matrix.environment == 'staging' && 'staging' || 'production' }}
+        id: rollbar_pre_deploy_staging
         with:
           environment: ${{ matrix.environment }}
           version: ${{ github.sha }}
@@ -124,7 +124,33 @@ jobs:
         env:
           ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
           ROLLBAR_USERNAME: "aaasante"
-          DEPLOY_ID: ${{ steps.rollbar_pre_deploy_${{ matrix.environment == 'staging' && 'staging' || 'production' }}.outputs.deploy_id }}
+          DEPLOY_ID: ${{ steps.rollbar_pre_deploy_staging.outputs.deploy_id }}
+          
+      - name: Notify Rollbar of deployment completion for production
+        if: ${{ matrix.condition && matrix.environment == 'production' }}
+        uses: rollbar/github-deploy-action@2.1.2
+        with:
+          environment: ${{ matrix.environment }}
+          version: ${{ github.sha }}
+          status: "succeeded"
+          local_username: ${{ github.actor }}
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: "aaasante"
+          DEPLOY_ID: ${{ steps.rollbar_pre_deploy_production.outputs.deploy_id }}
+          
+      - name: Notify Rollbar of deploy start for production
+        if: ${{ matrix.condition && matrix.environment == 'production' }}
+        uses: rollbar/github-deploy-action@2.1.2
+        id: rollbar_pre_deploy_production
+        with:
+          environment: ${{ matrix.environment }}
+          version: ${{ github.sha }}
+          status: "started"
+          local_username: ${{ github.actor }}
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: "aaasante"
 
       - name: Set deployment info
         if: ${{ matrix.condition }}
@@ -179,8 +205,8 @@ jobs:
             docker compose logs app
             exit 1
 
-      - name: Notify Rollbar of deployment completion
-        if: ${{ matrix.condition }}
+      - name: Notify Rollbar of deployment completion for staging
+        if: ${{ matrix.condition && matrix.environment == 'staging' }}
         uses: rollbar/github-deploy-action@2.1.2
         with:
           environment: ${{ matrix.environment }}
