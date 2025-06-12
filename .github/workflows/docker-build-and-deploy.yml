@@ -126,9 +126,10 @@ jobs:
             image_tag: ${{ github.ref_name || 'staging' }}
             port: 3015
 
-          # Production deployment conditions
+          # Production deployment conditions (FOR NOW ONLY MANUAL)
           - environment: production
-            condition: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production' }}
+            #condition: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production' }}
+            condition: ${{ github.event.inputs.environment == 'production' }}
             app_dir: /opt/Apps/TradeMachine
             image_tag: main
             port: 3005
