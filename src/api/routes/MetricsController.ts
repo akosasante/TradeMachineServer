@@ -19,7 +19,7 @@ export default class MetricsController {
         if (request?.app?.settings && "prisma" in (request.app.settings as Record<string, unknown>)) {
             const prisma = (request.app.settings as ExpressAppSettings).prisma;
             if (prisma) {
-                const prismaMetrics: string = await prisma.$metrics.prometheus();
+                const prismaMetrics: string = await prisma.$metrics.prometheus({ globalLabels: { "app": "trade_machine", "environment": process.env.APP_ENV || "unknown" } });
                 return response.contentType(this.registry.contentType).send(metrics + prismaMetrics);
             }
         }
