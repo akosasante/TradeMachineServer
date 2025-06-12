@@ -1,11 +1,10 @@
-name: Deploy Docker Image
+name: Deploy Docker Image (${{ github.event.workflow_run.head_commit.message || 'Manual deployment' }})
 
 on:
   workflow_run:
     workflows: ["Build and Publish Docker Image"]
-    branches: [main, staging]
+    branches: [staging]
     types: [completed]
-  # Manual trigger for feature branches
   workflow_dispatch:
     inputs:
       environment:
@@ -14,8 +13,8 @@ on:
         default: 'staging'
         type: choice
         options:
-        - staging
-        - production
+          - staging
+          - production
 
 jobs:
   deploy:
@@ -28,10 +27,10 @@ jobs:
           - environment: staging
             condition: ${{ (github.event.workflow_run.head_branch == 'staging') || (github.event.workflow_run.head_branch == 'main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging') }}
             app_dir: /opt/Apps/StagingTradeMachine
-            image_tag: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+            image_tag: ${{ github.ref_name || 'staging' }}
             port: 3015
-          
-          # Production deployment conditions  
+
+          # Production deployment conditions
           - environment: production
             condition: ${{ (github.event.workflow_run.head_branch == 'main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') }}
             app_dir: /opt/Apps/TradeMachine
@@ -43,19 +42,6 @@ jobs:
         if: ${{ !matrix.condition }}
         run: echo "Skipping ${{ matrix.environment }} deployment" && exit 0
 
-      - name: Run database migrations for ${{ matrix.environment }}
-        if: ${{ matrix.condition }}
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ${{ matrix.app_dir }}
-            source .env
-            docker pull ghcr.io/${{ github.repository }}:${{ matrix.image_tag }}
-            docker run --rm --env-file .env ghcr.io/${{ github.repository }}:${{ matrix.image_tag }} npx prisma migrate deploy
-
       - name: Deploy ${{ matrix.environment }}
         if: ${{ matrix.condition }}
         uses: appleboy/ssh-action@master
@@ -66,17 +52,17 @@ jobs:
           script: |
             cd ${{ matrix.app_dir }}
             
-            # Update IMAGE_TAG in .env
-            sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ matrix.image_tag }}/' .env
-            
             # Login to registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
+            # TODO: Maybe later we'll copy over the docker compose.yml file each time, but it should be fine for now
+            
             # Deploy
-            docker-compose pull app
-            docker-compose up -d app
+            docker compose pull app
+            docker compose up -d app
             
             # Health check
+            # TODO We may not need this since I think docker compose handles health checks automatically
             timeout=60
             while [ $timeout -gt 0 ]; do
               if curl -f http://localhost:${{ matrix.port }}/health; then
@@ -88,7 +74,7 @@ jobs:
             done
             
             echo "${{ matrix.environment }} health check failed"
-            docker-compose logs app
+            docker compose logs app
             exit 1
 
       - name: Notify Rollbar of deployment
