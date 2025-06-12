@@ -9,7 +9,8 @@ export default async function initializeDb(logQueries = false): Promise<Connecti
     try {
         logger.debug(`Connecting to ORM config: ${process.env.ORM_CONFIG}`);
         const dbConfigName = process.env.ORM_CONFIG || "";
-        const connectionConfig = await new ConnectionOptionsReader({ root: "/app" }).get(dbConfigName);
+        const root= process.env.APP_ENV === "production" ? process.cwd() : "/app";
+        const connectionConfig = await new ConnectionOptionsReader({ root }).get(dbConfigName);
         connection = await createConnection({
             ...connectionConfig,
             logger: logQueries ? new CustomQueryLogger(logger) : undefined,
