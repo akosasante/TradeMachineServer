@@ -27,7 +27,14 @@ export class EmailPublisher extends Publisher {
                 queueName = "email_queue";
             }
             EmailPublisher.instance = new EmailPublisher(
-                queue || new Bull(queueName, { redis: { password: process.env.REDISPASS } })
+                queue ||
+                    new Bull(queueName, {
+                        redis: {
+                            host: process.env.REDIS_IP || "localhost",
+                            port: Number(process.env.REDIS_PORT || 6379),
+                            password: process.env.REDISPASS,
+                        },
+                    })
             );
             recordJobMetrics(EmailPublisher.instance.queue!);
             logger.info(`EmailPublisher initialized with queue: ${queueName}`);

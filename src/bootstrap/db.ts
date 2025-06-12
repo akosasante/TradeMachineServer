@@ -1,4 +1,4 @@
-import { Connection, createConnection, getConnectionOptions } from "typeorm";
+import { Connection, ConnectionOptionsReader, createConnection } from "typeorm";
 import { inspect } from "util";
 import CustomQueryLogger from "../db/QueryLogger";
 import logger from "./logger";
@@ -8,8 +8,8 @@ export default async function initializeDb(logQueries = false): Promise<Connecti
     let connection: Connection | undefined;
     try {
         logger.debug(`Connecting to ORM config: ${process.env.ORM_CONFIG}`);
-        const dbConfigName = process.env.ORM_CONFIG;
-        const connectionConfig = await getConnectionOptions(dbConfigName);
+        const dbConfigName = process.env.ORM_CONFIG || "";
+        const connectionConfig = await new ConnectionOptionsReader({ root: "/app" }).get(dbConfigName);
         connection = await createConnection({
             ...connectionConfig,
             logger: logQueries ? new CustomQueryLogger(logger) : undefined,

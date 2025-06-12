@@ -13,7 +13,11 @@ export function setupEmailConsumers(): void {
     logger.info("registering email consumers");
     const queueName = process.env.ORM_CONFIG === "staging" ? "stg_email_queue" : "email_queue"; // TODO: Should this also have a conditional for test env queue?
     const emailQueue = new Bull(queueName, {
-        redis: { password: process.env.REDISPASS },
+        redis: {
+            host: process.env.REDIS_IP || "localhost",
+            port: Number(process.env.REDIS_PORT || 6379),
+            password: process.env.REDISPASS,
+        },
         settings: { maxStalledCount: 0, lockDuration: 60000 },
     });
     const cleanLoggedData = (data: any) => {

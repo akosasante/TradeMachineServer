@@ -22,7 +22,8 @@ module.exports = [
         ...commonOpts,
         name: "development",
         schema: "dev",
-        port: 5438,
+        host: process.env.PG_HOST || "localhost",
+        port: parseInt(process.env.PG_PORT || "5438", 10),
         extra: {
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 10000,

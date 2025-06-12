@@ -14,7 +14,11 @@ export function setupScheduledEspnUpdates(): void {
     logger.info(`Setting up espn updates to run on schedule: ${cron}`);
     const queueName = process.env.ORM_CONFIG === "staging" ? "stg_espn_queue" : "espn_queue"; // TODO: Should this also have a conditional for test env?
     const espnQueue = new Bull(queueName, {
-        redis: { password: process.env.REDISPASS },
+        redis: {
+            host: process.env.REDIS_IP || "localhost",
+            port: Number(process.env.REDIS_PORT || 6379),
+            password: process.env.REDISPASS,
+        },
         settings: { maxStalledCount: 0 },
     });
     // eslint-disable-next-line @typescript-eslint/naming-convention
