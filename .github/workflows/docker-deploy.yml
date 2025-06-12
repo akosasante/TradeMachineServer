@@ -1,4 +1,4 @@
-name: Deploy Docker Image
+name: Deploy Docker Image (${{ github.event.workflow_run.head_commit.message || 'Manual deployment' }})
 
 on:
   workflow_run:
