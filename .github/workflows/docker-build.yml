@@ -1,4 +1,4 @@
-name: Build and Publish Docker Image
+name: Build and Publish Docker Image (${{ github.event.head_commit.message || github.event.inputs.message || 'Manual build' }})
 
 on:
   push:
@@ -10,6 +10,10 @@ on:
         required: true
         default: true
         type: boolean
+      message:
+        description: 'Commit message/description for this build'
+        required: false
+        type: string
 
 jobs:
   build:
