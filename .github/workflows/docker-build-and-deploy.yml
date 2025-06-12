@@ -2,7 +2,7 @@ name: Build and Deploy Docker Image
 
 on:
   push:
-    branches: [ staging ]
+    branches: [ staging, main ]
   workflow_dispatch:
     inputs:
       trigger_deploy:
@@ -89,7 +89,7 @@ jobs:
     needs: build
     if: |
       success() && (
-        (github.event_name == 'push' && github.ref == 'refs/heads/staging') ||
+        (github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')) ||
         (github.event_name == 'workflow_dispatch' && inputs.trigger_deploy == true)
       )
     runs-on: ubuntu-latest
@@ -98,7 +98,7 @@ jobs:
         include:
           # Staging deployment conditions
           - environment: staging
-            condition: ${{ github.ref == 'refs/heads/staging' || github.event.inputs.environment == 'staging' }}
+            condition: ${{ github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging' }}
             app_dir: /opt/Apps/StagingTradeMachine
             image_tag: ${{ github.ref_name || 'staging' }}
             port: 3015
@@ -115,7 +115,7 @@ jobs:
       - name: Notify Rollbar of deploy start
         if: ${{ matrix.condition }}
         uses: rollbar/github-deploy-action@2.1.2
-        id: rollbar_pre_deploy_${{ matrix.environment }}
+        id: rollbar_pre_deploy_${{ matrix.environment == 'staging' && 'staging' || 'production' }}
         with:
           environment: ${{ matrix.environment }}
           version: ${{ github.sha }}
@@ -124,7 +124,7 @@ jobs:
         env:
           ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
           ROLLBAR_USERNAME: "aaasante"
-          DEPLOY_ID: ${{ steps[format('rollbar_pre_deploy_{0}', matrix.environment)].outputs.deploy_id }}
+          DEPLOY_ID: ${{ steps.rollbar_pre_deploy_${{ matrix.environment == 'staging' && 'staging' || 'production' }}.outputs.deploy_id }}
 
       - name: Set deployment info
         if: ${{ matrix.condition }}
