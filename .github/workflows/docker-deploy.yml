@@ -1,4 +1,4 @@
-name: Deploy Docker Image (${{ github.event.workflow_run.head_commit.message || github.event.inputs.message || 'Manual deployment' }})
+name: Deploy Docker Image
 
 on:
   workflow_run:
@@ -42,6 +42,17 @@ jobs:
             port: 3005
 
     steps:
+      - name: Set deployment info
+        if: ${{ matrix.condition }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "### Deploying commit: ${{ github.event.workflow_run.head_commit.message }}" >> $GITHUB_STEP_SUMMARY
+          elif [ -n "${{ github.event.inputs.message }}" ]; then
+            echo "### Manual deployment: ${{ github.event.inputs.message }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Manual deployment" >> $GITHUB_STEP_SUMMARY
+          fi
+      
       - name: Skip if condition not met
         if: ${{ !matrix.condition }}
         run: echo "Skipping ${{ matrix.environment }} deployment" && exit 0

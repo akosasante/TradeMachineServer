@@ -1,4 +1,4 @@
-name: Build and Publish Docker Image (${{ github.event.head_commit.message || github.event.inputs.message || 'Manual build' }})
+name: Build and Publish Docker Image
 
 on:
   push:
@@ -19,6 +19,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Set build info
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "### Building commit: ${{ github.event.head_commit.message }}" >> $GITHUB_STEP_SUMMARY
+          elif [ -n "${{ github.event.inputs.message }}" ]; then
+            echo "### Manual build: ${{ github.event.inputs.message }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Manual build" >> $GITHUB_STEP_SUMMARY
+          fi
+          
       - name: Checkout code
         uses: actions/checkout@v3
 
