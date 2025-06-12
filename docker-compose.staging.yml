@@ -1,10 +1,9 @@
-version: '3.8'
-
 services:
   app:
     image: ghcr.io/${GITHUB_REPOSITORY}:${IMAGE_TAG}
     container_name: staging_trademachine
     restart: always
+    network_mode: "host"
     env_file: .env
     environment:
       - NODE_ENV=production
@@ -12,8 +11,12 @@ services:
       - IP=0.0.0.0
       - ORM_CONFIG=staging
       - APP_ENV=staging
-    ports:
-      - "3015:3015"
+      - HOME=/tmp # Set HOME to a writable location
+      - npm_config_cache=/tmp/.npm # Configure npm to use a writable cache location
+    volumes:
+      - /tmp/app_data:/tmp # Mount a writable directory from host to container
+    # When using network_mode: "host", the ports section is ignored
+    # because the container shares the host's network stack
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3015/health"]
       interval: 30s
