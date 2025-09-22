@@ -32,5 +32,5 @@ export const getPrismaClientFromRequest = (request?: Request): ExtendedPrismaCli
     if (!expressSettings) {
         return undefined;
     }
-    return expressSettings?.prisma ;
+    return expressSettings?.prisma;
 };

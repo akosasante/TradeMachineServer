@@ -168,7 +168,7 @@ export default class AuthController {
     }
 
     @Get("/session_check")
-    public sessionCheck(@CurrentUser({ required: true }) user: User): Promise<User> {
+    public sessionCheck(@CurrentUser({ required: true }) user: PublicUser): Promise<PublicUser> {
         logger.debug(`session check worked ${user}`);
         // rollbar.info("sessionCheck", { user });
         return Promise.resolve(user);
