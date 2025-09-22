@@ -8,7 +8,7 @@
   "license": "ISC",
   "dependencies": {
     "@fast-csv/parse": "^4.3.6",
-    "@prisma/client": "^4.0.0",
+    "@prisma/client": "^4.16.2",
     "@slack/webhook": "^6.0.0",
     "axios": "^0.27.0",
     "bcryptjs": "^2.4.3",
@@ -90,7 +90,7 @@
     "node-notifier": "^10.0.1",
     "nodemon": "latest",
     "prettier": "^2.5.1",
-    "prisma": "^4.0.0",
+    "prisma": "^4.16.2",
     "supertest": "latest",
     "ts-jest": "latest",
     "ts-node": "^10.9.1",
