@@ -8,7 +8,7 @@ import {
     In,
     InsertResult,
     QueryFailedError,
-    Repository,
+    Repository
 } from "typeorm";
 import Player from "../models/player";
 import Team from "../models/team";
