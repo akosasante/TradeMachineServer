@@ -9,6 +9,8 @@ import v2UserDAO, { PublicUser } from "../DAO/v2/UserDAO";
 import User, { Role } from "../models/user";
 import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import { rollbar } from "../bootstrap/rollbar";
+import { getPrismaClientFromRequest } from "../bootstrap/prisma-db";
+import { Request } from "express";
 
 export function serializeUser(user: User | PublicUser): string | undefined {
     logger.debug("serializing user");
@@ -114,7 +116,12 @@ export async function currentUserChecker(
     userDAO: UserDAO = new UserDAO()
 ): Promise<User | PublicUser | undefined> {
     logger.debug("checking current user");
-    return await getUserFromAction(action, userDAO);
+    const prisma = getPrismaClientFromRequest(action.request as Request);
+    if (prisma?.user) {
+        return await getUserFromAction(action, new v2UserDAO(prisma.user));
+    } else {
+        return await getUserFromAction(action, userDAO);
+    }
 }
 
 export function passwordResetDateIsValid(passwordExpiry?: Date): boolean {
@@ -130,7 +137,7 @@ export async function generateHashedPassword(plainPassword: string): Promise<str
 
 async function getUserFromAction(
     action: Action,
-    userDAO: UserDAO = new UserDAO()
+    userDAO: UserDAO | v2UserDAO = new UserDAO()
 ): Promise<User | PublicUser | undefined> {
     /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     const userId = action.request?.session?.user as string;
