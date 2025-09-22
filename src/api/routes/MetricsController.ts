@@ -2,7 +2,7 @@ import * as promClient from "prom-client";
 import { Controller, Get, Req, Res } from "routing-controllers";
 import { Request, Response } from "express";
 import { metricsRegistry } from "../../bootstrap/metrics";
-import { ExpressAppSettings } from "../../bootstrap/express";
+import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
 
 @Controller("/metrics")
 export default class MetricsController {
@@ -16,12 +16,16 @@ export default class MetricsController {
     public async getMetrics(@Req() request: Request, @Res() response: Response): Promise<Response> {
         const metrics = await this.registry.metrics();
 
-        if (request?.app?.settings && "prisma" in (request.app.settings as Record<string, unknown>)) {
-            const prisma = (request.app.settings as ExpressAppSettings).prisma;
-            if (prisma) {
-                const prismaMetrics: string = await prisma.$metrics.prometheus({ globalLabels: { "app": "trade_machine", "environment": process.env.APP_ENV || "unknown" } });
-                return response.contentType(this.registry.contentType).send(metrics + prismaMetrics);
-            }
+        const prisma = getPrismaClientFromRequest(request);
+        if (prisma) {
+            /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+            const prismaMetrics: string = await (prisma as any).$metrics.prometheus({
+                globalLabels: {
+                    app: "trade_machine",
+                    environment: process.env.APP_ENV || "unknown",
+                },
+            });
+            return response.contentType(this.registry.contentType).send(metrics + prismaMetrics);
         }
 
         return response.contentType(this.registry.contentType).send(metrics);
