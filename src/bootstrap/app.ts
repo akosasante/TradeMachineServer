@@ -3,7 +3,7 @@ import "reflect-metadata";
 import { useExpressServer } from "routing-controllers";
 import { authorizationChecker, currentUserChecker } from "../authentication/auth";
 import initializeDb from "./db";
-import initializePrisma from "./prisma-db";
+import initializePrisma, { ExtendedPrismaClient } from "./prisma-db";
 import expressApp, { redisClient } from "./express";
 import logger from "./logger";
 import { inspect } from "util";
@@ -27,7 +27,7 @@ export async function setupExpressApp(
     }
     if (opts.startPrismaORM) {
         logger.debug("setting up prisma db");
-        const prisma = initializePrisma(true);
+        const prisma: ExtendedPrismaClient = initializePrisma(true);
         expressApp.set("prisma", prisma);
         registerCleanupCallback(async () => {
             logger.debug("closing prisma connection");

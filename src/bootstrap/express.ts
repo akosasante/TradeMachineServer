@@ -1,7 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import compression from "compression";
 import connectRedis from "connect-redis";
-import express from "express";
+import express, { Request } from "express";
 import expressSession from "express-session";
 import morgan from "morgan";
 import { createClient } from "redis";
@@ -10,6 +9,7 @@ import logger from "./logger";
 import { rollbar } from "./rollbar";
 import { metricsMiddleware } from "./metrics";
 import { registerCleanupCallback } from "./shutdownHandler";
+import { ExtendedPrismaClient } from "./prisma-db";
 
 const app = express();
 
@@ -29,7 +29,11 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 export interface ExpressAppSettings {
-    prisma: PrismaClient | undefined;
+    prisma: ExtendedPrismaClient | undefined;
+}
+
+export function getAppSettings(req: Request | undefined): ExpressAppSettings | undefined {
+    return req?.app?.settings as ExpressAppSettings | undefined;
 }
 
 // Session tracking
