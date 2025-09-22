@@ -15,7 +15,10 @@ export function serializeUser(user: User | PublicUser): string | undefined {
     return user?.id;
 }
 
-export async function deserializeUser(id: string, userDAO: UserDAO = new UserDAO()): Promise<User> {
+export async function deserializeUser(
+    id: string,
+    userDAO: UserDAO | v2UserDAO = new UserDAO()
+): Promise<User | PublicUser> {
     logger.debug("deserializing user");
     return await userDAO.getUserById(id);
 }
@@ -106,7 +109,10 @@ export async function authorizationChecker(
     }
 }
 
-export async function currentUserChecker(action: Action, userDAO: UserDAO = new UserDAO()): Promise<User | undefined> {
+export async function currentUserChecker(
+    action: Action,
+    userDAO: UserDAO = new UserDAO()
+): Promise<User | PublicUser | undefined> {
     logger.debug("checking current user");
     return await getUserFromAction(action, userDAO);
 }
@@ -122,7 +128,10 @@ export async function generateHashedPassword(plainPassword: string): Promise<str
     return hash(plainPassword, saltFactor);
 }
 
-async function getUserFromAction(action: Action, userDAO: UserDAO = new UserDAO()): Promise<User | undefined> {
+async function getUserFromAction(
+    action: Action,
+    userDAO: UserDAO = new UserDAO()
+): Promise<User | PublicUser | undefined> {
     /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     const userId = action.request?.session?.user as string;
     logger.debug(inspect(action.request.session));

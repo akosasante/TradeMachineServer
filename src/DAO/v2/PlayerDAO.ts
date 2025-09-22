@@ -1,12 +1,13 @@
-import { PrismaClient, Player } from "@prisma/client";
+import { Player } from "@prisma/client";
 import { convertParamsToWhereQuery } from "./helpers";
 import logger from "../../bootstrap/logger";
 import { inspect } from "util";
+import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
 export default class PlayerDAO {
-    private readonly playerDb: PrismaClient["player"];
+    private readonly playerDb: ExtendedPrismaClient["player"];
 
-    constructor(playerDb: PrismaClient["player"] | undefined) {
+    constructor(playerDb: ExtendedPrismaClient["player"] | undefined) {
         if (!playerDb) {
             throw new Error("PlayerDAO must be initialized with a PrismaClient model instance!");
         }

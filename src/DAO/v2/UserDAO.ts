@@ -1,12 +1,14 @@
-import { Prisma, PrismaClient, User } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { exclude } from "./helpers";
+import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
+type User = Prisma.Result<ExtendedPrismaClient["user"], Record<string, unknown>, "findFirstOrThrow">;
 export type PublicUser = Omit<User, "password">;
 
 export default class UserDAO {
-    private readonly userDb: PrismaClient["user"];
+    private readonly userDb: ExtendedPrismaClient["user"];
 
-    constructor(userDb: PrismaClient["user"] | undefined) {
+    constructor(userDb: ExtendedPrismaClient["user"] | undefined) {
         if (!userDb) {
             throw new Error("UserDAO must be initialized with a PrismaClient model instance!");
         }
@@ -25,6 +27,11 @@ export default class UserDAO {
     public async getAllUsers(): Promise<PublicUser[]> {
         const users = await this.userDb.findMany({ orderBy: { id: "asc" } });
         return UserDAO.publicUsers(users);
+    }
+
+    public async getUserById(id: string): Promise<PublicUser> {
+        const user = await this.userDb.findUniqueOrThrow({ where: { id } });
+        return UserDAO.publicUser(user);
     }
 
     public async findUserWithPasswordByEmail(email: string): Promise<User | null> {

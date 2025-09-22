@@ -20,6 +20,8 @@ import { EmailPublisher } from "../../email/publishers";
 import { rollbar } from "../../bootstrap/rollbar";
 import { SessionData } from "express-session";
 import { activeUserMetric } from "../../bootstrap/metrics";
+import Users, { PublicUser } from "../../DAO/v2/UserDAO";
+import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
 
 // declare the additional fields that we add to express session (via routing-controllers)
 declare module "express-session" {
@@ -38,12 +40,21 @@ export default class AuthController {
         this.emailPublisher = publisher || EmailPublisher.getInstance();
     }
 
+    private dao(req: Request | undefined) {
+        const prisma = getPrismaClientFromRequest(req);
+        if (prisma) {
+            return new Users(prisma.user);
+        } else {
+            return this.userDao;
+        }
+    }
+
     @Post("/login")
     @UseBefore(LoginHandler)
-    public async login(@Req() request: Request, @Session() session: SessionData): Promise<User> {
+    public async login(@Req() request: Request, @Session() session: SessionData): Promise<User | PublicUser> {
         rollbar.info("login", request);
         activeUserMetric.inc();
-        return await deserializeUser(session.user!, this.userDao);
+        return await deserializeUser(session.user!, this.dao(request));
     }
 
     @Post("/login/sendResetEmail")
@@ -70,7 +81,7 @@ export default class AuthController {
 
     @Post("/signup")
     @UseBefore(RegisterHandler)
-    public async signup(@Req() request: Request, @Session() session: SessionData): Promise<User> {
+    public async signup(@Req() request: Request, @Session() session: SessionData): Promise<User | PublicUser> {
         rollbar.info("signup", request);
         activeUserMetric.inc();
         return await deserializeUser(session.user!, this.userDao);
