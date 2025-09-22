@@ -1,31 +1,40 @@
 /* eslint-disable */
 
-import initializeDb from "../../bootstrap/prisma-db";
-import initializePrisma from "../../bootstrap/prisma-db";
-import logger from "../../bootstrap/logger";
+import initializeDb, { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
-const prisma = initializeDb(true);
+const myPrisma = initializeDb(true);
 
-async function main() {
-    // const schema = "dev";
-    // const tableNames = await prisma.$queryRaw<
-    //     { tablename: string }[]
-    // >`SELECT tablename FROM pg_tables WHERE schemaname=${schema}`;
-    // console.log(tableNames);
+async function main(prisma: ExtendedPrismaClient) {
+    const schema = "dev";
+    const tableNames = await prisma.$queryRaw<
+        { tablename: string }[]
+    >`SELECT tablename FROM pg_tables WHERE schemaname=${schema}`;
+    console.log(tableNames);
 
-    const prisma = initializePrisma(true);
+    const allUsers = await prisma.user.findMany({ orderBy: { id: "asc" } });
+    console.dir(allUsers);
+    for (const user of allUsers) {
+        console.log(`User ${user.id} is admin: ${user.isAdmin()}`);
+    }
+
+    //
     const playerDb = prisma.player;
-
+    //
     const allPlayers = await playerDb.findMany({ orderBy: { id: "desc" } });
     console.dir(allPlayers);
 
-    const query = convertParamsToQuery(["league.MINORS", "name.Franklin Perez"]);
-    const minorsOnly = await playerDb.findMany({
-        where: {
-            AND: query,
-        },
+    const prismaMetrics: string = await (prisma as any).$metrics.prometheus({
+        globalLabels: { app: "trade_machine", environment: process.env.APP_ENV || "unknown" },
     });
-    console.dir(minorsOnly);
+    console.dir(prismaMetrics);
+    //
+    // const query = convertParamsToQuery(["league.MINORS", "name.Franklin Perez"]);
+    // const minorsOnly = await playerDb.findMany({
+    //     where: {
+    //         AND: query,
+    //     },
+    // });
+    // console.dir(minorsOnly);
 }
 
 function convertParamsToQuery(params: string[]): { [field: string]: string }[] {
@@ -35,14 +44,14 @@ function convertParamsToQuery(params: string[]): { [field: string]: string }[] {
     });
 }
 
-main()
-    .then(async () => {
-        await prisma.$disconnect();
-    })
+main(myPrisma)
     .catch(async e => {
         console.error(e);
-        await prisma.$disconnect();
+        await myPrisma.$disconnect();
         process.exit(1);
+    })
+    .finally(async () => {
+        await myPrisma.$disconnect();
     });
 
 /* eslint-enable */
