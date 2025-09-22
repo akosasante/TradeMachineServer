@@ -18,9 +18,10 @@ const alignedWithColorsAndTime = combine(
 
 // Transport objects
 const consoleLogger = new winston.transports.Console({
-    format: process.env.NODE_ENV === "production"
-        ? combine(timestamp({ format: timestampFormat }), json())
-        : alignedWithColorsAndTime,
+    format:
+        process.env.NODE_ENV === "production"
+            ? combine(timestamp({ format: timestampFormat }), json())
+            : alignedWithColorsAndTime,
 });
 
 let errorLogger;
