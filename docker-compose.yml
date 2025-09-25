@@ -1,16 +1,20 @@
-# TradeMachine Server - connects to shared infrastructure
+# TradeMachine Server - Modern Development Environment
 #
 # Prerequisites:
 #   1. Start shared infrastructure first: cd ../; docker-compose -f docker-compose.shared.yml up -d
 #   2. Ensure .env file exists in parent directory with database credentials
+#   3. Install dependencies locally first: npm ci (for better IDE support)
 #
-# Usage: docker-compose up -d
+# Usage:
+#   Development: docker-compose up -d
+#   Production build test: docker-compose --profile production up
 
 services:
+  # Modern development server with tsx hot reloading
   app:
     build:
       context: .
-      target: build
+      dockerfile: Dockerfile.dev
     ports:
       - "3001:3001"
     environment:
@@ -33,12 +37,22 @@ services:
       # BASE_URL points to frontend for email templates
       - BASE_URL=http://localhost:3030
       - COOKIE_SECURE=false
-      # Help Node.js find modules correctly
-      - NODE_PATH=/app:/app/node_modules
+      # Enable tsx watch mode optimizations
+      - TSX_TSCONFIG_PATH=/app/tsconfig.json
     volumes:
-      - ./:/app
-      - /app/node_modules
-    command: bash -c "apt-get update && apt-get install -y postgresql-client && ./docker-init.sh && make dev-server"
+      # Bind mount source code for hot reloading (excludes node_modules for performance)
+      - ./src:/app/src:cached
+      - ./prisma:/app/prisma:cached
+      - ./tests:/app/tests:cached
+      - ./.env:/app/.env:cached
+      - ./tsconfig.json:/app/tsconfig.json:cached
+      - ./ormconfig.js:/app/ormconfig.js:cached
+      # Named volume for node_modules to avoid cross-platform issues
+      - node_modules_volume:/app/node_modules
+      # Performance: exclude common directories that cause churn
+      - /app/dist
+      - /app/.git
+    init: true  # Proper signal handling for clean shutdowns
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
@@ -48,9 +62,60 @@ services:
       start_period: 20s
     networks:
       - trade_machine_shared
+    depends_on:
+      - db-migrate
+
+  # Production-like build test (optional, use --profile production)
+  app-prod-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "3002:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_USER=${DATABASE_USER:-trader_user}
+      - PG_PASSWORD=${DATABASE_PASSWORD:-dev_password_change_me}
+      - PG_DB=${DATABASE_NAME:-trade_dn}
+      - ORM_CONFIG=development
+      - REDIS_IP=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://${DATABASE_USER:-trader_user}:${DATABASE_PASSWORD:-dev_password_change_me}@postgres:5432/${DATABASE_NAME:-trade_dn}?schema=dev
+    networks:
+      - trade_machine_shared
+    profiles:
+      - production
+
+  # Database migration runner (runs once on startup)
+  db-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      - NODE_ENV=development
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_USER=${DATABASE_USER:-trader_user}
+      - PG_PASSWORD=${DATABASE_PASSWORD:-dev_password_change_me}
+      - PG_DB=${DATABASE_NAME:-trade_dn}
+      - DATABASE_URL=postgresql://${DATABASE_USER:-trader_user}:${DATABASE_PASSWORD:-dev_password_change_me}@postgres:5432/${DATABASE_NAME:-trade_dn}?schema=dev
+    command: ["sh", "-c", "npx prisma migrate dev --skip-generate && npx prisma db seed"]
+    networks:
+      - trade_machine_shared
+    volumes:
+      - ./prisma:/app/prisma:cached
 
 # Connect to shared infrastructure network
 networks:
   trade_machine_shared:
     external: true
     name: trade_machine_shared
+
+# Volumes for better development performance
+volumes:
+  node_modules_volume:
+    driver: local
