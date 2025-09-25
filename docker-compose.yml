@@ -1,27 +1,36 @@
+# TradeMachine Server - connects to shared infrastructure
+#
+# Prerequisites:
+#   1. Start shared infrastructure first: cd ../; docker-compose -f docker-compose.shared.yml up -d
+#   2. Ensure .env file exists in parent directory with database credentials
+#
+# Usage: docker-compose up -d
+
 services:
   app:
     build:
       context: .
       target: build
-    # Install PostgreSQL client for database initialization
-    # This is needed for the docker-init.sh script
     ports:
       - "3001:3001"
     environment:
       - NODE_ENV=development
       - PORT=3001
       - IP=0.0.0.0
+      # Connect to shared PostgreSQL (external port 5438, internal 5432)
       - PG_HOST=postgres
       - PG_PORT=5432
-      - PG_USER=postgres
-      - PG_PASSWORD=postgres
-      - PG_DB=trade_machine
+      - PG_USER=${DATABASE_USER:-trader_user}
+      - PG_PASSWORD=${DATABASE_PASSWORD:-dev_password_change_me}
+      - PG_DB=${DATABASE_NAME:-trade_dn}
       - ORM_CONFIG=development
       - BASE_DIR=/app
+      # Connect to shared Redis
       - REDIS_IP=redis
       - REDIS_PORT=6379
       - SESSION_SECRET=local_dev_secret
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/trade_machine?schema=dev
+      - DATABASE_URL=postgresql://${DATABASE_USER:-trader_user}:${DATABASE_PASSWORD:-dev_password_change_me}@postgres:5432/${DATABASE_NAME:-trade_dn}?schema=dev
+      # BASE_URL points to frontend for email templates
       - BASE_URL=http://localhost:3030
       - COOKIE_SECURE=false
       # Help Node.js find modules correctly
@@ -29,11 +38,6 @@ services:
     volumes:
       - ./:/app
       - /app/node_modules
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     command: bash -c "apt-get update && apt-get install -y postgresql-client && ./docker-init.sh && make dev-server"
     restart: unless-stopped
     healthcheck:
@@ -42,39 +46,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
+    networks:
+      - trade_machine_shared
 
-  postgres:
-    image: postgres:12
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=trade_machine
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-  redis:
-    image: redis:5
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-volumes:
-  postgres_data:
-  redis_data:
+# Connect to shared infrastructure network
+networks:
+  trade_machine_shared:
+    external: true
+    name: trade_machine_shared
