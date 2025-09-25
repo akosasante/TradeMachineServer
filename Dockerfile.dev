@@ -1,0 +1,42 @@
+# Development Dockerfile - optimized for fast iterations and hot reloading
+FROM node:18-slim as development
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies needed for development
+RUN apt-get update && apt-get install -y \
+    make \
+    curl \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files and install ALL dependencies (including devDependencies)
+COPY package*.json ./
+RUN npm ci
+
+# Copy source files (volumes will override in dev mode)
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Create non-root user for development (good security practice)
+RUN groupadd -r app && useradd -r -g app app
+RUN chown -R app:app /app
+USER app
+
+# Environment variables for development
+ENV NODE_ENV=development
+ENV PORT=3001
+ENV IP=0.0.0.0
+
+# Expose port
+EXPOSE 3001
+
+# Health check using development port
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -f http://localhost:3001/health || exit 1
+
+# Development command - use tsx for fast TypeScript execution with hot reloading
+CMD ["npx", "tsx", "watch", "--clear-screen=false", "src/server.ts"]
