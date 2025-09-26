@@ -37,6 +37,9 @@ services:
       # BASE_URL points to frontend for email templates
       - BASE_URL=http://localhost:3030
       - COOKIE_SECURE=false
+      # Disable Rollbar in development to prevent errors
+      - ROLLBAR_TOKEN=
+      - ENABLE_LOGS=true
       # Enable tsx watch mode optimizations
       - TSX_TSCONFIG_PATH=/app/tsconfig.json
     volumes:
