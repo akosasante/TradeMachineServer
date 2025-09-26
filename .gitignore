@@ -43,5 +43,4 @@ workspace.code-workspace
 trade.iml
 
 **/.claude/settings.local.json
-CLAUDE.md
 ai_plans
