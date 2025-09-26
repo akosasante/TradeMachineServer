@@ -25,13 +25,13 @@ export enum TradeStatus {
 export default class Trade extends BaseModel {
     @Column({ type: "enum", enum: TradeStatus, default: TradeStatus.DRAFT })
     public status?: TradeStatus;
-    @Column({ nullable: true })
+    @Column({ type: "varchar", nullable: true })
     public declinedReason?: string;
     @Column({ nullable: true, type: "uuid" })
     public declinedById?: string;
     @Column({ nullable: true, type: "jsonb" })
     public acceptedBy?: string[];
-    @Column({ nullable: true })
+    @Column({ type: "timestamp", nullable: true })
     public acceptedOnDate?: Date;
     @OneToMany(_type => TradeParticipant, tradeParticipants => tradeParticipants.trade, { cascade: true, eager: true })
     public tradeParticipants?: TradeParticipant[];

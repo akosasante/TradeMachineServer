@@ -5,6 +5,7 @@ import { promisify } from "util";
 import { Request } from "express";
 import { getConnection } from "typeorm";
 import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
+import User from "../../models/user";
 
 interface CheckResponse {
     status: string;
@@ -88,7 +89,7 @@ export class HealthCheckController {
         try {
             // TypeORM database check
             const startTypeOrm = Date.now();
-            await getConnection(process.env.ORM_CONFIG).getRepository("User").count();
+            await getConnection(process.env.ORM_CONFIG).getRepository(User).count();
             health.checks.database = {
                 status: "ok",
                 responseTime: Date.now() - startTypeOrm,

@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { Server } from "http";
 import startServer from "./bootstrap/app";
 
