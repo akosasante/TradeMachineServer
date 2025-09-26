@@ -22,23 +22,23 @@ export const TIME_TO_EXPIRE_USER_PASSWORD_IN_MS = 1 * 60 * 60 * 1000; // 1 hr * 
 @Unique(["email"])
 export default class User extends BaseModel {
     private static TIME_TO_EXPIRE_PASSWORD_MS: number = TIME_TO_EXPIRE_USER_PASSWORD_IN_MS; // password expires in 1 hour after being set
-    @Column()
+    @Column({ type: "varchar" })
     public email!: string;
-    @Column({ nullable: true, select: false })
+    @Column({ type: "varchar", nullable: true, select: false })
     public password?: string;
-    @Column({ nullable: true })
+    @Column({ type: "varchar", nullable: true })
     public displayName?: string;
-    @Column({ nullable: true })
+    @Column({ type: "varchar", nullable: true })
     public slackUsername?: string;
-    @Column({ nullable: true })
+    @Column({ type: "varchar", nullable: true })
     public csvName?: string;
     @Column({ type: "enum", enum: Role, default: Role.OWNER })
     public role?: Role;
-    @Column({ nullable: true })
+    @Column({ type: "timestamp", nullable: true })
     public lastLoggedIn?: Date;
-    @Column({ nullable: true })
+    @Column({ type: "timestamp", nullable: true })
     public passwordResetExpiresOn?: Date;
-    @Column({ nullable: true })
+    @Column({ type: "varchar", nullable: true })
     public passwordResetToken?: string;
     @Column({ type: "enum", enum: UserStatus, default: UserStatus.ACTIVE })
     public status?: UserStatus;

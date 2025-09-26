@@ -20,9 +20,9 @@ export const MinorLeagueLevels = [LeagueLevel.HIGH, LeagueLevel.LOW];
 export default class DraftPick extends BaseModel {
     @Column({ type: "numeric" })
     public round!: number;
-    @Column({ nullable: true })
+    @Column({ type: "int", nullable: true })
     public pickNumber?: number;
-    @Column()
+    @Column({ type: "int" })
     public season!: number;
     @Column({ type: "enum", enum: LeagueLevel })
     public type!: LeagueLevel;
