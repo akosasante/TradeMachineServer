@@ -1,82 +1,46 @@
-import fs from "fs";
-import path from "path";
 import winston from "winston";
 
-const { combine, timestamp, printf, json, colorize, align } = winston.format;
-// No need to write error if we're only printing that level here anyway
-const errorFileLogFormat = printf(info => {
-    return `[ ${info.timestamp} ]:\t${info.message}`;
-});
-const timestampFormat = "YYYY-MM-DD hh:mm:ss A";
+const { combine, timestamp, json, colorize, printf, errors } = winston.format;
 
-const alignedWithColorsAndTime = combine(
-    colorize(),
+// Structured JSON format for production and development
+const jsonFormat = combine(
     timestamp(),
-    align(),
-    printf(info => `[ ${info.timestamp}] ${info.level}: ${info.message}`)
+    errors({ stack: true }),
+    json()
 );
 
-// Transport objects
-const consoleLogger = new winston.transports.Console({
-    format:
-        process.env.NODE_ENV === "production"
-            ? combine(timestamp({ format: timestampFormat }), json())
-            : alignedWithColorsAndTime,
+// Human-readable format for development (optional, can be switched to JSON)
+const devFormat = combine(
+    timestamp(),
+    colorize(),
+    errors({ stack: true }),
+    printf(({ timestamp, level, message, stack, ...meta }) => {
+        let log = `${timestamp} [${level}]: ${message}`;
+        if (stack) {
+            log += `\n${stack}`;
+        }
+        if (Object.keys(meta).length > 0) {
+            log += `\n${JSON.stringify(meta, null, 2)}`;
+        }
+        return log;
+    })
+);
+
+// Console transport - handles both regular logs and exceptions
+const consoleTransport = new winston.transports.Console({
+    format: process.env.NODE_ENV === "production" ? jsonFormat : devFormat,
+    handleExceptions: true,
+    handleRejections: true,
 });
 
-let errorLogger;
-let combinedLogger;
-let exceptionHandler;
-
-if (process.env.NODE_ENV !== "test") {
-    const logDir = path.resolve(`${process.env.BASE_DIR}/logs`);
-
-    if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir);
-    }
-
-    errorLogger = new winston.transports.File({
-        filename: `${logDir}/server-error.log`,
-        level: "error",
-        eol: "\r\n",
-        format: json(),
-        maxsize: 52428800,
-        maxFiles: 10,
-        tailable: true,
-    });
-
-    combinedLogger = new winston.transports.File({
-        filename: `${logDir}/server-combined.log`,
-        level: "info",
-        eol: "\r\n",
-        format: json(),
-        maxsize: 52428800,
-        maxFiles: 10,
-        tailable: true,
-    });
-
-    exceptionHandler = new winston.transports.File({
-        filename: `${logDir}/uncaught-exceptions.log`,
-        eol: "\r\n",
-        format: json(),
-        maxsize: 52428800,
-        maxFiles: 10,
-        tailable: true,
-    });
-}
-// Logger object
+// Logger object - simplified to console-only structured logging
 const logger = winston.createLogger({
-    level: "debug",
-    format: combine(timestamp({ format: timestampFormat }), errorFileLogFormat),
-    transports: errorLogger && combinedLogger ? [errorLogger, combinedLogger] : [],
+    level: process.env.NODE_ENV === "production" ? "info" : "debug",
+    format: jsonFormat,
+    transports: [consoleTransport],
     silent: process.env.ENABLE_LOGS === "false",
-    exceptionHandlers: exceptionHandler ? [exceptionHandler] : [],
     exitOnError: false,
 });
-
-if (process.env.ENABLE_LOGS === "true") {
-    logger.add(consoleLogger);
-}
 
 // Last ditch if the logger itself errors
 // eslint-disable-next-line no-console
