@@ -22,6 +22,7 @@ import { SessionData } from "express-session";
 import { activeUserMetric } from "../../bootstrap/metrics";
 import Users, { PublicUser } from "../../DAO/v2/UserDAO";
 import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
+import ObanDAO from "../../DAO/v2/ObanDAO";
 
 // declare the additional fields that we add to express session (via routing-controllers)
 declare module "express-session" {
@@ -165,6 +166,46 @@ export default class AuthController {
             passwordResetToken: undefined,
         });
         return response.status(200).json("success");
+    }
+
+    @Post("/login/sendResetEmailOban")
+    public async sendResetEmailOban(
+        @BodyParam("email") email: string,
+        @Res() response: Response,
+        @Req() request?: Request
+    ): Promise<Response> {
+        logger.debug(`Preparing to send reset password email via Oban to...: ${email}`);
+        rollbar.info("sendResetEmailOban", { email }, request);
+
+        const prisma = getPrismaClientFromRequest(request);
+        if (!prisma) {
+            return response.status(500).json({ error: "Database connection unavailable" });
+        }
+
+        const user = await this.dao(request).findUserWithPasswordByEmail(email);
+
+        if (!user) {
+            throw new NotFoundError("No user found with the given email.");
+        } else {
+            // Update current user with reset request time
+            const updatedUser = await this.dao(request).setPasswordExpires(user.id!);
+
+            if (!prisma.obanJob) {
+                logger.error("obanJob model not available in Prisma client");
+                return response.status(500).json({ error: "obanJob not available in Prisma client" });
+            }
+
+            // Queue job in Oban for Elixir to process
+            const obanDao = new ObanDAO(prisma.obanJob);
+            const job = await obanDao.enqueuePasswordResetEmail(updatedUser.id!);
+
+            logger.info("Oban job queued for password reset", { jobId: job.id.toString(), userId: updatedUser.id });
+            return response.status(202).json({
+                status: "oban job queued",
+                jobId: job.id.toString(),
+                userId: updatedUser.id,
+            });
+        }
     }
 
     @Get("/session_check")

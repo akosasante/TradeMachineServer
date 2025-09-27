@@ -21,6 +21,9 @@ services:
       - NODE_ENV=development
       - PORT=3001
       - IP=0.0.0.0
+      # File watching fixes for macOS Docker
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
       # Connect to shared PostgreSQL (external port 5438, internal 5432)
       - PG_HOST=postgres
       - PG_PORT=5432

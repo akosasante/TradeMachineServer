@@ -239,3 +239,9 @@ revert-migration: ## Revert the most recently applied migration using config fil
   	else \
   	  npx typeorm migration:revert -f ormconfig -c $$ENV; \
   	fi
+
+prisma-migrate-test:
+	@export $$(grep -v '^#' tests/.env | xargs) && npx prisma migrate deploy
+
+prisma-migrate:
+	@export $$(grep -v '^#' .env | xargs) && npx prisma migrate deploy
