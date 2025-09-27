@@ -39,4 +39,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD curl -f http://localhost:3001/health || exit 1
 
 # Development command - use tsx for fast TypeScript execution with hot reloading
-CMD ["npx", "tsx", "watch", "--clear-screen=false", "src/server.ts"]
+# Use polling for macOS Docker compatibility
+CMD ["sh", "-c", "FORCE_POLLING=true CHOKIDAR_USEPOLLING=true CHOKIDAR_INTERVAL=1000 npx tsx watch --clear-screen=false src/server.ts"]

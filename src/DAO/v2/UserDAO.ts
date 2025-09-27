@@ -1,12 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { exclude } from "./helpers";
 import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
+import * as crypto from "node:crypto";
 
 type User = Prisma.Result<ExtendedPrismaClient["user"], Record<string, unknown>, "findFirstOrThrow">;
 export type PublicUser = Omit<User, "password">;
 
 export default class UserDAO {
     private readonly userDb: ExtendedPrismaClient["user"];
+    // Password expires in 1 hour after being set (in ms)
+    private readonly TIME_TO_EXPIRE_USER_PASSWORD_IN_MS: number = 1 * 60 * 60 * 1000;
 
     constructor(userDb: ExtendedPrismaClient["user"] | undefined) {
         if (!userDb) {
@@ -65,6 +68,19 @@ export default class UserDAO {
         const updatedUser = await this.userDb.update({
             where: { id },
             data: userObj as unknown as Prisma.UserUpdateInput,
+        });
+        return UserDAO.publicUser(updatedUser);
+    }
+
+    public async setPasswordExpires(userId: string): Promise<PublicUser> {
+        const passwordResetExpiresOn = new Date(Date.now() + this.TIME_TO_EXPIRE_USER_PASSWORD_IN_MS);
+        const passwordResetToken = crypto.randomBytes(20).toString("hex");
+        const updatedUser = await this.userDb.update({
+            where: { id: userId },
+            data: {
+                passwordResetExpiresOn,
+                passwordResetToken,
+            } as unknown as Prisma.UserUpdateInput,
         });
         return UserDAO.publicUser(updatedUser);
     }
