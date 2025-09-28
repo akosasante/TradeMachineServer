@@ -6,7 +6,7 @@ import {
     In,
     InsertResult,
     Repository,
-    FindOneOptions,
+    FindOneOptions
 } from "typeorm";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import DraftPick from "../models/draftPick";

@@ -56,7 +56,7 @@ model migrations {
   timestamp BigInt
   name      String @db.VarChar
 
-  @@ignore()
+  @@ignore
 }
 
 model Player {
@@ -95,15 +95,15 @@ model query_result_cache {
   result     String
 
   @@map("query-result-cache")
-  @@ignore()
+  @@ignore
 }
 
-// I _think_ this is for elixir?
+// this is for elixir
 model schema_migrations {
   version     BigInt    @id
   inserted_at DateTime? @db.Timestamp(0)
 
-  @@ignore()
+  @@ignore
 }
 
 model Settings {
@@ -159,7 +159,7 @@ model Trade {
   id                String             @id(map: "PK_8a1cea805d050478a2482f0960e") @default(uuid()) @db.Uuid
   dateCreated       DateTime           @default(now()) @db.Timestamp(6)
   dateModified      DateTime           @default(now()) @db.Timestamp(6)
-  // What state the trade is curerntly in (draft, submitted, etc)
+  // What state the trade is currently in (draft, submitted, etc)
   status            TradeStatus        @default(DRAFT)
   // A string describing why a trade is declined. For now just kept for record-keeping and in an email.
   declinedReason    String?            @db.VarChar
@@ -239,7 +239,7 @@ model typeorm_metadata {
   name     String? @db.VarChar
   value    String?
 
-  @@ignore()
+  @@ignore
 }
 
 model User {
@@ -276,6 +276,43 @@ model User {
   modifiedSettings       Settings[]
 
   @@map("user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ObanJob {
+  id           BigInt         @id @default(autoincrement())
+  queue        String         @default("default")
+  worker       String
+  args         Json           @default("{}")
+  errors       Json[]         @default([])
+  attempt      Int            @default(0)
+  max_attempts Int            @default(20)
+  inserted_at  DateTime       @default(dbgenerated("timezone('UTC'::text, now())")) @db.Timestamp(6)
+  scheduled_at DateTime       @default(dbgenerated("timezone('UTC'::text, now())")) @db.Timestamp(6)
+  attempted_at DateTime?      @db.Timestamp(6)
+  completed_at DateTime?      @db.Timestamp(6)
+  attempted_by String[]
+  discarded_at DateTime?      @db.Timestamp(6)
+  priority     Int            @default(0)
+  tags         String[]       @default([])
+  meta         Json?          @default("{}")
+  cancelled_at DateTime?      @db.Timestamp(6)
+  state        oban_job_state @default(available)
+
+  @@index([args], map: "oban_jobs_args_index", type: Gin)
+  @@index([meta], map: "oban_jobs_meta_index", type: Gin)
+  @@index([state, queue, priority, scheduled_at, id], map: "oban_jobs_state_queue_priority_scheduled_at_id_index")
+  @@map("oban_jobs")
+}
+
+model oban_peers {
+  name       String   @id
+  node       String
+  started_at DateTime @db.Timestamp(6)
+  expires_at DateTime @db.Timestamp(6)
+
+  @@ignore
 }
 
 enum PickLeagueLevel {

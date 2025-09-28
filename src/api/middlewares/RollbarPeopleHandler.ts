@@ -33,7 +33,7 @@ export default class RollbarPeopleHandler implements ExpressMiddlewareInterface 
                 request.rollbar_person = {
                     id: existingUser.id,
                     email: existingUser.email,
-                    username: existingUser.displayName,
+                    username: existingUser.displayName!,
                 };
             }
             return next();

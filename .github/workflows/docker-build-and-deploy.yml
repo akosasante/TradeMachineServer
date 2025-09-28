@@ -1,0 +1,218 @@
+name: Build and Deploy Docker Image
+
+on:
+  push:
+    branches: [ staging, main ]
+  workflow_dispatch:
+    inputs:
+      trigger_deploy:
+        description: 'Deploy after building'
+        required: true
+        default: true
+        type: boolean
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      message:
+        description: 'Description for this build/deployment'
+        required: false
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set build info
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "### Building commit: ${{ github.event.head_commit.message }}" >> $GITHUB_STEP_SUMMARY
+          elif [ -n "${{ github.event.inputs.message }}" ]; then
+            echo "### Manual build: ${{ github.event.inputs.message }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Manual build" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Add workflow inputs to summary if manually triggered
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "#### Workflow Inputs" >> $GITHUB_STEP_SUMMARY
+            echo "- **Deploy after building:** ${{ github.event.inputs.trigger_deploy }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Target environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+            if [ -n "${{ github.event.inputs.message }}" ]; then
+              echo "- **Message:** ${{ github.event.inputs.message }}" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+
+      - uses: docker/setup-buildx-action@v2
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+            type=semver,pattern={{version}}
+            latest
+
+      - name: Build and push Docker image
+        id: build-image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+
+  deploy:
+    needs: build
+    if: |
+      success() && (
+        (github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')) ||
+        (github.event_name == 'workflow_dispatch' && inputs.trigger_deploy == true)
+      )
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Staging deployment conditions
+          - environment: staging
+            condition: ${{ github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging' }}
+            app_dir: /opt/Apps/StagingTradeMachine
+            image_tag: ${{ github.ref_name || 'staging' }}
+            port: 3015
+
+          # Production deployment conditions (FOR NOW ONLY MANUAL)
+          - environment: production
+            #condition: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production' }}
+            condition: ${{ github.event.inputs.environment == 'production' }}
+            app_dir: /opt/Apps/TradeMachine
+            image_tag: main
+            port: 3005
+
+    steps:
+      - name: Notify Rollbar of deploy start for staging
+        if: ${{ matrix.condition && matrix.environment == 'staging' }}
+        uses: rollbar/github-deploy-action@2.1.2
+        id: rollbar_pre_deploy_staging
+        with:
+          environment: ${{ matrix.environment }}
+          version: ${{ github.sha }}
+          status: "started"
+          local_username: ${{ github.actor }}
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: "aaasante"
+          DEPLOY_ID: ${{ steps.rollbar_pre_deploy_staging.outputs.deploy_id }}
+          
+      - name: Notify Rollbar of deployment completion for production
+        if: ${{ matrix.condition && matrix.environment == 'production' }}
+        uses: rollbar/github-deploy-action@2.1.2
+        with:
+          environment: ${{ matrix.environment }}
+          version: ${{ github.sha }}
+          status: "succeeded"
+          local_username: ${{ github.actor }}
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: "aaasante"
+          DEPLOY_ID: ${{ steps.rollbar_pre_deploy_production.outputs.deploy_id }}
+          
+      - name: Notify Rollbar of deploy start for production
+        if: ${{ matrix.condition && matrix.environment == 'production' }}
+        uses: rollbar/github-deploy-action@2.1.2
+        id: rollbar_pre_deploy_production
+        with:
+          environment: ${{ matrix.environment }}
+          version: ${{ github.sha }}
+          status: "started"
+          local_username: ${{ github.actor }}
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: "aaasante"
+
+      - name: Set deployment info
+        if: ${{ matrix.condition }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "### Deploying commit: ${{ github.event.head_commit.message }}" >> $GITHUB_STEP_SUMMARY
+          elif [ -n "${{ github.event.inputs.message }}" ]; then
+            echo "### Manual deployment: ${{ github.event.inputs.message }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Manual deployment" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Deployment Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ matrix.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image tag:** ${{ matrix.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment path:** ${{ matrix.app_dir }}" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Skip if condition not met
+        if: ${{ !matrix.condition }}
+        run: echo "Skipping ${{ matrix.environment }} deployment" && exit 0
+
+      - name: Deploy ${{ matrix.environment }}
+        if: ${{ matrix.condition }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ matrix.app_dir }}
+            
+            # Login to registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Deploy
+            docker compose pull app
+            docker compose up -d app
+            
+            # Health check
+            timeout=60
+            while [ $timeout -gt 0 ]; do
+              if curl -f http://localhost:${{ matrix.port }}/health; then
+                echo "${{ matrix.environment }} deployment successful"
+                exit 0
+              fi
+              sleep 5
+              timeout=$((timeout-5))
+            done
+            
+            echo "${{ matrix.environment }} health check failed"
+            docker compose logs app
+            exit 1
+
+      - name: Notify Rollbar of deployment completion for staging
+        if: ${{ matrix.condition && matrix.environment == 'staging' }}
+        uses: rollbar/github-deploy-action@2.1.2
+        with:
+          environment: ${{ matrix.environment }}
+          version: ${{ github.sha }}
+          status: "succeeded"
+          local_username: ${{ github.actor }}
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: "aaasante"

@@ -22,7 +22,7 @@ import {
     makePostRequest,
     makePutRequest,
     ownerLoggedIn,
-    setupOwnerAndAdminUsers,
+    setupOwnerAndAdminUsers
 } from "./helpers";
 import { v4 as uuid } from "uuid";
 import * as TradeTracker from "../../src/csv/TradeTracker";

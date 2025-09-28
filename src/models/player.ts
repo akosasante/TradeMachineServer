@@ -6,7 +6,7 @@ import {
     ESPN_ELIGIBLE_POSITION_MAPPING,
     ESPN_NON_POSITIONAL_NON_VALID_SLOTS,
     ESPN_POSITION_MAPPING,
-    espnMajorLeagueTeamFromId,
+    espnMajorLeagueTeamFromId
 } from "../espn/espnConstants";
 
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -22,17 +22,17 @@ export enum PlayerLeagueType {
 @Index(["leagueTeam"])
 @Index(["leagueTeam", "league"])
 export default class Player extends BaseModel {
-    @Column()
+    @Column({ type: "varchar" })
     @Index()
     public name!: string;
 
     @Column({ type: "enum", enum: PlayerLeagueType, nullable: true })
     public league?: PlayerLeagueType;
 
-    @Column({ nullable: true })
+    @Column({ type: "varchar", nullable: true })
     public mlbTeam?: string;
 
-    @Column({ nullable: true })
+    @Column({ type: "int", nullable: true })
     public playerDataId?: number;
 
     @Column({ nullable: true, type: "jsonb" })

@@ -1,10 +1,11 @@
 import { Get, HttpError, JsonController, Req } from "routing-controllers";
-import { PrismaClient } from "@prisma/client";
 import logger from "../../bootstrap/logger";
-import { ExpressAppSettings, redisClient } from "../../bootstrap/express";
+import { redisClient } from "../../bootstrap/express";
 import { promisify } from "util";
 import { Request } from "express";
 import { getConnection } from "typeorm";
+import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
+import User from "../../models/user";
 
 interface CheckResponse {
     status: string;
@@ -39,8 +40,10 @@ export class HealthCheckController {
             },
         };
         try {
-            const appSettings: ExpressAppSettings = request?.app.settings as ExpressAppSettings;
-            const prisma = appSettings?.prisma as PrismaClient;
+            const prisma = getPrismaClientFromRequest(request);
+            if (!prisma) {
+                throw new Error("Prisma client not found in express app settings!");
+            }
             const startPrisma = Date.now();
             await prisma.user.count();
             health.checks.prisma = {
@@ -61,6 +64,7 @@ export class HealthCheckController {
             const startRedis = Date.now();
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             const pingAsync = promisify<() => Promise<string>>(redisClient.ping).bind(redisClient);
             const pingResponse = await pingAsync();
             health.checks.redis = {
@@ -85,7 +89,7 @@ export class HealthCheckController {
         try {
             // TypeORM database check
             const startTypeOrm = Date.now();
-            await getConnection(process.env.ORM_CONFIG).getRepository("User").count();
+            await getConnection(process.env.ORM_CONFIG).getRepository(User).count();
             health.checks.database = {
                 status: "ok",
                 responseTime: Date.now() - startTypeOrm,
