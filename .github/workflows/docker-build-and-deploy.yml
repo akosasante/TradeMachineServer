@@ -240,8 +240,66 @@ jobs:
             # Pull latest image
             docker pull ${{ needs.build.outputs.image }}
 
-            # Run migrations in temporary container
-            docker run --rm --env-file .env --network host ${{ needs.build.outputs.image }} npx prisma migrate deploy
+            # Debug environment variables
+            echo "=== Debugging DATABASE_URL Loading ==="
+            echo "1. Checking if DATABASE_URL exists in .env file:"
+            grep -n "DATABASE_URL" .env || echo "DATABASE_URL not found in .env"
+
+            echo "2. Checking .env file format (first few lines):"
+            head -5 .env
+
+            echo "3. Testing raw environment variable loading:"
+            docker run --rm --env-file .env --network host ${{ needs.build.outputs.image }} sh -c '
+              echo "DATABASE_URL is set: ${DATABASE_URL+yes}${DATABASE_URL:+nonempty}"
+              echo "DATABASE_URL length: ${#DATABASE_URL}"
+              if [ -n "$DATABASE_URL" ]; then
+                echo "DATABASE_URL protocol: $(echo "$DATABASE_URL" | cut -d: -f1)"
+                echo "DATABASE_URL format check: $(echo "$DATABASE_URL" | grep -o "^postgresql://" || echo "MISSING_PROTOCOL")"
+              else
+                echo "DATABASE_URL is empty or unset"
+              fi
+            '
+
+            echo "4. Testing direct environment variable passing:"
+            DATABASE_URL_VALUE=$(grep "DATABASE_URL" .env | cut -d= -f2- | sed 's/^"//; s/"$//')
+            echo "Extracted DATABASE_URL (first 30 chars): ${DATABASE_URL_VALUE:0:30}..."
+            docker run --rm -e "DATABASE_URL=$DATABASE_URL_VALUE" --network host ${{ needs.build.outputs.image }} sh -c '
+              echo "Direct env - DATABASE_URL length: ${#DATABASE_URL}"
+              echo "Direct env - DATABASE_URL protocol: $(echo "$DATABASE_URL" | cut -d: -f1)"
+            '
+
+            echo "5. Testing Prisma config validation:"
+            docker run --rm --env-file .env --network host ${{ needs.build.outputs.image }} sh -c '
+              echo "Running Prisma validate..."
+              npx prisma validate 2>&1 || echo "Prisma validation failed"
+            '
+
+            # Run migrations with enhanced environment loading
+            echo "6. Running database migrations..."
+
+            # Try with --env-file first
+            echo "Attempting migration with --env-file..."
+            if docker run --rm --env-file .env --network host ${{ needs.build.outputs.image }} npx prisma migrate deploy; then
+              echo "Migration successful with --env-file"
+            else
+              echo "Migration failed with --env-file, trying direct environment variables..."
+
+              # Extract and set environment variables directly
+              export NODE_ENV=$(grep "NODE_ENV" .env | cut -d= -f2 | sed 's/^"//; s/"$//')
+              export DATABASE_URL=$(grep "DATABASE_URL" .env | cut -d= -f2- | sed 's/^"//; s/"$//')
+              export ORM_CONFIG=$(grep "ORM_CONFIG" .env | cut -d= -f2 | sed 's/^"//; s/"$//')
+
+              echo "Extracted DATABASE_URL protocol: $(echo "$DATABASE_URL" | cut -d: -f1)"
+
+              # Run migration with direct environment variables
+              docker run --rm \
+                -e "NODE_ENV=$NODE_ENV" \
+                -e "DATABASE_URL=$DATABASE_URL" \
+                -e "ORM_CONFIG=$ORM_CONFIG" \
+                --network host \
+                ${{ needs.build.outputs.image }} \
+                npx prisma migrate deploy
+            fi
 
       - name: Deploy ${{ matrix.environment }}
         if: ${{ matrix.condition }}
