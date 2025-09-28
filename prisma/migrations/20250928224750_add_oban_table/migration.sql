@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "oban_jobs" (
+CREATE TABLE IF NOT EXISTS "oban_jobs" (
     "id" BIGSERIAL NOT NULL,
     "queue" TEXT NOT NULL DEFAULT 'default',
     "worker" TEXT NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE "oban_jobs" (
 );
 
 -- CreateTable
-CREATE TABLE "oban_peers" (
+CREATE TABLE IF NOT EXISTS "oban_peers" (
     "name" TEXT NOT NULL,
     "node" TEXT NOT NULL,
     "started_at" TIMESTAMP(6) NOT NULL,
@@ -33,10 +33,10 @@ CREATE TABLE "oban_peers" (
 );
 
 -- CreateIndex
-CREATE INDEX "oban_jobs_args_index" ON "oban_jobs" USING GIN ("args");
+CREATE INDEX IF NOT EXISTS "oban_jobs_args_index" ON "oban_jobs" USING GIN ("args");
 
 -- CreateIndex
-CREATE INDEX "oban_jobs_meta_index" ON "oban_jobs" USING GIN ("meta");
+CREATE INDEX IF NOT EXISTS "oban_jobs_meta_index" ON "oban_jobs" USING GIN ("meta");
 
 -- CreateIndex
-CREATE INDEX "oban_jobs_state_queue_priority_scheduled_at_id_index" ON "oban_jobs"("state", "queue", "priority", "scheduled_at", "id");
+CREATE INDEX IF NOT EXISTS "oban_jobs_state_queue_priority_scheduled_at_id_index" ON "oban_jobs"("state", "queue", "priority", "scheduled_at", "id");
