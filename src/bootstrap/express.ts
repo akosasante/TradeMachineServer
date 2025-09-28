@@ -1,7 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import compression from "compression";
 import connectRedis from "connect-redis";
-import express from "express";
+import express, { Request } from "express";
 import expressSession from "express-session";
 import morgan from "morgan";
 import { createClient } from "redis";
@@ -10,7 +9,7 @@ import logger from "./logger";
 import { rollbar } from "./rollbar";
 import { metricsMiddleware } from "./metrics";
 import { registerCleanupCallback } from "./shutdownHandler";
-import {inspect} from "util";
+import { ExtendedPrismaClient } from "./prisma-db";
 
 const app = express();
 
@@ -30,14 +29,16 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 export interface ExpressAppSettings {
-    prisma: PrismaClient | undefined;
+    prisma: ExtendedPrismaClient | undefined;
+}
+
+export function getAppSettings(req: Request | undefined): ExpressAppSettings | undefined {
+    return req?.app?.settings as ExpressAppSettings | undefined;
 }
 
 // Session tracking
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 60 sec * 60 min * 24hr * 7 = 7 days
 const redisStore = connectRedis(expressSession);
-
-logger.debug(`CREATING REDIS CLIENT: ${inspect(process.env)}`);
 
 export const redisClient = createClient({
     // legacyMode: true is required to work with connect-redis + redis v4: https://github.com/tj/connect-redis/pull/345

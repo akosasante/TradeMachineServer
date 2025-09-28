@@ -90,7 +90,8 @@
   "exclude": [
     "./dist",
     "./tests",
-    "./node_modules"
+    "./node_modules",
+    "./ai_plans"
   ],
   "include": [
     "./src",

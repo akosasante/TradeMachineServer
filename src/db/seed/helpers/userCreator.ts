@@ -14,7 +14,7 @@ async function init() {
 
 export function createGenericUser() {
     const slackUsername = faker.internet.userName();
-    const email = faker.internet.email();
+    const email = faker.internet.exampleEmail();
     const displayName = faker.name.fullName();
     return new User({ id: randomUUID(), slackUsername, email, displayName, role: Role.OWNER });
 }

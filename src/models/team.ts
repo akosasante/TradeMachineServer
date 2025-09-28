@@ -17,10 +17,10 @@ export enum TeamStatus {
 @Entity()
 @Unique(["espnId"])
 export default class Team extends BaseModel {
-    @Column()
+    @Column({ type: "varchar" })
     public name!: string;
 
-    @Column({ nullable: true })
+    @Column({ type: "int", nullable: true })
     public espnId?: number;
     // TODO: Consider enforcing uniqueness on this column? Or name column? Maybe not necessary for now.
 

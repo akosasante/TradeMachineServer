@@ -3,10 +3,10 @@ import Trade from "./trade";
 
 @Entity()
 export default class Email {
-    @PrimaryColumn()
+    @PrimaryColumn({ type: "varchar" })
     public messageId!: string;
 
-    @Column()
+    @Column({ type: "varchar" })
     @Index()
     public status?: string;
 

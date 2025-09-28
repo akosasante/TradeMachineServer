@@ -2,9 +2,8 @@ import { Request } from "express";
 import { Get, JsonController, Req } from "routing-controllers";
 import logger from "../../../bootstrap/logger";
 import Users, { PublicUser } from "../../../DAO/v2/UserDAO";
-import { PrismaClient } from "@prisma/client";
-import { ExpressAppSettings } from "../../../bootstrap/express";
 import { rollbar } from "../../../bootstrap/rollbar";
+import { getPrismaClientFromRequest } from "../../../bootstrap/prisma-db";
 
 @JsonController("/v2/users")
 export default class V2UserController {
@@ -16,8 +15,11 @@ export default class V2UserController {
         } else if (!req) {
             throw new Error("HTTP request object required!");
         } else {
-            const appSettings: ExpressAppSettings = req.app.settings as ExpressAppSettings;
-            this.daoInstance = new Users(appSettings?.prisma?.user as PrismaClient["user"]);
+            const prisma = getPrismaClientFromRequest(req);
+            if (!prisma) {
+                throw new Error("Prisma client not found in express app settings!");
+            }
+            this.daoInstance = new Users(prisma.user);
             return this.daoInstance;
         }
     }

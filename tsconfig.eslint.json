@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "include": ["./src/**/*.ts", "./tests/**/*.ts", "./declarations/*.ts"],
-  "exclude": ["./dist", "./node_modules"],
+  "exclude": ["./dist", "./node_modules", "./ai_plans"],
   "compilerOptions": {
     "esModuleInterop": true
   }

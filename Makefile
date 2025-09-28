@@ -1,7 +1,9 @@
 # List any targets that are not an actual file here to ensure they are always run
 .PHONY: help
 .PHONY: test-ci test-ci-unit test-ci-integration test-unit test-integration test-update-snapshots test-local
-.PHONY: watch-ts-files watch-js-server dev-server watch-js-debug-server debug-server
+.PHONY: watch-ts-files watch-js-server dev-server dev-tsx watch-js-debug-server debug-server debug-tsx
+.PHONY: docker-dev-up docker-dev-down docker-dev-logs docker-dev-shell docker-dev-restart docker-dev-rebuild
+.PHONY: docker-infrastructure-up docker-infrastructure-down docker-infrastructure-logs docker-prod-test docker-full-setup
 .PHONY: lint lint-fix format compile-ts copy-email-templates build serve typecheck fullcheck
 .PHONY: generate-migration run-migration revert-migration
 
@@ -124,6 +126,9 @@ dev-server: ## Watch typescript files for changes, incrementally compile. While 
 	-c "cyan.bold,green.bold" \
 	"make watch-ts-files" "make watch-js-server"
 
+dev-tsx: ## Modern dev server using tsx with hot reloading (no compilation step needed)
+	npx tsx watch --clear-screen=false src/server.ts
+
 watch-js-debug-server: ## Run the server.js file with DEBUG flags and watch for js changes
 	NODE_ENV=development \
 	npx nodemon $NODE_DEBUG_OPTION --inspect ./dist/server.js \
@@ -135,6 +140,43 @@ debug-server: ## Watch for ts file changes, and js file changes, run server with
 	-n "TypeScript,Node" \
 	-c "cyan.bold,green.bold" \
 	"make watch-ts-files" "make watch-js-debug-server"
+
+debug-tsx: ## Debug server using tsx with hot reloading and inspect mode
+	npx tsx watch --inspect --clear-screen=false src/server.ts
+
+# |----------- DOCKER DEV SCRIPTS ---------|
+docker-dev-up: ## Start Docker development environment with hot reloading (requires shared infrastructure)
+	docker-compose up -d
+
+docker-dev-down: ## Stop Docker development environment
+	docker-compose down
+
+docker-dev-logs: ## Show logs from Docker development environment
+	docker-compose logs -f app
+
+docker-dev-shell: ## Open shell in Docker development container
+	docker-compose exec app bash
+
+docker-dev-restart: ## Restart Docker development container
+	docker-compose restart app
+
+docker-dev-rebuild: ## Rebuild and restart Docker development environment
+	docker-compose down && docker-compose build --no-cache && docker-compose up -d
+
+docker-infrastructure-up: ## Start shared infrastructure (PostgreSQL, Redis, monitoring)
+	cd .. && docker-compose -f docker-compose.shared.yml up -d
+
+docker-infrastructure-down: ## Stop shared infrastructure
+	cd .. && docker-compose -f docker-compose.shared.yml down
+
+docker-infrastructure-logs: ## Show infrastructure logs
+	cd .. && docker-compose -f docker-compose.shared.yml logs -f
+
+docker-prod-test: ## Test production Docker build locally
+	docker-compose --profile production up --build
+
+docker-full-setup: ## Complete Docker setup: infrastructure + dev environment
+	make docker-infrastructure-up && sleep 10 && make docker-dev-up
 
 lint: ## Run typescript linting
 	npx eslint --quiet . --ext .ts,.tsx
@@ -197,3 +239,9 @@ revert-migration: ## Revert the most recently applied migration using config fil
   	else \
   	  npx typeorm migration:revert -f ormconfig -c $$ENV; \
   	fi
+
+prisma-migrate-test:
+	@export $$(grep -v '^#' tests/.env | xargs) && npx prisma migrate deploy
+
+prisma-migrate:
+	@export $$(grep -v '^#' .env | xargs) && npx prisma migrate deploy
