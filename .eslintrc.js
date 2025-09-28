@@ -94,7 +94,7 @@ module.exports = {
       format: ['camelCase'],
       leadingUnderscore: 'allow',
       trailingUnderscore: 'allow',
-      filter: {regex: "^(AND|OR|Players|Users|Teams|rollbar_person|TIME_TO_EXPIRE_USER_PASSWORD_IN_MS)$", match: false}
+      filter: {regex: "^(AND|OR|Players|Users|Teams|rollbar_person|TIME_TO_EXPIRE_USER_PASSWORD_IN_MS|@opentelemetry/instrumentation-)$", match: false}
     },
       {
         selector: 'variable',
