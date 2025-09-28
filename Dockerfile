@@ -1,5 +1,5 @@
 # Base image, in this first stage, we transpile TypeScript to JavaScript
-FROM node:16-slim as build
+FROM node:20-slim AS build
 ARG CACHBUSTER=1
 
 # Set working directory
@@ -22,7 +22,7 @@ RUN npx prisma generate
 RUN make build
 
 # Create production image
-FROM node:16-slim as production
+FROM node:20-slim AS production
 
 # Create app directory
 WORKDIR /app

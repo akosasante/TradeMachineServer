@@ -1,15 +1,15 @@
 services:
   app:
     image: ghcr.io/akosasante/trade-machine-server:${IMAGE_TAG}
-    container_name: staging_trademachine
+    container_name: prod_trademachine
     restart: always
     network_mode: "host"
     environment:
       - NODE_ENV=${NODE_ENV:-production}
-      - PORT=${PORT:-3015}
+      - PORT=${PORT:-3005}
       - IP=${IP:-0.0.0.0}
-      - ORM_CONFIG=${ORM_CONFIG:-staging}
-      - APP_ENV=${APP_ENV:-staging}
+      - ORM_CONFIG=${ORM_CONFIG:-production}
+      - APP_ENV=${APP_ENV:-production}
       - DATABASE_URL=${DATABASE_URL}
       - BASE_DIR=${BASE_DIR:-/app}
       - REDIS_IP=${REDIS_IP}
@@ -17,17 +17,15 @@ services:
       - REDISPASS=${REDISPASS}
       - SESSION_SECRET=${SESSION_SECRET}
       - ROLLBAR_ACCESS_TOKEN=${ROLLBAR_ACCESS_TOKEN}
-      - ROLLBAR_ENVIRONMENT=${ROLLBAR_ENVIRONMENT:-staging}
+      - ROLLBAR_ENVIRONMENT=${ROLLBAR_ENVIRONMENT:-production}
       - PG_HOST=${PG_HOST:-localhost}
       - PG_USER=${PG_USER}
       - PG_PASSWORD=${PG_PASSWORD}
       - PG_DB=${PG_DB}
       - HOME=/tmp
       - npm_config_cache=/tmp/.npm
-    # When using network_mode: "host", the ports section is ignored
-    # because the container shares the host's network stack
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3015/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3005}/health"]
       interval: 30s
       timeout: 10s
       retries: 3
