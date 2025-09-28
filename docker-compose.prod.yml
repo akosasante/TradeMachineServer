@@ -18,6 +18,10 @@ services:
       - SESSION_SECRET=${SESSION_SECRET}
       - ROLLBAR_ACCESS_TOKEN=${ROLLBAR_ACCESS_TOKEN}
       - ROLLBAR_ENVIRONMENT=${ROLLBAR_ENVIRONMENT:-production}
+      - PG_HOST=${PG_HOST:-localhost}
+      - PG_USER=${PG_USER}
+      - PG_PASSWORD=${PG_PASSWORD}
+      - PG_DB=${PG_DB}
       - HOME=/tmp
       - npm_config_cache=/tmp/.npm
     healthcheck:
