@@ -3,6 +3,8 @@ name: Build and Deploy Docker Image
 on:
   push:
     branches: [ staging, main ]
+  pull_request:
+    branches: [ main, staging ]
   workflow_dispatch:
     inputs:
       trigger_deploy:
@@ -23,9 +25,42 @@ on:
         required: false
         type: string
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  build:
+  # Security scanning and linting
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+  build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: security
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Set build info
         run: |
@@ -49,40 +84,50 @@ jobs:
           fi
           
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - uses: docker/setup-buildx-action@v2
-
-      - name: Login to GitHub Container Registry
+      - name: Log in to Container Registry
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            type=sha,format=short
+            type=ref,event=pr
+            type=sha,prefix=${{ github.ref_name }}-
             type=semver,pattern={{version}}
-            latest
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
-        id: build-image
-        uses: docker/build-push-action@v3
+        id: build
+        uses: docker/build-push-action@v5
         with:
           context: .
+          platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      - name: Output image
+        id: image
+        run: |
+          echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
 
 
   deploy:
@@ -102,20 +147,21 @@ jobs:
             app_dir: /opt/Apps/StagingTradeMachine
             image_tag: ${{ github.ref_name || 'staging' }}
             port: 3015
+            compose_file: docker-compose.staging.yml
 
-          # Production deployment conditions (FOR NOW ONLY MANUAL)
+          # Production deployment conditions
           - environment: production
-            #condition: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production' }}
-            condition: ${{ github.event.inputs.environment == 'production' }}
+            condition: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production' }}
             app_dir: /opt/Apps/TradeMachine
             image_tag: main
             port: 3005
+            compose_file: docker-compose.prod.yml
 
     steps:
-      - name: Notify Rollbar of deploy start for staging
-        if: ${{ matrix.condition && matrix.environment == 'staging' }}
+      - name: Notify Rollbar of deploy start
+        if: ${{ matrix.condition }}
         uses: rollbar/github-deploy-action@2.1.2
-        id: rollbar_pre_deploy_staging
+        id: rollbar_pre_deploy
         with:
           environment: ${{ matrix.environment }}
           version: ${{ github.sha }}
@@ -124,33 +170,20 @@ jobs:
         env:
           ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
           ROLLBAR_USERNAME: "aaasante"
-          DEPLOY_ID: ${{ steps.rollbar_pre_deploy_staging.outputs.deploy_id }}
-          
-      - name: Notify Rollbar of deployment completion for production
-        if: ${{ matrix.condition && matrix.environment == 'production' }}
+          DEPLOY_ID: ${{ steps.rollbar_pre_deploy.outputs.deploy_id }}
+
+      - name: Notify Rollbar of deployment failure
+        if: ${{ matrix.condition && failure() }}
         uses: rollbar/github-deploy-action@2.1.2
         with:
           environment: ${{ matrix.environment }}
           version: ${{ github.sha }}
-          status: "succeeded"
+          status: "failed"
           local_username: ${{ github.actor }}
         env:
           ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
           ROLLBAR_USERNAME: "aaasante"
-          DEPLOY_ID: ${{ steps.rollbar_pre_deploy_production.outputs.deploy_id }}
-          
-      - name: Notify Rollbar of deploy start for production
-        if: ${{ matrix.condition && matrix.environment == 'production' }}
-        uses: rollbar/github-deploy-action@2.1.2
-        id: rollbar_pre_deploy_production
-        with:
-          environment: ${{ matrix.environment }}
-          version: ${{ github.sha }}
-          status: "started"
-          local_username: ${{ github.actor }}
-        env:
-          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
-          ROLLBAR_USERNAME: "aaasante"
+          DEPLOY_ID: ${{ steps.rollbar_pre_deploy.outputs.deploy_id }}
 
       - name: Set deployment info
         if: ${{ matrix.condition }}
@@ -173,40 +206,83 @@ jobs:
         if: ${{ !matrix.condition }}
         run: echo "Skipping ${{ matrix.environment }} deployment" && exit 0
 
-      - name: Deploy ${{ matrix.environment }}
+      - name: Run database migrations for ${{ matrix.environment }}
         if: ${{ matrix.condition }}
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ${{ matrix.app_dir }}
-            
+
             # Login to registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Deploy
-            docker compose pull app
-            docker compose up -d app
-            
-            # Health check
-            timeout=60
+
+            # Pull latest image
+            docker pull ${{ needs.build.outputs.image }}
+
+            # Run migrations in temporary container
+            docker run --rm --env-file .env --network host ${{ needs.build.outputs.image }} npx prisma migrate deploy
+
+      - name: Deploy ${{ matrix.environment }}
+        if: ${{ matrix.condition }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ matrix.app_dir }}
+
+            # Set IMAGE_TAG environment variable
+            export IMAGE_TAG="${{ matrix.image_tag }}"
+            export GITHUB_REPOSITORY="${{ github.repository }}"
+
+            # Update compose file if it doesn't exist
+            if [ ! -f "${{ matrix.compose_file }}" ]; then
+              echo "Downloading ${{ matrix.compose_file }} from repository..."
+              curl -o "${{ matrix.compose_file }}" "https://raw.githubusercontent.com/${{ github.repository }}/main/${{ matrix.compose_file }}"
+            fi
+
+            # Deploy with zero-downtime strategy
+            echo "Starting ${{ matrix.environment }} deployment..."
+            docker compose -f ${{ matrix.compose_file }} pull app
+            docker compose -f ${{ matrix.compose_file }} up -d app
+
+            # Health check with proper timeout
+            echo "Performing health check..."
+            timeout=90
+            health_check_passed=false
+
             while [ $timeout -gt 0 ]; do
               if curl -f http://localhost:${{ matrix.port }}/health; then
-                echo "${{ matrix.environment }} deployment successful"
-                exit 0
+                echo "${{ matrix.environment }} deployment successful - health check passed"
+                health_check_passed=true
+                break
               fi
+              echo "Health check failed, retrying in 5 seconds... ($timeout seconds remaining)"
               sleep 5
               timeout=$((timeout-5))
             done
-            
-            echo "${{ matrix.environment }} health check failed"
-            docker compose logs app
-            exit 1
 
-      - name: Notify Rollbar of deployment completion for staging
-        if: ${{ matrix.condition && matrix.environment == 'staging' }}
+            if [ "$health_check_passed" = "false" ]; then
+              echo "${{ matrix.environment }} health check failed after 90 seconds"
+              echo "Container logs:"
+              docker compose -f ${{ matrix.compose_file }} logs app
+
+              echo "Rolling back deployment..."
+              docker compose -f ${{ matrix.compose_file }} down
+              exit 1
+            fi
+
+            # Clean up old images (keep last 3)
+            echo "Cleaning up old images..."
+            docker image prune -f
+            docker images ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} --format "{{.Repository}}:{{.Tag}}" | tail -n +4 | xargs -r docker rmi || echo "No old images to remove"
+
+      - name: Notify Rollbar of deployment completion
+        if: ${{ matrix.condition && success() }}
         uses: rollbar/github-deploy-action@2.1.2
         with:
           environment: ${{ matrix.environment }}
