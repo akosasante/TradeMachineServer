@@ -34,6 +34,11 @@ jobs:
   security:
     name: Security Scan
     runs-on: ubuntu-latest
+    # Skip security on push if this commit was already scanned in a PR merge
+    if: |
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && !contains(github.event.head_commit.message, 'Merge pull request'))
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -54,7 +59,9 @@ jobs:
   build:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
+    # Build depends on security when security runs, otherwise run independently
     needs: security
+    if: always() && (needs.security.result == 'success' || needs.security.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -71,11 +78,18 @@ jobs:
           else
             echo "### Manual build" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
+          # Add security scan status
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Build Information" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.security.result }}" = "skipped" ]; then
+            echo "- **Security scan:** Skipped (already scanned in PR)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Security scan:** ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
           # Add workflow inputs to summary if manually triggered
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "#### Workflow Inputs" >> $GITHUB_STEP_SUMMARY
             echo "- **Deploy after building:** ${{ github.event.inputs.trigger_deploy }}" >> $GITHUB_STEP_SUMMARY
             echo "- **Target environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
             if [ -n "${{ github.event.inputs.message }}" ]; then
@@ -119,8 +133,12 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha
+            type=registry,ref=ghcr.io/akosasante/trade-machine-server:cache
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=ghcr.io/akosasante/trade-machine-server:cache,mode=max
           build-args: |
             BUILDKIT_INLINE_CACHE=1
 
