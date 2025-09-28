@@ -1,20 +1,25 @@
 services:
   app:
-    image: ghcr.io/${GITHUB_REPOSITORY}:${IMAGE_TAG}
+    image: ghcr.io/akosasante/trade-machine-server:${IMAGE_TAG}
     container_name: staging_trademachine
     restart: always
     network_mode: "host"
-    env_file: .env
     environment:
-      - NODE_ENV=production
-      - PORT=3015
-      - IP=0.0.0.0
-      - ORM_CONFIG=staging
-      - APP_ENV=staging
-      - HOME=/tmp # Set HOME to a writable location
-      - npm_config_cache=/tmp/.npm # Configure npm to use a writable cache location
-    volumes:
-      - /tmp/app_data:/tmp # Mount a writable directory from host to container
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=${PORT:-3015}
+      - IP=${IP:-0.0.0.0}
+      - ORM_CONFIG=${ORM_CONFIG:-staging}
+      - APP_ENV=${APP_ENV:-staging}
+      - DATABASE_URL=${DATABASE_URL}
+      - BASE_DIR=${BASE_DIR:-/app}
+      - REDIS_IP=${REDIS_IP}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDISPASS=${REDISPASS}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - ROLLBAR_ACCESS_TOKEN=${ROLLBAR_ACCESS_TOKEN}
+      - ROLLBAR_ENVIRONMENT=${ROLLBAR_ENVIRONMENT:-staging}
+      - HOME=/tmp
+      - npm_config_cache=/tmp/.npm
     # When using network_mode: "host", the ports section is ignored
     # because the container shares the host's network stack
     healthcheck:
