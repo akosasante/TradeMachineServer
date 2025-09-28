@@ -27,7 +27,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository_owner }}/trade-machine-server
 
 jobs:
   # Security scanning and linting
@@ -237,7 +237,6 @@ jobs:
 
             # Set IMAGE_TAG environment variable
             export IMAGE_TAG="${{ matrix.image_tag }}"
-            export GITHUB_REPOSITORY="${{ github.repository }}"
 
             # Update compose file if it doesn't exist
             if [ ! -f "${{ matrix.compose_file }}" ]; then
@@ -279,7 +278,7 @@ jobs:
             # Clean up old images (keep last 3)
             echo "Cleaning up old images..."
             docker image prune -f
-            docker images ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} --format "{{.Repository}}:{{.Tag}}" | tail -n +4 | xargs -r docker rmi || echo "No old images to remove"
+            docker images ghcr.io/akosasante/trade-machine-server --format "{{.Repository}}:{{.Tag}}" | tail -n +4 | xargs -r docker rmi || echo "No old images to remove"
 
       - name: Notify Rollbar of deployment completion
         if: ${{ matrix.condition && success() }}
