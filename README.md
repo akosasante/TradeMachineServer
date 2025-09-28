@@ -9,6 +9,7 @@ TypeScript backend server for the TradeMachine fantasy baseball trading platform
 - **Dual ORM approach**: TypeORM (legacy) + Prisma (new)
 - **Bull/Redis** job queues for emails and scheduled tasks
 - **PostgreSQL** database with TypeORM migrations
+- **OpenTelemetry** distributed tracing and observability
 - **Docker** development and deployment
 
 ## 🚀 Quick Start
@@ -237,6 +238,40 @@ curl http://localhost:3001/health
 - **Database**: `pg_isready` every 5 seconds
 - **Redis**: `redis-cli ping` every 5 seconds
 - **App**: HTTP health check every 30 seconds
+
+### **Distributed Tracing & Telemetry**
+
+The server includes **OpenTelemetry** integration for end-to-end observability:
+
+```bash
+# Start monitoring stack (includes Grafana, Tempo, Alloy)
+cd ../ && docker-compose -f docker-compose.shared.yml --profile monitoring up -d
+
+# Access Grafana dashboard
+open http://localhost:3000
+```
+
+**Features:**
+- **W3C Trace Context**: Correlates frontend Faro traces with backend spans
+- **Automatic HTTP Instrumentation**: All API requests tracked automatically
+- **Manual Business Logic Tracing**: Detailed spans for authentication, database operations
+- **Monitoring Integration**: Traces flow through Alloy → Tempo → Grafana
+
+**Current Implementation:**
+- ✅ `/auth/login` - User authentication with session management
+- ✅ `/auth/login/sendResetEmailOban` - Password reset via Oban job queue
+- ✅ Automatic HTTP request/response tracing for all endpoints
+
+**For detailed implementation guide:** See [TELEMETRY.md](./TELEMETRY.md)
+
+### **Metrics & Prometheus**
+```bash
+# View metrics endpoint
+curl http://localhost:3001/metrics
+
+# Access Prometheus (if monitoring stack is running)
+open http://localhost:9091
+```
 
 ## 🔧 Troubleshooting
 
