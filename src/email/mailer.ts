@@ -39,7 +39,7 @@ const SEND_IN_BLUE_OPTS: SendInBlueTransportOptions = {
 };
 
 const sendInBlueTransport = nodemailer.createTransport({
-    host: "smtp-relay.sendinblue.com",
+    host: "smtp-relay.brevo.com",
     port: 587,
     auth: {
         user: "akosuaasante@gmail.com",
