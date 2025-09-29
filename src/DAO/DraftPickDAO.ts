@@ -44,12 +44,8 @@ export default class DraftPickDAO {
     }
 
     public async createPicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
-        const result: InsertResult = await this.draftPickDb.insert(pickObjs);
-        return await this.draftPickDb.find({
-            where: {
-                id: In(result.identifiers.map(({ id }) => id as string)),
-            },
-        } as FindManyOptions<DraftPick>);
+        const pickEntities = pickObjs.map(pickObj => this.draftPickDb.create(pickObj));
+        return await this.draftPickDb.save(pickEntities);
     }
 
     public async batchCreatePicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
@@ -58,11 +54,17 @@ export default class DraftPickDAO {
 
     public async batchUpsertPicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {
         if (pickObjs.length) {
+            // Ensure UUIDs are generated for new entities (since raw insert bypasses @BeforeInsert hooks)
+            const picksWithIds = pickObjs.map(pickObj => ({
+                ...pickObj,
+                id: pickObj.id || require('uuid').v4()
+            }));
+
             // TODO: Look into replacing onConflict with orUpdate
             const result: InsertResult = await this.draftPickDb
                 .createQueryBuilder()
                 .insert()
-                .values(pickObjs)
+                .values(picksWithIds)
                 .onConflict(
                     '("type", "season", "round", "originalOwnerId") DO UPDATE SET "currentOwnerId" = EXCLUDED."currentOwnerId", "pickNumber" = EXCLUDED."pickNumber"'
                 )
