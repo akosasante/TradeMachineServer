@@ -23,6 +23,8 @@ import { activeUserMetric } from "../../bootstrap/metrics";
 import Users, { PublicUser } from "../../DAO/v2/UserDAO";
 import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
 import ObanDAO from "../../DAO/v2/ObanDAO";
+import { createSpanFromRequest, finishSpanWithResponse, addSpanAttributes, addSpanEvent, extractTraceContext } from "../../utils/tracing";
+import { context } from "@opentelemetry/api";
 
 // declare the additional fields that we add to express session (via routing-controllers)
 declare module "express-session" {
@@ -53,9 +55,36 @@ export default class AuthController {
     @Post("/login")
     @UseBefore(LoginHandler)
     public async login(@Req() request: Request, @Session() session: SessionData): Promise<User | PublicUser> {
-        rollbar.info("login", request);
-        activeUserMetric.inc();
-        return await deserializeUser(session.user!, this.dao(request));
+        const { span, context: traceContext } = createSpanFromRequest("auth.login", request);
+
+        return await context.with(traceContext, async () => {
+            rollbar.info("login", request);
+            activeUserMetric.inc();
+
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            addSpanAttributes({
+                "auth.session.exists": !!session.user,
+                "auth.action": "login"
+            });
+
+            addSpanEvent("login.start", { userId: session.user! });
+
+            const user = await deserializeUser(session.user!, this.dao(request));
+
+            addSpanEvent("login.success", {
+                userId: user.id?.toString() || "unknown",
+                userType: "isAdmin" in user ? (user.isAdmin() ? "admin" : "user") : "unknown"
+            });
+
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            addSpanAttributes({
+                "user.id": user.id?.toString() || "unknown",
+                "user.is_admin": "isAdmin" in user ? user.isAdmin() : false
+            });
+
+            finishSpanWithResponse(span, { statusCode: 200 } as Response);
+            return user;
+        });
     }
 
     @Post("/login/sendResetEmail")
@@ -174,38 +203,93 @@ export default class AuthController {
         @Res() response: Response,
         @Req() request?: Request
     ): Promise<Response> {
-        logger.debug(`Preparing to send reset password email via Oban to...: ${email}`);
-        rollbar.info("sendResetEmailOban", { email }, request);
+        const { span, context: traceContext } = createSpanFromRequest("auth.sendResetEmailOban", request!);
 
-        const prisma = getPrismaClientFromRequest(request);
-        if (!prisma) {
-            return response.status(500).json({ error: "Database connection unavailable" });
-        }
+        return await context.with(traceContext, async () => {
+            logger.debug(`Preparing to send reset password email via Oban to...: ${email}`);
+            rollbar.info("sendResetEmailOban", { email }, request);
 
-        const user = await this.dao(request).findUserWithPasswordByEmail(email);
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            addSpanAttributes({
+                "auth.action": "sendResetEmailOban",
+                "email.requested": !!email,
+                "email.domain": email ? email.split("@")[1] : "unknown"
+            });
 
-        if (!user) {
-            throw new NotFoundError("No user found with the given email.");
-        } else {
-            // Update current user with reset request time
-            const updatedUser = await this.dao(request).setPasswordExpires(user.id!);
+            addSpanEvent("reset_email.start", { emailProvided: !!email });
 
-            if (!prisma.obanJob) {
-                logger.error("obanJob model not available in Prisma client");
-                return response.status(500).json({ error: "obanJob not available in Prisma client" });
+            const prisma = getPrismaClientFromRequest(request);
+            if (!prisma) {
+                addSpanEvent("reset_email.error", { reason: "Database connection unavailable" });
+                finishSpanWithResponse(span, response);
+                return response.status(500).json({ error: "Database connection unavailable" });
             }
 
-            // Queue job in Oban for Elixir to process
-            const obanDao = new ObanDAO(prisma.obanJob);
-            const job = await obanDao.enqueuePasswordResetEmail(updatedUser.id!);
+            addSpanEvent("prisma.connected");
 
-            logger.info("Oban job queued for password reset", { jobId: job.id.toString(), userId: updatedUser.id });
-            return response.status(202).json({
-                status: "oban job queued",
-                jobId: job.id.toString(),
-                userId: updatedUser.id,
-            });
-        }
+            const user = await this.dao(request).findUserWithPasswordByEmail(email);
+
+            if (!user) {
+                addSpanEvent("reset_email.user_not_found", { email });
+                finishSpanWithResponse(span, response);
+                throw new NotFoundError("No user found with the given email.");
+            } else {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                addSpanAttributes({
+                    "user.id": user.id?.toString() || "unknown",
+                    "user.found": true
+                });
+
+                addSpanEvent("user.found", { userId: user.id?.toString() || "unknown" });
+
+                // Update current user with reset request time
+                const updatedUser = await this.dao(request).setPasswordExpires(user.id!);
+
+                addSpanEvent("user.password_expires_set", { userId: updatedUser.id?.toString() || "unknown" });
+
+                if (!prisma.obanJob) {
+                    logger.error("obanJob model not available in Prisma client");
+                    addSpanEvent("oban.error", { reason: "obanJob not available in Prisma client" });
+                    finishSpanWithResponse(span, response);
+                    return response.status(500).json({ error: "obanJob not available in Prisma client" });
+                }
+
+                // Extract current trace context for Elixir continuation
+                const currentTraceContext = extractTraceContext();
+
+                addSpanEvent("trace_context.extracted", {
+                    hasTraceContext: !!currentTraceContext,
+                    traceparentLength: currentTraceContext?.traceparent?.length || 0
+                });
+
+                // Queue job in Oban for Elixir to process
+                const obanDao = new ObanDAO(prisma.obanJob);
+                const job = await obanDao.enqueuePasswordResetEmail(updatedUser.id!, currentTraceContext || undefined);
+
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                addSpanAttributes({
+                    "oban.job_id": job.id.toString(),
+                    "oban.queue_success": true,
+                    "oban.trace_context_included": !!currentTraceContext
+                });
+
+                addSpanEvent("oban.job_queued", {
+                    jobId: job.id.toString(),
+                    userId: updatedUser.id?.toString() || "unknown"
+                });
+
+                logger.info("Oban job queued for password reset", { jobId: job.id.toString(), userId: updatedUser.id });
+
+                const responseData = {
+                    status: "oban job queued",
+                    jobId: job.id.toString(),
+                    userId: updatedUser.id,
+                };
+
+                finishSpanWithResponse(span, response);
+                return response.status(202).json(responseData);
+            }
+        });
     }
 
     @Get("/session_check")
