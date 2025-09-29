@@ -26,6 +26,7 @@ import ObanDAO from "../../DAO/v2/ObanDAO";
 import {
     createSpanFromRequest,
     finishSpanWithResponse,
+    finishSpanWithStatusCode,
     addSpanAttributes,
     addSpanEvent,
     extractTraceContext
@@ -86,7 +87,7 @@ export default class AuthController {
                 "user.is_admin": "isAdmin" in user ? user.isAdmin() : false,
             });
 
-            finishSpanWithResponse(span, { statusCode: 200 } as Response);
+            finishSpanWithStatusCode(span, 200);
             return user;
         });
     }
