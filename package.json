@@ -20,6 +20,8 @@
     "@opentelemetry/semantic-conventions": "^1.37.0",
     "@prisma/client": "^4.16.2",
     "@slack/webhook": "^6.0.0",
+    "@trpc/client": "^10.45.2",
+    "@trpc/server": "^10.45.2",
     "axios": "^0.27.0",
     "bcryptjs": "^2.4.3",
     "bull": "^4.10.1",
@@ -54,7 +56,8 @@
     "typedi": "^0.10.0",
     "typeorm": "^0.3.10",
     "uuid": "^9.0.0",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",
