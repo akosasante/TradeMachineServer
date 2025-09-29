@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
 import Bull from "bull";
 import { availableJobMetrics } from "../bootstrap/metrics";
 import { registerCleanupCallback } from "../bootstrap/shutdownHandler";
@@ -69,5 +67,3 @@ export function recordJobMetrics(queue: Bull.Queue): void {
         await queue.close();
     });
 }
-
-/* eslint-enable @typescript-eslint/naming-convention */

@@ -4,32 +4,42 @@ import type { Context } from "@opentelemetry/api";
 
 const tracer = trace.getTracer("trademachine-server");
 
+interface SessionData {
+    userId?: string;
+    user?: string;
+}
+
 /**
  * Extract trace context from incoming request headers and create a new span
  */
-export function createSpanFromRequest(operationName: string, req: Request): { span: ReturnType<typeof tracer.startSpan>; context: Context } {
+export function createSpanFromRequest(
+    operationName: string,
+    req: Request
+): { span: ReturnType<typeof tracer.startSpan>; context: Context } {
     // Extract trace context from incoming headers (W3C Trace Context)
     const activeContext = propagation.extract(context.active(), req.headers);
 
-
     // Safely access session data
-    const sessionData = req.session as any;
+    const sessionData = req.session as SessionData | undefined;
     const userId = sessionData?.userId || sessionData?.user || "anonymous";
     const isAuthenticated = !!(sessionData?.userId || sessionData?.user);
 
     // Create span with extracted context
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const span = tracer.startSpan(operationName, {
-        attributes: {
-            "http.method": req.method,
-            "http.url": req.url,
-            "http.route": (req.route )?.path || "unknown",
-            "http.user_agent": req.get("User-Agent") || "unknown",
-            "user.id": userId as string,
-            "user.authenticated": isAuthenticated,
-        },
-    }, activeContext);
 
+    const span = tracer.startSpan(
+        operationName,
+        {
+            attributes: {
+                "http.method": req.method,
+                "http.url": req.url,
+                "http.route": (req.route as { path?: string } | undefined)?.path || "unknown",
+                "http.user_agent": req.get("User-Agent") || "unknown",
+                "user.id": userId,
+                "user.authenticated": isAuthenticated,
+            },
+        },
+        activeContext
+    );
 
     return { span, context: activeContext };
 }
@@ -38,8 +48,6 @@ export function createSpanFromRequest(operationName: string, req: Request): { sp
  * Finish span with appropriate status based on response
  */
 export function finishSpanWithResponse(span: ReturnType<typeof tracer.startSpan>, res: Response, error?: Error): void {
-
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     span.setAttributes({
         "http.status_code": res.statusCode,
         "http.response.size": parseInt(res.get("content-length") || "0", 10),

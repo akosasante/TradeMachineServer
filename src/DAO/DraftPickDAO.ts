@@ -9,6 +9,7 @@ import {
     FindOneOptions
 } from "typeorm";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
+import { v4 as uuidv4 } from "uuid";
 import DraftPick from "../models/draftPick";
 
 interface DraftPickDeleteResult extends DeleteResult {
@@ -57,7 +58,7 @@ export default class DraftPickDAO {
             // Ensure UUIDs are generated for new entities (since raw insert bypasses @BeforeInsert hooks)
             const picksWithIds = pickObjs.map(pickObj => ({
                 ...pickObj,
-                id: pickObj.id || require('uuid').v4()
+                id: pickObj.id || uuidv4(),
             }));
 
             // TODO: Look into replacing onConflict with orUpdate
