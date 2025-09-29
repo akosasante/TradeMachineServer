@@ -9,6 +9,9 @@ services:
     environment:
       - HOME=/tmp
       - npm_config_cache=/tmp/.npm
+    volumes:
+      # Secret files (mount as read-only)
+      - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
     # When using network_mode: "host", the ports section is ignored
     # because the container shares the host's network stack
     healthcheck:

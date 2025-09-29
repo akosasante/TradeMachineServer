@@ -45,6 +45,8 @@ services:
       - ./.env:/app/.env:cached
       - ./tsconfig.json:/app/tsconfig.json:cached
       - ./ormconfig.js:/app/ormconfig.js:cached
+      # Secret files (mount as read-only)
+      - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
       # Named volume for node_modules to avoid cross-platform issues
       - node_modules_volume:/app/node_modules
       # Performance: exclude common directories that cause churn
@@ -83,6 +85,9 @@ services:
       - REDIS_IP=redis
       - REDIS_PORT=6379
       - DATABASE_URL=postgresql://${DATABASE_USER:-trader_user}:${DATABASE_PASSWORD:-dev_password_change_me}@postgres:5432/${DATABASE_NAME:-trade_dn}?schema=dev
+    volumes:
+      # Secret files (mount as read-only)
+      - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
     networks:
       - trade_machine_shared
     profiles:
