@@ -101,6 +101,22 @@ export default class TradeDAO {
             throw new BadRequestError("Trade is not valid");
         }
 
+        if (!tradeObj.id) {
+            tradeObj.id = uuid();
+        }
+
+        for (const item of tradeObj.tradeItems || []) {
+            if (!item.id) {
+                item.id = uuid();
+            }
+        }
+
+        for (const participant of tradeObj.tradeParticipants || []) {
+            if (!participant.id) {
+                participant.id = uuid();
+            }
+        }
+
         const saved = await this.tradeDb.save({...tradeObj, id: uuid()});
 
         return this.tradeDb.findOneOrFail({ where: { id: saved.id } } as FindOneOptions<Trade>);
