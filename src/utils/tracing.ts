@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { trace, context, propagation, SpanStatusCode, Context } from "@opentelemetry/api";
+import { trace, context, propagation, SpanStatusCode } from "@opentelemetry/api";
+import type { Context } from "@opentelemetry/api";
 
 const tracer = trace.getTracer("trademachine-server");
 
@@ -10,22 +11,25 @@ export function createSpanFromRequest(operationName: string, req: Request): { sp
     // Extract trace context from incoming headers (W3C Trace Context)
     const activeContext = propagation.extract(context.active(), req.headers);
 
+
     // Safely access session data
-    const sessionData = (req as any).session;
+    const sessionData = req.session as any;
     const userId = sessionData?.userId || sessionData?.user || "anonymous";
     const isAuthenticated = !!(sessionData?.userId || sessionData?.user);
 
     // Create span with extracted context
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const span = tracer.startSpan(operationName, {
         attributes: {
             "http.method": req.method,
             "http.url": req.url,
-            "http.route": req.route?.path || "unknown",
+            "http.route": (req.route )?.path || "unknown",
             "http.user_agent": req.get("User-Agent") || "unknown",
-            "user.id": userId,
+            "user.id": userId as string,
             "user.authenticated": isAuthenticated,
         },
     }, activeContext);
+
 
     return { span, context: activeContext };
 }
@@ -34,9 +38,11 @@ export function createSpanFromRequest(operationName: string, req: Request): { sp
  * Finish span with appropriate status based on response
  */
 export function finishSpanWithResponse(span: ReturnType<typeof tracer.startSpan>, res: Response, error?: Error): void {
+
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     span.setAttributes({
         "http.status_code": res.statusCode,
-        "http.response.size": res.get("content-length") || 0,
+        "http.response.size": parseInt(res.get("content-length") || "0", 10),
     });
 
     if (error) {
@@ -75,4 +81,24 @@ export function addSpanEvent(name: string, attributes?: Record<string, string | 
     if (span) {
         span.addEvent(name, attributes);
     }
+}
+
+/**
+ * Extract W3C trace context for passing to external services (like Oban jobs)
+ */
+export function extractTraceContext(): { traceparent: string; tracestate?: string } | null {
+    const activeContext = context.active();
+    if (!activeContext) {
+        return null;
+    }
+
+    const carrier: Record<string, string> = {};
+
+    // Inject current trace context into carrier using W3C format
+    propagation.inject(activeContext, carrier);
+
+    return {
+        traceparent: carrier.traceparent || "",
+        tracestate: carrier.tracestate,
+    };
 }
