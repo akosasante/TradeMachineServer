@@ -1,4 +1,6 @@
-import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn, BeforeInsert } from "typeorm";
+import { v4 as uuid } from "uuid";
+import logger from "../bootstrap/logger";
 
 export class BaseModel {
     @PrimaryGeneratedColumn("uuid")
@@ -9,6 +11,14 @@ export class BaseModel {
 
     @UpdateDateColumn()
     public dateModified?: Date;
+
+    @BeforeInsert()
+    generateId(): void {
+        if (!this.id) {
+            this.id = uuid();
+            logger.info(`Generated UUID for ${this.constructor.name}: ${this.id}`);
+        }
+    }
 
     public toString(): string {
         return `${this.constructor.name}#${this.id}`;
