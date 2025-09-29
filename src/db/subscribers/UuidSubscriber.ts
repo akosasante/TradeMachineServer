@@ -13,11 +13,4 @@ export class UuidSubscriber implements EntitySubscriberInterface<BaseModel> {
             event.entity.id = uuid();
         }
     }
-
-    /**
-     * Indicates that this subscriber only listen to BaseModel events.
-     */
-    listenTo(): typeof BaseModel {
-        return BaseModel;
-    }
 }
