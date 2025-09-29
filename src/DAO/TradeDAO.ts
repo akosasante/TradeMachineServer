@@ -7,8 +7,6 @@ import PlayerDAO from "./PlayerDAO";
 import DraftPickDAO from "./DraftPickDAO";
 import { HydratedTrade } from "../models/views/hydratedTrades";
 import { FindOptionsWhere } from "typeorm/find-options/FindOptionsWhere";
-import logger from "../bootstrap/logger";
-import { v4 as uuid } from "uuid";
 
 interface TradeDeleteResult extends DeleteResult {
     raw: Trade[];
@@ -101,23 +99,7 @@ export default class TradeDAO {
             throw new BadRequestError("Trade is not valid");
         }
 
-        if (!tradeObj.id) {
-            tradeObj.id = uuid();
-        }
-
-        for (const item of tradeObj.tradeItems || []) {
-            if (!item.id) {
-                item.id = uuid();
-            }
-        }
-
-        for (const participant of tradeObj.tradeParticipants || []) {
-            if (!participant.id) {
-                participant.id = uuid();
-            }
-        }
-
-        const saved = await this.tradeDb.save({...tradeObj, id: uuid()});
+        const saved = await this.tradeDb.save(tradeObj);
 
         return this.tradeDb.findOneOrFail({ where: { id: saved.id } } as FindOneOptions<Trade>);
     }
