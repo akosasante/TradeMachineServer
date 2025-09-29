@@ -96,7 +96,11 @@ export function addSpanEvent(name: string, attributes?: Record<string, string | 
 /**
  * Finish span with status code only (for cases without Response object)
  */
-export function finishSpanWithStatusCode(span: ReturnType<typeof tracer.startSpan>, statusCode: number, error?: Error): void {
+export function finishSpanWithStatusCode(
+    span: ReturnType<typeof tracer.startSpan>,
+    statusCode: number,
+    error?: Error
+): void {
     span.setAttributes({
         "http.status_code": statusCode,
     });

@@ -53,15 +53,17 @@ const baseConfig = {
 };
 
 // Add OTLP exporters only if endpoint is configured
-const sdkConfig = otlpEndpoint ? {
-    ...baseConfig,
-    traceExporter: new OTLPTraceExporter({ url: `${otlpEndpoint}/v1/traces` }),
-    metricReaders: [
-        new PeriodicExportingMetricReader({
-            exporter: new OTLPMetricExporter({ url: `${otlpEndpoint}/v1/metrics` }),
-        }),
-    ],
-} : baseConfig;
+const sdkConfig = otlpEndpoint
+    ? {
+          ...baseConfig,
+          traceExporter: new OTLPTraceExporter({ url: `${otlpEndpoint}/v1/traces` }),
+          metricReaders: [
+              new PeriodicExportingMetricReader({
+                  exporter: new OTLPMetricExporter({ url: `${otlpEndpoint}/v1/metrics` }),
+              }),
+          ],
+      }
+    : baseConfig;
 
 export const sdk = new NodeSDK(sdkConfig);
 
