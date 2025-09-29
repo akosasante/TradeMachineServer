@@ -1,0 +1,48 @@
+{
+  "name": "@trademachine/trpc-types",
+  "version": "1.0.1",
+  "description": "Shared tRPC types for TradeMachine client and server",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run build:isolated",
+    "build:isolated": "tsc",
+    "build:from-server": "cd ../.. && npm run build && npm run build:types-package",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "publish:manual": "npm run clean && npm run build && npm publish",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.0"
+  },
+  "peerDependencies": {
+    "@trpc/server": "^10.45.0"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akosasante/TradeMachineServer.git"
+  },
+  "keywords": [
+    "trpc",
+    "types",
+    "typescript",
+    "trademachine"
+  ],
+  "author": "Akosua Asante",
+  "license": "ISC"
+}

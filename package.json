@@ -59,6 +59,9 @@
     "winston": "^3.3.3",
     "zod": "^3.25.76"
   },
+  "scripts": {
+    "build:types-package": "cd packages/trpc-types && npm run build:isolated"
+  },
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",
     "@jest/globals": "^29.3.1",
