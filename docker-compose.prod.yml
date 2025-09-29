@@ -9,6 +9,9 @@ services:
     environment:
       - HOME=/tmp
       - npm_config_cache=/tmp/.npm
+    volumes:
+      # Secret files (mount as read-only)
+      - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3005}/health"]
       interval: 30s
