@@ -7,6 +7,7 @@ import PlayerDAO from "./PlayerDAO";
 import DraftPickDAO from "./DraftPickDAO";
 import { HydratedTrade } from "../models/views/hydratedTrades";
 import { FindOptionsWhere } from "typeorm/find-options/FindOptionsWhere";
+import logger from "../bootstrap/logger";
 
 interface TradeDeleteResult extends DeleteResult {
     raw: Trade[];
@@ -98,8 +99,12 @@ export default class TradeDAO {
         if (!Trade.isValid(tradeObj)) {
             throw new BadRequestError("Trade is not valid");
         }
+        logger.info("AKOS-DEBUG: Creating trade:", tradeObj);
 
-        const saved = await this.tradeDb.save(tradeObj);
+        // Remove id field to allow TypeORM to auto-generate UUID
+        const { id, ...tradeObjWithoutId } = tradeObj;
+        logger.info("AKOS-DEBUG: tradeObjWithoutId:", tradeObjWithoutId);
+        const saved = await this.tradeDb.save(tradeObjWithoutId);
 
         return this.tradeDb.findOneOrFail({ where: { id: saved.id } } as FindOneOptions<Trade>);
     }
