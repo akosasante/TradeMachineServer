@@ -22,6 +22,7 @@ services:
       - PG_USER=${PG_USER}
       - PG_PASSWORD=${PG_PASSWORD}
       - PG_DB=${PG_DB}
+      - SENDINBLUE_SMTP_PASS=${SENDINBLUE_SMTP_PASS}
       - HOME=/tmp
       - npm_config_cache=/tmp/.npm
     healthcheck:
