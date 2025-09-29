@@ -52,12 +52,8 @@ export default class UserDAO {
     }
 
     public async createUsers(userObjs: Partial<User>[]): Promise<User[]> {
-        const result: InsertResult = await this.userDb.insert(userObjs);
-        return await this.userDb.find({
-            where: {
-                id: In(result.identifiers.map(({ id }) => id as string)),
-            },
-        } as FindManyOptions<User>);
+        const userEntities = userObjs.map(userObj => this.userDb.create(userObj));
+        return await this.userDb.save(userEntities);
     }
 
     public async updateUser(id: string, userObj: Partial<User>): Promise<User> {

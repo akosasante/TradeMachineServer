@@ -41,12 +41,8 @@ export default class TeamDAO {
     }
 
     public async createTeams(teamObjs: Partial<Team>[]): Promise<Team[]> {
-        const result: InsertResult = await this.teamDb.insert(teamObjs);
-        return await this.teamDb.find({
-            where: {
-                id: In(result.identifiers.map(({ id }) => id as string)),
-            },
-        } as FindManyOptions<Team>);
+        const teamEntities = teamObjs.map(teamObj => this.teamDb.create(teamObj));
+        return await this.teamDb.save(teamEntities);
     }
 
     public async updateTeam(id: string, teamObj: Partial<Team>): Promise<Team> {

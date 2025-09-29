@@ -80,12 +80,8 @@ export default class PlayerDAO {
 
     public async createPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
         try {
-            const result: InsertResult = await this.playerDb.insert(playerObjs);
-            return await this.playerDb.find({
-                where: {
-                    id: In(result.identifiers.map(({ id }) => id as string)),
-                },
-            } as FindManyOptions<Player>);
+            const playerEntities = playerObjs.map(playerObj => this.playerDb.create(playerObj));
+            return await this.playerDb.save(playerEntities);
         } catch (error) {
             if (
                 error instanceof QueryFailedError &&
@@ -104,10 +100,16 @@ export default class PlayerDAO {
 
     public async batchUpsertPlayers(playerObjs: Partial<Player>[]): Promise<Player[]> {
         if (playerObjs.length) {
+            // Ensure UUIDs are generated for new entities (since raw insert bypasses @BeforeInsert hooks)
+            const playersWithIds = playerObjs.map(playerObj => ({
+                ...playerObj,
+                id: playerObj.id || require('uuid').v4()
+            }));
+
             const result: InsertResult = await this.playerDb
                 .createQueryBuilder()
                 .insert()
-                .values(playerObjs)
+                .values(playersWithIds)
                 .onConflict(
                     '("name", "playerDataId") DO UPDATE SET "meta" = "Player".meta || EXCLUDED.meta, "leagueTeamId" = EXCLUDED."leagueTeamId", "mlbTeam" = EXCLUDED."mlbTeam"'
                 )
