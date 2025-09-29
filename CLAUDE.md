@@ -46,6 +46,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Health Checks**: Built-in container health monitoring
 - **Volume Optimization**: Named volumes for node_modules, cached bind mounts for source
 
+### Docker Troubleshooting
+When new npm dependencies aren't being picked up in Docker containers:
+
+1. **Check for cached node_modules volume**: `docker volume ls | grep node_modules`
+2. **Remove specific node_modules volume** (recommended):
+   ```bash
+   docker volume rm trademachineserver_node_modules_volume
+   ```
+3. **Or remove all unused volumes** (more aggressive):
+   ```bash
+   docker volume prune -f
+   ```
+4. **Then rebuild**: `make docker-dev-rebuild`
+
+**Root cause**: Docker caches node_modules in named volumes for performance. When package.json changes, the cached volume doesn't automatically update.
+
 ## Key Libraries
 - **Express**: Web framework for API routes and middleware
 - **routing-controllers**: Decorator-based controller framework for Express
