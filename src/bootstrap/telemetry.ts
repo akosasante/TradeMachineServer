@@ -7,6 +7,11 @@ import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { RedisInstrumentation } from "@opentelemetry/instrumentation-redis";
 import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
+import { config as dotenvConfig } from "dotenv";
+import { resolve } from "path";
+
+// Load environment variables from .env file before initializing telemetry
+dotenvConfig({ path: resolve(__dirname, "../../.env") });
 
 // Enable OpenTelemetry logging based on environment variable
 const logLevel = process.env.OTEL_LOG_LEVEL?.toUpperCase() === "DEBUG" ? DiagLogLevel.DEBUG : DiagLogLevel.INFO;
@@ -14,19 +19,14 @@ diag.setLogger(new DiagConsoleLogger(), logLevel);
 
 const serviceName = process.env.OTEL_SERVICE_NAME || "trademachine-server";
 const serviceVersion = process.env.OTEL_SERVICE_VERSION || process.env.npm_package_version || "2.0.1";
+const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
 
-// Use environment variables for OTLP configuration (NodeSDK auto-detection)
-export const sdk = new NodeSDK({
+// Create SDK configuration - only include OTLP exporters if endpoint is configured
+const baseConfig = {
     resource: resourceFromAttributes({
         [ATTR_SERVICE_NAME]: serviceName,
         [ATTR_SERVICE_VERSION]: serviceVersion,
     }),
-    traceExporter: new OTLPTraceExporter({ url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces` }),
-    metricReaders: [
-        new PeriodicExportingMetricReader({
-            exporter: new OTLPMetricExporter({ url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/metrics` }),
-        }),
-    ],
     instrumentations: [
         getNodeAutoInstrumentations({
             "@opentelemetry/instrumentation-fs": {
@@ -50,7 +50,20 @@ export const sdk = new NodeSDK({
         // Redis instrumentation for session storage and Bull queue operations
         new RedisInstrumentation(),
     ],
-});
+};
+
+// Add OTLP exporters only if endpoint is configured
+const sdkConfig = otlpEndpoint ? {
+    ...baseConfig,
+    traceExporter: new OTLPTraceExporter({ url: `${otlpEndpoint}/v1/traces` }),
+    metricReaders: [
+        new PeriodicExportingMetricReader({
+            exporter: new OTLPMetricExporter({ url: `${otlpEndpoint}/v1/metrics` }),
+        }),
+    ],
+} : baseConfig;
+
+export const sdk = new NodeSDK(sdkConfig);
 
 // Initialize telemetry (should be called early in app startup)
 export function initializeTelemetry(): void {
@@ -60,8 +73,8 @@ export function initializeTelemetry(): void {
         console.log("OpenTelemetry started successfully", {
             serviceName,
             serviceVersion,
-            exporterType: "OTLP HTTP (explicit)",
-            otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+            exporterType: otlpEndpoint ? "OTLP HTTP" : "Local instrumentation only",
+            otlpEndpoint: otlpEndpoint || "Not configured",
             sampler: process.env.OTEL_TRACES_SAMPLER || "parentbased_always_on",
             samplerArg: process.env.OTEL_TRACES_SAMPLER_ARG || "1.0",
         });
