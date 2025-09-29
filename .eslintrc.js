@@ -94,13 +94,19 @@ module.exports = {
       format: ['camelCase'],
       leadingUnderscore: 'allow',
       trailingUnderscore: 'allow',
-      filter: {regex: "^(AND|OR|Players|Users|Teams|rollbar_person|TIME_TO_EXPIRE_USER_PASSWORD_IN_MS)$", match: false}
+      filter: {regex: "^(Players|Users|Teams|rollbar_person|TIME_TO_EXPIRE_USER_PASSWORD_IN_MS)$", match: false}
     },
+        {
+            selector: 'objectLiteralProperty',
+            format: ['camelCase', 'snake_case'],
+            filter: {regex: "^(@opentelemetry\/instrumentation|AND|OR)$", match: false}
+        },
       {
         selector: 'variable',
         format: ['camelCase', 'UPPER_CASE'],
         leadingUnderscore: 'allow',
         trailingUnderscore: 'allow',
+        filter: {regex: "^(Players|Users|Teams)$", match: false}
       },
       {
         selector: 'typeLike',

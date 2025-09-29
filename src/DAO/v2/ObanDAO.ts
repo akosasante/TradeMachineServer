@@ -7,6 +7,10 @@ import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 export interface EmailJobData {
     email_type: "reset_password";
     data: string; // user ID for reset_password
+    trace_context?: {
+        traceparent: string;
+        tracestate?: string;
+    };
 }
 
 export interface CreateObanJobInput {
@@ -62,10 +66,14 @@ export default class ObanDAO {
     /**
      * Enqueue a password reset email job (convenience method)
      */
-    public async enqueuePasswordResetEmail(userId: string): Promise<ObanJob> {
+    public async enqueuePasswordResetEmail(
+        userId: string,
+        traceContext?: { traceparent: string; tracestate?: string }
+    ): Promise<ObanJob> {
         return this.enqueueEmailJob({
             email_type: "reset_password",
             data: userId,
+            trace_context: traceContext,
         });
     }
 

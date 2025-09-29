@@ -7,6 +7,7 @@ import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import logger from "../../bootstrap/logger";
 import { rollbar } from "../../bootstrap/rollbar";
 import { inspect } from "util";
+import { trace, SpanStatusCode } from "@opentelemetry/api";
 
 @Middleware({ type: "after" })
 export default class CustomErrorHandler implements ExpressErrorMiddlewareInterface {
@@ -17,6 +18,21 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
     public error(error: Error, request: Request, response: Response, next: NextFunction): void {
         logger.error(`Handling error: ${error.stack}`);
         rollbar.error(error, request);
+
+        // Record error in active span if one exists
+        const activeSpan = trace.getActiveSpan();
+        if (activeSpan) {
+            activeSpan.recordException(error);
+            activeSpan.addEvent("error.handled_by_global_handler", {
+                "error.type": error.constructor.name,
+                "error.message": error.message
+            });
+            activeSpan.setStatus({
+                code: SpanStatusCode.ERROR,
+                message: error.message
+            });
+        }
+
         if (response.headersSent) {
             logger.error("headers already sent, passing to next");
             return next(error);
