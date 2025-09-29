@@ -52,18 +52,22 @@ const baseConfig = {
     ],
 };
 
-// Add OTLP exporters only if endpoint is configured
-const sdkConfig = otlpEndpoint
-    ? {
-          ...baseConfig,
-          traceExporter: new OTLPTraceExporter({ url: `${otlpEndpoint}/v1/traces` }),
-          metricReaders: [
-              new PeriodicExportingMetricReader({
-                  exporter: new OTLPMetricExporter({ url: `${otlpEndpoint}/v1/metrics` }),
-              }),
-          ],
-      }
-    : baseConfig;
+// Allow separate configuration for traces and metrics endpoints
+const tracesEndpoint = process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || (otlpEndpoint ? `${otlpEndpoint}/v1/traces` : undefined);
+const metricsEndpoint = process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT || (otlpEndpoint ? `${otlpEndpoint}/v1/metrics` : undefined);
+
+// Build SDK config with only configured exporters
+const sdkConfig = {
+    ...baseConfig,
+    ...(tracesEndpoint && { traceExporter: new OTLPTraceExporter({ url: tracesEndpoint }) }),
+    ...(metricsEndpoint && {
+        metricReaders: [
+            new PeriodicExportingMetricReader({
+                exporter: new OTLPMetricExporter({ url: metricsEndpoint }),
+            }),
+        ],
+    }),
+};
 
 export const sdk = new NodeSDK(sdkConfig);
 
@@ -75,8 +79,9 @@ export function initializeTelemetry(): void {
         console.log("OpenTelemetry started successfully", {
             serviceName,
             serviceVersion,
-            exporterType: otlpEndpoint ? "OTLP HTTP" : "Local instrumentation only",
-            otlpEndpoint: otlpEndpoint || "Not configured",
+            tracesEndpoint: tracesEndpoint || "Not configured",
+            metricsEndpoint: metricsEndpoint || "Not configured",
+            generalEndpoint: otlpEndpoint || "Not configured",
             sampler: process.env.OTEL_TRACES_SAMPLER || "parentbased_always_on",
             samplerArg: process.env.OTEL_TRACES_SAMPLER_ARG || "1.0",
         });
