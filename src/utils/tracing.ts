@@ -48,9 +48,11 @@ export function createSpanFromRequest(
  * Finish span with appropriate status based on response
  */
 export function finishSpanWithResponse(span: ReturnType<typeof tracer.startSpan>, res: Response, error?: Error): void {
+    const contentLength = typeof res.get === "function" ? res.get("content-length") : undefined;
+
     span.setAttributes({
         "http.status_code": res.statusCode,
-        "http.response.size": parseInt(res.get("content-length") || "0", 10),
+        "http.response.size": parseInt(contentLength || "0", 10),
     });
 
     if (error) {
@@ -89,6 +91,32 @@ export function addSpanEvent(name: string, attributes?: Record<string, string | 
     if (span) {
         span.addEvent(name, attributes);
     }
+}
+
+/**
+ * Finish span with status code only (for cases without Response object)
+ */
+export function finishSpanWithStatusCode(span: ReturnType<typeof tracer.startSpan>, statusCode: number, error?: Error): void {
+    span.setAttributes({
+        "http.status_code": statusCode,
+    });
+
+    if (error) {
+        span.recordException(error);
+        span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: error.message,
+        });
+    } else if (statusCode >= 400) {
+        span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: `HTTP ${statusCode}`,
+        });
+    } else {
+        span.setStatus({ code: SpanStatusCode.OK });
+    }
+
+    span.end();
 }
 
 /**
