@@ -7,6 +7,8 @@ import PlayerDAO from "./PlayerDAO";
 import DraftPickDAO from "./DraftPickDAO";
 import { HydratedTrade } from "../models/views/hydratedTrades";
 import { FindOptionsWhere } from "typeorm/find-options/FindOptionsWhere";
+import { v4 as uuid } from "uuid";
+import logger from "../bootstrap/logger";
 
 interface TradeDeleteResult extends DeleteResult {
     raw: Trade[];
@@ -99,6 +101,34 @@ export default class TradeDAO {
             throw new BadRequestError("Trade is not valid");
         }
 
+        // Manually generate IDs for nested entities to work around TypeORM @BeforeInsert hook issues
+        if (!tradeObj.id) {
+            tradeObj.id = uuid();
+            logger.info(`Generated UUID for Trade: ${tradeObj.id}`);
+        }
+
+        // Generate IDs for trade participants
+        if (tradeObj.tradeParticipants) {
+            tradeObj.tradeParticipants.forEach(participant => {
+                if (!participant.id) {
+                    participant.id = uuid();
+                    logger.info(`Generated UUID for TradeParticipant: ${participant.id}`);
+                }
+            });
+        }
+
+        // Generate IDs for trade items
+        if (tradeObj.tradeItems) {
+            tradeObj.tradeItems.forEach(item => {
+                if (!item.id) {
+                    item.id = uuid();
+                    logger.info(`Generated UUID for TradeItem: ${item.id}`);
+                }
+            });
+        }
+
+        // Note: Emails use messageId as primary key, not id, so no UUID generation needed
+
         const saved = await this.tradeDb.save(tradeObj);
 
         return this.tradeDb.findOneOrFail({ where: { id: saved.id } } as FindOneOptions<Trade>);
@@ -115,6 +145,15 @@ export default class TradeDAO {
         participantsToRemove: TradeParticipant[]
     ): Promise<Trade> {
         await this.tradeDb.findOneOrFail({ where: { id } });
+
+        // Generate IDs for new participants to work around TypeORM @BeforeInsert hook issues
+        participantsToAdd.forEach(participant => {
+            if (!participant.id) {
+                participant.id = uuid();
+                logger.info(`Generated UUID for new TradeParticipant: ${participant.id}`);
+            }
+        });
+
         await this.tradeDb
             .createQueryBuilder()
             .relation("tradeParticipants")
@@ -125,6 +164,15 @@ export default class TradeDAO {
 
     public async updateItems(id: string, itemsToAdd: TradeItem[], itemsToRemove: TradeItem[]): Promise<Trade> {
         await this.tradeDb.findOneOrFail({ where: { id } });
+
+        // Generate IDs for new items to work around TypeORM @BeforeInsert hook issues
+        itemsToAdd.forEach(item => {
+            if (!item.id) {
+                item.id = uuid();
+                logger.info(`Generated UUID for new TradeItem: ${item.id}`);
+            }
+        });
+
         await this.tradeDb.createQueryBuilder().relation("tradeItems").of(id).addAndRemove(itemsToAdd, itemsToRemove);
         return await this.tradeDb.findOneOrFail({ where: { id } });
     }

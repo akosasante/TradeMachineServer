@@ -2,7 +2,6 @@ import { EspnProTeam } from "./espnApi";
 
 // we have a number of fields here that we're explicitly copying from ESPN so ignore any non camel-cased formatting
 
-
 const ESPN_TEAM_MAPPING: EspnProTeam[] = [
     {
         abbrev: "Oak",

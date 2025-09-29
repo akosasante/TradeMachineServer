@@ -218,7 +218,6 @@ export default class EspnAPI {
                 `${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`,
                 {
                     headers: {
-
                         "X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`,
                     },
                 }
