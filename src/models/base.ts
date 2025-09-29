@@ -2,7 +2,7 @@ import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "type
 
 export class BaseModel {
     @PrimaryGeneratedColumn("uuid")
-    public readonly id?: string;
+    public id?: string;
 
     @CreateDateColumn()
     public dateCreated?: Date;
