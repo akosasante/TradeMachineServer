@@ -22,6 +22,27 @@ services:
       - PG_USER=${PG_USER}
       - PG_PASSWORD=${PG_PASSWORD}
       - PG_DB=${PG_DB}
+      - PG_SCHEMA=${PG_SCHEMA:-staging}
+      - BASE_URL=${BASE_URL}
+      - EMAIL_KEY_V3=${EMAIL_KEY_V3}
+      - EMAIL_API_URL_V3=${EMAIL_API_URL_V3:-https://api.sendinblue.com/v3/smtp}
+      - SENDINBLUE_SMTP_PASS=${SENDINBLUE_SMTP_PASS}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - ESPN_COOKIE=${ESPN_COOKIE}
+      - ESPN_SWID=${ESPN_SWID}
+      - DB_LOGS=${DB_LOGS:-true}
+      - ENABLE_LOGS=${ENABLE_LOGS:-true}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-trademachine-server}
+      - OTEL_SERVICE_VERSION=${OTEL_SERVICE_VERSION:-2.0.1}
+      - OTEL_LOG_LEVEL=${OTEL_LOG_LEVEL:-INFO}
+      - OTEL_TRACES_SAMPLER=${OTEL_TRACES_SAMPLER:-parentbased_always_on}
+      - OTEL_TRACES_SAMPLER_ARG=${OTEL_TRACES_SAMPLER_ARG:-1.0}
+      - SHEETS_CREDENTIAL_FILE=${SHEETS_CREDENTIAL_FILE}
+      - SHEETS_API_EMAIL=${SHEETS_API_EMAIL}
+      - SHEETS_API_KEY=${SHEETS_API_KEY}
+      - TRADE_SPREADSHEET_ID=${TRADE_SPREADSHEET_ID}
+      - TRADE_WORKSHEET_ID=${TRADE_WORKSHEET_ID}
       - HOME=/tmp
       - npm_config_cache=/tmp/.npm
     # When using network_mode: "host", the ports section is ignored
