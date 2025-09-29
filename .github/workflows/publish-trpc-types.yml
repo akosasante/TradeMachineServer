@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: '18.x'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@trademachine'
+          scope: '@akosasante'
 
       - name: Install dependencies
         run: npm ci
@@ -46,7 +46,7 @@ jobs:
           echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
 
           # Check if this version already exists on npm
-          if npm view @trademachine/trpc-types@$PACKAGE_VERSION version 2>/dev/null; then
+          if npm view @akosasante/trpc-types@$PACKAGE_VERSION version 2>/dev/null; then
             echo "version_exists=true" >> $GITHUB_OUTPUT
             echo "Version $PACKAGE_VERSION already exists, skipping publish"
           else
@@ -69,5 +69,5 @@ jobs:
           VERSION=${{ steps.version-check.outputs.package_version }}
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git tag -a "trpc-types-v$VERSION" -m "Release @trademachine/trpc-types@$VERSION"
+          git tag -a "trpc-types-v$VERSION" -m "Release @akosasante/trpc-types@$VERSION"
           git push origin "trpc-types-v$VERSION" || echo "Tag already exists"
