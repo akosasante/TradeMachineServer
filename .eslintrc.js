@@ -30,7 +30,7 @@ module.exports = {
     "sourceType": "module",
     "debugLevel": "true",
   },
-  "ignorePatterns": ['.eslintrc.js', 'src/db/*', './src/scripts/**/*.ts', './tests/*', 'jest.ci-config.js', 'db_setup.js', 'jest.config.js', 'ormconfig.js'],
+  "ignorePatterns": ['.eslintrc.js', 'src/db/*', './src/scripts/**/*.ts', './tests/*', 'jest.ci-config.js', 'db_setup.js', 'jest.config.js', 'ormconfig.js', 'TradeMachineElixirApp/**'],
   "plugins": [
     "eslint-plugin-jsdoc",
     "eslint-plugin-prefer-arrow",
@@ -98,8 +98,7 @@ module.exports = {
     },
         {
             selector: 'objectLiteralProperty',
-            format: ['camelCase', 'snake_case'],
-            filter: {regex: "^(@opentelemetry\/instrumentation|AND|OR)$", match: false}
+            format: null
         },
       {
         selector: 'variable',

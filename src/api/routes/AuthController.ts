@@ -23,7 +23,13 @@ import { activeUserMetric } from "../../bootstrap/metrics";
 import Users, { PublicUser } from "../../DAO/v2/UserDAO";
 import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
 import ObanDAO from "../../DAO/v2/ObanDAO";
-import { createSpanFromRequest, finishSpanWithResponse, addSpanAttributes, addSpanEvent, extractTraceContext } from "../../utils/tracing";
+import {
+    createSpanFromRequest,
+    finishSpanWithResponse,
+    addSpanAttributes,
+    addSpanEvent,
+    extractTraceContext
+} from "../../utils/tracing";
 import { context } from "@opentelemetry/api";
 
 // declare the additional fields that we add to express session (via routing-controllers)
@@ -61,10 +67,9 @@ export default class AuthController {
             rollbar.info("login", request);
             activeUserMetric.inc();
 
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             addSpanAttributes({
                 "auth.session.exists": !!session.user,
-                "auth.action": "login"
+                "auth.action": "login",
             });
 
             addSpanEvent("login.start", { userId: session.user! });
@@ -73,13 +78,12 @@ export default class AuthController {
 
             addSpanEvent("login.success", {
                 userId: user.id?.toString() || "unknown",
-                userType: "isAdmin" in user ? (user.isAdmin() ? "admin" : "user") : "unknown"
+                userType: "isAdmin" in user ? (user.isAdmin() ? "admin" : "user") : "unknown",
             });
 
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             addSpanAttributes({
                 "user.id": user.id?.toString() || "unknown",
-                "user.is_admin": "isAdmin" in user ? user.isAdmin() : false
+                "user.is_admin": "isAdmin" in user ? user.isAdmin() : false,
             });
 
             finishSpanWithResponse(span, { statusCode: 200 } as Response);
@@ -209,11 +213,10 @@ export default class AuthController {
             logger.debug(`Preparing to send reset password email via Oban to...: ${email}`);
             rollbar.info("sendResetEmailOban", { email }, request);
 
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             addSpanAttributes({
                 "auth.action": "sendResetEmailOban",
                 "email.requested": !!email,
-                "email.domain": email ? email.split("@")[1] : "unknown"
+                "email.domain": email ? email.split("@")[1] : "unknown",
             });
 
             addSpanEvent("reset_email.start", { emailProvided: !!email });
@@ -234,10 +237,9 @@ export default class AuthController {
                 finishSpanWithResponse(span, response);
                 throw new NotFoundError("No user found with the given email.");
             } else {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
                 addSpanAttributes({
                     "user.id": user.id?.toString() || "unknown",
-                    "user.found": true
+                    "user.found": true,
                 });
 
                 addSpanEvent("user.found", { userId: user.id?.toString() || "unknown" });
@@ -259,23 +261,22 @@ export default class AuthController {
 
                 addSpanEvent("trace_context.extracted", {
                     hasTraceContext: !!currentTraceContext,
-                    traceparentLength: currentTraceContext?.traceparent?.length || 0
+                    traceparentLength: currentTraceContext?.traceparent?.length || 0,
                 });
 
                 // Queue job in Oban for Elixir to process
                 const obanDao = new ObanDAO(prisma.obanJob);
                 const job = await obanDao.enqueuePasswordResetEmail(updatedUser.id!, currentTraceContext || undefined);
 
-                // eslint-disable-next-line @typescript-eslint/naming-convention
                 addSpanAttributes({
                     "oban.job_id": job.id.toString(),
                     "oban.queue_success": true,
-                    "oban.trace_context_included": !!currentTraceContext
+                    "oban.trace_context_included": !!currentTraceContext,
                 });
 
                 addSpanEvent("oban.job_queued", {
                     jobId: job.id.toString(),
-                    userId: updatedUser.id?.toString() || "unknown"
+                    userId: updatedUser.id?.toString() || "unknown",
                 });
 
                 logger.info("Oban job queued for password reset", { jobId: job.id.toString(), userId: updatedUser.id });

@@ -25,11 +25,11 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
             activeSpan.recordException(error);
             activeSpan.addEvent("error.handled_by_global_handler", {
                 "error.type": error.constructor.name,
-                "error.message": error.message
+                "error.message": error.message,
             });
             activeSpan.setStatus({
                 code: SpanStatusCode.ERROR,
-                message: error.message
+                message: error.message,
             });
         }
 

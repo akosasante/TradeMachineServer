@@ -10,6 +10,7 @@ import {
     QueryFailedError,
     Repository
 } from "typeorm";
+import { v4 as uuidv4 } from "uuid";
 import Player from "../models/player";
 import Team from "../models/team";
 import logger from "../bootstrap/logger";
@@ -103,7 +104,7 @@ export default class PlayerDAO {
             // Ensure UUIDs are generated for new entities (since raw insert bypasses @BeforeInsert hooks)
             const playersWithIds = playerObjs.map(playerObj => ({
                 ...playerObj,
-                id: playerObj.id || require('uuid').v4()
+                id: playerObj.id || uuidv4(),
             }));
 
             const result: InsertResult = await this.playerDb

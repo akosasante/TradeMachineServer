@@ -89,11 +89,7 @@ export default class ObanDAO {
     /**
      * Get jobs by queue and state (for debugging/monitoring)
      */
-    public async getJobsByQueueAndState(
-        queue: string,
-        state: oban_job_state,
-        limit = 50
-    ): Promise<ObanJob[]> {
+    public async getJobsByQueueAndState(queue: string, state: oban_job_state, limit = 50): Promise<ObanJob[]> {
         return this.obanJobsDb.findMany({
             where: {
                 queue,
