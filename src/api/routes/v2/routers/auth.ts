@@ -539,20 +539,15 @@ export const authRouter = router({
 
                         // Use signUpAuthentication like RegisterHandler does
                         const registeredUser = await new Promise<PublicUser>((resolve, reject) => {
-                            void signUpAuthentication(
-                                input.email,
-                                input.password,
-                                ctx.userDao,
-                                (err, user) => {
-                                    if (err) {
-                                        reject(err);
-                                    } else if (!user) {
-                                        reject(new Error("For some reason could not register user"));
-                                    } else {
-                                        resolve(user as PublicUser);
-                                    }
+                            void signUpAuthentication(input.email, input.password, ctx.userDao, (err, user) => {
+                                if (err) {
+                                    reject(err);
+                                } else if (!user) {
+                                    reject(new Error("For some reason could not register user"));
+                                } else {
+                                    resolve(user as PublicUser);
                                 }
-                            );
+                            });
                         });
 
                         addSpanAttributes({
