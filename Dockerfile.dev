@@ -1,5 +1,5 @@
 # Development Dockerfile - optimized for fast iterations and hot reloading
-FROM node:18-slim as development
+FROM node:20-slim as development
 
 # Set working directory
 WORKDIR /app
@@ -24,6 +24,10 @@ RUN npx prisma generate
 # Create non-root user for development (good security practice)
 RUN groupadd -r app && useradd -r -g app app
 RUN chown -R app:app /app
+
+# Ensure /tmp directory exists and is writable by the app user
+RUN mkdir -p /tmp && chmod 1777 /tmp
+
 USER app
 
 # Environment variables for development
