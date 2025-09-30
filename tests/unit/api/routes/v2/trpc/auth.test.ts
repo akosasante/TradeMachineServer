@@ -1,12 +1,12 @@
-import { TRPCError}  from "@trpc/server";
-import {mockClear, mockDeep} from "jest-mock-extended";
-import {authRouter} from "../../../../../../src/api/routes/v2/routers/auth";
+import { TRPCError } from "@trpc/server";
+import { mockClear, mockDeep } from "jest-mock-extended";
+import { authRouter } from "../../../../../../src/api/routes/v2/routers/auth";
 import logger from "../../../../../../src/bootstrap/logger";
-import {Context, createCallerFactory} from "../../../../../../src/api/routes/v2/trpc";
-import {ExtendedPrismaClient} from "../../../../../../src/bootstrap/prisma-db";
-import UserDAO, {PublicUser} from "../../../../../../src/DAO/v2/UserDAO";
+import { Context, createCallerFactory } from "../../../../../../src/api/routes/v2/trpc";
+import { ExtendedPrismaClient } from "../../../../../../src/bootstrap/prisma-db";
+import UserDAO, { PublicUser } from "../../../../../../src/DAO/v2/UserDAO";
 import ObanDAO from "../../../../../../src/DAO/v2/ObanDAO";
-import {Request, Response} from "express";
+import { Request, Response } from "express";
 
 // Mock the tracing utilities
 jest.mock("../../../../../../src/utils/tracing", () => ({
@@ -81,15 +81,21 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             // eslint-disable-next-line node/no-unsupported-features/es-builtins
             const mockJob = { id: BigInt(456) };
 
-            mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(mockUser as unknown as ReturnType<UserDAO["findUserWithPasswordByEmail"]>);
+            mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(
+                mockUser as unknown as ReturnType<UserDAO["findUserWithPasswordByEmail"]>
+            );
             mockUserDao.setPasswordExpires.mockResolvedValue(mockUpdatedUser);
-            mockObanDao.enqueuePasswordResetEmail.mockResolvedValue(mockJob as unknown as ReturnType<ObanDAO["enqueuePasswordResetEmail"]>);
+            mockObanDao.enqueuePasswordResetEmail.mockResolvedValue(
+                mockJob as unknown as ReturnType<ObanDAO["enqueuePasswordResetEmail"]>
+            );
 
             const result = await caller.login.sendResetEmail({ email: testEmail });
 
             expect(mockUserDao.findUserWithPasswordByEmail).toHaveBeenCalledWith(testEmail);
             expect(mockUserDao.setPasswordExpires).toHaveBeenCalledWith("user-123");
-            expect(mockObanDao.enqueuePasswordResetEmail).toHaveBeenCalledWith("user-123", { traceparent: "test-trace" });
+            expect(mockObanDao.enqueuePasswordResetEmail).toHaveBeenCalledWith("user-123", {
+                traceparent: "test-trace",
+            });
 
             expect(result).toEqual({
                 status: "oban job queued",
@@ -118,7 +124,9 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             const testEmail = "test@example.com";
             const mockUser = { id: "user-123", email: testEmail };
 
-            mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(mockUser as unknown as ReturnType<UserDAO["findUserWithPasswordByEmail"]>);
+            mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(
+                mockUser as unknown as ReturnType<UserDAO["findUserWithPasswordByEmail"]>
+            );
             mockUserDao.setPasswordExpires.mockResolvedValue(mockUser as unknown as PublicUser);
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore

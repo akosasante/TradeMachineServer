@@ -21,7 +21,7 @@ export const createContext = ({ req, res }: { req: Request; res: Response }): Co
     return {
         req,
         res,
-        session: req.session,  // Your existing session middleware
+        session: req.session, // Your existing session middleware
         prisma,
         userDao,
     };

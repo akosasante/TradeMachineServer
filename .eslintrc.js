@@ -30,7 +30,7 @@ module.exports = {
     "sourceType": "module",
     "debugLevel": "true",
   },
-  "ignorePatterns": ['.eslintrc.js', 'src/db/*', './src/scripts/**/*.ts', './tests/*', 'jest.ci-config.js', 'db_setup.js', 'jest.config.js', 'ormconfig.js', 'TradeMachineElixirApp/**'],
+  "ignorePatterns": ['.eslintrc.js', 'src/db/*', './src/scripts/**/*.ts', './tests/*', 'jest.ci-config.js', 'db_setup.js', 'jest.config.js', 'ormconfig.js', 'TradeMachineElixirApp/**', '**/*.d.ts', 'packages/**/node_modules/**', 'packages/**/dist/**'],
   "plugins": [
     "eslint-plugin-jsdoc",
     "eslint-plugin-prefer-arrow",
