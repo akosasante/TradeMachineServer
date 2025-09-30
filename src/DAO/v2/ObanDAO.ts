@@ -5,8 +5,8 @@ import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
 // Job type interfaces
 export interface EmailJobData {
-    email_type: "reset_password";
-    data: string; // user ID for reset_password
+    email_type: "reset_password" | "registration_email";
+    data: string; // user ID for reset_password and registration_email
     trace_context?: {
         traceparent: string;
         tracestate?: string;
@@ -72,6 +72,20 @@ export default class ObanDAO {
     ): Promise<ObanJob> {
         return this.enqueueEmailJob({
             email_type: "reset_password",
+            data: userId,
+            trace_context: traceContext,
+        });
+    }
+
+    /**
+     * Enqueue a registration email job (convenience method)
+     */
+    public async enqueueRegistrationEmail(
+        userId: string,
+        traceContext?: { traceparent: string; tracestate?: string }
+    ): Promise<ObanJob> {
+        return this.enqueueEmailJob({
+            email_type: "registration_email",
             data: userId,
             trace_context: traceContext,
         });
