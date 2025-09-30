@@ -53,8 +53,10 @@ const baseConfig = {
 };
 
 // Allow separate configuration for traces and metrics endpoints
-const tracesEndpoint = process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || (otlpEndpoint ? `${otlpEndpoint}/v1/traces` : undefined);
-const metricsEndpoint = process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT || (otlpEndpoint ? `${otlpEndpoint}/v1/metrics` : undefined);
+const tracesEndpoint =
+    process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || (otlpEndpoint ? `${otlpEndpoint}/v1/traces` : undefined);
+const metricsEndpoint =
+    process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT || (otlpEndpoint ? `${otlpEndpoint}/v1/metrics` : undefined);
 
 // Build SDK config with only configured exporters
 const sdkConfig = {

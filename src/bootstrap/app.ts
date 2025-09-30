@@ -84,17 +84,20 @@ export async function setupExpressApp(
         next();
     });
 
-    expressApp.use("/v2", createExpressMiddleware({
-        router: appRouter,
-        createContext,
-        batching: {
-            enabled: true,
-        },
-        onError: ({ error, req }) => {
-            logger.error(`tRPC Error: ${error.message}`, error);
-            rollbar.error(error, req);
-        },
-    }));
+    expressApp.use(
+        "/v2",
+        createExpressMiddleware({
+            router: appRouter,
+            createContext,
+            batching: {
+                enabled: true,
+            },
+            onError: ({ error, req }) => {
+                logger.error(`tRPC Error: ${error.message}`, error);
+                rollbar.error(error, req);
+            },
+        })
+    );
     logger.debug("tRPC v2 routes complete");
 
     return expressApp;
