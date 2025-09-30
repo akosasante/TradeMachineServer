@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Context } from "./trpc";
-import { getPrismaClientFromRequest } from "../bootstrap/prisma-db";
-import Users from "../DAO/v2/UserDAO";
+import { getPrismaClientFromRequest } from "../../../bootstrap/prisma-db";
+import Users from "../../../DAO/v2/UserDAO";
 
 /**
  * Creates the tRPC context from Express request/response
