@@ -103,7 +103,10 @@ module.exports = {
                 }
             }
         ],
-        "@typescript-eslint/naming-convention": "warn",
+        "@typescript-eslint/naming-convention": ["warn", {
+            selector: "classProperty",
+            format: ["UPPER_CASE"]
+        }],
         "@typescript-eslint/no-array-constructor": "error",
         "@typescript-eslint/no-empty-function": "error",
         "@typescript-eslint/no-empty-interface": "error",
