@@ -72,13 +72,25 @@ export async function setupExpressApp(
 
     // Set up tRPC v2 endpoints
     logger.debug("setting up tRPC v2 routes");
-    const { createExpressMiddleware } = await import('@trpc/server/adapters/express');
-    const { appRouter } = await import('../trpc/router');
-    const { createContext } = await import('../trpc/context');
+    const { createExpressMiddleware } = await import("@trpc/server/adapters/express");
+    const { appRouter } = await import("../trpc/router");
+    const { createContext } = await import("../trpc/context");
 
-    expressApp.use('/v2', createExpressMiddleware({
+    // Fix malformed Content-Type headers before tRPC processing
+    expressApp.use("/v2", (req, res, next) => {
+        // Handle duplicate content-type headers that break Express JSON parsing
+        if (req.headers["content-type"] && req.headers["content-type"].includes("application/json, application/json")) {
+            req.headers["content-type"] = "application/json";
+        }
+        next();
+    });
+
+    expressApp.use("/v2", createExpressMiddleware({
         router: appRouter,
         createContext,
+        batching: {
+            enabled: true,
+        },
         onError: ({ error, req }) => {
             logger.error(`tRPC Error: ${error.message}`, error);
             rollbar.error(error, req);
