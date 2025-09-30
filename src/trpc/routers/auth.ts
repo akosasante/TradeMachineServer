@@ -1,21 +1,21 @@
-import { z } from 'zod';
-import { TRPCError } from '@trpc/server';
-import { context } from '@opentelemetry/api';
-import { router, publicProcedure } from '../trpc';
+import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import { context } from "@opentelemetry/api";
+import { router, publicProcedure } from "../trpc";
 import {
     createSpanFromRequest,
     finishSpanWithStatusCode,
     addSpanAttributes,
     addSpanEvent,
     extractTraceContext
-} from '../../utils/tracing';
-import logger from '../../bootstrap/logger';
-import { rollbar } from '../../bootstrap/rollbar';
-import ObanDAO from '../../DAO/v2/ObanDAO';
+} from "../../utils/tracing";
+import logger from "../../bootstrap/logger";
+import { rollbar } from "../../bootstrap/rollbar";
+import ObanDAO from "../../DAO/v2/ObanDAO";
 
 // Input validation schemas
 const emailSchema = z.object({
-    email: z.string().email('Please provide a valid email address')
+    email: z.string().email("Please provide a valid email address"),
 });
 
 export const authRouter = router({
@@ -23,6 +23,7 @@ export const authRouter = router({
         sendResetEmail: publicProcedure
             .input(emailSchema)
             .mutation(async ({ input, ctx }) => {
+
                 const { span, context: traceContext } = createSpanFromRequest("trpc.auth.sendResetEmail", ctx.req);
 
                 return await context.with(traceContext, async () => {
@@ -46,8 +47,8 @@ export const authRouter = router({
                             addSpanEvent("reset_email.user_not_found", { email: input.email });
                             finishSpanWithStatusCode(span, 404);
                             throw new TRPCError({
-                                code: 'NOT_FOUND',
-                                message: 'No user found with the given email.'
+                                code: "NOT_FOUND",
+                                message: "No user found with the given email.",
                             });
                         }
 
@@ -69,8 +70,8 @@ export const authRouter = router({
                             addSpanEvent("oban.error", { reason: "obanJob not available in Prisma client" });
                             finishSpanWithStatusCode(span, 500);
                             throw new TRPCError({
-                                code: 'INTERNAL_SERVER_ERROR',
-                                message: 'obanJob not available in Prisma client'
+                                code: "INTERNAL_SERVER_ERROR",
+                                message: "obanJob not available in Prisma client",
                             });
                         }
 
@@ -108,18 +109,18 @@ export const authRouter = router({
                         };
                     } catch (error) {
                         addSpanEvent("reset_email.error", {
-                            error: error instanceof Error ? error.message : "Unknown error"
+                            error: error instanceof Error ? error.message : "Unknown error",
                         });
 
                         if (error instanceof TRPCError) {
-                            finishSpanWithStatusCode(span, error.code === 'NOT_FOUND' ? 404 : 500);
+                            finishSpanWithStatusCode(span, error.code === "NOT_FOUND" ? 404 : 500);
                             throw error;
                         }
 
                         finishSpanWithStatusCode(span, 500);
                         throw new TRPCError({
-                            code: 'INTERNAL_SERVER_ERROR',
-                            message: 'An unexpected error occurred'
+                            code: "INTERNAL_SERVER_ERROR",
+                            message: "An unexpected error occurred",
                         });
                     }
                 });
