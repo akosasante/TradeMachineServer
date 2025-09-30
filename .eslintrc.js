@@ -30,7 +30,7 @@ module.exports = {
     "sourceType": "module",
     "debugLevel": "true",
   },
-  "ignorePatterns": ['.eslintrc.js', 'src/db/*', './src/scripts/**/*.ts', './tests/*', 'jest.ci-config.js', 'db_setup.js', 'jest.config.js', 'ormconfig.js'],
+  "ignorePatterns": ['.eslintrc.js', 'src/db/*', './src/scripts/**/*.ts', './tests/*', 'jest.ci-config.js', 'db_setup.js', 'jest.config.js', 'ormconfig.js', 'TradeMachineElixirApp/**', '**/*.d.ts', 'packages/**/node_modules/**', 'packages/**/dist/**'],
   "plugins": [
     "eslint-plugin-jsdoc",
     "eslint-plugin-prefer-arrow",
@@ -94,13 +94,18 @@ module.exports = {
       format: ['camelCase'],
       leadingUnderscore: 'allow',
       trailingUnderscore: 'allow',
-      filter: {regex: "^(AND|OR|Players|Users|Teams|rollbar_person|TIME_TO_EXPIRE_USER_PASSWORD_IN_MS|@opentelemetry/instrumentation-)$", match: false}
+      filter: {regex: "^(Players|Users|Teams|rollbar_person|TIME_TO_EXPIRE_USER_PASSWORD_IN_MS)$", match: false}
     },
+        {
+            selector: 'objectLiteralProperty',
+            format: null
+        },
       {
         selector: 'variable',
         format: ['camelCase', 'UPPER_CASE'],
         leadingUnderscore: 'allow',
         trailingUnderscore: 'allow',
+        filter: {regex: "^(Players|Users|Teams)$", match: false}
       },
       {
         selector: 'typeLike',

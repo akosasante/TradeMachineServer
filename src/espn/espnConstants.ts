@@ -1,7 +1,6 @@
 import { EspnProTeam } from "./espnApi";
 
 // we have a number of fields here that we're explicitly copying from ESPN so ignore any non camel-cased formatting
-/* eslint-disable @typescript-eslint/naming-convention */
 
 const ESPN_TEAM_MAPPING: EspnProTeam[] = [
     {
@@ -289,7 +288,6 @@ export const ESPN_ELIGIBLE_POSITION_MAPPING: { [key: number]: string } = {
     17: "IL",
     18: "IF", // ?
 };
-/* eslint-enable @typescript-eslint/naming-convention */
 
 export const ESPN_NON_POSITIONAL_NON_VALID_SLOTS = [5, 6, 7, 11, 12, 13, 16, 17, 18, 19];
 

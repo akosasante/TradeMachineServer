@@ -3,19 +3,15 @@ import winston from "winston";
 const { combine, timestamp, json, colorize, printf, errors } = winston.format;
 
 // Structured JSON format for production and development
-const jsonFormat = combine(
-    timestamp(),
-    errors({ stack: true }),
-    json()
-);
+const jsonFormat = combine(timestamp(), errors({ stack: true }), json());
 
 // Human-readable format for development (optional, can be switched to JSON)
 const devFormat = combine(
     timestamp(),
     colorize(),
     errors({ stack: true }),
-    printf(({ timestamp, level, message, stack, ...meta }) => {
-        let log = `${timestamp} [${level}]: ${message}`;
+    printf(({ timestamp: logTimestamp, level, message, stack, ...meta }) => {
+        let log = `${logTimestamp} [${level}]: ${message}`;
         if (stack) {
             log += `\n${stack}`;
         }

@@ -10,6 +10,8 @@ The server uses **OpenTelemetry** to instrument HTTP requests and business logic
 
 - **W3C Trace Context**: Extracts `traceparent` and `tracestate` headers from frontend requests
 - **Automatic HTTP/Express Instrumentation**: All HTTP requests get basic spans automatically
+- **Automatic Redis Tracing**: All Redis operations tracked including session storage and Bull queue operations
+- **Cross-Service Tracing**: Trace context propagated to Oban jobs for Elixir continuation
 - **Manual Business Logic Tracing**: Detailed spans for authentication, database operations, and job queuing
 - **Monitoring Stack Integration**: Traces flow through Alloy to Tempo and display in Grafana
 
@@ -21,9 +23,13 @@ When the server starts, OpenTelemetry automatically instruments:
 
 - **HTTP Requests**: Method, URL, status code, response time
 - **Express Routes**: Route patterns and middleware execution
-- **Database Queries**: (when using instrumented database clients)
+- **Redis Operations**: All Redis commands with execution time, connection details, and command arguments
+- **Bull Queue Operations**: Job enqueue/dequeue, processing, and state management via Redis
 
-Example automatic span: `GET /auth/login` with attributes like `http.method`, `http.status_code`.
+Example automatic spans:
+- `GET /auth/login` with attributes like `http.method`, `http.status_code`
+- `redis-set` / `redis-get` for session storage operations
+- `redis-lpush` / `redis-brpop` for Bull job queue operations
 
 ### Manual Tracing (Business Logic)
 
@@ -65,7 +71,7 @@ src/
 ├── bootstrap/
 │   └── telemetry.ts          # OpenTelemetry SDK configuration and initialization
 ├── utils/
-│   └── tracing.ts            # Utility functions for manual span management
+│   └── tracing.ts            # Utility functions for manual span management and trace context extraction
 ├── server.ts                 # Early telemetry initialization (MUST be first import)
 ├── api/
 │   ├── middlewares/
@@ -82,7 +88,7 @@ src/
 # OpenTelemetry Tracing Configuration
 OTEL_SERVICE_NAME=trademachine-server
 OTEL_SERVICE_VERSION=2.0.1
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 OTEL_RESOURCE_ATTRIBUTES="service.name=trademachine-server,service.version=2.0.1"
 
 # Optional: Control trace sampling (1.0 = 100%, 0.1 = 10%)
@@ -111,7 +117,7 @@ Access Grafana at http://localhost:3000 to view traces.
 ### Step 1: Import Utilities
 
 ```typescript
-import { createSpanFromRequest, finishSpanWithResponse, addSpanAttributes, addSpanEvent } from "../../utils/tracing";
+import { createSpanFromRequest, finishSpanWithResponse, addSpanAttributes, addSpanEvent, extractTraceContext } from "../../utils/tracing";
 import { context } from "@opentelemetry/api";
 ```
 
@@ -167,6 +173,27 @@ Choose attributes and events that help with debugging and performance analysis:
 - `external.api.call`, `external.api.response`
 - `error.occurred`, `retry.attempt`
 
+### Step 4: Cross-Service Trace Continuation (Optional)
+
+For jobs or external service calls that should continue the trace:
+
+```typescript
+// Extract current trace context for external services
+const traceContext = extractTraceContext();
+
+// Include in job args or API headers
+const jobArgs = {
+    userId: user.id,
+    trace_context: traceContext  // For Oban jobs
+};
+
+// Or for external HTTP calls
+const headers = {
+    'traceparent': traceContext?.traceparent,
+    'tracestate': traceContext?.tracestate,
+};
+```
+
 ## 📊 Current Implementation Status
 
 ### ✅ Implemented Endpoints
@@ -176,10 +203,19 @@ Choose attributes and events that help with debugging and performance analysis:
 
 ### 🔄 Automatic Instrumentation
 
-All endpoints automatically get basic HTTP tracing including:
+All endpoints automatically get tracing including:
+
+**HTTP Layer:**
 - Request method, URL, headers
 - Response status code, duration
 - User agent, correlation with frontend traces
+
+**Redis Layer:**
+- All Redis commands (`GET`, `SET`, `LPUSH`, `BRPOP`, etc.)
+- Command execution time and response size
+- Connection details and Redis database selection
+- Bull queue operations (job enqueue, processing, completion)
+- Session storage operations (login, logout, session retrieval)
 
 ### 🎯 Future Endpoint Candidates
 
@@ -197,8 +233,9 @@ Consider adding detailed tracing to:
 2. Select **Tempo** as data source
 3. Search for traces by:
    - Service name: `trademachine-server`
-   - Operation: `auth.login`, `auth.sendResetEmailOban`
-   - User ID or other attributes
+   - Operation: `auth.login`, `auth.sendResetEmailOban`, `redis-set`, `redis-lpush`
+   - User ID, Redis operations, or other attributes
+   - Redis commands and queue operations
 
 ### Trace Correlation
 
@@ -206,7 +243,16 @@ When the frontend makes API calls:
 1. Frontend Faro generates trace context
 2. Browser sends `traceparent` header with requests
 3. Backend extracts context and creates child spans
-4. Both frontend and backend spans appear in the same trace tree
+4. Redis operations automatically inherit trace context
+5. Oban jobs receive trace context for Elixir continuation
+6. Complete trace tree: Frontend → HTTP Request → Business Logic → Redis Commands → Elixir Jobs
+
+### Cross-Service Trace Continuation
+
+When creating Oban jobs for Elixir processing, the Node.js backend:
+1. Extracts current W3C trace context (`traceparent` and `tracestate`)
+2. Includes trace context in the job args under `trace_context` key
+3. Elixir Oban workers can continue the distributed trace from this context
 
 ## 🚨 Best Practices
 

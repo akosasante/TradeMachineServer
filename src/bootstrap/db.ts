@@ -1,6 +1,7 @@
 import { Connection, ConnectionOptionsReader, createConnection } from "typeorm";
 import { inspect } from "util";
 import CustomQueryLogger from "../db/QueryLogger";
+import { UuidSubscriber } from "../db/subscribers/UuidSubscriber";
 import logger from "./logger";
 import { rollbar } from "./rollbar";
 
@@ -10,9 +11,12 @@ export default async function initializeDb(logQueries = false): Promise<Connecti
         logger.debug(`Connecting to ORM config: ${process.env.ORM_CONFIG}`);
         const dbConfigName = process.env.ORM_CONFIG || "";
         const connectionConfig = await new ConnectionOptionsReader({ root: process.cwd() }).get(dbConfigName);
+        // logger.debug(`DB Connection options: ${inspect(connectionConfig, { depth: 2 })}`);
+
         connection = await createConnection({
             ...connectionConfig,
             logger: logQueries ? new CustomQueryLogger(logger) : undefined,
+            subscribers: [UuidSubscriber], // Explicitly register UUID subscriber (overrides config)
         });
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         const pgClient = (await connection.driver.obtainMasterConnection())[0];

@@ -173,7 +173,7 @@ export default class EspnAPI {
         this.leagueId = leagueId;
         this.req = axios.create({
             withCredentials: true,
-            // eslint-disable-next-line @typescript-eslint/naming-convention
+
             headers: { Cookie: `espn_s2=${this.espn2Cookie}; SWID=${this.espnSwid};` },
             timeout: 30000,
         });
@@ -218,7 +218,6 @@ export default class EspnAPI {
                 `${EspnAPI.getBaseUrl(year, this.leagueId)}?view=kona_player_info`,
                 {
                     headers: {
-                        // eslint-disable-next-line @typescript-eslint/naming-convention
                         "X-Fantasy-Filter": `{"players": { "limit": 100, "offset": ${offset}, "sortPercOwned": { "sortAsc": false, "sortPriority": 1 } } }`,
                     },
                 }

@@ -1,5 +1,10 @@
 name: Build and Deploy Docker Image
 
+# Prevent concurrent deployments to avoid conflicts
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 on:
   push:
     branches: [ staging, main ]
@@ -134,9 +139,11 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
+            type=gha
             type=registry,ref=ghcr.io/akosasante/trade-machine-server:cache
           cache-to: |
-            type=registry,ref=ghcr.io/akosasante/trade-machine-server:cache,mode=max
+            type=gha,mode=max
+            ${{ github.event_name != 'pull_request' && 'type=registry,ref=ghcr.io/akosasante/trade-machine-server:cache,mode=max' || '' }}
           build-args: |
             BUILDKIT_INLINE_CACHE=1
 
@@ -232,11 +239,20 @@ jobs:
           script: |
             cd ${{ matrix.app_dir }}
 
-            # Login to registry
+            # Login to registry with retry
+            echo "Logging in to container registry..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Pull latest image
-            docker pull ${{ needs.build.outputs.image }}
+            # Pull latest image with retry
+            echo "Pulling latest image..."
+            for i in {1..3}; do
+              if docker pull ${{ needs.build.outputs.image }}; then
+                break
+              else
+                echo "Pull attempt $i failed, retrying..."
+                sleep 5
+              fi
+            done
 
             # Run database migrations
             echo "Running database migrations..."
@@ -292,10 +308,23 @@ jobs:
               exit 1
             fi
 
-            # Clean up old images (keep last 3)
-            echo "Cleaning up old images..."
+            # Clean up old images and containers (keep last 3 images)
+            echo "Cleaning up old Docker resources..."
+
+            # Remove unused containers
+            docker container prune -f || echo "No containers to remove"
+
+            # Remove old images (keep last 3 versions)
+            docker images ghcr.io/akosasante/trade-machine-server --format "{{.Repository}}:{{.Tag}}" | \
+            grep -v -E "(latest|main|staging)$" | tail -n +4 | \
+            xargs -r docker rmi || echo "No old images to remove"
+
+            # General cleanup
             docker image prune -f
-            docker images ghcr.io/akosasante/trade-machine-server --format "{{.Repository}}:{{.Tag}}" | tail -n +4 | xargs -r docker rmi || echo "No old images to remove"
+
+            # Show disk usage
+            echo "Docker disk usage after cleanup:"
+            docker system df
 
       - name: Notify Rollbar of deployment completion
         if: ${{ matrix.condition && success() }}

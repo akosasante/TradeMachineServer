@@ -1,6 +1,6 @@
 import Email from "email-templates";
 import nodemailer from "nodemailer";
-import SendinBlueTransport, { SendInBlueTransportOptions } from "nodemailer-sendinblue-v3-transport";
+// import SendinBlueTransport, { SendInBlueTransportOptions } from "nodemailer-sendinblue-v3-transport";
 import path from "path";
 import { inspect } from "util";
 import logger from "../bootstrap/logger";
@@ -32,14 +32,14 @@ export interface SendInBlueSendResponse {
         attachments: object[];
     };
 }
-
-const SEND_IN_BLUE_OPTS: SendInBlueTransportOptions = {
-    apiKey: process.env.EMAIL_KEY_V3 || "",
-    apiUrl: process.env.EMAIL_API_URL_V3 || "",
-};
+//
+// const SEND_IN_BLUE_OPTS: SendInBlueTransportOptions = {
+//     apiKey: process.env.EMAIL_KEY_V3 || "",
+//     apiUrl: process.env.EMAIL_API_URL_V3 || "",
+// };
 
 const sendInBlueTransport = nodemailer.createTransport({
-    host: "smtp-relay.sendinblue.com",
+    host: "smtp-relay.brevo.com",
     port: 587,
     auth: {
         user: "akosuaasante@gmail.com",

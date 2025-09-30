@@ -27,8 +27,17 @@ pids
 # Dependency directory
 node_modules
 
+
 # Optional npm cache directory
 .npm
+.npmrc
+
+# TypeScript compilation artifacts - these should be generated at build time
+*.d.ts
+*.d.ts.map
+*.js.map
+# Ignore compiled JS files in src directory (but keep intentional JS files like configs)
+src/**/*.js
 
 # Ignore migrations for now. We use diff schemas in development vs public so it's easier to just generate migration in prod as needed for now.
 src/db/migrations-old
@@ -44,3 +53,6 @@ trade.iml
 
 **/.claude/settings.local.json
 ai_plans
+TradeMachineElixirApp
+TradeMachineElixirApp/
+TradeMachineElixirApp/**

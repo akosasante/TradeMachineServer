@@ -31,8 +31,11 @@ async function main(prisma: ExtendedPrismaClient) {
 
     // Test ObanJob integration
     console.log("\n=== Testing ObanJob Integration ===");
-    console.log("Available models:", Object.keys(prisma).filter(key => !key.startsWith('$') && !key.startsWith('_')));
-    console.log("Has obanJob:", 'obanJob' in prisma);
+    console.log(
+        "Available models:",
+        Object.keys(prisma).filter(key => !key.startsWith("$") && !key.startsWith("_"))
+    );
+    console.log("Has obanJob:", "obanJob" in prisma);
     console.log("obanJob type:", typeof prisma.obanJob);
 
     if (!prisma.obanJob) {
@@ -53,7 +56,7 @@ async function main(prisma: ExtendedPrismaClient) {
         id: job.id.toString(),
         worker: job.worker,
         queue: job.queue,
-        args: job.args
+        args: job.args,
     });
 
     // Test retrieving the job
@@ -63,7 +66,7 @@ async function main(prisma: ExtendedPrismaClient) {
     if (retrievedJob) {
         console.log("Job retrieved successfully:", {
             id: retrievedJob.id.toString(),
-            state: retrievedJob.state
+            state: retrievedJob.state,
         });
     } else {
         console.error("Failed to retrieve job");

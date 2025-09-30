@@ -46,6 +46,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Health Checks**: Built-in container health monitoring
 - **Volume Optimization**: Named volumes for node_modules, cached bind mounts for source
 
+### Docker Troubleshooting
+When new npm dependencies aren't being picked up in Docker containers:
+
+1. **Check for cached node_modules volume**: `docker volume ls | grep node_modules`
+2. **Remove specific node_modules volume** (recommended):
+   ```bash
+   docker volume rm trademachineserver_node_modules_volume
+   ```
+3. **Or remove all unused volumes** (more aggressive):
+   ```bash
+   docker volume prune -f
+   ```
+4. **Then rebuild**: `make docker-dev-rebuild`
+
+**Root cause**: Docker caches node_modules in named volumes for performance. When package.json changes, the cached volume doesn't automatically update.
+
 ## Key Libraries
 - **Express**: Web framework for API routes and middleware
 - **routing-controllers**: Decorator-based controller framework for Express
@@ -57,6 +73,105 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Winston**: Logging throughout the application
 - **Rollbar**: Error tracking and monitoring
 - **bcryptjs**: Password hashing for authentication
+
+## Distributed Tracing
+
+### Overview
+The application implements comprehensive distributed tracing using OpenTelemetry to provide end-to-end observability across the entire stack, from frontend Faro traces → Node.js backend → Elixir Oban jobs.
+
+### Architecture
+- **OpenTelemetry SDK**: Full instrumentation with automatic HTTP, Express, and Redis tracing
+- **OTLP Export**: Traces exported to Alloy via HTTP/protobuf protocol
+- **W3C Trace Context**: Standards-compliant trace propagation across service boundaries
+- **Cross-Service Tracing**: Trace context passed to Oban jobs for Elixir continuation
+
+### Key Components
+
+#### Telemetry Initialization (`/src/bootstrap/telemetry.ts`)
+- NodeSDK with automatic instrumentations for HTTP, Express, and Redis operations
+- Configurable logging levels via `OTEL_LOG_LEVEL` environment variable
+- Resource identification with service name and version
+- OTLP exporters for traces and metrics
+
+#### Tracing Utilities (`/src/utils/tracing.ts`)
+- `createSpanFromRequest()`: Creates spans with W3C trace context extraction
+- `finishSpanWithResponse()`: Completes spans with HTTP status and error handling
+- `addSpanAttributes()`: Adds custom business logic attributes to active spans
+- `addSpanEvent()`: Records events on active spans for detailed observability
+- `extractTraceContext()`: Extracts W3C traceparent/tracestate for cross-service propagation
+
+#### Instrumentation Coverage
+- **HTTP Requests**: Automatic request/response tracing with route information
+- **Express Routes**: Route-level spans with middleware integration
+- **Redis Operations**: Bull queue jobs and session storage operations
+- **PostgreSQL**: Prisma query operations and connection pooling
+- **Custom Business Logic**: Manual spans for critical application workflows
+- **Cross-Service**: Trace context propagation to Oban jobs via job arguments
+
+### Implementation Examples
+
+#### Controller Tracing Pattern
+```typescript
+@Post("/endpoint")
+public async myEndpoint(@Req() request: Request, @Res() response: Response): Promise<Response> {
+    const { span, context: traceContext } = createSpanFromRequest("operation.name", request);
+
+    return await context.with(traceContext, async () => {
+        addSpanAttributes({
+            "custom.attribute": "value",
+            "business.context": userId
+        });
+
+        addSpanEvent("operation.start");
+
+        // Business logic here...
+
+        addSpanEvent("operation.complete");
+        finishSpanWithResponse(span, response);
+        return response.json(result);
+    });
+}
+```
+
+#### Cross-Service Trace Propagation
+```typescript
+// Extract trace context for passing to external services
+const currentTraceContext = extractTraceContext();
+const job = await obanDao.enqueueJob(data, currentTraceContext || undefined);
+```
+
+### Environment Configuration
+```bash
+# Service identification
+OTEL_SERVICE_NAME=trademachine-server
+OTEL_SERVICE_VERSION=2.0.1
+
+# OTLP export configuration
+OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
+OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+OTEL_EXPORTER_OTLP_TIMEOUT=30000
+OTEL_EXPORTER_OTLP_COMPRESSION=gzip
+
+# Trace sampling (1.0 = 100%, 0.1 = 10%)
+OTEL_TRACES_SAMPLER=traceidratio
+OTEL_TRACES_SAMPLER_ARG=1.0
+
+# Debug logging (INFO for production, DEBUG for troubleshooting)
+OTEL_LOG_LEVEL=INFO
+```
+
+### Monitoring Integration
+- **Grafana**: View traces in the Grafana dashboard via Tempo data source
+- **Alloy**: Collects and forwards traces to Tempo for storage and querying
+- **Automatic Correlation**: HTTP requests automatically correlated with business logic spans
+- **Error Tracking**: Failed spans include exception details and stack traces
+
+### Implementation Notes
+- Tracing is initialized early in server startup (before other modules)
+- Business logic tracing implemented for authentication endpoints (`/auth/login`, `/auth/login/sendResetEmailOban`)
+- Trace context seamlessly propagated from frontend requests to background jobs
+- Performance impact minimized with efficient sampling and batched exports
+- Debug logging configurable for development vs production environments
 
 ## Code Style Guidelines
 - **Formatting**: Use double quotes, semicolons, camelCase (variables/methods), PascalCase (types/classes)

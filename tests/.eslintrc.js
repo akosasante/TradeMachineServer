@@ -103,7 +103,10 @@ module.exports = {
                 }
             }
         ],
-        "@typescript-eslint/naming-convention": "warn",
+        "@typescript-eslint/naming-convention": ["warn", {
+            selector: "classProperty",
+            format: ["UPPER_CASE"]
+        }],
         "@typescript-eslint/no-array-constructor": "error",
         "@typescript-eslint/no-empty-function": "error",
         "@typescript-eslint/no-empty-interface": "error",
@@ -173,7 +176,8 @@ module.exports = {
             }
         ],
         "@typescript-eslint/type-annotation-spacing": "error",
-        "@typescript-eslint/unbound-method": "warn",
+        "@typescript-eslint/unbound-method": "off",
+        "jest/unbound-method": "warn",
         "@typescript-eslint/unified-signatures": "error",
         "arrow-parens": [
             "error",
@@ -251,7 +255,7 @@ module.exports = {
         "no-var": "error",
         "node/no-unsupported-features/es-syntax": "off",
         "node/no-missing-import": "off",
-        "node/no-unpublished-import": "warn",
+        "node/no-unpublished-import": "off",
         "object-shorthand": "error",
         "one-var": [
             "error",

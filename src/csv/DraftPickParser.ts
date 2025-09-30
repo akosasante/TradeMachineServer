@@ -84,13 +84,12 @@ async function readAndParsePickCsv(path: string, teams: Team[]): Promise<Partial
 function parseDraftPick(row: DraftPickCSVRow, teams: Team[]): Partial<DraftPick> | undefined {
     // logger.debug(`INDEX=${index}`);
     const DRAFT_PICK_REQUIRED_PROPS = ["Round", "Pick Owner", "Type", "Owner"];
-    /* eslint-disable @typescript-eslint/naming-convention */
+
     const KEYWORD_TO_LEVEL: { [key: string]: LeagueLevel } = {
         High: LeagueLevel.HIGH,
         Low: LeagueLevel.LOW,
         Major: LeagueLevel.MAJORS,
     };
-    /* eslint-enable @typescript-eslint/naming-convention */
 
     const validRow = validateRow(row, DRAFT_PICK_REQUIRED_PROPS);
     if (!validRow) {
