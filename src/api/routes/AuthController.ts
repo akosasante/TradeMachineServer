@@ -23,7 +23,14 @@ import { activeUserMetric } from "../../bootstrap/metrics";
 import Users, { PublicUser } from "../../DAO/v2/UserDAO";
 import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
 import ObanDAO from "../../DAO/v2/ObanDAO";
-import { createSpanFromRequest, finishSpanWithResponse, addSpanAttributes, addSpanEvent } from "../../utils/tracing";
+import {
+    createSpanFromRequest,
+    finishSpanWithResponse,
+    finishSpanWithStatusCode,
+    addSpanAttributes,
+    addSpanEvent,
+    extractTraceContext
+} from "../../utils/tracing";
 import { context } from "@opentelemetry/api";
 
 // declare the additional fields that we add to express session (via routing-controllers)
@@ -63,7 +70,7 @@ export default class AuthController {
 
             addSpanAttributes({
                 "auth.session.exists": !!session.user,
-                "auth.action": "login"
+                "auth.action": "login",
             });
 
             addSpanEvent("login.start", { userId: session.user! });
@@ -72,15 +79,15 @@ export default class AuthController {
 
             addSpanEvent("login.success", {
                 userId: user.id?.toString() || "unknown",
-                userType: "isAdmin" in user ? (user.isAdmin() ? "admin" : "user") : "unknown"
+                userType: "isAdmin" in user ? (user.isAdmin() ? "admin" : "user") : "unknown",
             });
 
             addSpanAttributes({
                 "user.id": user.id?.toString() || "unknown",
-                "user.is_admin": "isAdmin" in user ? user.isAdmin() : false
+                "user.is_admin": "isAdmin" in user ? user.isAdmin() : false,
             });
 
-            finishSpanWithResponse(span, { statusCode: 200 } as Response);
+            finishSpanWithStatusCode(span, 200);
             return user;
         });
     }
@@ -210,7 +217,7 @@ export default class AuthController {
             addSpanAttributes({
                 "auth.action": "sendResetEmailOban",
                 "email.requested": !!email,
-                "email.domain": email ? email.split("@")[1] : "unknown"
+                "email.domain": email ? email.split("@")[1] : "unknown",
             });
 
             addSpanEvent("reset_email.start", { emailProvided: !!email });
@@ -233,7 +240,7 @@ export default class AuthController {
             } else {
                 addSpanAttributes({
                     "user.id": user.id?.toString() || "unknown",
-                    "user.found": true
+                    "user.found": true,
                 });
 
                 addSpanEvent("user.found", { userId: user.id?.toString() || "unknown" });
@@ -250,18 +257,27 @@ export default class AuthController {
                     return response.status(500).json({ error: "obanJob not available in Prisma client" });
                 }
 
+                // Extract current trace context for Elixir continuation
+                const currentTraceContext = extractTraceContext();
+
+                addSpanEvent("trace_context.extracted", {
+                    hasTraceContext: !!currentTraceContext,
+                    traceparentLength: currentTraceContext?.traceparent?.length || 0,
+                });
+
                 // Queue job in Oban for Elixir to process
                 const obanDao = new ObanDAO(prisma.obanJob);
-                const job = await obanDao.enqueuePasswordResetEmail(updatedUser.id!);
+                const job = await obanDao.enqueuePasswordResetEmail(updatedUser.id!, currentTraceContext || undefined);
 
                 addSpanAttributes({
                     "oban.job_id": job.id.toString(),
-                    "oban.queue_success": true
+                    "oban.queue_success": true,
+                    "oban.trace_context_included": !!currentTraceContext,
                 });
 
                 addSpanEvent("oban.job_queued", {
                     jobId: job.id.toString(),
-                    userId: updatedUser.id?.toString() || "unknown"
+                    userId: updatedUser.id?.toString() || "unknown",
                 });
 
                 logger.info("Oban job queued for password reset", { jobId: job.id.toString(), userId: updatedUser.id });

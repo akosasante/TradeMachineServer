@@ -17,6 +17,8 @@ services:
       dockerfile: Dockerfile.dev
     ports:
       - "3001:3001"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development
       - PORT=3001
@@ -24,27 +26,17 @@ services:
       # File watching fixes for macOS Docker
       - CHOKIDAR_USEPOLLING=true
       - CHOKIDAR_INTERVAL=1000
-      # Connect to shared PostgreSQL (external port 5438, internal 5432)
+      # Docker-specific overrides (different from .env for container networking)
       - PG_HOST=postgres
       - PG_PORT=5432
-      - PG_USER=${DATABASE_USER:-trader_user}
-      - PG_PASSWORD=${DATABASE_PASSWORD:-dev_password_change_me}
-      - PG_DB=${DATABASE_NAME:-trade_dn}
-      - ORM_CONFIG=development
-      - BASE_DIR=/app
-      # Connect to shared Redis
       - REDIS_IP=redis
       - REDIS_PORT=6379
-      - SESSION_SECRET=local_dev_secret
+      - BASE_DIR=/app
       - DATABASE_URL=postgresql://${DATABASE_USER:-trader_user}:${DATABASE_PASSWORD:-dev_password_change_me}@postgres:5432/${DATABASE_NAME:-trade_dn}?schema=dev
-      # BASE_URL points to frontend for email templates
-      - BASE_URL=http://localhost:3030
-      - COOKIE_SECURE=false
-      # Disable Rollbar in development to prevent errors
-      - ROLLBAR_TOKEN=
-      - ENABLE_LOGS=true
       # Enable tsx watch mode optimizations
       - TSX_TSCONFIG_PATH=/app/tsconfig.json
+      # Docker-specific OTLP endpoint (container-to-container networking)
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
     volumes:
       # Bind mount source code for hot reloading (excludes node_modules for performance)
       - ./src:/app/src:cached
@@ -53,6 +45,8 @@ services:
       - ./.env:/app/.env:cached
       - ./tsconfig.json:/app/tsconfig.json:cached
       - ./ormconfig.js:/app/ormconfig.js:cached
+      # Secret files (mount as read-only)
+      - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
       # Named volume for node_modules to avoid cross-platform issues
       - node_modules_volume:/app/node_modules
       # Performance: exclude common directories that cause churn
@@ -91,6 +85,9 @@ services:
       - REDIS_IP=redis
       - REDIS_PORT=6379
       - DATABASE_URL=postgresql://${DATABASE_USER:-trader_user}:${DATABASE_PASSWORD:-dev_password_change_me}@postgres:5432/${DATABASE_NAME:-trade_dn}?schema=dev
+    volumes:
+      # Secret files (mount as read-only)
+      - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
     networks:
       - trade_machine_shared
     profiles:

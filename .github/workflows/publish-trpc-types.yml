@@ -1,0 +1,73 @@
+name: Publish tRPC Types Package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/trpc-types/**'
+      - 'src/trpc/**'
+      - 'package.json' # In case dependencies change
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@akosasante'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build main server (to generate types)
+        run: make build
+
+      - name: Build tRPC types package
+        working-directory: packages/trpc-types
+        run: |
+          npm install
+          npm run build
+
+      - name: Check if version changed
+        id: version-check
+        working-directory: packages/trpc-types
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+
+          # Check if this version already exists on npm
+          if npm view @akosasante/trpc-types@$PACKAGE_VERSION version 2>/dev/null; then
+            echo "version_exists=true" >> $GITHUB_OUTPUT
+            echo "Version $PACKAGE_VERSION already exists, skipping publish"
+          else
+            echo "version_exists=false" >> $GITHUB_OUTPUT
+            echo "Version $PACKAGE_VERSION is new, will publish"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to GitHub Package Registry
+        if: steps.version-check.outputs.version_exists == 'false'
+        working-directory: packages/trpc-types
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release Tag
+        if: steps.version-check.outputs.version_exists == 'false'
+        run: |
+          VERSION=${{ steps.version-check.outputs.package_version }}
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "trpc-types-v$VERSION" -m "Release @akosasante/trpc-types@$VERSION"
+          git push origin "trpc-types-v$VERSION" || echo "Tag already exists"

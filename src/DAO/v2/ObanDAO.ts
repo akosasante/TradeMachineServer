@@ -5,8 +5,12 @@ import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
 // Job type interfaces
 export interface EmailJobData {
-    email_type: "reset_password";
-    data: string; // user ID for reset_password
+    email_type: "reset_password" | "registration_email";
+    data: string; // user ID for reset_password and registration_email
+    trace_context?: {
+        traceparent: string;
+        tracestate?: string;
+    };
 }
 
 export interface CreateObanJobInput {
@@ -62,10 +66,28 @@ export default class ObanDAO {
     /**
      * Enqueue a password reset email job (convenience method)
      */
-    public async enqueuePasswordResetEmail(userId: string): Promise<ObanJob> {
+    public async enqueuePasswordResetEmail(
+        userId: string,
+        traceContext?: { traceparent: string; tracestate?: string }
+    ): Promise<ObanJob> {
         return this.enqueueEmailJob({
             email_type: "reset_password",
             data: userId,
+            trace_context: traceContext,
+        });
+    }
+
+    /**
+     * Enqueue a registration email job (convenience method)
+     */
+    public async enqueueRegistrationEmail(
+        userId: string,
+        traceContext?: { traceparent: string; tracestate?: string }
+    ): Promise<ObanJob> {
+        return this.enqueueEmailJob({
+            email_type: "registration_email",
+            data: userId,
+            trace_context: traceContext,
         });
     }
 
@@ -81,11 +103,7 @@ export default class ObanDAO {
     /**
      * Get jobs by queue and state (for debugging/monitoring)
      */
-    public async getJobsByQueueAndState(
-        queue: string,
-        state: oban_job_state,
-        limit = 50
-    ): Promise<ObanJob[]> {
+    public async getJobsByQueueAndState(queue: string, state: oban_job_state, limit = 50): Promise<ObanJob[]> {
         return this.obanJobsDb.findMany({
             where: {
                 queue,

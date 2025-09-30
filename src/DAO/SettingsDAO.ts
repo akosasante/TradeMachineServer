@@ -44,8 +44,7 @@ export default class SettingsDAO {
             dateCreated: undefined,
         };
 
-        const result: InsertResult = await this.settingsDb.insert(newLine as QueryDeepPartialEntity<Settings>);
-
-        return await this.settingsDb.findOneOrFail({ where: result.identifiers[0] } as FindOneOptions<Settings>);
+        const settingsEntity = this.settingsDb.create(newLine);
+        return await this.settingsDb.save(settingsEntity);
     }
 }

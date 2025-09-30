@@ -4,26 +4,14 @@ services:
     container_name: prod_trademachine
     restart: always
     network_mode: "host"
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - PORT=${PORT:-3005}
-      - IP=${IP:-0.0.0.0}
-      - ORM_CONFIG=${ORM_CONFIG:-production}
-      - APP_ENV=${APP_ENV:-production}
-      - DATABASE_URL=${DATABASE_URL}
-      - BASE_DIR=${BASE_DIR:-/app}
-      - REDIS_IP=${REDIS_IP}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - REDISPASS=${REDISPASS}
-      - SESSION_SECRET=${SESSION_SECRET}
-      - ROLLBAR_ACCESS_TOKEN=${ROLLBAR_ACCESS_TOKEN}
-      - ROLLBAR_ENVIRONMENT=${ROLLBAR_ENVIRONMENT:-production}
-      - PG_HOST=${PG_HOST:-localhost}
-      - PG_USER=${PG_USER}
-      - PG_PASSWORD=${PG_PASSWORD}
-      - PG_DB=${PG_DB}
       - HOME=/tmp
       - npm_config_cache=/tmp/.npm
+    volumes:
+      # Secret files (mount as read-only)
+      - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3005}/health"]
       interval: 30s
