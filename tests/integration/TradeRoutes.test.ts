@@ -431,7 +431,7 @@ describe("Trade API endpoints", () => {
     });
 
     describe("PUT /trades/:id/:action (accept/reject/submit a trade)", () => {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+
         type actionBody = { declinedById: string; declinedReason: string } | undefined;
         const putTradeRequest =
             (action: string, id: string, actionObj: actionBody, status = 200) =>
