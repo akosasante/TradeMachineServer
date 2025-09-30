@@ -48,7 +48,7 @@ export async function setupExpressApp(
     logger.debug("consumer setup complete");
 
     // Register routes and some global auth middlewares
-    logger.debug("setting up route-controllers");
+    logger.info("setting up route-controllers");
     const developmentOrigins = [/localhost:3030/, /localhost:3031/, /127\.0\.0\.1/, /ngrok/];
     const prodOrigins = [
         /newtrades\.akosua\.xyz/,
@@ -71,10 +71,10 @@ export async function setupExpressApp(
         authorizationChecker,
         currentUserChecker,
     });
-    logger.debug("route-controllers complete");
+    logger.info("route-controllers complete");
 
     // Set up tRPC v2 endpoints
-    logger.debug("setting up tRPC v2 routes");
+    logger.info("setting up tRPC v2 routes");
     // Fix malformed Content-Type headers before tRPC processing
     expressApp.use("/v2", (req, res, next) => {
         // Handle duplicate content-type headers that break Express JSON parsing
@@ -83,6 +83,7 @@ export async function setupExpressApp(
         }
         next();
     });
+    logger.info("tRPC v2 pre-processing complete");
 
     expressApp.use(
         "/v2",
@@ -98,7 +99,7 @@ export async function setupExpressApp(
             },
         })
     );
-    logger.debug("tRPC v2 routes complete");
+    logger.info("tRPC v2 routes complete");
 
     return expressApp;
 }
