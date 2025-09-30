@@ -8,10 +8,10 @@ import {
     addSpanAttributes,
     addSpanEvent,
     extractTraceContext
-} from "../../utils/tracing";
-import logger from "../../bootstrap/logger";
-import { rollbar } from "../../bootstrap/rollbar";
-import ObanDAO from "../../DAO/v2/ObanDAO";
+} from "../../../../utils/tracing";
+import logger from "../../../../bootstrap/logger";
+import { rollbar } from "../../../../bootstrap/rollbar";
+import ObanDAO from "../../../../DAO/v2/ObanDAO";
 
 // Input validation schemas
 const emailSchema = z.object({
