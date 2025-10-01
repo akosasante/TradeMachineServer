@@ -4,7 +4,6 @@ import { v4 as uuid } from "uuid";
 import { espnIdCounter } from "./Counter";
 
 export class TeamFactory {
-
     public static NAME = "Squirtle Squad";
 
     public static getTeamObject(name = TeamFactory.NAME, espnId = espnIdCounter(), rest = {}) {

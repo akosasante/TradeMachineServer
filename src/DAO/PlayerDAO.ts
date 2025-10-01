@@ -8,7 +8,7 @@ import {
     In,
     InsertResult,
     QueryFailedError,
-    Repository
+    Repository,
 } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import Player from "../models/player";

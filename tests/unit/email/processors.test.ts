@@ -6,7 +6,6 @@ import EmailDAO from "../../../src/DAO/EmailDAO";
 import { TradeFactory } from "../../factories/TradeFactory";
 
 jest.mock("../../../src/email/mailer", () => ({
-
     EMAILER: {
         sendPasswordResetEmail: jest.fn(),
         sendTestEmail: jest.fn(),
@@ -102,6 +101,7 @@ describe("Email queue processors", () => {
 
             "message-id": "<5d0e2800bbddbd4ed05cc56a@domain.com>",
             ts_event: 1586556782,
+            /* eslint-enable @typescript-eslint/naming-convention */
         };
         await handleWebhookResponse(webhookEvent, mockEmailDAO as unknown as EmailDAO);
         expect(mockEmailDAO.getEmailByMessageId).toHaveBeenCalledTimes(1);
