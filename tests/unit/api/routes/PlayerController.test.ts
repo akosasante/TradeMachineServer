@@ -3,7 +3,7 @@ import PlayerController from "../../../../src/api/routes/PlayerController";
 import { processMinorLeagueCsv } from "../../../../src/csv/PlayerParser";
 import PlayerDAO from "../../../../src/DAO/PlayerDAO";
 import TeamDAO from "../../../../src/DAO/TeamDAO";
-import Player, { PlayerLeagueType } from "../../../../src/models/player";
+import Player from "../../../../src/models/player";
 import { PlayerFactory } from "../../../factories/PlayerFactory";
 import { TeamFactory } from "../../../factories/TeamFactory";
 import logger from "../../../../src/bootstrap/logger";

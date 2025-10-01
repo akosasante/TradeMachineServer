@@ -14,8 +14,10 @@ import PlayerModel, { PlayerLeagueType } from "../../../src/models/player";
 
 let app: Server;
 let prismaConn: PrismaClient;
+/* eslint-disable @typescript-eslint/no-unused-vars */
 let ownerUser: User;
 let adminUser: User;
+/* eslint-enable @typescript-eslint/no-unused-vars */
 let playerDao: PlayerDAO;
 
 async function shutdown() {

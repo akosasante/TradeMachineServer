@@ -6,7 +6,7 @@ export const registerCleanupCallback = (callback: () => Promise<void>): void => 
     cleanupCallbacks.push(callback);
 };
 
-export const setupSignalHandlers = () => {
+export const setupSignalHandlers = (): void => {
     const handleExit = async (reason: string) => {
         logger.info(`Application exiting due to ${reason}`);
         for (const callback of cleanupCallbacks) {
@@ -25,7 +25,7 @@ export const setupSignalHandlers = () => {
     process.on("SIGTERM", () => void handleExit("SIGTERM"));
 };
 
-export const handleExitInTest = async () => {
+export const handleExitInTest = async (): Promise<void> => {
     logger.info("Shutting down gracefully in test environment");
     for (const callback of cleanupCallbacks) {
         try {

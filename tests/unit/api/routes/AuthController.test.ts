@@ -5,7 +5,7 @@ import { UserFactory } from "../../../factories/UserFactory";
 import logger from "../../../../src/bootstrap/logger";
 import { NotFoundError } from "routing-controllers";
 import { EmailPublisher } from "../../../../src/email/publishers";
-import { SessionData } from "express-session";
+import { SessionData as ExpressSessionData } from "express-session";
 
 declare module "express-session" {
     interface SessionData {
@@ -13,7 +13,8 @@ declare module "express-session" {
     }
 }
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return */
+type AppSessionData = ExpressSessionData;
+
 describe("AuthController", () => {
     beforeAll(() => {
         logger.debug("~~~~~~AUTH CONTROLLER TESTS BEGIN~~~~~~");
@@ -37,11 +38,10 @@ describe("AuthController", () => {
     );
     const mockReq = { session: { destroy: jest.fn() }, sessionID: "" };
 
-    /* @ts-ignore */
     const mockRes: Response = {
         status: jest.fn().mockReturnThis(),
         json: jest.fn().mockReturnThis(),
-    };
+    } as unknown as Response;
     const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {
         passwordResetToken: "xyz-uuid",
     });
@@ -58,7 +58,7 @@ describe("AuthController", () => {
     describe("login method", () => {
         it("should return the user model that logged in", async () => {
             mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
-            const res = await authController.login(mockReq as unknown as Request, mockSess as SessionData);
+            const res = await authController.login(mockReq as unknown as Request, mockSess as AppSessionData);
             expect(res).toEqual(testUser);
         });
     });
@@ -66,7 +66,7 @@ describe("AuthController", () => {
     describe("signup method", () => {
         it("should return the user model that signed in", async () => {
             mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
-            const res = await authController.signup(mockReq as unknown as Request, mockSess as SessionData);
+            const res = await authController.signup(mockReq as unknown as Request, mockSess as AppSessionData);
             expect(res).toEqual(testUser);
         });
     });
@@ -76,7 +76,7 @@ describe("AuthController", () => {
             mockReq.session.destroy.mockImplementationOnce(cb => {
                 return cb(undefined);
             });
-            const res = await authController.logout(mockReq as unknown as Request, mockSess as SessionData);
+            const res = await authController.logout(mockReq as unknown as Request, mockSess as AppSessionData);
 
             expect(mockReq.session.destroy).toHaveBeenCalledTimes(1);
             expect(mockSess.user).toBeUndefined();
@@ -85,7 +85,7 @@ describe("AuthController", () => {
             // expect(mockUserDAO.updateUser).toHaveBeenCalledWith(testUser.id, { lastLoggedIn: expect.any(Date) });
         });
         it("should resolve the promise if there is no userId on the session", async () => {
-            const res = await authController.logout(mockReq as unknown as Request, {} as SessionData);
+            const res = await authController.logout(mockReq as unknown as Request, {} as AppSessionData);
 
             expect(res).toBe(true);
             // expect(mockReq.session.destroy).toHaveBeenCalledTimes(0);
@@ -97,7 +97,7 @@ describe("AuthController", () => {
             mockReq.session.destroy.mockImplementationOnce(cb => {
                 return cb(err);
             });
-            const res = authController.logout(mockReq as unknown as Request, mockSess as SessionData);
+            const res = authController.logout(mockReq as unknown as Request, mockSess as AppSessionData);
 
             await expect(res).rejects.toEqual(err);
             // expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
@@ -206,4 +206,3 @@ describe("AuthController", () => {
         });
     });
 });
-/* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return */

@@ -17,7 +17,7 @@ describe("TeamDAO", () => {
     const testTeam = TeamFactory.getTeam();
     const teamDAO = new TeamDAO(mockTeamDb as unknown as Repository<Team>);
 
-    afterEach(async () => {
+    afterEach(() => {
         Object.values(mockTeamDb).forEach(mockFn => mockFn.mockReset());
 
         mockExecute.mockClear();

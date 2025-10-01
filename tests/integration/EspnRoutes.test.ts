@@ -67,9 +67,13 @@ describe("ESPN API endpoints", () => {
             expect(body).toBeArray();
             expect(body[0]).toContainKeys(["id", "abbrev", "name", "owners", "divisionId", "isActive"]);
         }, 10000);
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden Error if a non-admin tries to call the endpoint", async () => {
             await ownerLoggedIn(getAllRequest(2019, 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
             await getAllRequest(2019, 403)(request(app));
         });
@@ -90,14 +94,20 @@ describe("ESPN API endpoints", () => {
             expect(body[0]).toContainAllKeys(["id", "isLeagueManager", "displayName"]);
         }, 10000);
 
+        // assertion happens inside api call helper function
+
         it("should return all members in a given year", async () => {
             const { body } = await adminLoggedIn(getAllRequest(2019), app);
             expect(body).toBeArray();
             expect(body[0]).toContainAllKeys(["id", "isLeagueManager", "displayName"]);
         }, 10000);
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden Error if a non-admin tries to call the endpoint", async () => {
             await ownerLoggedIn(getAllRequest(2019, 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
             await getAllRequest(2019, 403)(request(app));
         });

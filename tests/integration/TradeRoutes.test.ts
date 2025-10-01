@@ -22,7 +22,7 @@ import {
     makePostRequest,
     makePutRequest,
     ownerLoggedIn,
-    setupOwnerAndAdminUsers
+    setupOwnerAndAdminUsers,
 } from "./helpers";
 import { v4 as uuid } from "uuid";
 import * as TradeTracker from "../../src/csv/TradeTracker";
@@ -41,8 +41,7 @@ let pickDAO: DraftPickDAO;
 let teamDAO: TeamDAO;
 let tradeDAO: TradeDAO;
 
-// @ts-ignore
-TradeTracker.appendNewTrade = jest.fn();
+jest.spyOn(TradeTracker, "appendNewTrade").mockImplementation(() => Promise.resolve());
 
 async function shutdown() {
     try {
@@ -118,7 +117,6 @@ describe("Trade API endpoints", () => {
         });
         it("should ignore any invalid properties from the object passed in", async () => {
             const testTrade = TradeFactory.getTrade();
-            // @ts-ignore
             await adminLoggedIn(postRequest({ ...testTrade.parse(), blah: "boop" }), app);
             const { body } = await getOneRequest(testTrade.id!);
 
@@ -140,6 +138,8 @@ describe("Trade API endpoints", () => {
 
             expect(body.message).toEqual(expectErrorString);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 401 Unauthorized error if a non-logged in request is used", async () => {
             const testTrade = TradeFactory.getTrade();
 
@@ -303,6 +303,8 @@ describe("Trade API endpoints", () => {
                 (ti: TradeItem) => pickIds.includes(ti.entity!.id) || playerIds.includes(ti.entity!.id)
             );
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
@@ -347,12 +349,13 @@ describe("Trade API endpoints", () => {
             expect(body).toMatchObject({
                 id: testTrade.id,
                 tradeParticipants: expect.toSatisfyAll(participant =>
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     updatedTradeParticipantIds.includes(participant.id)
                 ),
                 tradeItems: expect.toSatisfyAll(item => newItem.id === item.id),
             });
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
@@ -379,6 +382,8 @@ describe("Trade API endpoints", () => {
                 app
             );
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 401 Unauthorized error if a non-admin non-participant tries to update a trade", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
@@ -405,6 +410,8 @@ describe("Trade API endpoints", () => {
                 app
             );
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
@@ -512,12 +519,18 @@ describe("Trade API endpoints", () => {
             const { body: getAllRes } = await request(app).get("/trades").expect(200);
             expect(getAllRes).toBeArrayOfSize(0);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
             await adminLoggedIn(deleteTradeRequest(uuid(), 404), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-admin tries to delete a trade", async () => {
             await ownerLoggedIn(deleteTradeRequest(uuid(), 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await deleteTradeRequest(uuid(), 403)(request(app));
         });

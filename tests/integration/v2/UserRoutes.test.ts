@@ -5,16 +5,18 @@ import { redisClient } from "../../../src/bootstrap/express";
 import logger from "../../../src/bootstrap/logger";
 import initializeDb from "../../../src/bootstrap/prisma-db";
 import startServer from "../../../src/bootstrap/app";
-import { clearDb, clearPrismaDb, DatePatternRegex, makeGetRequest, setupOwnerAndAdminUsers } from "../helpers";
-import { PrismaClient, Prisma } from "@prisma/client";
-import User, { UserStatus, Role as UserRole } from "../../../src/models/user";
+import { clearPrismaDb, DatePatternRegex, makeGetRequest } from "../helpers";
+import { PrismaClient } from "@prisma/client";
+import User, { Role as UserRole, UserStatus } from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
 import UserDAO from "../../../src/DAO/UserDAO";
 
 let app: Server;
 let prismaConn: PrismaClient;
+/* eslint-disable @typescript-eslint/no-unused-vars */
 let ownerUser: User;
 let adminUser: User;
+/* eslint-enable @typescript-eslint/no-unused-vars */
 let userDao: UserDAO;
 
 async function shutdown() {
@@ -32,7 +34,7 @@ beforeAll(async () => {
     prismaConn = initializeDb(true);
     logger.debug("prisma conn started");
     // Create admin and owner users in db for rest of this suite's use
-    [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+    // [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
     logger.debug("users created");
 
     // TODO: Replace with Prisma dao once we've implemented creating users

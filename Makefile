@@ -4,7 +4,7 @@
 .PHONY: watch-ts-files watch-js-server dev-server dev-tsx watch-js-debug-server debug-server debug-tsx
 .PHONY: docker-dev-up docker-dev-down docker-dev-logs docker-dev-shell docker-dev-restart docker-dev-rebuild
 .PHONY: docker-infrastructure-up docker-infrastructure-down docker-infrastructure-logs docker-prod-test docker-full-setup
-.PHONY: lint lint-fix format compile-ts copy-email-templates build serve typecheck fullcheck
+.PHONY: lint lint-fix fix-all format compile-ts copy-email-templates build serve typecheck fullcheck
 .PHONY: generate-migration run-migration revert-migration
 
 help: ## show make commands
@@ -184,8 +184,11 @@ lint: ## Run typescript linting
 lint-fix: ## Attempt to fix any typescript lint errors
 	npx eslint . --ext .ts,.tsx --fix
 
-format: ## Reformat all files with Prettier (via ESLint)
-	$(MAKE) lint-fix
+fix-all: ## Fix both formatting and linting issues in one command
+	$(MAKE) format && $(MAKE) lint-fix
+
+format: ## Reformat all files with Prettier
+	npx prettier --write "src/**/*.{ts,tsx,js,jsx,json}" "tests/**/*.{ts,tsx,js,jsx,json}" "*.{ts,tsx,js,jsx,json}"
 
 # |----------- BUILD AND SERVE SCRIPTS ---------|
 compile-ts: ## Compile typescript
@@ -202,7 +205,7 @@ serve: ## Serve the node server statically (no restarting on file changes)
 typecheck: ## Check for type errors that would cause failures to build
 	npx tsc --noEmit --incremental false
 
-fullcheck: lint-fix typecheck ## Run all code quality checks (lint, format, typecheck)
+fullcheck: format lint typecheck ## Run all code quality checks (format, lint, typecheck)
 
 # |----------- DATABASE MIGRATION SCRIPTS ---------|
 generate-migration: ## Generate a new migration file with name=MIGRATION_NAME and using config for ENV

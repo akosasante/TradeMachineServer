@@ -1,4 +1,3 @@
-/* eslint-disable */
 // noinspection DuplicatedCode
 
 import Trade, { TradeStatus } from "../../models/trade";
@@ -10,11 +9,11 @@ import Player, { PlayerLeagueType } from "../../models/player";
 import Email from "../../models/email";
 import initializeDb from "../../bootstrap/db";
 import UserDAO from "../../DAO/UserDAO";
-import Team from "../../models/team";
 import User from "../../models/user";
 import { getConnection } from "typeorm";
 import axios from "axios";
 import { inspect } from "util";
+import Team from "../../models/team";
 
 interface OldPlayer {
     _id: string;
@@ -115,11 +114,11 @@ const prodOldNameToNewOwnerId: { [key: string]: string } = {
 };
 // 855 trades, 3866 trade item, 1744 participants, 93 emails, 105 draft picks, 4452 players, 20 team, 26 user
 let userDAO: UserDAO;
-const schema = process.env.ORM_CONFIG == "production" ? "public" : process.env.ORM_CONFIG;
+const schema = process.env.ORM_CONFIG === "production" ? "public" : process.env.ORM_CONFIG;
 
-async function getOwnerFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise<User> {
+async function getOwnerFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise<User & { teamId?: string }> {
     let myMapper;
-    if (process.env.ORM_CONFIG == "production" || process.env.ORM_CONFIG == "staging") {
+    if (process.env.ORM_CONFIG === "production" || process.env.ORM_CONFIG === "staging") {
         myMapper = prodOldNameToNewOwnerId;
     } else {
         myMapper = devOldNameToNewOwnerId;
@@ -132,10 +131,10 @@ async function getOwnerFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise
 SELECT * FROM "${schema}"."user" WHERE id::text = $1 LIMIT 1`,
             [myMapper[owner.name]]
         )
-    )[0];
+    )[0] as User & { teamId?: string };
 }
 
-async function getTeamFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise<Team | undefined> {
+async function getTeamFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise<string | undefined> {
     const user = await getOwnerFromOldOwner(owner);
     // console.dir(`GOT USER: ${JSON.stringify(user)} for owner ${owner.name}`)
     // if (user) {
@@ -148,8 +147,8 @@ async function getTeamFromOldOwner(owner: Pick<OldTradeOwner, "name">): Promise<
     //   console.dir(`GOT TEAM: ${JSON.stringify(teams)}`)
     //   return teams[0];
     // }
-    // @ts-ignore
-    return user["teamId"];
+
+    return user.teamId;
 }
 
 async function getLeagueLevelFromOldPick(oldPickType: string): Promise<LeagueLevel> {
@@ -158,7 +157,7 @@ async function getLeagueLevelFromOldPick(oldPickType: string): Promise<LeagueLev
         high: LeagueLevel.HIGH,
         low: LeagueLevel.LOW,
     };
-    return pickMap[oldPickType];
+    return Promise.resolve(pickMap[oldPickType]);
 }
 
 async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
@@ -180,8 +179,7 @@ async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
             id: uuid(),
             participantType: TradeParticipantType.CREATOR,
             trade,
-            // @ts-ignore
-            team: await getTeamFromOldOwner(oldTrade.sender),
+            team: (await getTeamFromOldOwner(oldTrade.sender)) as unknown as Team,
         });
 
         const recipients: TradeParticipant[] = [];
@@ -191,8 +189,8 @@ async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
                     id: uuid(),
                     participantType: TradeParticipantType.RECIPIENT,
                     trade,
-                    // @ts-ignore
-                    team: await getTeamFromOldOwner(recipient.recipient),
+
+                    team: (await getTeamFromOldOwner(recipient.recipient)) as unknown as Team,
                 })
             );
         }
@@ -210,8 +208,8 @@ async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
                 let pickId = uuid();
                 const pick = new DraftPick({
                     round: oldPick.round,
-                    // @ts-ignore
-                    originalOwner: await getTeamFromOldOwner({ name: oldPick.pick }),
+
+                    originalOwner: (await getTeamFromOldOwner({ name: oldPick.pick })) as unknown as Team,
                     type: await getLeagueLevelFromOldPick(oldPick.type),
                     season: new Date(oldTrade.expiry).getFullYear(),
                 });
@@ -239,10 +237,8 @@ async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
                         tradeItemId: pickId,
                         tradeItemType: TradeItemType.PICK,
                         trade,
-                        // @ts-ignore
-                        sender: sender,
-                        // @ts-ignore
-                        recipient: recipient,
+                        sender: sender as unknown as Team,
+                        recipient: recipient as unknown as Team,
                     })
                 );
             }
@@ -279,10 +275,8 @@ async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
                         tradeItemId: playerId,
                         tradeItemType: TradeItemType.PLAYER,
                         trade,
-                        // @ts-ignore
-                        sender: sender,
-                        // @ts-ignore
-                        recipient: recipient,
+                        sender: sender as unknown as Team,
+                        recipient: recipient as unknown as Team,
                     })
                 );
             }
@@ -319,10 +313,10 @@ async function createTrades(oldTrades: OldTrade[]): Promise<Trade[]> {
                         tradeItemId: playerId,
                         tradeItemType: TradeItemType.PLAYER,
                         trade,
-                        // @ts-ignore
-                        sender: sender,
-                        // @ts-ignore
-                        recipient: recipient,
+
+                        sender: sender as unknown as Team,
+
+                        recipient: recipient as unknown as Team,
                     })
                 );
             }
@@ -350,12 +344,12 @@ async function fetchOldTrades(): Promise<{ data: { result: OldTrade[] } }> {
 async function createAndInsertTrades(trades: OldTrade[]) {
     const newFFTrades = await createTrades(trades);
     console.log(inspect(newFFTrades[0]));
-    // @ts-ignore
+
     return await getConnection(process.env.ORM_CONFIG).getRepository("Trade").save(newFFTrades, { chunk: 15 });
 }
 
 async function run() {
-    console.log("RUNNING SCRIPT IN ENV: " + process.env.ORM_CONFIG);
+    console.log(`RUNNING SCRIPT IN ENV: ${process.env.ORM_CONFIG}`);
     await initializeDb(true);
     userDAO = new UserDAO();
 
@@ -518,7 +512,6 @@ async function run() {
 
 run()
     .then(res => {
-        // @ts-ignore
         console.log(inspect(res[0]));
         process.exit(0);
     })
@@ -526,4 +519,3 @@ run()
         console.error(err);
         process.exit(99);
     });
-/* eslint-enable */

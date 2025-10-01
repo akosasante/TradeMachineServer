@@ -13,7 +13,7 @@ import {
     makeGetRequest,
     makePostRequest,
     ownerLoggedIn,
-    setupOwnerAndAdminUsers
+    setupOwnerAndAdminUsers,
 } from "./helpers";
 import startServer from "../../src/bootstrap/app";
 import { getConnection } from "typeorm";
@@ -157,9 +157,13 @@ describe("Settings API endpoints for general settings", () => {
             expect(returnedSetting).toMatchObject(expectedTestSettings);
         });
 
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {
             await ownerLoggedIn(getAllRequest(403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await getAllRequest(403)(request(app));
         });
@@ -181,9 +185,13 @@ describe("Settings API endpoints for general settings", () => {
             expect(body).toMatchObject(mergedSettings);
         });
 
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {
             await ownerLoggedIn(getRecentRequest(403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await getRecentRequest(403)(request(app));
         });
@@ -205,9 +213,13 @@ describe("Settings API endpoints for general settings", () => {
             expect(body).toMatchObject(expectedTestSettings);
         });
 
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {
             await ownerLoggedIn(getOneRequest(testSettings.id!, 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await getOneRequest(testSettings.id!, 403)(request(app));
         });
@@ -240,7 +252,7 @@ describe("Settings API endpoints for general settings", () => {
                 } as Partial<Settings>),
                 app
             );
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
             const { body } = await adminLoggedIn(getOneRequest(createBody.id), app);
 
             expect(body).toMatchObject(expectedTestSettings2);
@@ -254,7 +266,6 @@ describe("Settings API endpoints for general settings", () => {
         });
         it("should unset any fields that are passed in with a value of null", async () => {
             await settingsDAO.insertNewSettings(testSettings);
-            // @ts-ignore
             // tslint:disable-next-line:no-null-keyword
             const { body } = await adminLoggedIn(postRequest({ ...testSettings2.parse(), tradeWindowEnd: null }), app);
 
@@ -274,9 +285,13 @@ describe("Settings API endpoints for general settings", () => {
             );
             expect(body.message).toEqual(expectErrorString);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {
             await ownerLoggedIn(postRequest({ ...testSettings.parse() }, 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await postRequest(testSettings.parse(), 403)(request(app));
         });

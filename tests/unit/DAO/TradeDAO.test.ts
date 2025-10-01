@@ -1,5 +1,5 @@
 import "jest-extended";
-import { FindOperator, Repository, Raw } from "typeorm";
+import { FindOperator, Repository } from "typeorm";
 import TradeDAO from "../../../src/DAO/TradeDAO";
 import { TradeFactory } from "../../factories/TradeFactory";
 import { TeamFactory } from "../../factories/TeamFactory";

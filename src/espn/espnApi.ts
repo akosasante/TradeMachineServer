@@ -103,25 +103,25 @@ interface EspnPlayerInfo {
     active?: boolean;
 }
 
-interface EspnPlayerPoolEntry {
-    player: EspnPlayerInfo;
-    keeperValue: number;
-    keeperValueFuture: number;
-    onTeamId: number;
-    id: number;
-    appliedStatTotal: number;
-    status: string; // "ONTEAM"|"FREEAGENT" idk what else, maybe waivers?
-}
+// interface EspnPlayerPoolEntry {
+//     player: EspnPlayerInfo;
+//     keeperValue: number;
+//     keeperValueFuture: number;
+//     onTeamId: number;
+//     id: number;
+//     appliedStatTotal: number;
+//     status: string; // "ONTEAM"|"FREEAGENT" idk what else, maybe waivers?
+// }
 
-interface EspnOwnedPlayer {
-    lineupSlotId?: number;
-    playerId?: number;
-    status?: string;
-    injuryStatus?: string;
-    playerPoolEntry?: EspnPlayerPoolEntry;
-    acquisitionDate?: any;
-    acquisitionType?: any;
-}
+// interface EspnOwnedPlayer {
+//     lineupSlotId?: number;
+//     playerId?: number;
+//     status?: string;
+//     injuryStatus?: string;
+//     playerPoolEntry?: EspnPlayerPoolEntry;
+//     acquisitionDate?: any;
+//     acquisitionType?: any;
+// }
 
 export interface EspnMajorLeaguePlayer {
     id: number;
