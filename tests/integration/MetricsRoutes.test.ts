@@ -146,7 +146,7 @@ describe("Metrics API endpoint", () => {
 
             // register a new user to create a session
             const user = createAdminUser();
-            const res = await registerUser(user, new v2UserDAO(prismaConn.user));
+            await registerUser(user, new v2UserDAO(prismaConn.user));
             await agent.post("/auth/login").send({ email: user.email, password: "testing123" }).expect(200);
 
             const afterLoginMetricsResponse = await agent.get("/metrics").expect(200);

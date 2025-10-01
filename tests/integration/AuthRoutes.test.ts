@@ -79,6 +79,8 @@ describe("Auth API endpoints", () => {
             const updatedUser = await userDAO.findUserWithPasswordByEmail(testUser.email);
             expect(updatedUser!.password).toBeDefined();
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should not allow signing up with the same email for an existing user that already has a password", async () => {
             const hashedPass = await generateHashedPassword(testUser.password);
             await userDAO.createUsers([{ email: testUser.email, password: hashedPass }]);
@@ -158,6 +160,8 @@ describe("Auth API endpoints", () => {
         it("should successfully 'logout' a non-initialized session", async () => {
             await request(app).post("/auth/logout").expect(200);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should successfully logout the user and/ destroy session data", async () => {
             await makeLoggedInRequest(request.agent(app), testUser.email, testUser.password, logoutFunc);
         });
@@ -227,6 +231,7 @@ describe("Auth API endpoints", () => {
             return await userDAO.createUsers([{ email: testUser.email, password: hashedPass }]);
         });
 
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 200 if a logged in user calls the endpoint", async () => {
             await makeLoggedInRequest(request.agent(app), testUser.email, testUser.password, sessionCheckFn);
         });

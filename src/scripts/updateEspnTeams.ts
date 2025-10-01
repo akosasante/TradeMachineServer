@@ -1,4 +1,3 @@
-/* eslint-disable */
 import initializeDb from "../bootstrap/db";
 import EspnAPI from "../espn/espnApi";
 import TeamDAO from "../DAO/TeamDAO";
@@ -20,4 +19,3 @@ run()
         console.error(err);
         process.exit(99);
     });
-/* eslint-enable */

@@ -6,18 +6,26 @@ import { faker } from "@faker-js/faker";
 export class PlayerFactory {
     public static NAME = "Honus Wiener";
 
-    public static getPlayerObject(name = PlayerFactory.NAME, league = PlayerLeagueType.MINOR, rest = {}) {
+    public static getPlayerObject(
+        name = PlayerFactory.NAME,
+        league = PlayerLeagueType.MINOR,
+        rest = {}
+    ): {
+        name: string;
+        league: PlayerLeagueType;
+        id: string;
+    } {
         return { name, league, id: uuid(), ...rest };
     }
 
-    public static getPlayer(name = PlayerFactory.NAME, league = PlayerLeagueType.MINOR, rest = {}) {
+    public static getPlayer(name = PlayerFactory.NAME, league = PlayerLeagueType.MINOR, rest = {}): Player {
         return new Player(PlayerFactory.getPlayerObject(name, league, rest));
     }
 
     public static getPrismaPlayer(
         name = faker.name.fullName(),
         league = PlayerLeagueLevel.MINORS,
-        rest = {}
+        _rest = {}
     ): PrismaPlayer {
         return {
             id: uuid(),

@@ -6,7 +6,6 @@ import startServer from "../../src/bootstrap/app";
 import { clearPrismaDb } from "./helpers";
 import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
 import UserDAO from "../../src/DAO/v2/UserDAO";
-import { inspect } from "util";
 
 let app: Server;
 let userDAO: UserDAO;
@@ -81,7 +80,7 @@ describe("tRPC API endpoints", () => {
         //     });
         //
         //     logger.debug("tHIS IS AFtER THE REQUEST");
-        //     logger.debug(inspect(userDAO, {depth: 1}));
+        //     logger.debug(inspect(userDAO, { depth: 1 }));
         //
         //     // Verify the user's password expiry was updated
         //     const updatedUser = await userDAO.findUserWithPasswordByEmail(testUser.email);

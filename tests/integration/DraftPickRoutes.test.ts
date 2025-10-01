@@ -20,7 +20,7 @@ import {
     makePutRequest,
     ownerLoggedIn,
     setupOwnerAndAdminUsers,
-    stringifyQuery
+    stringifyQuery,
 } from "./helpers";
 import { v4 as uuid } from "uuid";
 import startServer from "../../src/bootstrap/app";
@@ -107,7 +107,7 @@ describe("Pick API endpoints", () => {
                 ]),
                 app
             );
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
             const { body: getBody } = await getOneRequest(body[0].id);
 
             expect(getBody).toMatchObject(testPick1);
@@ -118,12 +118,16 @@ describe("Pick API endpoints", () => {
 
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to create a pick", async () => {
             const testPick1 = DraftPickFactory.getPick();
             await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
 
             await ownerLoggedIn(postRequest([testPick1.parse()], 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             const testPick1 = DraftPickFactory.getPick();
             await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
@@ -218,6 +222,8 @@ describe("Pick API endpoints", () => {
             expect(body).toBeObject();
             expect(body).toMatchObject({ ...picks[0], originalOwner: expect.toBeObject() });
         });
+        // assertion happens inside getOneRequest
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no pick with that ID", async () => {
             await getOneRequest(uuid(), 404);
         });
@@ -237,6 +243,8 @@ describe("Pick API endpoints", () => {
             expect(body).toBeArrayOfSize(1);
             expect(body).toMatchObject([{ ...picks[1], originalOwner: expect.toBeObject() }]);
         });
+        // assertion happens inside findRequest
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 error if no pick with that query is found", async () => {
             await findRequest({ round: 4 }, 404);
         });
@@ -275,12 +283,18 @@ describe("Pick API endpoints", () => {
             expect(getOneBody).toMatchObject(testPick1);
             expect(getOneBody.blah).toBeUndefined();
         });
+        // assertion happens inside putRequest
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no pick with that ID", async () => {
             await adminLoggedIn(putRequest(uuid(), updatedPickObj, 404), app);
         });
+        // assertion happens inside putRequest
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-admin tries to update a pick", async () => {
             await ownerLoggedIn(putRequest(uuid(), updatedPickObj, 403), app);
         });
+        // assertion happens inside putRequest
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await putRequest(uuid(), updatedPickObj, 403)(request(app));
         });
@@ -430,12 +444,18 @@ describe("Pick API endpoints", () => {
             const allPicksAfter = await pickDAO.getAllPicks(true);
             expect(allPicksAfter).toBeArrayOfSize(33);
         });
+        // assertion happens inside requestWithoutFile
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 400 Bad Request if no file is passed in", async () => {
             await adminLoggedIn(requestWithoutFile("overwrite", 400), app);
         });
+        // assertion happens inside postFileRequest
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to upload new picks", async () => {
             await ownerLoggedIn(postFileRequest(csv1, "overwrite", 403), app);
         });
+        // assertion happens inside postFileRequest
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged-in request is used", async () => {
             await postFileRequest(csv1, "overwrite", 403)(request(app));
         });

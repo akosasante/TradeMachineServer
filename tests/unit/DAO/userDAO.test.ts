@@ -3,7 +3,7 @@ import UserDAO from "../../../src/DAO/UserDAO";
 import User from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
 import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
-import { Repository, FindOperator } from "typeorm";
+import { Repository } from "typeorm";
 
 describe("UserDAO", () => {
     const mockUserDb: MockObj = {
@@ -18,7 +18,7 @@ describe("UserDAO", () => {
     const testUser = UserFactory.getUser();
     const userDAO: UserDAO = new UserDAO(mockUserDb as unknown as Repository<User>);
 
-    afterEach(async () => {
+    afterEach(() => {
         Object.values(mockUserDb).forEach(mockFn => mockFn.mockReset());
 
         mockExecute.mockClear();

@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 import { Connection } from "typeorm";
 import User, { Role, UserStatus } from "../../models/user";
 import initializeDb from "../../bootstrap/db";
@@ -49,5 +47,3 @@ async function main() {
 }
 
 main().catch(console.error);
-
-/* eslint-enable */

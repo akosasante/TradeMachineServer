@@ -196,6 +196,7 @@ describe("Messenger API endpoints", () => {
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
+
         it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const declinedTrade = await createTradeOfStatus(TradeStatus.REJECTED, {
                 declinedById: ownerUser.id,
@@ -257,6 +258,7 @@ describe("Messenger API endpoints", () => {
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
+
         it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const submittedTrade = await createTradeOfStatus(TradeStatus.SUBMITTED);
 
@@ -315,6 +317,7 @@ describe("Messenger API endpoints", () => {
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
+
         it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const acceptedTrade = await createTradeOfStatus(TradeStatus.ACCEPTED);
 

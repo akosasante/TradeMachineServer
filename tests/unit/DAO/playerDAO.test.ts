@@ -189,10 +189,9 @@ describe("PlayerDAO", () => {
         const defaultCacheTimeout = 60000;
         const leagueId = 1;
         const order = { name: "ASC" };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         const expectedWhere = { name: expect.objectContaining({ _value: `%${queryName}%` }), league: leagueId };
         const expectedOptions = {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             where: expect.objectContaining(expectedWhere),
             take: defaultLimit,
             cache: defaultCacheTimeout,

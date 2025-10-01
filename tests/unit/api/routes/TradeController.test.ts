@@ -9,26 +9,11 @@ import { UserFactory } from "../../../factories/UserFactory";
 import { BadRequestError, UnauthorizedError } from "routing-controllers";
 import { TeamFactory } from "../../../factories/TeamFactory";
 import { TradeItemType } from "../../../../src/models/tradeItem";
-import * as TradeTracker from "../../../../src/csv/TradeTracker";
 import { HydratedTrade } from "../../../../src/models/views/hydratedTrades";
+import { mockDeep } from "jest-mock-extended";
 
 describe("TradeController", () => {
-    const mockTradeDAO = {
-        getAllTrades: jest.fn(),
-        getTradeById: jest.fn(),
-        hydrateTrade: jest.fn(),
-        createTrade: jest.fn(),
-        updateStatus: jest.fn(),
-        updateParticipants: jest.fn(),
-        updateItems: jest.fn(),
-        updateDeclinedBy: jest.fn(),
-        deleteTrade: jest.fn(),
-        updateAcceptedBy: jest.fn(),
-        returnHydratedTrades: jest.fn(),
-    };
-
-    // @ts-ignore
-    TradeTracker.appendNewTrade = jest.fn();
+    const mockTradeDAO = mockDeep<TradeDAO>({});
 
     const testTrade = TradeFactory.getTrade();
     const creator = testTrade.tradeParticipants?.find(part => part.participantType === TradeParticipantType.CREATOR);
@@ -44,7 +29,7 @@ describe("TradeController", () => {
     beforeAll(() => {
         logger.debug("~~~~~~TRADE CONTROLLER TESTS BEGIN~~~~~~");
     });
-    afterAll(async () => {
+    afterAll(() => {
         logger.debug("~~~~~~TRADE CONTROLLER TESTS COMPLETE~~~~~~");
     });
     afterEach(() => {
@@ -542,7 +527,7 @@ describe("TradeController", () => {
 
     describe("deleteTrade method", () => {
         it("should delete a trade by id from the db", async () => {
-            mockTradeDAO.deleteTrade.mockResolvedValueOnce({ raw: [{ id: testTrade.id }], affected: 1 });
+            mockTradeDAO.deleteTrade.mockResolvedValueOnce({ raw: [{ id: testTrade.id! } as Trade], affected: 1 });
             const res = await tradeController.deleteTrade(testTrade.id!);
 
             expect(mockTradeDAO.deleteTrade).toHaveBeenCalledTimes(1);

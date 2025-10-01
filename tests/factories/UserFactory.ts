@@ -9,15 +9,13 @@ export class UserFactory {
     public static OWNER_EMAIL = "owner@example+test.com";
     public static GENERIC_NAME = "John Smith";
 
-    /* eslint-enable @typescript-eslint/naming-convention */
-
     public static getUserObject(
         email = UserFactory.TEST_EMAIL,
         displayName = UserFactory.GENERIC_NAME,
         password = UserFactory.GENERIC_PASSWORD,
         role = Role.ADMIN,
         rest = {}
-    ) {
+    ): { id: string; email: string; displayName: string; password: string; role: Role } {
         return { id: uuid(), email, displayName, password, role, ...rest };
     }
 
@@ -54,19 +52,19 @@ export class UserFactory {
         password = UserFactory.GENERIC_PASSWORD,
         role = Role.ADMIN,
         rest = {}
-    ) {
+    ): User {
         return new User(UserFactory.getUserObject(email, displayName, password, role, rest));
     }
 
-    public static getAdminUser() {
+    public static getAdminUser(): User {
         return UserFactory.getUser(UserFactory.ADMIN_EMAIL, undefined, undefined, Role.ADMIN);
     }
 
-    public static getOwnerUser() {
+    public static getOwnerUser(): User {
         return UserFactory.getUser(UserFactory.OWNER_EMAIL, undefined, undefined, Role.OWNER);
     }
 
-    public static getPasswordlessOwner() {
+    public static getPasswordlessOwner(): User {
         return new User({ email: UserFactory.OWNER_EMAIL, displayName: "Len Mitch", role: Role.OWNER });
     }
 }
