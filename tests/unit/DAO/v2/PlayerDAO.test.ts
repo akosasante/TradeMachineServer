@@ -3,7 +3,7 @@ import { PlayerFactory } from "../../../factories/PlayerFactory";
 import { mockDeep, mockClear } from "jest-mock-extended";
 import PlayerDAO from "../../../../src/DAO/v2/PlayerDAO";
 import logger from "../../../../src/bootstrap/logger";
-import {ExtendedPrismaClient} from "../../../../src/bootstrap/prisma-db";
+import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
 
 describe("[PRISMA] PlayerDAO", () => {
     const testPlayer: Player = PlayerFactory.getPrismaPlayer();
