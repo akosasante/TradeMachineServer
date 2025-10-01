@@ -10,7 +10,7 @@ import { BadRequestError, UnauthorizedError } from "routing-controllers";
 import { TeamFactory } from "../../../factories/TeamFactory";
 import { TradeItemType } from "../../../../src/models/tradeItem";
 import { HydratedTrade } from "../../../../src/models/views/hydratedTrades";
-import {mockClear, mockDeep} from "jest-mock-extended";
+import { mockClear, mockDeep } from "jest-mock-extended";
 
 describe("TradeController", () => {
     const mockTradeDAO = mockDeep<TradeDAO>();

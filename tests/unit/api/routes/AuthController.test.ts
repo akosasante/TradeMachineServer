@@ -97,7 +97,10 @@ describe("AuthController", () => {
     describe("resetPassword method", () => {
         it("should return a successful response and update user", async () => {
             const date = new Date(Date.now() + 30 * 60 * 1000); // half an hour from now
-            mockUserDAO.getUserById.mockResolvedValueOnce({ ...testUser, passwordResetExpiresOn: date } as unknown as User);
+            mockUserDAO.getUserById.mockResolvedValueOnce({
+                ...testUser,
+                passwordResetExpiresOn: date,
+            } as unknown as User);
             await authController.resetPassword(testUser.id!, "lol2", "xyz-uuid", mockRes);
             const expectedUserUpdateObj = {
                 password: expect.any(String),
