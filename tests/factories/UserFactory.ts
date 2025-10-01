@@ -10,6 +10,8 @@ export class UserFactory {
     public static OWNER_EMAIL = "owner@example+test.com";
     public static GENERIC_NAME = "John Smith";
 
+    /* eslint-enable @typescript-eslint/naming-convention */
+
     public static getUserObject(
         email = UserFactory.TEST_EMAIL,
         displayName = UserFactory.GENERIC_NAME,
