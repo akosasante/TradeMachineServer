@@ -184,8 +184,8 @@ lint: ## Run typescript linting
 lint-fix: ## Attempt to fix any typescript lint errors
 	npx eslint . --ext .ts,.tsx --fix
 
-format: ## Reformat all files wih Prettier
-	 npx prettier --write "src/**/*.ts" &&  npx prettier --write "tests/**/*.ts"
+format: ## Reformat all files with Prettier (via ESLint)
+	$(MAKE) lint-fix
 
 # |----------- BUILD AND SERVE SCRIPTS ---------|
 compile-ts: ## Compile typescript
@@ -202,7 +202,7 @@ serve: ## Serve the node server statically (no restarting on file changes)
 typecheck: ## Check for type errors that would cause failures to build
 	npx tsc --noEmit --incremental false
 
-fullcheck: lint-fix typecheck format lint
+fullcheck: lint-fix typecheck ## Run all code quality checks (lint, format, typecheck)
 
 # |----------- DATABASE MIGRATION SCRIPTS ---------|
 generate-migration: ## Generate a new migration file with name=MIGRATION_NAME and using config for ENV

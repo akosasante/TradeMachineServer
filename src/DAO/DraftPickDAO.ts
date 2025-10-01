@@ -6,7 +6,7 @@ import {
     In,
     InsertResult,
     Repository,
-    FindOneOptions
+    FindOneOptions,
 } from "typeorm";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { v4 as uuidv4 } from "uuid";

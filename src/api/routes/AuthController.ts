@@ -9,7 +9,7 @@ import {
     Req,
     Res,
     Session,
-    UseBefore
+    UseBefore,
 } from "routing-controllers";
 import { deserializeUser, generateHashedPassword, passwordResetDateIsValid } from "../../authentication/auth";
 import logger from "../../bootstrap/logger";
@@ -29,7 +29,7 @@ import {
     finishSpanWithStatusCode,
     addSpanAttributes,
     addSpanEvent,
-    extractTraceContext
+    extractTraceContext,
 } from "../../utils/tracing";
 import { context } from "@opentelemetry/api";
 

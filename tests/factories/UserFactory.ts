@@ -3,7 +3,6 @@ import { User as PrismaUser, UserRole } from "@prisma/client";
 import { v4 as uuid } from "uuid";
 
 export class UserFactory {
-    /* eslint-disable @typescript-eslint/naming-convention */
     public static TEST_EMAIL = "test@example+test.com";
     public static GENERIC_PASSWORD = "lol";
     public static ADMIN_EMAIL = "admin@example+test.com";

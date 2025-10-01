@@ -13,7 +13,7 @@ describe("Player Class", () => {
 
     const playerObj = PlayerFactory.getPlayerObject();
     const player = new Player(playerObj);
-    /* eslint-disable @typescript-eslint/naming-convention */
+
     const espnPlayer = {
         id: 2966,
         lineupLocked: true,
