@@ -23,7 +23,7 @@ describe("EmailDAO", () => {
 
     it("getEmailByMessageId - should call the db findOne once with id", async () => {
         mockEmailDb.findOne.mockResolvedValueOnce(testEmail);
-        const res = await emailDAO.getEmailByMessageId(testEmail.messageId);
+        const res = await emailDAO.getEmailByMessageId(testEmail.messageId!);
 
         expect(mockEmailDb.findOne).toHaveBeenCalledTimes(1);
         expect(mockEmailDb.findOne).toHaveBeenCalledWith({ where: { messageId: testEmail.messageId } });
