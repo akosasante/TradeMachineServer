@@ -1,7 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import { Request, Response } from "express";
 import { Session } from "express-session";
-import { context } from "@opentelemetry/api";
+import { context, Span } from "@opentelemetry/api";
 import { ExtendedPrismaClient } from "../../../bootstrap/prisma-db";
 import Users from "../../../DAO/v2/UserDAO";
 import {
@@ -81,3 +81,86 @@ export const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
         }
     });
 });
+
+/**
+ * Utility function to map TRPCError codes to HTTP status codes
+ */
+const getTRPCErrorStatusCode = (error: TRPCError): number => {
+    switch (error.code) {
+        case "BAD_REQUEST":
+            return 400;
+        case "UNAUTHORIZED":
+            return 401;
+        case "FORBIDDEN":
+            return 403;
+        case "NOT_FOUND":
+            return 404;
+        case "METHOD_NOT_SUPPORTED":
+            return 405;
+        case "TIMEOUT":
+            return 408;
+        case "CONFLICT":
+            return 409;
+        case "PRECONDITION_FAILED":
+            return 412;
+        case "PAYLOAD_TOO_LARGE":
+            return 413;
+        case "UNPROCESSABLE_CONTENT":
+            return 422;
+        case "TOO_MANY_REQUESTS":
+            return 429;
+        case "CLIENT_CLOSED_REQUEST":
+            return 499;
+        case "INTERNAL_SERVER_ERROR":
+        default:
+            return 500;
+    }
+};
+
+/**
+ * Higher-order function that wraps tRPC procedure handlers with distributed tracing.
+ * Automatically handles span creation, context management, and error handling.
+ *
+ * @param operationName - The name of the operation for tracing (e.g., "trpc.auth.login")
+ * @param handler - The actual procedure handler function
+ * @returns A wrapped handler function with tracing
+ */
+export const withTracing = <TInput, TOutput>(
+    operationName: string,
+    handler: (
+        input: TInput,
+        ctx: Context,
+        span: Span,
+        traceContext: any
+    ) => Promise<TOutput>
+) => {
+    return async ({ input, ctx }: { input: TInput; ctx: Context }): Promise<TOutput> => {
+        const { span, context: traceContext } = createSpanFromRequest(operationName, ctx.req);
+
+        return await context.with(traceContext, async () => {
+            try {
+                const result = await handler(input, ctx, span, traceContext);
+                finishSpanWithStatusCode(span, 200);
+                return result;
+            } catch (error) {
+                const operationShortName = operationName.split('.').pop() || 'operation';
+
+                addSpanEvent(`${operationShortName}.error`, {
+                    error: error instanceof Error ? error.message : "Unknown error",
+                });
+
+                if (error instanceof TRPCError) {
+                    const statusCode = getTRPCErrorStatusCode(error);
+                    finishSpanWithStatusCode(span, statusCode);
+                    throw error;
+                }
+
+                finishSpanWithStatusCode(span, 500);
+                throw new TRPCError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: error instanceof Error ? error.message : "An unexpected error occurred",
+                });
+            }
+        });
+    };
+};
