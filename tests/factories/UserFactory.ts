@@ -1,5 +1,6 @@
 import User, { Role } from "../../src/models/user";
-import { User as PrismaUser, UserRole } from "@prisma/client";
+import type { User as PrismaUser } from "../../src/DAO/v2/UserDAO";
+import { UserRole } from "@prisma/client";
 import { v4 as uuid } from "uuid";
 
 export class UserFactory {
@@ -43,7 +44,7 @@ export class UserFactory {
             espnMember: null,
             teamId: null,
             ...rest,
-        };
+        } as PrismaUser;
     }
 
     public static getUser(

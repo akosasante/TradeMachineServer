@@ -1,6 +1,7 @@
 import DraftPick, { LeagueLevel } from "../../src/models/draftPick";
 import { v4 as uuid } from "uuid";
 import { TeamFactory } from "./TeamFactory";
+import Team from "../../src/models/team";
 
 export class DraftPickFactory {
     public static getPickObject(

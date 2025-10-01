@@ -3,7 +3,7 @@ import { exclude } from "./helpers";
 import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 import * as crypto from "node:crypto";
 
-type User = Prisma.Result<ExtendedPrismaClient["user"], Record<string, unknown>, "findFirstOrThrow">;
+export type User = Prisma.Result<ExtendedPrismaClient["user"], Record<string, unknown>, "findFirstOrThrow">;
 export type PublicUser = Omit<User, "password">;
 
 export default class UserDAO {

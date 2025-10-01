@@ -17,7 +17,7 @@ afterAll(() => {
     logger.debug("~~~~~~SLACK QUEUE PROCESSORS TESTS COMPLETE~~~~~~");
 });
 afterEach(() => {
-    Object.values(mockSlackAnnouncer).forEach(mockFn => mockFn.mockReset());
+    jest.clearAllMocks();
 });
 
 describe("Slack queue processors", () => {

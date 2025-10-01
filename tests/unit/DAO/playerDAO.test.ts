@@ -1,28 +1,19 @@
-import { Repository } from "typeorm";
+import { Repository, SelectQueryBuilder } from "typeorm";
+import { mockDeep } from "jest-mock-extended";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import Player, { PlayerLeagueType } from "../../../src/models/player";
 import { PlayerFactory } from "../../factories/PlayerFactory";
-import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
+import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 import logger from "../../../src/bootstrap/logger";
 
 describe("PlayerDAO", () => {
-    const mockPlayerDb: MockObj = {
-        find: jest.fn(),
-        findOne: jest.fn(),
-        findOneOrFail: jest.fn(),
-        save: jest.fn(),
-        insert: jest.fn(),
-        update: jest.fn(),
-        remove: jest.fn(),
-        createQueryBuilder: jest.fn(),
-    };
+    const mockPlayerDb = mockDeep<Repository<Player>>();
 
     const testPlayer1 = PlayerFactory.getPlayer();
     const playerDAO: PlayerDAO = new PlayerDAO(mockPlayerDb as unknown as Repository<Player>);
 
     afterEach(() => {
-        Object.values(mockPlayerDb).forEach(mockFn => mockFn.mockReset());
-
+        jest.clearAllMocks();
         mockExecute.mockClear();
         mockWhereInIds.mockClear();
     });
@@ -73,29 +64,16 @@ describe("PlayerDAO", () => {
     });
 
     it("createPlayer - should call the db save once with playerObj", async () => {
-        mockPlayerDb.insert.mockResolvedValueOnce({
-            identifiers: [{ id: testPlayer1.id! }],
-            generatedMaps: [],
-            raw: [],
-        });
-        mockPlayerDb.find.mockResolvedValueOnce(testPlayer1);
+        mockPlayerDb.create.mockReturnValue(testPlayer1);
+        mockPlayerDb.save.mockResolvedValueOnce([testPlayer1] as unknown as Player);
         const res = await playerDAO.createPlayers([testPlayer1]);
 
-        expect(mockPlayerDb.insert).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.insert).toHaveBeenCalledWith([testPlayer1.parse()]);
-        expect(mockPlayerDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPlayerDb.find).toHaveBeenCalledWith({
-            where: {
-                id: expect.objectContaining({
-                    _multipleParameters: true,
-                    _type: "in",
-                    _useParameter: true,
-                    _value: [testPlayer1.id],
-                }),
-            },
-        });
+        expect(mockPlayerDb.create).toHaveBeenCalledTimes(1);
+        expect(mockPlayerDb.create).toHaveBeenCalledWith(testPlayer1);
+        expect(mockPlayerDb.save).toHaveBeenCalledTimes(1);
+        expect(mockPlayerDb.save).toHaveBeenCalledWith([testPlayer1]);
 
-        expect(res).toEqual(testPlayer1);
+        expect(res).toEqual([testPlayer1]);
     });
 
     it("updatePlayer - should call the db update and findOneOrFail once with id and teamObj", async () => {
@@ -111,7 +89,7 @@ describe("PlayerDAO", () => {
 
     it("deletePlayer - should call the db delete once with id", async () => {
         mockPlayerDb.findOneOrFail.mockResolvedValueOnce(testPlayer1);
-        mockPlayerDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+        mockPlayerDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain as unknown as SelectQueryBuilder<Player>);
         const deleteResult = { affected: 1, raw: { id: testPlayer1.id! } };
         mockExecute.mockResolvedValueOnce(deleteResult);
         const res = await playerDAO.deletePlayer(testPlayer1.id!);
@@ -147,7 +125,7 @@ describe("PlayerDAO", () => {
     });
 
     it("batchCreatePlayers - should call the db save once with playerObjs", async () => {
-        mockPlayerDb.save.mockResolvedValueOnce([testPlayer1]);
+        mockPlayerDb.save.mockResolvedValueOnce([testPlayer1] as unknown as Player);
         const res = await playerDAO.batchCreatePlayers([testPlayer1]);
 
         expect(mockPlayerDb.save).toHaveBeenCalledTimes(1);
@@ -159,7 +137,9 @@ describe("PlayerDAO", () => {
         const mockOnConflict = jest.fn().mockReturnValue({ execute: mockExecute });
         const mockValues = jest.fn().mockReturnValue({ onConflict: mockOnConflict });
         const mockInsertChain = jest.fn().mockReturnValue({ values: mockValues });
-        mockPlayerDb.createQueryBuilder.mockReturnValueOnce({ insert: mockInsertChain });
+        mockPlayerDb.createQueryBuilder.mockReturnValueOnce({
+            insert: mockInsertChain,
+        } as unknown as SelectQueryBuilder<Player>);
         mockExecute.mockResolvedValueOnce({ identifiers: [{ id: testPlayer1.id! }], generatedMaps: [], raw: [] });
         mockPlayerDb.find.mockResolvedValueOnce([testPlayer1]);
 
