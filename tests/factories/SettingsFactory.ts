@@ -9,7 +9,6 @@ export class SettingsFactory {
     public static DEFAULT_DOWNTIME_START = new Date("January 1 2019 5:00");
     public static DEFAULT_DOWNTIME_END = new Date("February 1 2019 5:00");
     public static DEFAULT_DOWNTIME_REASON = "off-season";
-    /* eslint-enable @typescript-eslint/naming-convention */
 
     public static getSettingsObject(
         modifiedBy: User = UserFactory.getUser(),
