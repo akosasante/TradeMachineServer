@@ -3,19 +3,21 @@ import Bull from "bull";
 import { UserFactory } from "../../factories/UserFactory";
 import logger from "../../../src/bootstrap/logger";
 import { TradeFactory } from "../../factories/TradeFactory";
+import { mockDeep } from "jest-mock-extended";
+import { clearJobMetricsIntervals } from "../../../src/scheduled_jobs/metrics";
 
-const mockQueue = {
-    add: jest.fn(),
-};
+const mockQueue = mockDeep<Bull.Queue>();
 
 beforeAll(() => {
     logger.debug("~~~~~~EMAIL PUBLISHER TESTS BEGIN~~~~~~");
 });
 afterAll(() => {
+    // Clear job metrics intervals to prevent Jest from hanging
+    clearJobMetricsIntervals();
     logger.debug("~~~~~~EMAIL PUBLISHER COMPLETE~~~~~~");
 });
 afterEach(() => {
-    mockQueue.add.mockReset();
+    jest.clearAllMocks();
 });
 
 describe("EmailPublisher", () => {

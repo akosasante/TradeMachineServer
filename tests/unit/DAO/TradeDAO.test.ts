@@ -1,9 +1,10 @@
 import "jest-extended";
 import { FindOperator, Repository } from "typeorm";
+import { mockDeep } from "jest-mock-extended";
 import TradeDAO from "../../../src/DAO/TradeDAO";
 import { TradeFactory } from "../../factories/TradeFactory";
 import { TeamFactory } from "../../factories/TeamFactory";
-import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
+import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 import Trade, { TradeStatus } from "../../../src/models/trade";
 import logger from "../../../src/bootstrap/logger";
 import { v4 as uuid } from "uuid";
@@ -14,35 +15,21 @@ import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import { HydratedTrade } from "../../../src/models/views/hydratedTrades";
 
 describe("TradeDAO", () => {
-    const mockTradeDb: MockObj = {
-        find: jest.fn(),
-        findOneOrFail: jest.fn(),
-        save: jest.fn(),
-        createQueryBuilder: jest.fn(),
-        update: jest.fn(),
-    };
-    const mockHydratedTradeDb: MockObj = {
-        findAndCount: jest.fn(),
-    };
-    const mockPlayerDao: MockObj = {
-        getPlayerById: jest.fn(),
-    };
-    const mockPickDao: MockObj = {
-        getPickById: jest.fn(),
-    };
+    const mockTradeDb = mockDeep<Repository<Trade>>();
+    const mockHydratedTradeDb = mockDeep<Repository<HydratedTrade>>();
+    const mockPlayerDao = mockDeep<PlayerDAO>();
+    const mockPickDao = mockDeep<DraftPickDAO>();
 
     const testTrade = TradeFactory.getTrade();
     const tradeDAO = new TradeDAO(
-        mockTradeDb as unknown as Repository<Trade>,
-        mockPlayerDao as unknown as PlayerDAO,
-        mockPickDao as unknown as DraftPickDAO,
-        mockHydratedTradeDb as unknown as Repository<HydratedTrade>
+        mockTradeDb as any,
+        mockPlayerDao as any,
+        mockPickDao as any,
+        mockHydratedTradeDb as any
     );
 
     afterEach(() => {
-        [mockTradeDb, mockPlayerDao, mockPickDao, mockHydratedTradeDb].forEach(mockedThing =>
-            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset())
-        );
+        jest.clearAllMocks();
         mockWhereInIds.mockClear();
         mockExecute.mockClear();
     });
@@ -207,8 +194,8 @@ describe("TradeDAO", () => {
         const addAndRemove = jest.fn();
         const of = jest.fn(() => ({ addAndRemove }));
         const relation = jest.fn(() => ({ of }));
-        mockTradeDb.createQueryBuilder.mockImplementationOnce(() => ({ relation }));
-        mockTradeDb.findOneOrFail.mockReturnValue(testTrade);
+        mockTradeDb.createQueryBuilder.mockImplementationOnce(() => ({ relation } as any));
+        mockTradeDb.findOneOrFail.mockResolvedValue(testTrade);
         const otherParticipant = new TradeParticipant({ ...testTrade.tradeParticipants![0].parse(), id: uuid() });
         const res = await tradeDAO.updateParticipants(
             testTrade.id!,
@@ -227,8 +214,8 @@ describe("TradeDAO", () => {
         const addAndRemove = jest.fn();
         const of = jest.fn(() => ({ addAndRemove }));
         const relation = jest.fn(() => ({ of }));
-        mockTradeDb.createQueryBuilder.mockImplementationOnce(() => ({ relation }));
-        mockTradeDb.findOneOrFail.mockReturnValue(testTrade);
+        mockTradeDb.createQueryBuilder.mockImplementationOnce(() => ({ relation } as any));
+        mockTradeDb.findOneOrFail.mockResolvedValue(testTrade);
         const otherPlayer = new TradeItem({ ...testTrade.tradeItems![0].parse(), id: uuid() });
         const res = await tradeDAO.updateItems(testTrade.id!, [otherPlayer], [testTrade.tradeItems![0]]);
 
@@ -241,7 +228,7 @@ describe("TradeDAO", () => {
 
     it("deleteTrade - should call the db delete once with id", async () => {
         mockTradeDb.findOneOrFail.mockResolvedValueOnce(testTrade);
-        mockTradeDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+        mockTradeDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain as any);
         const deleteResult = { raw: [{ id: testTrade.id! }], affected: 1 };
         mockExecute.mockResolvedValueOnce(deleteResult);
         const res = await tradeDAO.deleteTrade(testTrade.id!);

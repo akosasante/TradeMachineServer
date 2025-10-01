@@ -1,13 +1,15 @@
 import { PrismaClient, User } from "@prisma/client";
 import logger from "../../../../src/bootstrap/logger";
-import { mockDeep, mockClear } from "jest-mock-extended";
+import { mockClear, mockDeep } from "jest-mock-extended";
+import type { User as UserDO } from "../../../../src/DAO/v2/UserDAO";
 import UserDAO from "../../../../src/DAO/v2/UserDAO";
 import { UserFactory } from "../../../factories/UserFactory";
+import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
 
 describe("[PRISMA] UserDAO", () => {
     const testUser: User = UserFactory.getPrismaUser();
     const prisma = mockDeep<PrismaClient["user"]>();
-    const Users: UserDAO = new UserDAO(prisma);
+    const Users: UserDAO = new UserDAO(prisma as unknown as ExtendedPrismaClient["user"]);
 
     afterEach(() => {
         mockClear(prisma);
@@ -23,7 +25,7 @@ describe("[PRISMA] UserDAO", () => {
     describe("getAllUsers", () => {
         it("should return an array of public users by calling the db", async () => {
             prisma.findMany.mockResolvedValueOnce([testUser]);
-            const publicUser = UserDAO.publicUser(testUser);
+            const publicUser = UserDAO.publicUser(testUser as unknown as UserDO);
             const sortOptions = { orderBy: { id: "asc" } };
 
             const res = await Users.getAllUsers();
