@@ -30,10 +30,9 @@ describe("EmailPublisher", () => {
         id: 134503,
         date: "2020-04-11 00:13:02",
         ts: 1586556782,
-        /* eslint-disable @typescript-eslint/naming-convention */
+
         "message-id": "<5d0e2800bbddbd4ed05cc56a@domain.com>",
         ts_event: 1586556782,
-        /* eslint-enable @typescript-eslint/naming-convention */
     };
     const eventJson = JSON.stringify(event);
     const exponentialBackoff = { attempts: 3, backoff: { type: "exponential", delay: 30000 } };

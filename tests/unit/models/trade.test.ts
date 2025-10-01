@@ -141,7 +141,6 @@ describe("Trade Class", () => {
 
             it("should fail if items is undefined", () => {
                 const invalidTrade = clone(testTrade);
-                // @ts-ignore
                 invalidTrade.tradeItems = undefined;
                 expect(invalidTrade.isValid()).toBe(false);
             });
