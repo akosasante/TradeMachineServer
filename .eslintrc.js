@@ -35,7 +35,8 @@ module.exports = {
     "eslint-plugin-jsdoc",
     "eslint-plugin-prefer-arrow",
     "@typescript-eslint",
-    "@typescript-eslint/tslint"
+    "@typescript-eslint/tslint",
+    "prettier"
   ],
   "rules": {
     "@typescript-eslint/adjacent-overload-signatures": "error",
@@ -194,7 +195,9 @@ module.exports = {
       {
         "objects": "always-multiline",
         "arrays": "always-multiline",
-        "functions": "never"
+        "functions": "never",
+        "imports": "always-multiline",
+        "exports": "always-multiline"
       }
     ],
     "complexity": "off",
@@ -279,6 +282,7 @@ module.exports = {
       }
     ],
     "use-isnan": "error",
-    "valid-typeof": "off"
+    "valid-typeof": "off",
+    "prettier/prettier": "error"
   }
 };

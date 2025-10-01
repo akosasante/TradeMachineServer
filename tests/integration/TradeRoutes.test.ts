@@ -431,7 +431,6 @@ describe("Trade API endpoints", () => {
     });
 
     describe("PUT /trades/:id/:action (accept/reject/submit a trade)", () => {
-
         type actionBody = { declinedById: string; declinedReason: string } | undefined;
         const putTradeRequest =
             (action: string, id: string, actionObj: actionBody, status = 200) =>

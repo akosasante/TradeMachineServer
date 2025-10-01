@@ -4,7 +4,6 @@ import { v4 as uuid } from "uuid";
 import { faker } from "@faker-js/faker";
 
 export class PlayerFactory {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     public static NAME = "Honus Wiener";
 
     public static getPlayerObject(name = PlayerFactory.NAME, league = PlayerLeagueType.MINOR, rest = {}) {

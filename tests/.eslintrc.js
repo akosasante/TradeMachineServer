@@ -45,7 +45,8 @@ module.exports = {
         "eslint-plugin-prefer-arrow",
         "@typescript-eslint",
         "@typescript-eslint/tslint",
-        "jest"
+        "jest",
+        "prettier"
     ],
     "rules": {
         "jest/expect-expect": [
@@ -277,6 +278,7 @@ module.exports = {
             }
         ],
         "use-isnan": "error",
-        "valid-typeof": "off"
+        "valid-typeof": "off",
+        "prettier/prettier": "error"
     }
 };

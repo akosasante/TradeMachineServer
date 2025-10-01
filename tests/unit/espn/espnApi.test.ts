@@ -15,7 +15,6 @@ import logger from "../../../src/bootstrap/logger";
 
 const mockedGet = jest.fn();
 const headers = {
-
     "x-fantasy-filter-player-count": 1,
 };
 
