@@ -1,15 +1,21 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import { Request, Response } from "express";
+import { Session } from "express-session";
 import { context } from "@opentelemetry/api";
-import { ExtendedPrismaClient } from "../bootstrap/prisma-db";
-import Users from "../DAO/v2/UserDAO";
-import { createSpanFromRequest, finishSpanWithStatusCode, addSpanAttributes, addSpanEvent } from "../utils/tracing";
+import { ExtendedPrismaClient } from "../../../bootstrap/prisma-db";
+import Users from "../../../DAO/v2/UserDAO";
+import {
+    createSpanFromRequest,
+    finishSpanWithStatusCode,
+    addSpanAttributes,
+    addSpanEvent
+} from "../../../utils/tracing";
 
 // Define the context type that will be available in all procedures
 export interface Context {
     req: Request;
     res: Response;
-    session?: {
+    session?: Session & {
         user?: string;
     };
     prisma: ExtendedPrismaClient;
@@ -21,6 +27,7 @@ const t = initTRPC.context<Context>().create();
 
 // Export reusable pieces
 export const router = t.router;
+export const createCallerFactory = t.createCallerFactory;
 export const publicProcedure = t.procedure;
 
 // Create a protected procedure that requires authentication
@@ -64,7 +71,7 @@ export const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
             return next({
                 ctx: {
                     ...ctx,
-                    user ,
+                    user,
                 },
             });
         } catch (error) {

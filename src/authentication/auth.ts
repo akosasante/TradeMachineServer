@@ -58,8 +58,8 @@ export async function signUpAuthentication(
 export async function signInAuthentication(
     email: string,
     password: string,
-    userDAO: UserDAO = new UserDAO(),
-    done: (err?: Error, user?: User) => void
+    userDAO: UserDAO | v2UserDAO = new UserDAO(),
+    done: (err?: Error, user?: User | PublicUser) => void
 ): Promise<void> {
     try {
         logger.debug("sign in strategy");

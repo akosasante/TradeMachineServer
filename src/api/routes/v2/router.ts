@@ -1,5 +1,5 @@
-import { router } from './trpc';
-import { authRouter } from './routers/auth';
+import { router } from "./trpc";
+import { authRouter } from "./routers/auth";
 
 // Main tRPC router - this is what gets exported to the types package
 export const appRouter = router({

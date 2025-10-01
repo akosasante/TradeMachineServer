@@ -11,7 +11,7 @@ export default async function initializeDb(logQueries = false): Promise<Connecti
         logger.debug(`Connecting to ORM config: ${process.env.ORM_CONFIG}`);
         const dbConfigName = process.env.ORM_CONFIG || "";
         const connectionConfig = await new ConnectionOptionsReader({ root: process.cwd() }).get(dbConfigName);
-        logger.info(`DB Connection options: ${inspect(connectionConfig, { depth: 2 })}`);
+        // logger.debug(`DB Connection options: ${inspect(connectionConfig, { depth: 2 })}`);
 
         connection = await createConnection({
             ...connectionConfig,

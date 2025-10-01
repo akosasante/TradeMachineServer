@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["metrics"]
+  previewFeatures = ["metrics"] // TODO: Add views, replace metrics with otel
 }
 
 datasource db {

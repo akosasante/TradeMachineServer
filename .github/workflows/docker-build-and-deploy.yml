@@ -170,7 +170,7 @@ jobs:
             app_dir: /opt/Apps/StagingTradeMachine
             image_tag: ${{ github.ref_name || 'staging' }}
             port: 3015
-            compose_file: docker-compose.staging.yml
+            compose_file: docker-compose.yml
 
           # Production deployment conditions
           - environment: production
@@ -178,7 +178,7 @@ jobs:
             app_dir: /opt/Apps/TradeMachine
             image_tag: main
             port: 3005
-            compose_file: docker-compose.prod.yml
+            compose_file: docker-compose.yml
 
     steps:
       - name: Notify Rollbar of deploy start
