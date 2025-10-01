@@ -1,6 +1,7 @@
 # List any targets that are not an actual file here to ensure they are always run
 .PHONY: help
 .PHONY: test-ci test-ci-unit test-ci-integration test-unit test-integration test-update-snapshots test-local
+.PHONY: docker-test-unit docker-test-integration docker-test-all docker-test-standalone
 .PHONY: watch-ts-files watch-js-server dev-server dev-tsx watch-js-debug-server debug-server debug-tsx
 .PHONY: docker-dev-up docker-dev-down docker-dev-logs docker-dev-shell docker-dev-restart docker-dev-rebuild
 .PHONY: docker-infrastructure-up docker-infrastructure-down docker-infrastructure-logs docker-prod-test docker-full-setup
@@ -110,6 +111,21 @@ test-file: ## Test a specific file
 	npx jest --watch --runTestsByPath $$PATH_NAME --config ./jest.config.js
 
 test-local: test-unit test-integration ## run unit, then integration tests using local config
+
+# |----------- DOCKER TEST SCRIPTS ---------|
+docker-test-unit: ## run unit tests in Docker container (requires docker-dev-up)
+	docker-compose exec app sh -c "NODE_ENV=test npx jest --config ./jest.minimal.config.js --testPathPattern=unit/ --runInBand"
+
+docker-test-integration: ## run integration tests in Docker container (requires docker-dev-up)
+	docker-compose exec app sh -c "NODE_ENV=test npx jest --config ./jest.minimal.config.js --testPathPattern=integration/ --runInBand"
+
+docker-test-all: ## run all tests in Docker container (requires docker-dev-up)
+	$(MAKE) docker-test-unit && $(MAKE) docker-test-integration
+
+docker-test-standalone: ## run tests in standalone Docker container (starts and stops infrastructure)
+	make docker-infrastructure-up && sleep 10 && \
+	docker-compose run --rm app sh -c "NODE_ENV=test npx jest --config ./jest.minimal.config.js --runInBand" && \
+	make docker-infrastructure-down
 
 # |----------- LOCAL DEV SCRIPTS ---------|
 watch-ts-files: ## Watch tsconfig input files and compile typescript to javascript files
