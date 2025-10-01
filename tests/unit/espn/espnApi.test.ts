@@ -15,7 +15,6 @@ import logger from "../../../src/bootstrap/logger";
 
 const mockedGet = jest.fn();
 const headers = {
-    /* eslint-disable-next-line @typescript-eslint/naming-convention */
     "x-fantasy-filter-player-count": 1,
 };
 
@@ -50,7 +49,7 @@ afterAll(() => {
 });
 describe("EspnApi Class", () => {
     const testLeagueId = 545;
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+
     const Api = new EspnAPI(testLeagueId);
 
     it("getAllLeagueData/1 - should return general league data", async () => {

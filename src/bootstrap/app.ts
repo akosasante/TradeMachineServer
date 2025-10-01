@@ -65,7 +65,10 @@ export async function setupExpressApp(
             origin: allowedOrigins,
             credentials: true,
         },
-        controllers: [`${__dirname}/../api/routes/*Controller.{ts,js}`, `${__dirname}/../api/routes/v2/*Controller.{ts,js}`],
+        controllers: [
+            `${__dirname}/../api/routes/*Controller.{ts,js}`,
+            `${__dirname}/../api/routes/v2/*Controller.{ts,js}`,
+        ],
         defaultErrorHandler: false,
         middlewares: [`${__dirname}/../api/middlewares/**`],
         authorizationChecker,
