@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { mockClear, mockDeep } from "jest-mock-extended";
 import { authRouter } from "../../../../../../src/api/routes/v2/routers/auth";
 import logger from "../../../../../../src/bootstrap/logger";
-import { Context, createCallerFactory } from "../../../../../../src/api/routes/v2/trpc";
+import { Context, createCallerFactory } from "../../../../../../src/api/routes/v2/trpcHelpers";
 import { ExtendedPrismaClient } from "../../../../../../src/bootstrap/prisma-db";
 import UserDAO, { PublicUser } from "../../../../../../src/DAO/v2/UserDAO";
 import ObanDAO from "../../../../../../src/DAO/v2/ObanDAO";

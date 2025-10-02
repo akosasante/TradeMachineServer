@@ -1,4 +1,4 @@
-import { publicProcedure, router, withTracing } from "../trpc";
+import { publicProcedure, router, withTracing } from "../trpcHelpers";
 import { addSpanAttributes, addSpanEvent } from "../../../../utils/tracing";
 import logger from "../../../../bootstrap/logger";
 
