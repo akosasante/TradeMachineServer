@@ -27,7 +27,7 @@ import { v4 as uuid } from "uuid";
 import startServer from "../../src/bootstrap/app";
 import PlayerDAO from "../../src/DAO/PlayerDAO";
 import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
-import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
+import { handleExitInTest } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let adminUser: User;

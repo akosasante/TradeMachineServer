@@ -8,7 +8,7 @@ import { clearPrismaDb, makeLoggedInRequest, makePostRequest } from "./helpers";
 import { generateHashedPassword } from "../../src/authentication/auth";
 import { advanceBy, clear } from "jest-date-mock";
 import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
-import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
+import { handleExitInTest } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let userDAO: UserDAO;

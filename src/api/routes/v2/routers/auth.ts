@@ -1,12 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router, withTracing } from "../trpc";
-import {
-    addSpanAttributes,
-    addSpanEvent,
-    extractTraceContext,
-    finishSpanWithStatusCode,
-} from "../../../../utils/tracing";
+import { addSpanAttributes, addSpanEvent, extractTraceContext } from "../../../../utils/tracing";
 import logger from "../../../../bootstrap/logger";
 import ObanDAO from "../../../../DAO/v2/ObanDAO";
 import {
@@ -39,7 +34,7 @@ const resetPasswordSchema = z.object({
 export const authRouter = router({
     login: router({
         authenticate: publicProcedure.input(loginSchema).mutation(
-            withTracing("trpc.auth.login", async (input, ctx, span) => {
+            withTracing("trpc.auth.login", async (input, ctx, _span) => {
                 logger.debug(`Attempting to authenticate user: ${input.email}`);
 
                 addSpanAttributes({
@@ -116,7 +111,7 @@ export const authRouter = router({
                 activeUserMetric.inc();
 
                 // Return the deserialized user like the original endpoint
-                const deserializedUser = await deserializeUser(ctx.session!.user!, ctx.userDao);
+                const deserializedUser = await deserializeUser(ctx.session.user!, ctx.userDao);
 
                 addSpanEvent("login.success", {
                     userId: deserializedUser.id?.toString() || "unknown",
@@ -137,7 +132,7 @@ export const authRouter = router({
             })
         ),
         sendResetEmail: publicProcedure.input(emailSchema).mutation(
-            withTracing("trpc.auth.sendResetEmail", async (input, ctx, span) => {
+            withTracing("trpc.auth.sendResetEmail", async (input, ctx, _span) => {
                 logger.debug(`Preparing to send reset password email via Oban to...: ${input.email}`);
 
                 addSpanAttributes({
@@ -191,10 +186,7 @@ export const authRouter = router({
 
                 // Queue job in Oban for Elixir to process
                 const obanDao = new ObanDAO(ctx.prisma.obanJob);
-                const job = await obanDao.enqueuePasswordResetEmail(
-                    updatedUser.id!,
-                    currentTraceContext || undefined
-                );
+                const job = await obanDao.enqueuePasswordResetEmail(updatedUser.id!, currentTraceContext || undefined);
 
                 addSpanAttributes({
                     "oban.job_id": job.id.toString(),
@@ -221,7 +213,7 @@ export const authRouter = router({
         ),
     }),
     sessionCheck: publicProcedure.query(
-        withTracing("trpc.auth.sessionCheck", async (input, ctx, span) => {
+        withTracing("trpc.auth.sessionCheck", async (input, ctx, _span) => {
             logger.debug("tRPC session check");
 
             addSpanAttributes({
@@ -262,7 +254,7 @@ export const authRouter = router({
         })
     ),
     logout: publicProcedure.mutation(
-        withTracing("trpc.auth.logout", async (input, ctx, span) => {
+        withTracing("trpc.auth.logout", async (input, ctx, _span) => {
             logger.debug("tRPC logout");
 
             addSpanAttributes({
@@ -327,7 +319,7 @@ export const authRouter = router({
         })
     ),
     resetPassword: publicProcedure.input(resetPasswordSchema).mutation(
-        withTracing("trpc.auth.resetPassword", async (input, ctx, span) => {
+        withTracing("trpc.auth.resetPassword", async (input, ctx, _span) => {
             logger.debug("tRPC reset password");
 
             addSpanAttributes({
@@ -343,11 +335,7 @@ export const authRouter = router({
             // Use v2 DAO for consistency with other tRPC endpoints
             const existingUser = await ctx.userDao.getUserById(input.id);
 
-            if (
-                !existingUser ||
-                !existingUser.passwordResetToken ||
-                existingUser.passwordResetToken !== input.token
-            ) {
+            if (!existingUser || !existingUser.passwordResetToken || existingUser.passwordResetToken !== input.token) {
                 addSpanEvent("reset_password.user_not_found_or_token_mismatch", {
                     userId: input.id,
                     userExists: !!existingUser,
@@ -409,7 +397,7 @@ export const authRouter = router({
         register: publicProcedure
             .input(loginSchema) // Reuse loginSchema since it has email and password validation
             .mutation(
-                withTracing("trpc.auth.signup.register", async (input, ctx, span) => {
+                withTracing("trpc.auth.signup.register", async (input, ctx, _span) => {
                     logger.debug("IN tRPC SIGNUP");
 
                     addSpanAttributes({
@@ -472,11 +460,7 @@ export const authRouter = router({
                     addSpanEvent("signup.success", {
                         userId: deserializedUser.id?.toString() || "unknown",
                         userType:
-                            "isAdmin" in deserializedUser
-                                ? deserializedUser.isAdmin()
-                                    ? "admin"
-                                    : "user"
-                                : "unknown",
+                            "isAdmin" in deserializedUser ? (deserializedUser.isAdmin() ? "admin" : "user") : "unknown",
                     });
 
                     addSpanAttributes({
@@ -492,7 +476,7 @@ export const authRouter = router({
                 })
             ),
         sendEmail: publicProcedure.input(emailSchema).mutation(
-            withTracing("trpc.auth.signup.sendEmail", async (input, ctx, span) => {
+            withTracing("trpc.auth.signup.sendEmail", async (input, ctx, _span) => {
                 logger.debug(`Preparing to send registration email to: ${input.email}`);
 
                 addSpanAttributes({
