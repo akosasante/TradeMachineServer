@@ -67,6 +67,10 @@ export default class PlayerDAO {
     public async queryPlayersByName(query: string, league?: number): Promise<Player[]> {
         const defaultLimit = 50;
         const cacheExpiryMilliseconds = 60000;
+        let skipCache = false;
+        if (process.env.SKIP_CACHE_IN_TEST === "true") {
+            skipCache = true;
+        }
         const where: FindOptionsWhere<Player> = { name: ILike(`%${query}%`) };
         if (league) {
             where.league = league;
@@ -74,7 +78,7 @@ export default class PlayerDAO {
         return await this.playerDb.find({
             where,
             take: defaultLimit,
-            cache: cacheExpiryMilliseconds,
+            cache: skipCache ? false : cacheExpiryMilliseconds,
             order: { name: "ASC" },
         });
     }
