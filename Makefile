@@ -1,12 +1,12 @@
 # List any targets that are not an actual file here to ensure they are always run
 .PHONY: help
-.PHONY: test-ci test-ci-unit test-ci-integration test-unit test-integration test-update-snapshots test-local
+.PHONY: clear-test-cache test-ci test-ci-unit test-ci-integration test-unit test-integration test-update-snapshots test-local
 .PHONY: docker-test-unit docker-test-integration docker-test-all docker-test-standalone
 .PHONY: watch-ts-files watch-js-server dev-server dev-tsx watch-js-debug-server debug-server debug-tsx
 .PHONY: docker-dev-up docker-dev-down docker-dev-logs docker-dev-shell docker-dev-restart docker-dev-rebuild
 .PHONY: docker-infrastructure-up docker-infrastructure-down docker-infrastructure-logs docker-prod-test docker-full-setup
 .PHONY: lint lint-fix fix-all format compile-ts copy-email-templates build serve typecheck fullcheck
-.PHONY: generate-migration run-migration revert-migration
+.PHONY: generate-migration run-migration revert-migration prisma-migrate-test prisma-push-test prisma-migrate
 
 help: ## show make commands
 	@echo "\n"
@@ -15,6 +15,10 @@ help: ## show make commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 # |----------- TESTING SCRIPTS ---------|
+clear-test-cache:
+	@rm -rf dist/ \
+	@npx jest --clearCache
+	$(MAKE) build
 test-ci: ## run tests using CI config, and no logging
 	NODE_ENV=test ORM_CONFIG=test PG_SCHEMA=test \
 	npx jest --config ./jest.ci-config.js \
@@ -261,6 +265,9 @@ revert-migration: ## Revert the most recently applied migration using config fil
 
 prisma-migrate-test:
 	@export $$(grep -v '^#' tests/.env | xargs) && npx prisma migrate deploy
+
+prisma-push-test:
+	@export $$(grep -v '^#' tests/.env | xargs) && npx prisma db push --accept-data-loss
 
 prisma-migrate:
 	@export $$(grep -v '^#' .env | xargs) && npx prisma migrate deploy
