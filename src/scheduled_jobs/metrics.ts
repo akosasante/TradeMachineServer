@@ -3,6 +3,9 @@ import { availableJobMetrics } from "../bootstrap/metrics";
 import { registerCleanupCallback } from "../bootstrap/shutdownHandler";
 import logger from "../bootstrap/logger";
 
+// Track intervals for manual cleanup in tests
+const activeIntervals = new Set<NodeJS.Timeout>();
+
 export function recordJobMetrics(queue: Bull.Queue): void {
     const recordDurationMetrics = (job: Bull.Job, status: string) => {
         if (job.finishedOn && job.processedOn) {
@@ -61,9 +64,26 @@ export function recordJobMetrics(queue: Bull.Queue): void {
         })();
     }, 60000);
 
+    // Track the interval for manual cleanup
+    activeIntervals.add(gaugeInterval);
+
     registerCleanupCallback(async () => {
         clearInterval(gaugeInterval);
+        activeIntervals.delete(gaugeInterval);
         logger.info(`Cleared job metrics interval for queue ${queue.name}`);
         await queue.close();
     });
+}
+
+/**
+ * Clear all active job metrics intervals.
+ * Useful for test cleanup to prevent Jest from hanging due to open handles.
+ */
+export function clearJobMetricsIntervals(): void {
+    const count = activeIntervals.size;
+    activeIntervals.forEach(interval => {
+        clearInterval(interval);
+    });
+    activeIntervals.clear();
+    logger.debug(`Cleared ${count} job metrics intervals`);
 }

@@ -24,9 +24,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Build/Test Commands
 - Build: `make build`
 - Lint: `make lint`
-- Format: `make format`
+- Format: `make format` (runs Prettier via ESLint)
 - Type check: `make typecheck`
-- Full check (lint, type check, format): `make fullcheck`
+- Full check (lint, format, typecheck): `make fullcheck`
 - Run single test file: `make test-file` (prompts for file path)
 - Run unit tests: `make test-unit`
 - Run integration tests: `make test-integration`

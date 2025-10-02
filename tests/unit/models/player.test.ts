@@ -77,7 +77,7 @@ describe("Player Class", () => {
     describe("static methods", () => {
         const convertedPlayer = Player.convertEspnMajorLeaguerToPlayer(espnPlayer);
         const {
-            player: { fullName: ignoreFullName },
+            player: { fullName: _ignoreFullName },
             ...noNamePlayer
         } = clone(espnPlayer);
 

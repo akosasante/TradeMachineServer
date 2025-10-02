@@ -40,7 +40,6 @@ const mockPlayerDao = {
 afterEach(() => {
     mockGetPlayerById.mockClear();
     [mockPickDao, mockPlayerDao].forEach(mockedThing =>
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
         Object.values(mockedThing).forEach(mockFn => mockFn.mockClear())
     );
 });

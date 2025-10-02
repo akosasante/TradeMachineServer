@@ -1,28 +1,20 @@
 import { Repository } from "typeorm";
+import { mockDeep } from "jest-mock-extended";
 import DraftPickDAO from "../../../src/DAO/DraftPickDAO";
 import { DraftPickFactory } from "../../factories/DraftPickFactory";
-import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
+import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 import DraftPick, { LeagueLevel } from "../../../src/models/draftPick";
 import logger from "../../../src/bootstrap/logger";
 
 describe("DraftPickDAO", () => {
-    const mockPickDb: MockObj = {
-        find: jest.fn(),
-        findOneOrFail: jest.fn(),
-        save: jest.fn(),
-        insert: jest.fn(),
-        update: jest.fn(),
-        remove: jest.fn(),
-        createQueryBuilder: jest.fn(),
-    };
+    const mockPickDb = mockDeep<Repository<DraftPick>>();
 
     const testPick1 = DraftPickFactory.getPick();
-    const draftPickDAO = new DraftPickDAO(mockPickDb as unknown as Repository<DraftPick>);
+    const draftPickDAO = new DraftPickDAO(mockPickDb as any);
     const defaultCacheTimeout = 60000;
 
     afterEach(() => {
-        Object.values(mockPickDb).forEach(mockFn => mockFn.mockReset());
-
+        jest.clearAllMocks();
         mockExecute.mockClear();
         mockWhereInIds.mockClear();
     });
@@ -77,25 +69,16 @@ describe("DraftPickDAO", () => {
     });
 
     it("createPicks - should call the db save once with pickObj", async () => {
-        mockPickDb.insert.mockResolvedValueOnce({ identifiers: [{ id: testPick1.id! }], generatedMaps: [], raw: [] });
-        mockPickDb.find.mockResolvedValueOnce(testPick1);
+        mockPickDb.create.mockReturnValue(testPick1);
+        mockPickDb.save.mockResolvedValueOnce([testPick1] as unknown as DraftPick);
         const res = await draftPickDAO.createPicks([testPick1]);
 
-        expect(mockPickDb.insert).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.insert).toHaveBeenCalledWith([testPick1.parse()]);
-        expect(mockPickDb.find).toHaveBeenCalledTimes(1);
-        expect(mockPickDb.find).toHaveBeenCalledWith({
-            where: {
-                id: expect.objectContaining({
-                    _multipleParameters: true,
-                    _type: "in",
-                    _useParameter: true,
-                    _value: [testPick1.id],
-                }),
-            },
-        });
+        expect(mockPickDb.create).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.create).toHaveBeenCalledWith(testPick1);
+        expect(mockPickDb.save).toHaveBeenCalledTimes(1);
+        expect(mockPickDb.save).toHaveBeenCalledWith([testPick1]);
 
-        expect(res).toEqual(testPick1);
+        expect(res).toEqual([testPick1]);
     });
 
     it("updatePick - should call the db update and findOneOrFail once with id and teamObj", async () => {
@@ -114,7 +97,7 @@ describe("DraftPickDAO", () => {
 
     it("deletePick - should call the db delete once with id", async () => {
         mockPickDb.findOneOrFail.mockResolvedValueOnce(testPick1);
-        mockPickDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+        mockPickDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain as any);
         const deleteResult = { affected: 1, raw: { id: testPick1.id! } };
         mockExecute.mockResolvedValueOnce(deleteResult);
         const res = await draftPickDAO.deletePick(testPick1.id!);
@@ -153,7 +136,7 @@ describe("DraftPickDAO", () => {
     });
 
     it("batchCreatePicks - should call the db save once with pickObjs", async () => {
-        mockPickDb.save.mockResolvedValueOnce([testPick1]);
+        mockPickDb.save.mockResolvedValueOnce([testPick1] as any);
         const res = await draftPickDAO.batchCreatePicks([testPick1]);
 
         expect(mockPickDb.save).toHaveBeenCalledTimes(1);
@@ -165,7 +148,7 @@ describe("DraftPickDAO", () => {
         const mockOnConflict = jest.fn().mockReturnValue({ execute: mockExecute });
         const mockValues = jest.fn().mockReturnValue({ onConflict: mockOnConflict });
         const mockInsertChain = jest.fn().mockReturnValue({ values: mockValues });
-        mockPickDb.createQueryBuilder.mockReturnValueOnce({ insert: mockInsertChain });
+        mockPickDb.createQueryBuilder.mockReturnValueOnce({ insert: mockInsertChain } as any);
         mockExecute.mockResolvedValueOnce({ identifiers: [{ id: testPick1.id! }], generatedMaps: [], raw: [] });
         mockPickDb.find.mockResolvedValueOnce([testPick1]);
 

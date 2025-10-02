@@ -363,7 +363,7 @@ a.button-link {
           <h2>Declined trade was:</h2>
           <h3>CREATOR_TEAM would have received:</h3>
           <ul class="picks" style="margin-top: 1em; margin-bottom: 2em;"></ul>
-          <li>Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM</li>
+          <li>Squirtle Squad's 1st round Low Minors pick from RECIPIENT_TEAM</li>
           <h3>RECIPIENT_TEAM would have received:</h3>
           <ul class="majors" style="margin-top: 1em; margin-bottom: 2em;"></ul>
           <li>Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM</li>
@@ -391,7 +391,7 @@ DECLINED TRADE WAS:
 
 CREATOR_TEAM WOULD HAVE RECEIVED:
 
-Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM
+Squirtle Squad's 1st round Low Minors pick from RECIPIENT_TEAM
 
 
 RECIPIENT_TEAM WOULD HAVE RECEIVED:
@@ -481,7 +481,7 @@ a.button-link {
         <div class="divider"></div>
         <h3>CREATOR_TEAM would receive:</h3>
         <ul class="picks" style="margin-top: initial !important; margin-bottom: initial !important;"></ul>
-        <li>Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM</li>
+        <li>Squirtle Squad's 1st round Low Minors pick from RECIPIENT_TEAM</li>
         <hr>
         <h3>RECIPIENT_TEAM would receive:</h3>
         <ul class="majors" style="margin-top: initial !important; margin-bottom: initial !important;"></ul>
@@ -507,7 +507,7 @@ CREATOR_TEAM REQUESTED A TRADE WITH YOU:
 
 CREATOR_TEAM WOULD RECEIVE:
 
-Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM
+Squirtle Squad's 1st round Low Minors pick from RECIPIENT_TEAM
 
 --------------------------------------------------------------------------------
 
@@ -604,7 +604,7 @@ a.button-link {
         <div>
           <h3>CREATOR_TEAM will receive:</h3>
           <ul class="picks" style="margin-top: 1em; margin-bottom: 2em;"></ul>
-          <li>Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM</li>
+          <li>Squirtle Squad's 1st round Low Minors pick from RECIPIENT_TEAM</li>
           <h3>RECIPIENT_TEAM will receive:</h3>
           <ul class="majors" style="margin-top: 1em; margin-bottom: 2em;"></ul>
           <li>Honus Wiener (Pirates - C, 1B) from CREATOR_TEAM</li>
@@ -627,7 +627,7 @@ YOUR TRADE OFFER HAS BEEN ACCEPTED BY ALL RECIPIENTS:
 
 CREATOR_TEAM WILL RECEIVE:
 
-Squirtle Squad's 2020 1st round Low Minors pick (#12) from RECIPIENT_TEAM
+Squirtle Squad's 1st round Low Minors pick from RECIPIENT_TEAM
 
 
 RECIPIENT_TEAM WILL RECEIVE:

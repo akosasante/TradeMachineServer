@@ -1,38 +1,40 @@
 import { Server } from "http";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import User from "../../src/models/user";
 import startServer from "../../src/bootstrap/app";
-import { clearDb, makePostRequest, setupOwnerAndAdminUsers } from "./helpers";
-import { getConnection } from "typeorm";
+import { clearPrismaDb, makePostRequest, setupOwnerAndAdminUsers } from "./helpers";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
+import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let ownerUser: User;
 
+let prismaConn: ExtendedPrismaClient;
 async function shutdown() {
     try {
-        await redisClient.disconnect();
+        await handleExitInTest();
     } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
+        logger.error(`Error while shutting down: ${err}`);
     }
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~EMAIL ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
     return app;
 }, 5000);
 
 afterAll(async () => {
     logger.debug("~~~~~~EMAIL ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    const shutdownResult = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
-    return shutdownRedis;
+    return shutdownResult;
 });
 
 describe("Email API endpoints", () => {
@@ -41,8 +43,8 @@ describe("Email API endpoints", () => {
         return ownerUser;
     });
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.ORM_CONFIG));
-    }, 40000);
+        return await clearPrismaDb(prismaConn);
+    });
 
     const emailPostRequest =
         (email: string, url: string, status = 202) =>
@@ -54,16 +56,22 @@ describe("Email API endpoints", () => {
             makePostRequest<{ [key: string]: string | number }>(agent, "/email/sendInMailWebhook", event, status);
 
     describe("POST /testEmail (send a test notification email)", () => {
+        // assertion happens inside emailPostRequest
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 202 message if the email is successfully queued", async () => {
             await emailPostRequest(ownerUser.email, "testEmail")(request(app));
         });
 
+        // assertion happens inside emailPostRequest
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 404 response if no user exists with the given email", async () => {
             await emailPostRequest("unknown@example.com", "testEmail", 404)(request(app));
         });
     });
 
     describe("POST /sendInMailWebhook (receive a webhook response)", () => {
+        // assertion happens inside webhookPostRequest
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 200 message if the email is successfully queued", async () => {
             const webhookEvent = {
                 event: "request",

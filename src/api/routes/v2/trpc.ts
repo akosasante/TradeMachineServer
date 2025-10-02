@@ -8,7 +8,7 @@ import {
     createSpanFromRequest,
     finishSpanWithStatusCode,
     addSpanAttributes,
-    addSpanEvent
+    addSpanEvent,
 } from "../../../utils/tracing";
 
 // Define the context type that will be available in all procedures

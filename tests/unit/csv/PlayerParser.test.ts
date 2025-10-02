@@ -102,7 +102,7 @@ describe("PlayerParser", () => {
         expect(mockDAO.deleteAllPlayers).toHaveBeenCalledTimes(0);
         expect(mockDAO.batchUpsertPlayers).toHaveBeenCalledTimes(1);
         expect(mockDAO.batchUpsertPlayers).toHaveBeenCalledWith(expect.toBeArrayOfSize(99));
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
         expect(mockDAO.batchUpsertPlayers.mock.calls[0][0]).toSatisfyAll(playerPredicate);
     });
     it("should return all the rows from the csv as players", async () => {

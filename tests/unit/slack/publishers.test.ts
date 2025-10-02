@@ -2,19 +2,21 @@ import logger from "../../../src/bootstrap/logger";
 import { SlackPublisher } from "../../../src/slack/publishers";
 import Bull from "bull";
 import { TradeFactory } from "../../factories/TradeFactory";
+import { mockDeep } from "jest-mock-extended";
+import { clearJobMetricsIntervals } from "../../../src/scheduled_jobs/metrics";
 
-const mockQueue = {
-    add: jest.fn(),
-};
+const mockQueue = mockDeep<Bull.Queue>();
 
 beforeAll(() => {
     logger.debug("~~~~~~SLACK PUBLISHER TESTS BEGIN~~~~~~");
 });
 afterAll(() => {
+    // Clear job metrics intervals to prevent Jest from hanging
+    clearJobMetricsIntervals();
     logger.debug("~~~~~~SLACK PUBLISHER COMPLETE~~~~~~");
 });
 afterEach(() => {
-    mockQueue.add.mockReset();
+    jest.clearAllMocks();
 });
 
 describe("SlackPublisher", () => {

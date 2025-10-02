@@ -1,14 +1,13 @@
 import { Server } from "http";
 import "jest-extended";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
 import { UserFactory } from "../factories/UserFactory";
 import User from "../../src/models/user";
 import {
     adminLoggedIn,
-    clearDb,
+    clearPrismaDb,
     DatePatternRegex,
     doLogout,
     makeDeleteRequest,
@@ -17,28 +16,30 @@ import {
     makePutRequest,
     ownerLoggedIn,
     setupOwnerAndAdminUsers,
-    stringifyQuery
+    stringifyQuery,
 } from "./helpers";
 import { v4 as uuid } from "uuid";
-import { getConnection } from "typeorm";
 import UserDAO from "../../src/DAO/UserDAO";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
+import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let ownerUser: User;
 let adminUser: User;
 let userDao: UserDAO;
-
+let prismaConn: ExtendedPrismaClient;
 async function shutdown() {
     try {
-        await redisClient.disconnect();
+        await handleExitInTest();
     } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
+        logger.error(`Error while shutting down: ${err}`);
     }
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~USER ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
     userDao = new UserDAO();
 
     return app;
@@ -46,13 +47,13 @@ beforeAll(async () => {
 
 afterAll(async () => {
     logger.debug("~~~~~~USER ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    const shutdownResult = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
-    return shutdownRedis;
+    return shutdownResult;
 });
 
 describe("User API endpoints", () => {
@@ -62,8 +63,8 @@ describe("User API endpoints", () => {
         return [adminUser, ownerUser];
     });
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.ORM_CONFIG));
-    }, 40000);
+        return await clearPrismaDb(prismaConn);
+    });
 
     describe("POST /users (create new user)", () => {
         const jatheeshUser = UserFactory.getUser("jatheesh@example.com");
@@ -97,7 +98,7 @@ describe("User API endpoints", () => {
                 bloop: "yeeeah",
             };
             const { body } = await adminLoggedIn(postRequest([invalidPropsObj]), app);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
             const { body: getBody } = await getOneRequest(body[0].id);
             const expected: Partial<User> | Omit<User, "password"> = {
                 ...akosUser,
@@ -120,9 +121,13 @@ describe("User API endpoints", () => {
             const { body } = await adminLoggedIn(postRequest([jatheeshUser.parse()], 400), app);
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         }, 10000);
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden Error if a non-admin tries to create a user", async () => {
             await ownerLoggedIn(postRequest([jatheeshUser.parse()], 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
             await postRequest([jatheeshUser.parse()], 403)(request(app));
         });
@@ -196,6 +201,8 @@ describe("User API endpoints", () => {
             });
             expect(body.password).toBeUndefined();
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
             await getOneRequest(uuid(), 404);
         });
@@ -203,7 +210,6 @@ describe("User API endpoints", () => {
 
     describe("GET /users/search?queryOpts (get user by query)", () => {
         const findRequest = (query: any, status = 200) =>
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             makeGetRequest(request(app), `/users/search${stringifyQuery(query)}`, status);
 
         it("should return a single public user for the given query", async () => {
@@ -216,6 +222,8 @@ describe("User API endpoints", () => {
             });
             expect(body.password).toBeUndefined();
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 error if no user with that query is found", async () => {
             await findRequest({ query: { email: "nonono@test.com" } }, 404);
         });
@@ -230,6 +238,8 @@ describe("User API endpoints", () => {
             });
             expect(body[0].password).toBeUndefined();
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 error if no users with that query are found (multiple)", async () => {
             await findRequest({ query: { email: "nonono@test.com" }, multiple: "true" }, 404);
         });
@@ -289,12 +299,18 @@ describe("User API endpoints", () => {
             expect(getOneRes.slackUsername).toBeNull();
             expect(getOneRes.email).toEqual(adminUser.email);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
             await adminLoggedIn(putRequest(uuid(), { email: "whatever@gmail.com" }, 404), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden Error if a non-admin tries to update a user", async () => {
             await ownerLoggedIn(putRequest(uuid(), { slackUsername: "hey" }, 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
             await putRequest(uuid(), { slackUsername: "Hey2" }, 403)(request(app));
         });
@@ -319,7 +335,7 @@ describe("User API endpoints", () => {
                 (user: User) => user.id !== adminUser.id! && user.id !== ownerUser.id!
             )[0];
             expect(getAllBefore).toBeArrayOfSize(4);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
             const res = await adminLoggedIn(deleteRequest(deletableUser.id!), app);
             expect(res.body).toEqual({ deleteCount: 1, id: deletableUser.id! });
 
@@ -328,12 +344,18 @@ describe("User API endpoints", () => {
             expect(getAllRes).toBeArrayOfSize(3);
             expect(getAllRes.filter((user: User) => user.id === deletableUser.id!)).toBeEmpty();
         }, 2000);
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no user with that ID", async () => {
             await adminLoggedIn(deleteRequest(uuid(), 404), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden Error if a non-admin tries to delete a user", async () => {
             await ownerLoggedIn(deleteRequest(uuid(), 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden Error if a non-logged-in request is used", async () => {
             await deleteRequest(uuid(), 403)(request(app));
         });

@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 import initializeDb, { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 import ObanDAO from "../../DAO/v2/ObanDAO";
 
@@ -99,5 +97,3 @@ main(myPrisma)
     .finally(async () => {
         await myPrisma.$disconnect();
     });
-
-/* eslint-enable */

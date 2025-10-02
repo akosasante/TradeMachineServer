@@ -1,5 +1,6 @@
-import Bull, { Queue, JobCounts } from "bull";
+import Bull, { JobCounts, Queue } from "bull";
 import logger from "../bootstrap/logger";
+import { registerCleanupCallback } from "../bootstrap/shutdownHandler";
 
 interface TypedJobCounts extends JobCounts {
     [key: string]: number;
@@ -7,6 +8,12 @@ interface TypedJobCounts extends JobCounts {
 
 export class Publisher {
     protected queue?: Queue;
+
+    protected constructor() {
+        registerCleanupCallback(async () => {
+            await this.closeQueue();
+        });
+    }
 
     public async getJobTotal(): Promise<number> {
         return Object.values<number>((await this.queue!.getJobCounts()) as TypedJobCounts).reduce(

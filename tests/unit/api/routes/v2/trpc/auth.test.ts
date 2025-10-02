@@ -38,8 +38,6 @@ describe("[TRPC] Auth Router Unit Tests", () => {
     const mockReq = mockDeep<Request>();
     const mockRes = mockDeep<Response>();
 
-    const createCaller = createCallerFactory(authRouter);
-
     beforeAll(() => {
         logger.debug("~~~~~~TRPC AUTH ROUTER UNIT TESTS BEGIN~~~~~~");
     });

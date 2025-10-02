@@ -11,7 +11,7 @@ export class UuidSubscriber implements EntitySubscriberInterface<BaseModel> {
      * Ensures all BaseModel entities have UUIDs since TypeORM auto-generation is not working.
      */
     beforeInsert(event: InsertEvent<BaseModel>): void {
-        logger.debug(`UuidSubscriber beforeInsert called for entity: ${inspect(event, { depth: 2 })}`);
+        logger.debug(`UuidSubscriber beforeInsert called for entity: ${inspect(event.entity, { depth: 1 })}`);
         if (event.entity instanceof BaseModel && !event.entity.id) {
             event.entity.id = uuid();
         }

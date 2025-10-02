@@ -1,9 +1,9 @@
 import User, { Role } from "../../src/models/user";
-import { User as PrismaUser, UserRole } from "@prisma/client";
+import type { User as PrismaUser } from "../../src/DAO/v2/UserDAO";
+import { UserRole } from "@prisma/client";
 import { v4 as uuid } from "uuid";
 
 export class UserFactory {
-
     public static TEST_EMAIL = "test@example+test.com";
     public static GENERIC_PASSWORD = "lol";
     public static ADMIN_EMAIL = "admin@example+test.com";
@@ -16,7 +16,7 @@ export class UserFactory {
         password = UserFactory.GENERIC_PASSWORD,
         role = Role.ADMIN,
         rest = {}
-    ) {
+    ): { id: string; email: string; displayName: string; password: string; role: Role } {
         return { id: uuid(), email, displayName, password, role, ...rest };
     }
 
@@ -44,7 +44,7 @@ export class UserFactory {
             espnMember: null,
             teamId: null,
             ...rest,
-        };
+        } as PrismaUser;
     }
 
     public static getUser(
@@ -53,19 +53,19 @@ export class UserFactory {
         password = UserFactory.GENERIC_PASSWORD,
         role = Role.ADMIN,
         rest = {}
-    ) {
+    ): User {
         return new User(UserFactory.getUserObject(email, displayName, password, role, rest));
     }
 
-    public static getAdminUser() {
+    public static getAdminUser(): User {
         return UserFactory.getUser(UserFactory.ADMIN_EMAIL, undefined, undefined, Role.ADMIN);
     }
 
-    public static getOwnerUser() {
+    public static getOwnerUser(): User {
         return UserFactory.getUser(UserFactory.OWNER_EMAIL, undefined, undefined, Role.OWNER);
     }
 
-    public static getPasswordlessOwner() {
+    public static getPasswordlessOwner(): User {
         return new User({ email: UserFactory.OWNER_EMAIL, displayName: "Len Mitch", role: Role.OWNER });
     }
 }

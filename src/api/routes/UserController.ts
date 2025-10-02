@@ -10,7 +10,7 @@ import {
     Post,
     Put,
     QueryParam,
-    Req
+    Req,
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";

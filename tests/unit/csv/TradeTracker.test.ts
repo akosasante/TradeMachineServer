@@ -1,26 +1,30 @@
 import "jest-extended";
 import { TradeFactory } from "../../factories/TradeFactory";
 import { appendNewTrade } from "../../../src/csv/TradeTracker";
-import { google } from "googleapis";
+import { google, sheets_v4 } from "googleapis";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import { PlayerLeagueType } from "../../../src/models/player";
 import { TeamFactory } from "../../factories/TeamFactory";
 
 jest.mock("googleapis");
-const mockedGoogleSheets = google as jest.MockedObject<typeof google>;
+
+// Create properly typed mocks
 const mockBatchUpdate = jest.fn();
-// @ts-ignore
-mockedGoogleSheets.sheets = jest.fn(() => {
-    return {
-        spreadsheets: {
-            batchUpdate: mockBatchUpdate,
-        },
-    };
-});
-// @ts-ignore
-mockedGoogleSheets.auth = {
-    getClient: jest.fn().mockResolvedValue("authed"),
-};
+const mockGetClient = jest.fn().mockResolvedValue("authed");
+
+const mockSheetsInstance: jest.MockedObject<sheets_v4.Sheets> = {
+    spreadsheets: {
+        batchUpdate: mockBatchUpdate,
+    } as any,
+} as jest.MockedObject<sheets_v4.Sheets>;
+
+const mockSheetsConstructor = jest.fn().mockReturnValue(mockSheetsInstance);
+
+const mockedGoogle = google as jest.MockedObject<typeof google>;
+mockedGoogle.sheets = mockSheetsConstructor;
+mockedGoogle.auth = {
+    getClient: mockGetClient,
+} as any;
 
 afterEach(() => {
     mockBatchUpdate.mockReset();
@@ -41,9 +45,8 @@ function getCellValues(mockBatchUpdateMock: jest.MockContext<any, any>) {
     } = mockBatchUpdateMock.calls[0][0];
     const {
         updateCells: { rows },
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     } = (requests as any[]).find(obj => obj.hasOwnProperty("updateCells"));
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return rows[0].values;
 }
 

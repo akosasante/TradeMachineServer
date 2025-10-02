@@ -1,28 +1,26 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:base"
-  ],
-  "timezone": "America/Toronto",
-  "packageRules": [
-    {
-      "groupName": "devDependencies (non-major)",
-      "groupSlug": "devdep-minor",
-      "matchManagers": ["npm"],
-      "matchDepTypes": ["devDependencies"],
-      "matchUpdateTypes": ["patch", "minor"],
-      "automerge": true,
-      "automergeSchedule": "before 8am on Saturday",
-      "excludePackageNames": ["typescript"]
-    },
-    {
-      "groupName": "npm dependencies (patch-only)",
-      "groupSlug": "dep-patch",
-      "matchManagers": ["npm"],
-      "matchDepTypes": ["dependencies"],
-      "matchUpdateTypes": ["patch"],
-      "automerge": true,
-      "automergeSchedule": "before 8am on Saturday"
-    }
-  ]
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": ["config:base"],
+    "timezone": "America/Toronto",
+    "packageRules": [
+        {
+            "groupName": "devDependencies (non-major)",
+            "groupSlug": "devdep-minor",
+            "matchManagers": ["npm"],
+            "matchDepTypes": ["devDependencies"],
+            "matchUpdateTypes": ["patch", "minor"],
+            "automerge": true,
+            "automergeSchedule": "before 8am on Saturday",
+            "excludePackageNames": ["typescript"]
+        },
+        {
+            "groupName": "npm dependencies (patch-only)",
+            "groupSlug": "dep-patch",
+            "matchManagers": ["npm"],
+            "matchDepTypes": ["dependencies"],
+            "matchUpdateTypes": ["patch"],
+            "automerge": true,
+            "automergeSchedule": "before 8am on Saturday"
+        }
+    ]
 }

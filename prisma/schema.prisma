@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["metrics"] // TODO: Add views, replace metrics with otel
+  previewFeatures = ["metrics", "views"] // TODO: Add views, replace metrics with otel
 }
 
 datasource db {
@@ -87,8 +87,8 @@ model Player {
 
 // probably don't need this either in the post-typeorm world; question is there a caching solution in prisma?
 model query_result_cache {
-  id         Int    @id(map: "PK_6a98f758d8bfd010e7e10ffd3d3") @default(autoincrement())
-  identifier String @db.VarChar
+  id         Int     @id(map: "PK_6a98f758d8bfd010e7e10ffd3d3") @default(autoincrement())
+  identifier String? @db.VarChar
   time       BigInt
   duration   Int
   query      String
@@ -385,4 +385,57 @@ enum UserStatus {
   INACTIVE @map("2")
 
   @@map("user_status_enum")
+}
+
+view HydratedMajor {
+  id                String            @id @db.Uuid
+  name              String            @db.VarChar
+  league            PlayerLeagueLevel
+  mlbTeam           String?           @db.VarChar()
+  ownerTeam         Json?             @db.Json
+  eligiblePositions Json?             @db.JsonB
+  mainPosition      Json?             @db.JsonB
+
+  @@map("hydrated_majors")
+}
+
+view HydratedMinor {
+  id               String            @id @db.Uuid
+  name             String            @db.VarChar
+  league           PlayerLeagueLevel
+  minorTeam        String?           @db.Text
+  ownerTeam        Json?             @db.Json
+  position         String?           @db.Text
+  minorLeagueLevel String?           @db.Text
+
+  @@map("hydrated_minors")
+}
+
+view HydratedPick {
+  id                String          @id @db.Uuid
+  season            Int
+  type              PickLeagueLevel
+  round             Int
+  pickNumber        Int?
+  currentPickHolder Json            @db.Json
+  originalPickOwner Json            @db.Json
+
+  @@map("hydrated_picks")
+}
+
+view HydratedTrade {
+  tradeId         String      @id @db.Uuid
+  dateCreated     DateTime    @db.Timestamp(6)
+  tradeStatus     TradeStatus
+  tradeCreator    String      @db.VarChar()
+  tradeRecipients String[]
+  decliningUser   String?     @db.VarChar()
+  declinedReason  String?     @db.VarChar()
+  acceptingUsers  String[]
+  acceptedOnDate  DateTime?   @db.Timestamp(6)
+  tradedMajors    Json?       @db.Json
+  tradedMinors    Json?       @db.JsonB
+  tradedPicks     Json?       @db.Json
+
+  @@map("hydrated_trades")
 }
