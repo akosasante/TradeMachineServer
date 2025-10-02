@@ -13,6 +13,7 @@ import { registerCleanupCallback, setupSignalHandlers } from "./shutdownHandler"
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../api/routes/v2/router";
 import { createContext } from "../api/routes/v2/context";
+import cors from "cors";
 
 export interface ExpressAppOptions {
     startTypeORM: boolean;
@@ -59,6 +60,51 @@ export async function setupExpressApp(
     ];
     const allowedOrigins = prodOrigins.concat(process.env.NODE_ENV === "development" ? developmentOrigins : []);
 
+    // Set up tRPC v2 endpoints
+    logger.debug("setting up tRPC v2 routes");
+    // Fix malformed Content-Type headers before tRPC processing
+    expressApp.use("/v2", (req, res, next) => {
+        // Handle duplicate content-type headers that break Express JSON parsing
+        if (req.headers["content-type"] && req.headers["content-type"].includes("application/json, application/json")) {
+            req.headers["content-type"] = "application/json";
+        }
+        next();
+    });
+
+    // Add CORS middleware for tRPC routes to handle OPTIONS requests
+    expressApp.use("/v2", (req, res, next) => {
+        if (req.path.startsWith("/auth")) {
+            cors({
+                origin: allowedOrigins,
+                credentials: true,
+                methods: ["GET", "POST", "OPTIONS"],
+                allowedHeaders: ["Content-Type", "Authorization", "traceparent"],
+            })(req, res, next);
+        } else {
+            next();
+        }
+    });
+
+    expressApp.use("/v2", (req, res, next) => {
+        // conditional mount to avoid conflict with routing-controllers /v2 routes
+        if (req.path.startsWith("/auth")) {
+            createExpressMiddleware({
+                router: appRouter,
+                createContext,
+                batching: {
+                    enabled: true,
+                },
+                onError: ({ error, req: failedReq }) => {
+                    logger.error(`tRPC Error: ${error.message}`, error);
+                    rollbar.error(error, failedReq);
+                },
+            })(req, res, next);
+        } else {
+            next();
+        }
+    });
+    logger.debug("tRPC v2 routes complete");
+
     useExpressServer(expressApp, {
         classTransformer: true,
         cors: {
@@ -75,34 +121,6 @@ export async function setupExpressApp(
         currentUserChecker,
     });
     logger.debug("route-controllers complete");
-
-    // Set up tRPC v2 endpoints
-    logger.debug("setting up tRPC v2 routes");
-    // Fix malformed Content-Type headers before tRPC processing
-    expressApp.use("/v2", (req, res, next) => {
-        // Handle duplicate content-type headers that break Express JSON parsing
-        if (req.headers["content-type"] && req.headers["content-type"].includes("application/json, application/json")) {
-            req.headers["content-type"] = "application/json";
-        }
-        next();
-    });
-
-    expressApp.use(
-        "/v2",
-        createExpressMiddleware({
-            router: appRouter,
-            createContext,
-            batching: {
-                enabled: true,
-            },
-            onError: ({ error, req }) => {
-                logger.error(`tRPC Error: ${error.message}`, error);
-                rollbar.error(error, req);
-            },
-        })
-    );
-    logger.debug("tRPC v2 routes complete");
-
     return expressApp;
 }
 
