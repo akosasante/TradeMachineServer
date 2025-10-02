@@ -1,7 +1,6 @@
 import { Server } from "http";
 import "jest-extended";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import { WriteMode } from "../../src/csv/CsvUtils";
 import TeamDAO from "../../src/DAO/TeamDAO";
@@ -13,7 +12,7 @@ import { TeamFactory } from "../factories/TeamFactory";
 import { UserFactory } from "../factories/UserFactory";
 import {
     adminLoggedIn,
-    clearDb,
+    clearPrismaDb,
     DatePatternRegex,
     doLogout,
     makeDeleteRequest,
@@ -27,7 +26,8 @@ import {
 import { v4 as uuid } from "uuid";
 import startServer from "../../src/bootstrap/app";
 import PlayerDAO from "../../src/DAO/PlayerDAO";
-import { getConnection } from "typeorm";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
+import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let adminUser: User;
@@ -35,19 +35,20 @@ let ownerUser: User;
 let userDAO: UserDAO;
 let teamDAO: TeamDAO;
 let playerDAO: PlayerDAO;
-
+let prismaConn: ExtendedPrismaClient;
 async function shutdown() {
     try {
-        await redisClient.disconnect();
+        await handleExitInTest();
     } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
+        logger.error(`Error while shutting down: ${err}`);
     }
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~PLAYER ROUTES BEFORE ALL~~~~~~");
+    process.env.SKIP_CACHE_IN_TEST = "true";
     app = await startServer();
-
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
     userDAO = new UserDAO();
     teamDAO = new TeamDAO();
     playerDAO = new PlayerDAO();
@@ -57,13 +58,14 @@ beforeAll(async () => {
 
 afterAll(async () => {
     logger.debug("~~~~~~PLAYER ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    process.env.SKIP_CACHE_IN_TEST = "false";
+    const shutdownResult = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
-    return shutdownRedis;
+    return shutdownResult;
 });
 
 describe("Player API endpoints", () => {
@@ -74,8 +76,8 @@ describe("Player API endpoints", () => {
     });
 
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.ORM_CONFIG));
-    }, 40000);
+        return await clearPrismaDb(prismaConn);
+    });
 
     describe("POST /players (create new player)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
@@ -219,7 +221,7 @@ describe("Player API endpoints", () => {
 
             const { body } = await findRequest({ leagueTeamId: team2.id, league: 2 });
 
-            const expectedPlayer = testPlayers[1].parse();
+            const expectedPlayer = testPlayers[1].parse<Player>();
             delete expectedPlayer.leagueTeam;
             expect(body).toBeArrayOfSize(1);
             expect(body[0]).toMatchObject(expectedPlayer);

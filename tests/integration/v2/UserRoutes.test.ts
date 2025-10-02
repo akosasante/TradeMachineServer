@@ -1,29 +1,27 @@
 import { Server } from "http";
 import request from "supertest";
 import "jest-extended";
-import { redisClient } from "../../../src/bootstrap/express";
 import logger from "../../../src/bootstrap/logger";
-import initializeDb from "../../../src/bootstrap/prisma-db";
+import initializeDb, { ExtendedPrismaClient } from "../../../src/bootstrap/prisma-db";
 import startServer from "../../../src/bootstrap/app";
-import { clearPrismaDb, DatePatternRegex, makeGetRequest } from "../helpers";
-import { PrismaClient } from "@prisma/client";
+import { clearPrismaDb, DatePatternRegex, makeGetRequest, setupOwnerAndAdminUsers } from "../helpers";
 import User, { Role as UserRole, UserStatus } from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
 import UserDAO from "../../../src/DAO/UserDAO";
+import { handleExitInTest, registerCleanupCallback } from "../../../src/bootstrap/shutdownHandler";
 
 let app: Server;
-let prismaConn: PrismaClient;
-/* eslint-disable @typescript-eslint/no-unused-vars */
+let prismaConn: ExtendedPrismaClient;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let ownerUser: User;
 let adminUser: User;
-/* eslint-enable @typescript-eslint/no-unused-vars */
 let userDao: UserDAO;
 
 async function shutdown() {
     try {
-        await redisClient.disconnect();
+        await handleExitInTest();
     } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
+        logger.error(`Error while shutting down: ${err}`);
     }
 }
 
@@ -31,10 +29,10 @@ beforeAll(async () => {
     logger.debug("~~~~~~[V2] USER ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
     logger.debug("server started");
-    prismaConn = initializeDb(true);
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
     logger.debug("prisma conn started");
     // Create admin and owner users in db for rest of this suite's use
-    // [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+    [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
     logger.debug("users created");
 
     // TODO: Replace with Prisma dao once we've implemented creating users
@@ -46,13 +44,13 @@ beforeAll(async () => {
 
 afterAll(async () => {
     logger.debug("~~~~~~[V2] USER ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    const shutdownResult = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
-    return shutdownRedis;
+    return shutdownResult;
 });
 
 describe("User V2 API Endpoints", () => {
@@ -62,7 +60,6 @@ describe("User V2 API Endpoints", () => {
     });
 
     describe("GET /v2/users (get all users)", () => {
-        logger.debug("GET test!");
         const getAllRequest = (status = 200) => makeGetRequest(request(app), "/v2/users", status);
 
         it("should return an array of all the users in the db", async () => {

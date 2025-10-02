@@ -1,7 +1,6 @@
 import { Server } from "http";
 import "jest-extended";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import Team from "../../src/models/team";
@@ -10,7 +9,7 @@ import { UserFactory } from "../factories/UserFactory";
 import { v4 as uuid } from "uuid";
 import {
     adminLoggedIn,
-    clearDb,
+    clearPrismaDb,
     DatePatternRegex,
     doLogout,
     makeDeleteRequest,
@@ -25,7 +24,8 @@ import {
 import startServer from "../../src/bootstrap/app";
 import User from "../../src/models/user";
 import TeamDAO from "../../src/DAO/TeamDAO";
-import { getConnection } from "typeorm";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
+import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let ownerUser: User;
@@ -33,18 +33,19 @@ let adminUser: User;
 let otherUser: User;
 let userDAO: UserDAO;
 let teamDAO: TeamDAO;
-
+let prismaConn: ExtendedPrismaClient;
 async function shutdown() {
     try {
-        await redisClient.disconnect();
+        await handleExitInTest();
     } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
+        logger.error(`Error while shutting down: ${err}`);
     }
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
 
     userDAO = new UserDAO();
     teamDAO = new TeamDAO();
@@ -53,13 +54,13 @@ beforeAll(async () => {
 
 afterAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    const shutdownResult = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
-    return shutdownRedis;
+    return shutdownResult;
 });
 
 describe("Team API endpoints", () => {
@@ -71,8 +72,8 @@ describe("Team API endpoints", () => {
     });
 
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.ORM_CONFIG));
-    }, 40000);
+        return await clearPrismaDb(prismaConn);
+    });
 
     describe("POST /teams (create new team)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);

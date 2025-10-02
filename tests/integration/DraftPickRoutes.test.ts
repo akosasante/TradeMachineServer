@@ -1,7 +1,6 @@
 import "jest-extended";
 import { Server } from "http";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import { WriteMode } from "../../src/csv/CsvUtils";
 import TeamDAO from "../../src/DAO/TeamDAO";
@@ -12,7 +11,7 @@ import { DraftPickFactory } from "../factories/DraftPickFactory";
 import { TeamFactory } from "../factories/TeamFactory";
 import {
     adminLoggedIn,
-    clearDb,
+    clearPrismaDb,
     doLogout,
     makeDeleteRequest,
     makeGetRequest,
@@ -24,8 +23,9 @@ import {
 } from "./helpers";
 import { v4 as uuid } from "uuid";
 import startServer from "../../src/bootstrap/app";
-import { getConnection } from "typeorm";
 import DraftPickDAO from "../../src/DAO/DraftPickDAO";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
+import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let adminUser: User;
@@ -33,18 +33,21 @@ let ownerUser: User;
 let userDAO: UserDAO;
 let teamDAO: TeamDAO;
 let pickDAO: DraftPickDAO;
+let prismaConn: ExtendedPrismaClient;
 
 async function shutdown() {
     try {
-        await redisClient.disconnect();
+        await handleExitInTest();
     } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
+        logger.error(`Error while shutting down: ${err}`);
     }
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~DRAFT PICK ROUTES BEFORE ALL~~~~~~");
+    process.env.SKIP_CACHE_IN_TEST = "true";
     app = await startServer();
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
     userDAO = new UserDAO();
     teamDAO = new TeamDAO();
     pickDAO = new DraftPickDAO();
@@ -54,13 +57,14 @@ beforeAll(async () => {
 
 afterAll(async () => {
     logger.debug("~~~~~~DRAFT PICK ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    process.env.SKIP_CACHE_IN_TEST = "false";
+    const shutdownResult = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
-    return shutdownRedis;
+    return shutdownResult;
 });
 
 describe("Pick API endpoints", () => {
@@ -71,8 +75,8 @@ describe("Pick API endpoints", () => {
     });
 
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.ORM_CONFIG));
-    }, 40000);
+        return await clearPrismaDb(prismaConn);
+    });
 
     describe("POST /picks (create new pick)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
@@ -311,6 +315,7 @@ describe("Pick API endpoints", () => {
         });
 
         it("should return a delete result if successful", async () => {
+            logger.debug("TEST #1");
             const testPick1 = DraftPickFactory.getPick();
             await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
             await pickDAO.createPicks([testPick1.parse()]);
@@ -323,6 +328,7 @@ describe("Pick API endpoints", () => {
             expect(getAllRes).toBeArrayOfSize(0);
         });
         it("should throw a 404 Not Found error if there is no pick with that ID", async () => {
+            logger.debug("TEST #2");
             const testPick1 = DraftPickFactory.getPick();
             await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
             await pickDAO.createPicks([testPick1.parse()]);
@@ -333,6 +339,7 @@ describe("Pick API endpoints", () => {
             expect(getAllRes).toBeArrayOfSize(1);
         });
         it("should throw a 403 Forbidden error if a non-admin tries to delete a pick", async () => {
+            logger.debug("TEST #3");
             const testPick1 = DraftPickFactory.getPick();
             await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
             await pickDAO.createPicks([testPick1.parse()]);
@@ -343,6 +350,7 @@ describe("Pick API endpoints", () => {
             expect(getAllRes).toBeArrayOfSize(1);
         });
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
+            logger.debug("TEST #4");
             const testPick1 = DraftPickFactory.getPick();
             await teamDAO.createTeams([testPick1.originalOwner!.parse()]);
             await pickDAO.createPicks([testPick1.parse()]);
