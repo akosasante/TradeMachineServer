@@ -6,7 +6,7 @@ import { adminLoggedIn, clearPrismaDb, makeGetRequest, ownerLoggedIn, setupOwner
 import startServer from "../../src/bootstrap/app";
 import User from "../../src/models/user";
 import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
-import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
+import { handleExitInTest } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let adminUser: User;

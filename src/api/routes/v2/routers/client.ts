@@ -4,12 +4,12 @@ import logger from "../../../../bootstrap/logger";
 
 export const clientRouter = router({
     getIP: publicProcedure.query(
-        withTracing("trpc.client.getIP", async (input, ctx, span) => {
+        withTracing("trpc.client.getIP", async (input, ctx, _span) => {
             logger.debug("tRPC client IP request");
 
             addSpanAttributes({
                 "client.action": "getIP",
-                "client.method": "trpc"
+                "client.method": "trpc",
             });
 
             addSpanEvent("get_ip.start");
@@ -34,17 +34,17 @@ export const clientRouter = router({
             addSpanAttributes({
                 "client.ip": clientIP,
                 "client.ip_source": xForwardedFor ? "x-forwarded-for" : xRealIp ? "x-real-ip" : "direct",
-                "client.has_proxy_headers": !!(xForwardedFor || xRealIp)
+                "client.has_proxy_headers": !!(xForwardedFor || xRealIp),
             });
 
             addSpanEvent("get_ip.success", {
                 ip: clientIP,
-                source: xForwardedFor ? "x-forwarded-for" : xRealIp ? "x-real-ip" : "direct"
+                source: xForwardedFor ? "x-forwarded-for" : xRealIp ? "x-real-ip" : "direct",
             });
 
             logger.debug(`Client IP detected: ${clientIP}`);
 
-            return { ip: clientIP };
+            return Promise.resolve({ ip: clientIP });
         })
-    )
+    ),
 });
