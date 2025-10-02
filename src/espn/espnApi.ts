@@ -180,7 +180,9 @@ export default class EspnAPI {
     }
 
     private static getBaseUrl(season = 2023, leagueId: number): string {
-        if (season >= 2017) {
+        if (season >= 2024) {
+            return `https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/${season}/segments/0/leagues/${leagueId}`;
+        } else if (season >= 2017) {
             return `https://fantasy.espn.com/apis/v3/games/flb/seasons/${season}/segments/0/leagues/${leagueId}`;
         } else {
             return `https://fantasy.espn.com/apis/v3/games/flb/leagueHistory/${leagueId}?seasonId=${season}`;
