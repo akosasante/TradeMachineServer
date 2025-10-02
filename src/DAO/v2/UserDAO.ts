@@ -40,7 +40,16 @@ export default class UserDAO {
     public async findUserWithPasswordByEmail(email: string): Promise<User | null> {
         const user = await this.userDb.findUnique({
             where: { email },
-            select: { id: true, email: true, password: true, role: true, status: true, lastLoggedIn: true },
+            select: {
+                id: true,
+                email: true,
+                password: true,
+                role: true,
+                status: true,
+                lastLoggedIn: true,
+                passwordResetToken: true,
+                passwordResetExpiresOn: true,
+            },
         });
         if (user) {
             return user as User;
