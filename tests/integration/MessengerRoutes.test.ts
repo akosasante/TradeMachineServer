@@ -1,17 +1,15 @@
 import { Server } from "http";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
 import { EmailPublisher } from "../../src/email/publishers";
 import {
     adminLoggedIn,
-    clearDb,
     clearPrismaDb,
     doLogout,
     makePostRequest,
     ownerLoggedIn,
-    setupOwnerAndAdminUsers
+    setupOwnerAndAdminUsers,
 } from "./helpers";
 import { TradeFactory } from "../factories/TradeFactory";
 import User from "../../src/models/user";
@@ -23,9 +21,8 @@ import { TeamFactory } from "../factories/TeamFactory";
 import TeamDAO from "../../src/DAO/TeamDAO";
 import { v4 as uuid } from "uuid";
 import { SlackPublisher } from "../../src/slack/publishers";
-import { getConnection } from "typeorm";
-import initializeDb, {ExtendedPrismaClient} from "../../src/bootstrap/prisma-db";
-import {handleExitInTest, registerCleanupCallback} from "../../src/bootstrap/shutdownHandler";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
+import { handleExitInTest } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let adminUser: User;
@@ -95,7 +92,6 @@ describe("Messenger API endpoints", () => {
 
         return await tradeDao.createTrade(TradeFactory.getTrade([tradeItem1], tradeParticipants1, status, tradeArgs));
     };
-
 
     describe("POST /requestTrade/:id (send trade request email)", () => {
         const req =

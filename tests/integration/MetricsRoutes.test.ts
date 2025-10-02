@@ -4,7 +4,7 @@ import "jest-extended";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
 import { clearPrismaDb } from "./helpers";
-import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
+import { handleExitInTest } from "../../src/bootstrap/shutdownHandler";
 import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
 import { EmailPublisher } from "../../src/email/publishers";
 import UserDAO from "../../src/DAO/UserDAO";

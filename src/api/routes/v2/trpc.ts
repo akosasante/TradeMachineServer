@@ -1,7 +1,8 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import { Request, Response } from "express";
 import { Session } from "express-session";
-import { context, Span } from "@opentelemetry/api";
+import { context } from "@opentelemetry/api";
+import type { Span } from "@opentelemetry/api";
 import { ExtendedPrismaClient } from "../../../bootstrap/prisma-db";
 import Users from "../../../DAO/v2/UserDAO";
 import {
@@ -127,12 +128,7 @@ const getTRPCErrorStatusCode = (error: TRPCError): number => {
  */
 export const withTracing = <TInput, TOutput>(
     operationName: string,
-    handler: (
-        input: TInput,
-        ctx: Context,
-        span: Span,
-        traceContext: any
-    ) => Promise<TOutput>
+    handler: (input: TInput, ctx: Context, span: Span, traceContext: any) => Promise<TOutput>
 ) => {
     return async ({ input, ctx }: { input: TInput; ctx: Context }): Promise<TOutput> => {
         const { span, context: traceContext } = createSpanFromRequest(operationName, ctx.req);
@@ -143,7 +139,7 @@ export const withTracing = <TInput, TOutput>(
                 finishSpanWithStatusCode(span, 200);
                 return result;
             } catch (error) {
-                const operationShortName = operationName.split('.').pop() || 'operation';
+                const operationShortName = operationName.split(".").pop() || "operation";
 
                 addSpanEvent(`${operationShortName}.error`, {
                     error: error instanceof Error ? error.message : "Unknown error",
