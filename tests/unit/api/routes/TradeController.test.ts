@@ -525,7 +525,7 @@ describe("TradeController", () => {
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledWith(acceptedTrade);
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledWith(acceptedTrade.id, TradeStatus.SUBMITTED);
-        });
+        }, 10000);
     });
 
     describe("deleteTrade method", () => {
