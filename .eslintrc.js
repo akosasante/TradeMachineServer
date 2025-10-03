@@ -51,6 +51,11 @@ module.exports = {
         "@typescript-eslint/tslint",
         "prettier",
     ],
+    settings: {
+        node: {
+            version: ">=20.0.0",
+        },
+    },
     rules: {
         "@typescript-eslint/adjacent-overload-signatures": "error",
         "@typescript-eslint/array-type": [

@@ -156,7 +156,6 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             const testEmail = "test@example.com";
             const mockUser = { id: "user-123", email: testEmail };
             const mockUpdatedUser = { ...mockUser, passwordResetExpiresOn: new Date() } as PublicUser;
-            // eslint-disable-next-line node/no-unsupported-features/es-builtins
             const mockJob = { id: BigInt(456) };
 
             mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(
@@ -575,7 +574,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
         it("should successfully queue registration email for existing user", async () => {
             const testEmail = "test@example.com";
             const mockUser = { id: "user-123", email: testEmail };
-            // eslint-disable-next-line node/no-unsupported-features/es-builtins
+
             const mockJob = { id: BigInt(789) };
 
             mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(
