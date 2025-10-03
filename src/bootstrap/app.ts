@@ -57,6 +57,7 @@ export async function setupExpressApp(
         /trades\.akosua\.xyz/,
         /naughty-wozniak-9fc262\.netlify\.app/,
         /trades\.flexfoxfantasy\.com/,
+        /ffftemp\.netlify\.app/,
     ];
     const allowedOrigins = prodOrigins.concat(process.env.NODE_ENV === "development" ? developmentOrigins : []);
 
