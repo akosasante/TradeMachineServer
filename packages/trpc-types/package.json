@@ -1,6 +1,6 @@
 {
   "name": "@akosasante/trpc-types",
-  "version": "1.0.2",
+  "version": "1.1.2",
   "description": "Shared tRPC types for TradeMachine client and server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,9 +14,12 @@
     "dist"
   ],
   "scripts": {
-    "build": "npm run build:isolated",
+    "build": "npm run build:server-types && npm run copy:server-types && npm run build:package && npm run fix:paths",
+    "build:server-types": "cd ../.. && tsc -p tsconfig.declarations.json",
+    "copy:server-types": "mkdir -p dist/server && cp -r ../../dist/api dist/server/ && cp -r ../../dist/DAO dist/server/ && cp -r ../../dist/bootstrap dist/server/ && cp -r ../../dist/models dist/server/ && cp -r ../../dist/utils dist/server/ && cp -r ../../dist/authentication dist/server/",
+    "build:package": "tsc",
+    "fix:paths": "node fix-paths.js",
     "build:isolated": "tsc",
-    "build:from-server": "cd ../.. && npm run build && npm run build:types-package",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build",
     "publish:manual": "npm run clean && npm run build && npm publish",
