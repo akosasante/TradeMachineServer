@@ -32,6 +32,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Run unit tests: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --bail --forceExit --testNamePattern=unit/`
 - Run integration tests: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --runInBand --bail --forceExit --testNamePattern=integration/` (always add `--runInBand` for integration tests to avoid DB conflicts)
 - Watch tests: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --bail --forceExit --watch`
+- Test coverage: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --bail --forceExit --coverage`
+- When writing tests for new code, prefer using Prisma and the DAO v2 pattern. Integration tests should use NO mocks. Unit tests can use mocks as needed. We generally mock one layer down from the code being tested (e.g. mock DAO methods when testing controllers); or only mock the DAO methods that would hit the database.
+- Never delete tests unless explicitly asked to. If a test is consistently failing and you're having trouble fixing it, then comment it out (and add an eslint-disable comment) and leave a clear TODO comment explaining why it was disabled and what needs to be done to fix it.
 
 ## Modern Development Environment
 
