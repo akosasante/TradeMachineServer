@@ -292,9 +292,9 @@ describe("tRPC Auth endpoints", () => {
         });
     });
 
-    describe("POST /v2/auth.resetPassword", () => {
+    describe("POST /v2/auth.resetPassword.applyReset", () => {
         const makeTrpcRequest = (input: any, expectedStatus = 200) => {
-            return request(app).post("/v2/auth.resetPassword").send(input).expect(expectedStatus);
+            return request(app).post("/v2/auth.resetPassword.applyReset").send(input).expect(expectedStatus);
         };
 
         it("should successfully reset password with valid token", async () => {
@@ -433,6 +433,56 @@ describe("tRPC Auth endpoints", () => {
                 },
                 400
             );
+
+            expect(body.error).toMatchObject({
+                code: -32600, // tRPC PARSE_ERROR code
+                message: expect.stringContaining("required"),
+            });
+        });
+    });
+
+    describe("POST /v2/auth.resetPassword.checkToken", () => {
+        const makeTrpcRequest = (input: any, expectedStatus = 200) => {
+            return request(app).post("/v2/auth.resetPassword.checkToken").send(input).expect(expectedStatus);
+        };
+
+        it("should return valid true when token exists", async () => {
+            // Create a user with a reset token
+            const hashedPassword = hashSync(testUser.password, 1);
+            const createdUsers = await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+            const userId = createdUsers[0].id;
+
+            // Set password reset token
+            const resetToken = "valid-token-abc123";
+            await userDAO.updateUser(userId, {
+                passwordResetToken: resetToken,
+            });
+
+            const { body } = await makeTrpcRequest({ token: resetToken });
+
+            expect(body.result.data).toEqual({ valid: true });
+        });
+
+        it("should return NOT_FOUND error when token does not exist", async () => {
+            const { body } = await makeTrpcRequest({ token: "non-existent-token" }, 404);
+
+            expect(body.error).toMatchObject({
+                code: -32004, // tRPC NOT_FOUND error code
+                message: expect.stringContaining("Invalid or expired reset token"),
+            });
+        });
+
+        it("should return validation error for missing token", async () => {
+            const { body } = await makeTrpcRequest({}, 400);
+
+            expect(body.error).toMatchObject({
+                code: -32600, // tRPC PARSE_ERROR code
+                message: expect.stringContaining("Required"),
+            });
+        });
+
+        it("should return validation error for empty token", async () => {
+            const { body } = await makeTrpcRequest({ token: "" }, 400);
 
             expect(body.error).toMatchObject({
                 code: -32600, // tRPC PARSE_ERROR code
