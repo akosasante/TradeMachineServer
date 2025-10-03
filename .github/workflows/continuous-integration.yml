@@ -22,9 +22,9 @@ jobs:
       postgres:
         image: postgres
         env:
-          POSTGRES_USER: ${{ secrets.PG_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.PG_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.PG_DB }}
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_trade_machine
         ports:
           - 5432:5432
         # Set health checks to wait until postgres has started
@@ -47,15 +47,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
       - name: Build js files
         run: make build
 
       - name: Setup db
         run: node db_setup.js
         env:
-          PGUSER: ${{ secrets.PG_USER }}
-          PGPASSWORD: ${{ secrets.PG_PASSWORD }}
-          PGDATABASE: ${{ secrets.PG_DB }}
+          PGUSER: test_user
+          PGPASSWORD: test_password
+          PGDATABASE: test_trade_machine
+
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?schema=test&application_name=tm_test"
 
       - name: Run typechecking and linting
         run: make typecheck && make lint
@@ -63,9 +71,9 @@ jobs:
       - name: Run integration tests
         run: make test-ci-integration
         env:
-          PG_USER: ${{ secrets.PG_USER }}
-          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
-          PG_DB: ${{ secrets.PG_DB }}
+          PG_USER: test_user
+          PG_PASSWORD: test_password
+          PG_DB: test_trade_machine
           BASE_DIR: ${{ github.workspace }}
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
@@ -74,14 +82,14 @@ jobs:
           TRADE_SPREADSHEET_ID: test_spreadsheet
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?schema=test&application_name=tm_test"
 
       - name: Run unit tests
         run: make test-ci-unit
         env:
-          PG_USER: ${{ secrets.PG_USER }}
-          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
-          PG_DB: ${{ secrets.PG_DB }}
+          PG_USER: test_user
+          PG_PASSWORD: test_password
+          PG_DB: test_trade_machine
           BASE_DIR: ${{ github.workspace }}
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
@@ -90,5 +98,5 @@ jobs:
           TRADE_SPREADSHEET_ID: test_spreadsheet
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?schema=test&application_name=tm_test"
 
