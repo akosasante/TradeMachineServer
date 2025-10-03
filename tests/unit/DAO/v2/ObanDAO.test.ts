@@ -7,15 +7,17 @@ describe("ObanDAO Unit Tests", () => {
     const mockPrismaObanJob = mockDeep<ExtendedPrismaClient["obanJob"]>();
     let obanDao: ObanDAO;
 
-    const originalEnv = process.env.APP_ENV;
+    let originalEnv: string | undefined;
 
     beforeEach(() => {
+        // Save the original APP_ENV at the start of each test
+        originalEnv = process.env.APP_ENV;
         mockClear(mockPrismaObanJob);
         obanDao = new ObanDAO(mockPrismaObanJob as any);
     });
 
     afterEach(() => {
-        // Restore original APP_ENV
+        // Restore original APP_ENV after each test
         if (originalEnv !== undefined) {
             process.env.APP_ENV = originalEnv;
         } else {
