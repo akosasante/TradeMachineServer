@@ -47,6 +47,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Wait for services to be ready
+        run: |
+          timeout 60 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/localhost/5432; do sleep 1; done'
+          timeout 60 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/localhost/6379; do sleep 1; done'
+          echo "Services are ready"
+
       - name: Generate Prisma Client
         run: npx prisma generate
 
@@ -71,7 +77,6 @@ jobs:
           PG_PASSWORD: test_password
           PG_DB: test_trade_machine
           BASE_DIR: ${{ github.workspace }}
-          SHEETS_CREDENTIAL_FILE: "fake_creds.json"
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
           BASE_URL: http://localhost:8080
@@ -88,6 +93,7 @@ jobs:
           PG_PASSWORD: test_password
           PG_DB: test_trade_machine
           BASE_DIR: ${{ github.workspace }}
+          SHEETS_CREDENTIAL_FILE: "fake_creds.json"
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
           BASE_URL: http://localhost:8080
