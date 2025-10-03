@@ -45,8 +45,8 @@ module.exports = [
         ...commonOpts,
         name: "test",
         schema: "public",
-        synchronize: true,
-        dropSchema: true,
+        synchronize: false,
+        dropSchema: false,
         maxQueryExecutionTime: 500, // lets us log slow queries (over 0.5 sec to execute)
         connectTimeoutMS: 6000, // not sure if this works/does anything
         extra: {
