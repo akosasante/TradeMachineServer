@@ -71,12 +71,12 @@ jobs:
       - name: Run typechecking and linting
         run: make typecheck && make lint
 
-      - name: Run integration tests (single test for debugging)
+      - name: Run integration tests
         run: |
           NODE_ENV=test ORM_CONFIG=test \
           npx jest --config ./jest.ci-config.js \
           --detectOpenHandles --runInBand --bail --forceExit --ci \
-          --testPathPattern=tests/integration/app.test.ts --testTimeout=25000
+          --testPathPattern=integration/ --testTimeout=25000
         env:
           PG_USER: test_user
           PG_PASSWORD: test_password
