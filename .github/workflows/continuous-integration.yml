@@ -71,6 +71,7 @@ jobs:
           PG_PASSWORD: test_password
           PG_DB: test_trade_machine
           BASE_DIR: ${{ github.workspace }}
+          SHEETS_CREDENTIAL_FILE: "fake_creds.json"
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
           BASE_URL: http://localhost:8080
