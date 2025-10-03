@@ -53,16 +53,12 @@ jobs:
       - name: Build js files
         run: make build
 
-      - name: Setup db
+      - name: Setup db and run migrations
         run: node db_setup.js
         env:
           PGUSER: test_user
           PGPASSWORD: test_password
           PGDATABASE: test_trade_machine
-
-      - name: Run Prisma migrations
-        run: npx prisma migrate deploy
-        env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?schema=test&application_name=tm_test"
 
       - name: Run typechecking and linting
