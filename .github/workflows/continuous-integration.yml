@@ -65,7 +65,8 @@ jobs:
           PGUSER: test_user
           PGPASSWORD: test_password
           PGDATABASE: test_trade_machine
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?application_name=tm_ci_test
+          PGHOST: 127.0.0.1
+          DATABASE_URL: postgresql://test_user:test_password@127.0.0.1:5432/test_trade_machine?application_name=tm_ci_test
 
       - name: Run typechecking and linting
         run: make typecheck && make lint
@@ -76,15 +77,17 @@ jobs:
           PG_USER: test_user
           PG_PASSWORD: test_password
           PG_DB: test_trade_machine
+          PG_HOST: 127.0.0.1
+          REDIS_IP: 127.0.0.1
           BASE_DIR: ${{ github.workspace }}
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
-          BASE_URL: http://localhost:8080
+          BASE_URL: http://127.0.0.1:8080
           TRADE_WORKSHEET_ID: 9999
           TRADE_SPREADSHEET_ID: test_spreadsheet
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?application_name=tm_ci_test
+          DATABASE_URL: postgresql://test_user:test_password@127.0.0.1:5432/test_trade_machine?application_name=tm_ci_test
 
       - name: Run unit tests
         run: make test-ci-unit
@@ -92,14 +95,16 @@ jobs:
           PG_USER: test_user
           PG_PASSWORD: test_password
           PG_DB: test_trade_machine
+          PG_HOST: 127.0.0.1
+          REDIS_IP: 127.0.0.1
           BASE_DIR: ${{ github.workspace }}
           SHEETS_CREDENTIAL_FILE: "fake_creds.json"
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
-          BASE_URL: http://localhost:8080
+          BASE_URL: http://127.0.0.1:8080
           TRADE_WORKSHEET_ID: 9999
           TRADE_SPREADSHEET_ID: test_spreadsheet
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?application_name=tm_ci_test
+          DATABASE_URL: postgresql://test_user:test_password@127.0.0.1:5432/test_trade_machine?application_name=tm_ci_test
 
