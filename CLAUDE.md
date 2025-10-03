@@ -27,10 +27,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Format: `make format` (runs Prettier via ESLint)
 - Type check: `make typecheck`
 - Full check (lint, format, typecheck): `make fullcheck`
-- Run single test file: `make test-file` (prompts for file path)
-- Run unit tests: `make test-unit`
-- Run integration tests: `make test-integration`
-- Watch tests: `make test-watch`
+- Run single test file: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --bail --forceExit --testPathPattern=<path-to-test-file>`
+- Run single test by name: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --bail --forceExit --testNamePattern="<name-or-regex>"` (can also be combined with --testPathPattern)
+- Run unit tests: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --bail --forceExit --testNamePattern=unit/`
+- Run integration tests: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --runInBand --bail --forceExit --testNamePattern=integration/` (always add `--runInBand` for integration tests to avoid DB conflicts)
+- Watch tests: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --bail --forceExit --watch`
 
 ## Modern Development Environment
 
