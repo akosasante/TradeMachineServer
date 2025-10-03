@@ -27,7 +27,6 @@ import { v4 as uuid } from "uuid";
 import startServer from "../../src/bootstrap/app";
 import PlayerDAO from "../../src/DAO/PlayerDAO";
 import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
-import { handleExitInTest } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let adminUser: User;
@@ -36,14 +35,6 @@ let userDAO: UserDAO;
 let teamDAO: TeamDAO;
 let playerDAO: PlayerDAO;
 let prismaConn: ExtendedPrismaClient;
-async function shutdown() {
-    try {
-        await handleExitInTest();
-    } catch (err) {
-        logger.error(`Error while shutting down: ${err}`);
-    }
-}
-
 beforeAll(async () => {
     logger.debug("~~~~~~PLAYER ROUTES BEFORE ALL~~~~~~");
     process.env.SKIP_CACHE_IN_TEST = "true";
@@ -57,15 +48,16 @@ beforeAll(async () => {
 }, 5000);
 
 afterAll(async () => {
-    logger.debug("~~~~~~PLAYER ROUTES AFTER ALL~~~~~~");
-    process.env.SKIP_CACHE_IN_TEST = "false";
-    const shutdownResult = await shutdown();
+    // Only close the server instance for this test file
+    // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        app.close(() => {
-            logger.debug("CLOSED SERVER");
+        return new Promise<void>((resolve) => {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+                resolve();
+            });
         });
     }
-    return shutdownResult;
 });
 
 describe("Player API endpoints", () => {
