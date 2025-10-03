@@ -139,10 +139,13 @@ export default async function startServer(): Promise<Server> {
         const app = await setupExpressApp();
         logger.info("Express app setup complete");
         logger.info(`Starting HTTP server on ${app.get("ip")}:${app.get("port")}`);
-        const srv = app.listen(app.get("port") as number, app.get("ip") as string, () => {
-            logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
-            logger.info("Press CTRL-C to stop\n");
-            rollbar.info("server_started");
+        const srv = await new Promise<Server>((resolve) => {
+            const server = app.listen(app.get("port") as number, app.get("ip") as string, () => {
+                logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
+                logger.info("Press CTRL-C to stop\n");
+                rollbar.info("server_started");
+                resolve(server);
+            });
         });
 
         redisClient.on("error", (err: Error) => {
