@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { Session } from "express-session";
 import { context } from "@opentelemetry/api";
 import type { Span } from "@opentelemetry/api";
+import { Prisma } from "@prisma/client";
 import { ExtendedPrismaClient } from "../../../bootstrap/prisma-db";
 import Users from "../../../DAO/v2/UserDAO";
 import {
@@ -11,6 +12,12 @@ import {
     addSpanAttributes,
     addSpanEvent,
 } from "../../../utils/tracing";
+
+/**
+ * Error handling strategy:
+ * - errorFormatter: Transforms errors into proper tRPC responses (single source of truth)
+ * - withTracing: Sets span status codes for observability, preserves original errors
+ */
 
 // Define the context type that will be available in all procedures
 export interface Context {
@@ -23,8 +30,46 @@ export interface Context {
     userDao: Users;
 }
 
-// Create the tRPC instance
-const t = initTRPC.context<Context>().create();
+const t = initTRPC.context<Context>().create({
+    errorFormatter({ shape, error }) {
+        // Customize error messages for better client experience
+        if (error.cause instanceof Prisma.PrismaClientKnownRequestError) {
+            const prismaError = error.cause;
+
+            // P2025: Record not found
+            if (prismaError.code === "P2025") {
+                return {
+                    ...shape,
+                    message: "Record not found",
+                };
+            }
+
+            // P2002: Unique constraint violation
+            if (prismaError.code === "P2002") {
+                return {
+                    ...shape,
+                    message: "Unique constraint violation",
+                };
+            }
+
+            // P2003: Foreign key constraint failed
+            if (prismaError.code === "P2003") {
+                return {
+                    ...shape,
+                    message: "Foreign key constraint violation",
+                };
+            }
+
+            // Generic Prisma error
+            return {
+                ...shape,
+                message: "Database error",
+            };
+        }
+
+        return shape;
+    },
+});
 
 // Export reusable pieces
 export const router = t.router;
@@ -133,7 +178,7 @@ export const withTracing = <TInput, TOutput>(
     return async ({ input, ctx }: { input: TInput; ctx: Context }): Promise<TOutput> => {
         const { span, context: traceContext } = createSpanFromRequest(operationName, ctx.req);
 
-        return await context.with(traceContext, async () => {
+        return context.with(traceContext, async () => {
             try {
                 const result = await handler(input, ctx, span, traceContext);
                 finishSpanWithStatusCode(span, 200);
@@ -145,16 +190,63 @@ export const withTracing = <TInput, TOutput>(
                     error: error instanceof Error ? error.message : "Unknown error",
                 });
 
+                // Set span status code based on error type (for observability)
+                let statusCode = 500;
                 if (error instanceof TRPCError) {
-                    const statusCode = getTRPCErrorStatusCode(error);
-                    finishSpanWithStatusCode(span, statusCode);
+                    statusCode = getTRPCErrorStatusCode(error);
+                } else if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                    const prismaError = error;
+                    if (prismaError.code === "P2025") statusCode = 404;
+                    else if (prismaError.code === "P2002") statusCode = 409;
+                    else statusCode = 400;
+                } else if (error instanceof Prisma.PrismaClientValidationError) {
+                    statusCode = 400;
+                }
+
+                finishSpanWithStatusCode(span, statusCode);
+
+                // Re-throw TRPCError as-is
+                if (error instanceof TRPCError) {
                     throw error;
                 }
 
-                finishSpanWithStatusCode(span, 500);
+                // Convert Prisma errors to appropriate TRPCError codes
+                if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                    const prismaError = error;
+                    if (prismaError.code === "P2025") {
+                        throw new TRPCError({
+                            code: "NOT_FOUND",
+                            message: error.message,
+                            cause: error,
+                        });
+                    }
+                    if (prismaError.code === "P2002") {
+                        throw new TRPCError({
+                            code: "CONFLICT",
+                            message: error.message,
+                            cause: error,
+                        });
+                    }
+                    throw new TRPCError({
+                        code: "BAD_REQUEST",
+                        message: error.message,
+                        cause: error,
+                    });
+                }
+
+                if (error instanceof Prisma.PrismaClientValidationError) {
+                    throw new TRPCError({
+                        code: "BAD_REQUEST",
+                        message: "Invalid data provided",
+                        cause: error,
+                    });
+                }
+
+                // Generic error fallback
                 throw new TRPCError({
                     code: "INTERNAL_SERVER_ERROR",
                     message: error instanceof Error ? error.message : "An unexpected error occurred",
+                    cause: error,
                 });
             }
         });
