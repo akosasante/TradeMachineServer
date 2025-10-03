@@ -374,8 +374,8 @@ export const authRouter = router({
             // Update user with new password and clear reset fields
             await ctx.userDao.updateUser(input.id, {
                 password: hashedPassword,
-                passwordResetExpiresOn: undefined,
-                passwordResetToken: undefined,
+                passwordResetExpiresOn: null,
+                passwordResetToken: null,
             });
 
             addSpanAttributes({
