@@ -16,7 +16,10 @@ help: ## show make commands
 
 # |----------- TESTING SCRIPTS ---------|
 clear-test-cache:
-	@rm -rf dist/ \
+	@rm -rf dist/
+	@rm -rf node_modules/.cache/ts-jest
+	@find src -name "*.js" -delete
+	@find src -name "*.d.ts" -delete
 	@npx jest --clearCache
 	$(MAKE) build
 test-ci: ## run tests using CI config, and no logging
