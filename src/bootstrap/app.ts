@@ -140,7 +140,7 @@ export default async function startServer(): Promise<Server> {
         const app = await setupExpressApp();
         logger.info("Express app setup complete");
         logger.info(`Starting HTTP server on ${app.get("ip")}:${app.get("port")}`);
-        const srv = await new Promise<Server>((resolve) => {
+        const srv = await new Promise<Server>(resolve => {
             const server = app.listen(app.get("port") as number, app.get("ip") as string, () => {
                 logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
                 logger.info("Press CTRL-C to stop\n");
