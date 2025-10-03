@@ -15,7 +15,8 @@ const app = express();
 
 // Express configuration.
 app.set("port", process.env.PORT || "3000");
-app.set("ip", process.env.IP || "localhost");
+// Force IPv4 in test mode to match Redis client and avoid IPv6/IPv4 mismatch in CI
+app.set("ip", process.env.IP || (process.env.NODE_ENV === "test" ? "127.0.0.1" : "localhost"));
 app.set("env", process.env.NODE_ENV || "development");
 app.set("json spaces", 2);
 app.set("trust proxy", 1);
