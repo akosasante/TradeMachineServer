@@ -127,7 +127,11 @@ export async function setupExpressApp(
 export default async function startServer(): Promise<Server> {
     try {
         logger.info("=== Starting server initialization ===");
-        logger.info(`Redis client configuration: host=${process.env.REDIS_IP || "localhost"}, port=${process.env.REDIS_PORT || 6379}`);
+        logger.info(
+            `Redis client configuration: host=${process.env.REDIS_IP || "localhost"}, port=${
+                process.env.REDIS_PORT || 6379
+            }`
+        );
         logger.info("Attempting to connect to Redis...");
         await redisClient.connect();
         logger.info("Redis connection successful");
