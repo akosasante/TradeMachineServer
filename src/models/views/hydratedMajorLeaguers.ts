@@ -16,12 +16,12 @@ SELECT id,
                league,
                COALESCE("mlbTeam", meta ->> 'proTeamId')           AS "mlbTeam",
                (SELECT json_build_object('id', "id", 'name', "name")
-                FROM ${process.env.PG_SCHEMA}.team t
+                FROM ${process.env.PG_SCHEMA || "public"}.team t
                 WHERE t.id = "leagueTeamId")                       AS "ownerTeam",
                meta -> 'espnPlayer' -> 'player' -> 'eligibleSlots' AS "eligiblePositions",
                meta -> 'position'                                  AS "mainPosition"
-        FROM ${process.env.PG_SCHEMA}.player
-        WHERE ${process.env.PG_SCHEMA}.player.league::text = '1';
+        FROM ${process.env.PG_SCHEMA || "public"}.player
+        WHERE ${process.env.PG_SCHEMA || "public"}.player.league::text = '1';
     `,
 })
 export class HydratedMajorLeaguer {

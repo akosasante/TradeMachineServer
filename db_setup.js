@@ -6,9 +6,7 @@ const client = new Client();
 const uuidSetup = `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`;
 // Only create test schema if PG_SCHEMA is set to 'test' (local testing)
 const needsTestSchema = process.env.PG_SCHEMA === "test";
-const schemaSetup = needsTestSchema
-    ? `CREATE SCHEMA IF NOT EXISTS test AUTHORIZATION ${process.env.PGUSER};`
-    : null;
+const schemaSetup = needsTestSchema ? `CREATE SCHEMA IF NOT EXISTS test AUTHORIZATION ${process.env.PGUSER};` : null;
 
 client
     .connect()
@@ -24,7 +22,7 @@ client
             // Run Prisma migrations
             console.log("Running Prisma migrations...");
             const migrateEnv = {
-                ...process.env
+                ...process.env,
             };
             // Only set search_path if we're using test schema
             if (needsTestSchema) {
@@ -32,7 +30,7 @@ client
             }
             execSync("npx prisma migrate deploy", {
                 env: migrateEnv,
-                stdio: "inherit"
+                stdio: "inherit",
             });
             console.log("Prisma migrations complete");
         } catch (e) {
