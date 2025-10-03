@@ -326,12 +326,12 @@ describe("[TRPC] Auth Router Unit Tests", () => {
 
             const caller = createCallerFactory(authRouter)(createMockContext());
 
-            mockUserDao.getUserById.mockResolvedValue(mockUser);
+            mockUserDao.findUserByPasswordResetToken.mockResolvedValue(mockUser);
             mockUserDao.updateUser.mockResolvedValue(mockUser);
 
             const result = await caller.resetPassword.applyReset({
-                id: validUserId,
                 password: "newPassword123",
+                confirmPassword: "newPassword123",
                 token: "valid-token",
             });
 
@@ -339,55 +339,29 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                 status: "success",
                 message: "Password reset successfully",
             });
+            expect(mockUserDao.findUserByPasswordResetToken).toHaveBeenCalledWith("valid-token");
             expect(mockUserDao.updateUser).toHaveBeenCalledWith(validUserId, expect.any(Object));
         });
 
-        it("should throw NOT_FOUND error when user does not exist", async () => {
-            const validUserId = "550e8400-e29b-41d4-a716-446655440000";
+        it("should throw NOT_FOUND error when token is invalid", async () => {
             const caller = createCallerFactory(authRouter)(createMockContext());
 
-            mockUserDao.getUserById.mockResolvedValue(null as any);
+            mockUserDao.findUserByPasswordResetToken.mockResolvedValue(null);
 
             await expect(
                 caller.resetPassword.applyReset({
-                    id: validUserId,
                     password: "newPassword123",
-                    token: "valid-token",
+                    confirmPassword: "newPassword123",
+                    token: "invalid-token",
                 })
             ).rejects.toThrow(
                 new TRPCError({
                     code: "NOT_FOUND",
-                    message: "user does not exist",
+                    message: "Invalid or expired reset token",
                 })
             );
-        });
 
-        it("should throw NOT_FOUND error when token does not match", async () => {
-            const validUserId = "550e8400-e29b-41d4-a716-446655440000";
-
-            const mockUser = {
-                id: validUserId,
-                email: "test@example.com",
-                passwordResetToken: "valid-token",
-                passwordResetExpiresOn: new Date(),
-            } as unknown as PublicUser;
-
-            const caller = createCallerFactory(authRouter)(createMockContext());
-
-            mockUserDao.getUserById.mockResolvedValue(mockUser);
-
-            await expect(
-                caller.resetPassword.applyReset({
-                    id: validUserId,
-                    password: "newPassword123",
-                    token: "wrong-token",
-                })
-            ).rejects.toThrow(
-                new TRPCError({
-                    code: "NOT_FOUND",
-                    message: "user does not exist",
-                })
-            );
+            expect(mockUserDao.findUserByPasswordResetToken).toHaveBeenCalledWith("invalid-token");
         });
 
         it("should throw FORBIDDEN error when token is expired", async () => {
@@ -404,29 +378,31 @@ describe("[TRPC] Auth Router Unit Tests", () => {
 
             const caller = createCallerFactory(authRouter)(createMockContext());
 
-            mockUserDao.getUserById.mockResolvedValue(mockUser);
+            mockUserDao.findUserByPasswordResetToken.mockResolvedValue(mockUser);
 
             await expect(
                 caller.resetPassword.applyReset({
-                    id: validUserId,
                     password: "newPassword123",
+                    confirmPassword: "newPassword123",
                     token: "valid-token",
                 })
             ).rejects.toThrow(
                 new TRPCError({
                     code: "FORBIDDEN",
-                    message: "expired",
+                    message: "Reset token has expired",
                 })
             );
+
+            expect(mockUserDao.findUserByPasswordResetToken).toHaveBeenCalledWith("valid-token");
         });
 
-        it("should validate user ID format", async () => {
+        it("should throw validation error when passwords do not match", async () => {
             const caller = createCallerFactory(authRouter)(createMockContext());
 
             await expect(
                 caller.resetPassword.applyReset({
-                    id: "not-a-uuid",
                     password: "newPassword123",
+                    confirmPassword: "differentPassword",
                     token: "valid-token",
                 })
             ).rejects.toThrow();
@@ -437,8 +413,8 @@ describe("[TRPC] Auth Router Unit Tests", () => {
 
             await expect(
                 caller.resetPassword.applyReset({
-                    id: "",
                     password: "",
+                    confirmPassword: "",
                     token: "",
                 })
             ).rejects.toThrow();
