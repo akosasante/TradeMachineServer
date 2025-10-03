@@ -72,11 +72,7 @@ jobs:
         run: make typecheck && make lint
 
       - name: Run integration tests
-        run: |
-          NODE_ENV=test ORM_CONFIG=test \
-          npx jest --config ./jest.ci-config.js \
-          --detectOpenHandles --runInBand --bail --forceExit --ci \
-          --testPathPattern=integration/ --testTimeout=25000
+        run: make test-ci-integration
         env:
           PG_USER: test_user
           PG_PASSWORD: test_password
