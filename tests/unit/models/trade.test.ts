@@ -120,7 +120,6 @@ describe("Trade Class", () => {
             });
             it("should fail if there are no participants (undefined)", () => {
                 const invalidTrade = clone(testTrade);
-                // @ts-ignore
                 invalidTrade.tradeParticipants = undefined;
                 expect(invalidTrade.isValid()).toBe(false);
             });
@@ -141,7 +140,6 @@ describe("Trade Class", () => {
 
             it("should fail if items is undefined", () => {
                 const invalidTrade = clone(testTrade);
-                // @ts-ignore
                 invalidTrade.tradeItems = undefined;
                 expect(invalidTrade.isValid()).toBe(false);
             });

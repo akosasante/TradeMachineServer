@@ -26,6 +26,9 @@ export default class DraftPickDAO {
     }
 
     public async getAllPicks(skipCache = false): Promise<DraftPick[]> {
+        if (process.env.SKIP_CACHE_IN_TEST === "true") {
+            skipCache = true;
+        }
         const options: FindManyOptions = {
             order: { id: "ASC" },
             cache: skipCache ? false : this.cacheExpiryMilliseconds,
@@ -34,14 +37,22 @@ export default class DraftPickDAO {
     }
 
     public async getPickById(id: string): Promise<DraftPick> {
+        let skipCache = false;
+        if (process.env.SKIP_CACHE_IN_TEST === "true") {
+            skipCache = true;
+        }
         return await this.draftPickDb.findOneOrFail({
             where: { id },
-            cache: this.cacheExpiryMilliseconds,
+            cache: skipCache ? false : this.cacheExpiryMilliseconds,
         } as FindOneOptions<DraftPick>);
     }
 
     public async findPicks(query: FindOptionsWhere<DraftPick>): Promise<DraftPick[]> {
-        return await this.draftPickDb.find({ where: query, cache: this.cacheExpiryMilliseconds });
+        let skipCache = false;
+        if (process.env.SKIP_CACHE_IN_TEST === "true") {
+            skipCache = true;
+        }
+        return await this.draftPickDb.find({ where: query, cache: skipCache ? false : this.cacheExpiryMilliseconds });
     }
 
     public async createPicks(pickObjs: Partial<DraftPick>[]): Promise<DraftPick[]> {

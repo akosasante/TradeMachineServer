@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
 import AuthController from "../../../../src/api/routes/AuthController";
 import UserDAO from "../../../../src/DAO/UserDAO";
+import User from "../../../../src/models/user";
 import { UserFactory } from "../../../factories/UserFactory";
 import logger from "../../../../src/bootstrap/logger";
 import { NotFoundError } from "routing-controllers";
 import { EmailPublisher } from "../../../../src/email/publishers";
-import { SessionData } from "express-session";
+import { SessionData as ExpressSessionData } from "express-session";
+import { mockDeep } from "jest-mock-extended";
 
 declare module "express-session" {
     interface SessionData {
@@ -13,7 +15,8 @@ declare module "express-session" {
     }
 }
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return */
+type AppSessionData = ExpressSessionData;
+
 describe("AuthController", () => {
     beforeAll(() => {
         logger.debug("~~~~~~AUTH CONTROLLER TESTS BEGIN~~~~~~");
@@ -21,44 +24,31 @@ describe("AuthController", () => {
     afterAll(() => {
         logger.debug("~~~~~~AUTH CONTROLLER TESTS COMPLETE~~~~~~");
     });
-    const mockUserDAO = {
-        getUserById: jest.fn(),
-        updateUser: jest.fn(),
-        setPasswordExpires: jest.fn(),
-        findUser: jest.fn(),
-    };
-    const mockMailPublisher = {
-        queueRegistrationEmail: jest.fn(),
-        queueResetEmail: jest.fn(),
-    };
+    const mockMailPublisher = mockDeep<EmailPublisher>();
+    const mockUserDAO = mockDeep<UserDAO>();
     const authController: AuthController = new AuthController(
         mockUserDAO as unknown as UserDAO,
         mockMailPublisher as unknown as EmailPublisher
     );
-    const mockReq = { session: { destroy: jest.fn() }, sessionID: "" };
+    const mockReq = mockDeep<Request>();
+    const mockRes = mockDeep<Response>();
 
-    /* @ts-ignore */
-    const mockRes: Response = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn().mockReturnThis(),
-    };
+    // Configure Response mock for method chaining
+    mockRes.status.mockReturnValue(mockRes);
+    mockRes.json.mockReturnValue(mockRes);
     const testUser = UserFactory.getUser("j@gm.com", "Jatheesh", undefined, undefined, {
         passwordResetToken: "xyz-uuid",
     });
     let mockSess = { user: testUser.id };
 
     afterEach(() => {
-        [mockUserDAO, mockMailPublisher].forEach(mockedThing =>
-            Object.values(mockedThing).forEach(mockFn => mockFn.mockReset())
-        );
-        mockReq.session.destroy.mockReset();
-        Object.values(mockRes).forEach(mockFn => mockFn.mockClear());
+        jest.clearAllMocks();
     });
 
     describe("login method", () => {
         it("should return the user model that logged in", async () => {
-            mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
-            const res = await authController.login(mockReq as unknown as Request, mockSess as SessionData);
+            mockReq.app.settings.prisma.user.findUniqueOrThrow.mockResolvedValueOnce(testUser);
+            const res = await authController.login(mockReq as unknown as Request, mockSess as AppSessionData);
             expect(res).toEqual(testUser);
         });
     });
@@ -66,48 +56,51 @@ describe("AuthController", () => {
     describe("signup method", () => {
         it("should return the user model that signed in", async () => {
             mockUserDAO.getUserById.mockResolvedValueOnce(testUser);
-            const res = await authController.signup(mockReq as unknown as Request, mockSess as SessionData);
+            const res = await authController.signup(mockReq as unknown as Request, mockSess as AppSessionData);
             expect(res).toEqual(testUser);
         });
     });
 
     describe("logout method", () => {
         it("should resolve the promise and destroy the session if logout is successful", async () => {
-            mockReq.session.destroy.mockImplementationOnce(cb => {
+            (mockReq.session.destroy as any).mockImplementationOnce((cb: any) => {
                 return cb(undefined);
             });
-            const res = await authController.logout(mockReq as unknown as Request, mockSess as SessionData);
+            const res = await authController.logout(mockReq as unknown as Request, mockSess as AppSessionData);
 
             expect(mockReq.session.destroy).toHaveBeenCalledTimes(1);
             expect(mockSess.user).toBeUndefined();
             expect(res).toBe(true);
-            // expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(1);
-            // expect(mockUserDAO.updateUser).toHaveBeenCalledWith(testUser.id, { lastLoggedIn: expect.any(Date) });
+            expect(mockReq.app.settings.prisma.user.updateUser).toHaveBeenCalledTimes(0);
         });
         it("should resolve the promise if there is no userId on the session", async () => {
-            const res = await authController.logout(mockReq as unknown as Request, {} as SessionData);
+            const res = await authController.logout(mockReq as unknown as Request, {} as AppSessionData);
 
             expect(res).toBe(true);
-            // expect(mockReq.session.destroy).toHaveBeenCalledTimes(0);
-            // expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
+            expect(mockReq.session.destroy).toHaveBeenCalledTimes(0);
+            expect(mockReq.app.settings.prisma.user.updateUser).toHaveBeenCalledTimes(0);
         });
         it("should reject the promise if destroying the request session fails somehow", async () => {
             mockSess = { user: testUser.id };
             const err = new Error("Failed to destroy request session");
-            mockReq.session.destroy.mockImplementationOnce(cb => {
-                return cb(err);
+            mockReq.session.destroy.mockImplementationOnce((cb: any) => {
+                cb(err);
+                return {} as any;
             });
-            const res = authController.logout(mockReq as unknown as Request, mockSess as SessionData);
+            const res = authController.logout(mockReq as unknown as Request, mockSess as AppSessionData);
 
             await expect(res).rejects.toEqual(err);
-            // expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
+            expect(mockReq.app.settings.prisma.user.updateUser).toHaveBeenCalledTimes(0);
         });
     });
 
     describe("resetPassword method", () => {
         it("should return a successful response and update user", async () => {
             const date = new Date(Date.now() + 30 * 60 * 1000); // half an hour from now
-            mockUserDAO.getUserById.mockResolvedValueOnce({ ...testUser, passwordResetExpiresOn: date });
+            mockUserDAO.getUserById.mockResolvedValueOnce({
+                ...testUser,
+                passwordResetExpiresOn: date,
+            } as unknown as User);
             await authController.resetPassword(testUser.id!, "lol2", "xyz-uuid", mockRes);
             const expectedUserUpdateObj = {
                 password: expect.any(String),
@@ -121,7 +114,7 @@ describe("AuthController", () => {
             expect(mockRes.json).toHaveBeenCalledWith("success");
         });
         it("should return a 404 Not Found status if the user with that ID don't exist", async () => {
-            mockUserDAO.getUserById.mockResolvedValueOnce(undefined);
+            mockUserDAO.getUserById.mockResolvedValueOnce(undefined as unknown as User);
             await authController.resetPassword(testUser.id!, "lol2", "xyz-uuid", mockRes);
 
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
@@ -135,7 +128,10 @@ describe("AuthController", () => {
             expect(mockRes.status).toHaveBeenCalledWith(404);
         });
         it("should return a 404 Not Found status if the user doesn't have a passwordResetToken", async () => {
-            mockUserDAO.getUserById.mockResolvedValueOnce({ ...testUser, passwordResetToken: undefined });
+            mockUserDAO.getUserById.mockResolvedValueOnce({
+                ...testUser,
+                passwordResetToken: undefined,
+            } as unknown as User);
             await authController.resetPassword(testUser.id!, "lol2", "xyz-uuid", mockRes);
 
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
@@ -144,7 +140,10 @@ describe("AuthController", () => {
 
         it("should return a 403 Forbidden status if the user's reset token has expired", async () => {
             const date = new Date(Date.now() - 30 * 60 * 1000); // half an hour from ago
-            mockUserDAO.getUserById.mockResolvedValueOnce({ ...testUser, passwordResetExpiresOn: date });
+            mockUserDAO.getUserById.mockResolvedValueOnce({
+                ...testUser,
+                passwordResetExpiresOn: date,
+            } as unknown as User);
             await authController.resetPassword(testUser.id!, "lol2", "xyz-uuid", mockRes);
 
             expect(mockUserDAO.updateUser).toHaveBeenCalledTimes(0);
@@ -206,4 +205,3 @@ describe("AuthController", () => {
         });
     });
 });
-/* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return */

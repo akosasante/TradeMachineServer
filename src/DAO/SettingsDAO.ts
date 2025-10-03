@@ -1,9 +1,8 @@
-import { FindManyOptions, FindOneOptions, getConnection, InsertResult, Repository } from "typeorm";
+import { FindManyOptions, FindOneOptions, getConnection, Repository } from "typeorm";
 import Settings from "../models/settings";
 import { BadRequestError } from "routing-controllers";
 import logger from "../bootstrap/logger";
 import { inspect } from "util";
-import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 export default class SettingsDAO {
     private settingsDb: Repository<Settings>;

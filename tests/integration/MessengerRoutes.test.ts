@@ -1,10 +1,16 @@
 import { Server } from "http";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
 import { EmailPublisher } from "../../src/email/publishers";
-import { adminLoggedIn, clearDb, doLogout, makePostRequest, ownerLoggedIn, setupOwnerAndAdminUsers } from "./helpers";
+import {
+    adminLoggedIn,
+    clearPrismaDb,
+    doLogout,
+    makePostRequest,
+    ownerLoggedIn,
+    setupOwnerAndAdminUsers,
+} from "./helpers";
 import { TradeFactory } from "../factories/TradeFactory";
 import User from "../../src/models/user";
 import TradeDAO from "../../src/DAO/TradeDAO";
@@ -15,7 +21,7 @@ import { TeamFactory } from "../factories/TeamFactory";
 import TeamDAO from "../../src/DAO/TeamDAO";
 import { v4 as uuid } from "uuid";
 import { SlackPublisher } from "../../src/slack/publishers";
-import { getConnection } from "typeorm";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
 
 let app: Server;
 let adminUser: User;
@@ -23,22 +29,14 @@ let ownerUser: User;
 let tradeDao: TradeDAO;
 let playerDao: PlayerDAO;
 let teamDAO: TeamDAO;
+
 const emailPublisher = EmailPublisher.getInstance();
 const slackPublisher = SlackPublisher.getInstance();
-
-async function shutdown() {
-    try {
-        await redisClient.disconnect();
-        await emailPublisher.closeQueue();
-        await slackPublisher.closeQueue();
-    } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
-    }
-}
-
+let prismaConn: ExtendedPrismaClient;
 beforeAll(async () => {
     logger.debug("~~~~~~MESSENGER ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
     playerDao = new PlayerDAO();
     tradeDao = new TradeDAO();
     teamDAO = new TeamDAO();
@@ -47,17 +45,33 @@ beforeAll(async () => {
 }, 5000);
 
 afterAll(async () => {
-    logger.debug("~~~~~~MESSENGER ROUTES AFTER ALL~~~~~~");
-    const shutdownRedisAndQueues = await shutdown();
+    // Only close the server instance for this test file
+    // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        app.close(() => {
-            logger.debug("CLOSED SERVER");
+        return new Promise<void>(resolve => {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+                resolve();
+            });
         });
     }
-    return shutdownRedisAndQueues;
 });
 
 describe("Messenger API endpoints", () => {
+    beforeEach(async () => {
+        [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
+
+        // clean up the queues so the queue lengths are reset between tests
+        await emailPublisher.cleanWaitQueue();
+        await slackPublisher.cleanWaitQueue();
+
+        return [adminUser, ownerUser];
+    });
+
+    afterEach(async () => {
+        return await clearPrismaDb(prismaConn);
+    });
+
     const createTradeOfStatus = async (status: TradeStatus, tradeArgs: Partial<Trade> = {}) => {
         const [player] = await playerDao.createPlayers([PlayerFactory.getPlayer()]);
         let [team1, team2] = await teamDAO.createTeams([
@@ -71,20 +85,6 @@ describe("Messenger API endpoints", () => {
 
         return await tradeDao.createTrade(TradeFactory.getTrade([tradeItem1], tradeParticipants1, status, tradeArgs));
     };
-
-    beforeEach(async () => {
-        [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
-
-        // clean up the queues so the queue lengths are reset between tests
-        await emailPublisher.cleanWaitQueue();
-        await slackPublisher.cleanWaitQueue();
-
-        return [adminUser, ownerUser];
-    });
-
-    afterEach(async () => {
-        return await clearDb(getConnection(process.env.ORM_CONFIG));
-    }, 40000);
 
     describe("POST /requestTrade/:id (send trade request email)", () => {
         const req =
@@ -196,6 +196,7 @@ describe("Messenger API endpoints", () => {
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
+
         it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const declinedTrade = await createTradeOfStatus(TradeStatus.REJECTED, {
                 declinedById: ownerUser.id,
@@ -257,6 +258,7 @@ describe("Messenger API endpoints", () => {
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
+
         it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const submittedTrade = await createTradeOfStatus(TradeStatus.SUBMITTED);
 
@@ -315,6 +317,7 @@ describe("Messenger API endpoints", () => {
 
             expect(queueLengthAfter).toEqual(queueLengthBefore);
         });
+
         it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const acceptedTrade = await createTradeOfStatus(TradeStatus.ACCEPTED);
 

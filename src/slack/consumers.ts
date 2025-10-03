@@ -15,6 +15,7 @@ export function setupSlackConsumers(): void {
             host: process.env.REDIS_IP || "localhost",
             port: Number(process.env.REDIS_PORT || 6379),
             password: process.env.REDISPASS,
+            family: 4, // Force IPv4 to avoid Node 20's IPv6 preference
         },
     });
     const cleanLoggedData = (data: any) => {

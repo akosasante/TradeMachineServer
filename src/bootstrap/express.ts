@@ -46,6 +46,7 @@ export const redisClient = createClient({
     socket: {
         host: process.env.REDIS_IP || "localhost",
         port: Number(process.env.REDIS_PORT || 6379),
+        family: 4, // Force IPv4 to avoid Node 20's IPv6 preference
     },
     password: process.env.REDISPASS,
 });

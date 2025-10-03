@@ -41,12 +41,7 @@ module.exports = {
     ],
 
     // A list of reporter names that Jest uses when writing coverage reports
-    coverageReporters: [
-        "json",
-        "text",
-        "lcov",
-        "clover"
-    ],
+    coverageReporters: ["json", "text", "lcov", "clover"],
 
     // An object that configures minimum threshold enforcement for coverage results
     // coverageThreshold: null,
@@ -61,7 +56,7 @@ module.exports = {
     // globalSetup: null,
 
     // A path to a module which exports an async function that is triggered once after all test suites
-    // globalTeardown: null,
+    globalTeardown: "./tests/globalTeardown.js",
 
     // A set of global variables that need to be available in all test environments
     // globals: {
@@ -80,17 +75,12 @@ module.exports = {
     // ],
 
     // An array of file extensions your modules use
-    moduleFileExtensions: [
-        "js",
-        "json",
-        "ts",
-        "node"
-    ],
+    moduleFileExtensions: ["js", "json", "ts", "node"],
 
     // A map from regular expressions to module names that allow to stub out resources with a single module
     moduleNameMapper: {
         // '\*': '<rootDir>/node_modules/$1',
-        '^@/(.*)$': '<rootDir>/src/$1'
+        "^@/(.*)$": "<rootDir>/src/$1",
     },
 
     // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
@@ -151,10 +141,7 @@ module.exports = {
     // testLocationInResults: false,
 
     // The glob patterns Jest uses to detect test files
-    testMatch: [
-        "**/__tests__/**/*.ts?(x)",
-        "**/?(*.)+(spec|test).ts?(x)"
-    ],
+    testMatch: ["**/__tests__/**/*.ts?(x)", "**/?(*.)+(spec|test).ts?(x)"],
 
     // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
     // testPathIgnorePatterns: [
@@ -178,7 +165,7 @@ module.exports = {
 
     // A map from regular expressions to paths to transformers
     transform: {
-        "^.+\\.ts?$": ["ts-jest", { tsconfig: 'tests/tsconfig.json' }]
+        "^.+\\.ts?$": ["ts-jest", { tsconfig: "tests/tsconfig.json" }],
     },
 
     // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation

@@ -2,24 +2,18 @@ import logger from "../../../src/bootstrap/logger";
 import TeamDAO from "../../../src/DAO/TeamDAO";
 import User from "../../../src/models/user";
 import { TeamFactory } from "../../factories/TeamFactory";
-import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
+import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
 import Team from "../../../src/models/team";
 import { Repository } from "typeorm";
+import { mockDeep } from "jest-mock-extended";
 
 describe("TeamDAO", () => {
-    const mockTeamDb: MockObj = {
-        find: jest.fn(),
-        findOneOrFail: jest.fn(),
-        insert: jest.fn(),
-        update: jest.fn(),
-        createQueryBuilder: jest.fn(),
-    };
+    const mockTeamDb = mockDeep<Repository<Team>>();
     const testTeam = TeamFactory.getTeam();
-    const teamDAO = new TeamDAO(mockTeamDb as unknown as Repository<Team>);
+    const teamDAO = new TeamDAO(mockTeamDb as any);
 
-    afterEach(async () => {
-        Object.values(mockTeamDb).forEach(mockFn => mockFn.mockReset());
-
+    afterEach(() => {
+        jest.clearAllMocks();
         mockExecute.mockClear();
         mockWhereInIds.mockClear();
     });
@@ -44,7 +38,7 @@ describe("TeamDAO", () => {
     it("getTeamsWithOwners - should call createQueryBuilder with the correct methods", async () => {
         const getMany = jest.fn(() => [testTeam]);
         const innerJoin = jest.fn(() => ({ getMany }));
-        mockTeamDb.createQueryBuilder.mockImplementation(() => ({ innerJoinAndSelect: innerJoin }));
+        mockTeamDb.createQueryBuilder.mockImplementation(() => ({ innerJoinAndSelect: innerJoin } as any));
         const res = await teamDAO.getTeamsWithOwners();
 
         expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
@@ -57,7 +51,7 @@ describe("TeamDAO", () => {
         const getMany = jest.fn(() => [testTeam]);
         const where = jest.fn(() => ({ getMany }));
         const leftJoinAndSelect = jest.fn(() => ({ where }));
-        mockTeamDb.createQueryBuilder.mockImplementation(() => ({ leftJoinAndSelect }));
+        mockTeamDb.createQueryBuilder.mockImplementation(() => ({ leftJoinAndSelect } as any));
         const res = await teamDAO.getTeamsWithNoOwners();
 
         expect(mockTeamDb.createQueryBuilder).toHaveBeenCalledTimes(1);
@@ -87,23 +81,15 @@ describe("TeamDAO", () => {
     });
 
     it("createTeams - should call the db save once with all the teams passed in", async () => {
-        mockTeamDb.insert.mockResolvedValueOnce({ identifiers: [{ id: testTeam.id! }], generatedMaps: [], raw: [] });
-        mockTeamDb.find.mockResolvedValueOnce([testTeam]);
-        const res = await teamDAO.createTeams([testTeam.parse()]);
+        const parsedTeam = testTeam.parse();
+        mockTeamDb.create.mockReturnValue(testTeam);
+        mockTeamDb.save.mockResolvedValueOnce([testTeam] as unknown as Team);
+        const res = await teamDAO.createTeams([parsedTeam]);
 
-        expect(mockTeamDb.insert).toHaveBeenCalledTimes(1);
-        expect(mockTeamDb.insert).toHaveBeenCalledWith([testTeam.parse()]);
-        expect(mockTeamDb.find).toHaveBeenCalledTimes(1);
-        expect(mockTeamDb.find).toHaveBeenCalledWith({
-            where: {
-                id: expect.objectContaining({
-                    _multipleParameters: true,
-                    _type: "in",
-                    _useParameter: true,
-                    _value: [testTeam.id],
-                }),
-            },
-        });
+        expect(mockTeamDb.create).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.create).toHaveBeenCalledWith(parsedTeam);
+        expect(mockTeamDb.save).toHaveBeenCalledTimes(1);
+        expect(mockTeamDb.save).toHaveBeenCalledWith([testTeam]);
         expect(res).toEqual([testTeam]);
     });
 
@@ -120,7 +106,7 @@ describe("TeamDAO", () => {
 
     it("deleteTeam - should call the db delete once with id", async () => {
         mockTeamDb.findOneOrFail.mockResolvedValueOnce(testTeam);
-        mockTeamDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+        mockTeamDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain as any);
         const deleteResult = { raw: [{ id: testTeam.id! }], affected: 1 };
         mockExecute.mockResolvedValueOnce(deleteResult);
         const res = await teamDAO.deleteTeam(testTeam.id!);
@@ -136,8 +122,8 @@ describe("TeamDAO", () => {
         const addAndRemove = jest.fn();
         const of = jest.fn(() => ({ addAndRemove }));
         const relation = jest.fn(() => ({ of }));
-        mockTeamDb.createQueryBuilder.mockImplementationOnce(() => ({ relation }));
-        mockTeamDb.findOneOrFail.mockReturnValue(testTeam);
+        mockTeamDb.createQueryBuilder.mockImplementationOnce(() => ({ relation } as any));
+        mockTeamDb.findOneOrFail.mockResolvedValue(testTeam);
         const res = await teamDAO.updateTeamOwners(
             testTeam.id!,
             [new User({ email: "1@example.com" })],

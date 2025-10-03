@@ -1,6 +1,7 @@
 import DraftPick, { LeagueLevel } from "../../src/models/draftPick";
 import { v4 as uuid } from "uuid";
 import { TeamFactory } from "./TeamFactory";
+import Team from "../../src/models/team";
 
 export class DraftPickFactory {
     public static getPickObject(
@@ -10,7 +11,7 @@ export class DraftPickFactory {
         season = 2020,
         originalOwner = TeamFactory.getTeam(),
         rest = {}
-    ) {
+    ): { round: number; pickNumber: number; type: LeagueLevel; season: number; originalOwner: Team; id: string } {
         return { round, pickNumber, type, season, originalOwner, id: uuid(), ...rest };
     }
 
@@ -21,7 +22,7 @@ export class DraftPickFactory {
         season = 2020,
         originalOwner = TeamFactory.getTeam(),
         rest = {}
-    ) {
+    ): DraftPick {
         return new DraftPick(DraftPickFactory.getPickObject(round, pickNumber, type, season, originalOwner, rest));
     }
 }

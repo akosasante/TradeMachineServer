@@ -1,20 +1,18 @@
 import { Server } from "http";
 import "jest-extended";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import { WriteMode } from "../../src/csv/CsvUtils";
 import TeamDAO from "../../src/DAO/TeamDAO";
 import UserDAO from "../../src/DAO/UserDAO";
 import Player, { PlayerLeagueType } from "../../src/models/player";
-import Team from "../../src/models/team";
 import User, { Role } from "../../src/models/user";
 import { PlayerFactory } from "../factories/PlayerFactory";
 import { TeamFactory } from "../factories/TeamFactory";
 import { UserFactory } from "../factories/UserFactory";
 import {
     adminLoggedIn,
-    clearDb,
+    clearPrismaDb,
     DatePatternRegex,
     doLogout,
     makeDeleteRequest,
@@ -23,12 +21,12 @@ import {
     makePutRequest,
     ownerLoggedIn,
     setupOwnerAndAdminUsers,
-    stringifyQuery
+    stringifyQuery,
 } from "./helpers";
 import { v4 as uuid } from "uuid";
 import startServer from "../../src/bootstrap/app";
 import PlayerDAO from "../../src/DAO/PlayerDAO";
-import { getConnection } from "typeorm";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
 
 let app: Server;
 let adminUser: User;
@@ -36,19 +34,12 @@ let ownerUser: User;
 let userDAO: UserDAO;
 let teamDAO: TeamDAO;
 let playerDAO: PlayerDAO;
-
-async function shutdown() {
-    try {
-        await redisClient.disconnect();
-    } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
-    }
-}
-
+let prismaConn: ExtendedPrismaClient;
 beforeAll(async () => {
     logger.debug("~~~~~~PLAYER ROUTES BEFORE ALL~~~~~~");
+    process.env.SKIP_CACHE_IN_TEST = "true";
     app = await startServer();
-
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
     userDAO = new UserDAO();
     teamDAO = new TeamDAO();
     playerDAO = new PlayerDAO();
@@ -57,14 +48,16 @@ beforeAll(async () => {
 }, 5000);
 
 afterAll(async () => {
-    logger.debug("~~~~~~PLAYER ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    // Only close the server instance for this test file
+    // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        app.close(() => {
-            logger.debug("CLOSED SERVER");
+        return new Promise<void>(resolve => {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+                resolve();
+            });
         });
     }
-    return shutdownRedis;
 });
 
 describe("Player API endpoints", () => {
@@ -75,8 +68,8 @@ describe("Player API endpoints", () => {
     });
 
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.ORM_CONFIG));
-    }, 40000);
+        return await clearPrismaDb(prismaConn);
+    });
 
     describe("POST /players (create new player)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
@@ -102,7 +95,7 @@ describe("Player API endpoints", () => {
             const invalidPropsObj = { ...testPlayer1.parse(), blah: "Hello" };
 
             const { body } = await adminLoggedIn(postRequest([invalidPropsObj]), app);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
             const { body: getBody } = await getOneRequest(body[0].id);
 
             expect(getBody).toMatchObject({
@@ -117,9 +110,11 @@ describe("Player API endpoints", () => {
             const res = await adminLoggedIn(postRequest([playerObj], 400), app);
             expect(res.body.stack).toEqual(expectQueryFailedErrorString);
         });
+        // eslint-disable-next-line jest/no-commented-out-tests
         // it("should return a 403 Forbidden error if a non-admin tries to create a player", async () => {
         //     await ownerLoggedIn(postRequest([testPlayer.parse()], 403), app);
         // });
+        // eslint-disable-next-line jest/no-commented-out-tests
         // it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
         //     await postRequest([testPlayer.parse()], 403)(request(app));
         // });
@@ -138,7 +133,7 @@ describe("Player API endpoints", () => {
             const { body } = await getAllRequest();
 
             expect(body).toBeArrayOfSize(2);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
             expect(body.map((p: Player) => p.id)).toSatisfyAll(id => testPlayers.map(tp => tp.id).includes(id));
         });
         it("should return an array of all players in a given league or leagues", async () => {
@@ -177,6 +172,8 @@ describe("Player API endpoints", () => {
             expect(body).toBeObject();
             expect(body).toMatchObject(testPlayers[0]);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no player with that ID", async () => {
             await getOneRequest(uuid(), 404);
         });
@@ -216,12 +213,13 @@ describe("Player API endpoints", () => {
 
             const { body } = await findRequest({ leagueTeamId: team2.id, league: 2 });
 
-            const expectedPlayer = testPlayers[1].parse();
-            // @ts-ignore
+            const expectedPlayer = testPlayers[1].parse<Player>();
             delete expectedPlayer.leagueTeam;
             expect(body).toBeArrayOfSize(1);
             expect(body[0]).toMatchObject(expectedPlayer);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 error if no player with that query is found", async () => {
             await findRequest({ mlbTeam: "Toronto Blue Jays" }, 404);
         });
@@ -294,12 +292,18 @@ describe("Player API endpoints", () => {
             expect(getOneBody).toMatchObject(testPlayer1);
             expect(getOneBody.blah).toBeUndefined();
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no player with that ID", async () => {
             await adminLoggedIn(putRequest(uuid(), updatedPlayerObj, 404), app);
         }, 2000);
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-admin tries to update a player", async () => {
             await ownerLoggedIn(putRequest(uuid(), updatedPlayerObj, 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await putRequest(uuid(), updatedPlayerObj, 403)(request(app));
         });
@@ -342,9 +346,13 @@ describe("Player API endpoints", () => {
 
             expect(getAllRes).toBeArrayOfSize(2);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-admin tries to delete a player", async () => {
             await ownerLoggedIn(deleteRequest(uuid(), 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await deleteRequest(uuid(), 403)(request(app));
         });
@@ -456,12 +464,18 @@ describe("Player API endpoints", () => {
             expect(afterGetAllResMinorsOnly).toBeArrayOfSize(99);
             expect(afterGetAllRes.find((player: Player) => player.id === initialPlayers[0].id)).toBeUndefined();
         }, 10000);
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 400 Bad Request if no file is passed in", async () => {
             await adminLoggedIn(requestWithoutFile("overwrite", 400), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to upload new players", async () => {
             await ownerLoggedIn(postFileRequest(csv, "overwrite", 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged-in request is used", async () => {
             await postFileRequest(csv, "overwrite", 403)(request(app));
         });
