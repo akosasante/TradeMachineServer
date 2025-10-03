@@ -329,7 +329,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             mockUserDao.getUserById.mockResolvedValue(mockUser);
             mockUserDao.updateUser.mockResolvedValue(mockUser);
 
-            const result = await caller.resetPassword({
+            const result = await caller.resetPassword.applyReset({
                 id: validUserId,
                 password: "newPassword123",
                 token: "valid-token",
@@ -349,7 +349,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             mockUserDao.getUserById.mockResolvedValue(null as any);
 
             await expect(
-                caller.resetPassword({
+                caller.resetPassword.applyReset({
                     id: validUserId,
                     password: "newPassword123",
                     token: "valid-token",
@@ -377,7 +377,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             mockUserDao.getUserById.mockResolvedValue(mockUser);
 
             await expect(
-                caller.resetPassword({
+                caller.resetPassword.applyReset({
                     id: validUserId,
                     password: "newPassword123",
                     token: "wrong-token",
@@ -407,7 +407,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             mockUserDao.getUserById.mockResolvedValue(mockUser);
 
             await expect(
-                caller.resetPassword({
+                caller.resetPassword.applyReset({
                     id: validUserId,
                     password: "newPassword123",
                     token: "valid-token",
@@ -424,7 +424,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             const caller = createCallerFactory(authRouter)(createMockContext());
 
             await expect(
-                caller.resetPassword({
+                caller.resetPassword.applyReset({
                     id: "not-a-uuid",
                     password: "newPassword123",
                     token: "valid-token",
@@ -436,7 +436,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             const caller = createCallerFactory(authRouter)(createMockContext());
 
             await expect(
-                caller.resetPassword({
+                caller.resetPassword.applyReset({
                     id: "",
                     password: "",
                     token: "",
