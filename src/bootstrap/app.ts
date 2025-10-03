@@ -73,7 +73,7 @@ export async function setupExpressApp(
 
     // Add CORS middleware for tRPC routes to handle OPTIONS requests
     expressApp.use("/v2", (req, res, next) => {
-        if (req.path.startsWith("/auth")) {
+        if (req.path.startsWith("/auth") || req.path.startsWith("/client")) {
             cors({
                 origin: allowedOrigins,
                 credentials: true,
@@ -87,7 +87,7 @@ export async function setupExpressApp(
 
     expressApp.use("/v2", (req, res, next) => {
         // conditional mount to avoid conflict with routing-controllers /v2 routes
-        if (req.path.startsWith("/auth")) {
+        if (req.path.startsWith("/auth") || req.path.startsWith("/client")) {
             createExpressMiddleware({
                 router: appRouter,
                 createContext,
