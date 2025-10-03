@@ -26,7 +26,7 @@ afterAll(async () => {
     // Only close the server instance for this test file
     // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        return new Promise<void>((resolve) => {
+        return new Promise<void>(resolve => {
             app.close(() => {
                 logger.debug("CLOSED SERVER");
                 resolve();
