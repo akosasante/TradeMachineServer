@@ -25,11 +25,16 @@ const loginSchema = z.object({
     password: z.string().min(1, "Password is required"),
 });
 
-const resetPasswordSchema = z.object({
-    id: z.string().min(1, "User ID is required").uuid("User ID must be a valid UUID"),
-    password: z.string().min(1, "New password is required"),
-    token: z.string().min(1, "Password reset token is required"),
-});
+const resetPasswordSchema = z
+    .object({
+        password: z.string().min(1, "New password is required"),
+        confirmPassword: z.string().min(1, "Password confirmation is required"),
+        token: z.string().min(1, "Password reset token is required"),
+    })
+    .refine(data => data.password === data.confirmPassword, {
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+    });
 
 const checkResetTokenSchema = z.object({
     token: z.string().min(1, "Password reset token is required"),
@@ -330,58 +335,54 @@ export const authRouter = router({
                 addSpanAttributes({
                     "auth.action": "resetPassword",
                     "auth.method": "trpc",
-                    "user.id": input.id,
                     "password.provided": !!input.password,
+                    "confirmPassword.provided": !!input.confirmPassword,
                     "token.provided": !!input.token,
                 });
 
-                addSpanEvent("reset_password.start", { userId: input.id });
+                addSpanEvent("reset_password.start");
 
-                // Use v2 DAO for consistency with other tRPC endpoints
-                const existingUser = await ctx.userDao.getUserById(input.id);
+                // Use v2 DAO to find user by token
+                const existingUser = await ctx.userDao.findUserByPasswordResetToken(input.token);
 
-                if (
-                    !existingUser ||
-                    !existingUser.passwordResetToken ||
-                    existingUser.passwordResetToken !== input.token
-                ) {
-                    addSpanEvent("reset_password.user_not_found_or_token_mismatch", {
-                        userId: input.id,
-                        userExists: !!existingUser,
-                        hasResetToken: !!existingUser?.passwordResetToken,
-                    });
+                if (!existingUser) {
+                    addSpanEvent("reset_password.user_not_found_or_invalid_token");
 
                     throw new TRPCError({
                         code: "NOT_FOUND",
-                        message: "user does not exist",
+                        message: "Invalid or expired reset token",
                     });
                 }
 
-                addSpanEvent("reset_password.user_found", { userId: input.id });
+                addSpanAttributes({
+                    "user.id": existingUser.id?.toString() || "unknown",
+                });
+
+                addSpanEvent("reset_password.user_found", { userId: existingUser.id?.toString() || "unknown" });
 
                 if (!passwordResetDateIsValid(existingUser.passwordResetExpiresOn || undefined)) {
                     addSpanEvent("reset_password.token_expired", {
-                        userId: input.id,
+                        userId: existingUser.id?.toString() || "unknown",
                         expiresOn: existingUser.passwordResetExpiresOn?.toISOString() || "unknown",
                     });
 
                     throw new TRPCError({
                         code: "FORBIDDEN",
-                        message: "expired",
+                        message: "Reset token has expired",
                     });
                 }
 
-                addSpanEvent("reset_password.token_valid", { userId: input.id });
+                addSpanEvent("reset_password.token_valid", { userId: existingUser.id?.toString() || "unknown" });
 
                 logger.debug("valid reset password request via tRPC");
 
                 // Generate hashed password
                 const hashedPassword = await generateHashedPassword(input.password);
 
-                addSpanEvent("reset_password.password_hashed", { userId: input.id });
+                addSpanEvent("reset_password.password_hashed", { userId: existingUser.id?.toString() || "unknown" });
 
                 // Update user with new password and clear reset fields
-                await ctx.userDao.updateUser(input.id, {
+                await ctx.userDao.updateUser(existingUser.id!, {
                     password: hashedPassword,
                     passwordResetExpiresOn: null,
                     passwordResetToken: null,
@@ -392,9 +393,9 @@ export const authRouter = router({
                     "reset_token.cleared": true,
                 });
 
-                addSpanEvent("reset_password.success", { userId: input.id });
+                addSpanEvent("reset_password.success", { userId: existingUser.id?.toString() || "unknown" });
 
-                logger.info("Password successfully reset via tRPC", { userId: input.id });
+                logger.info("Password successfully reset via tRPC", { userId: existingUser.id });
 
                 return {
                     status: "success",
