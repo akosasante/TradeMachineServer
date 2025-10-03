@@ -153,7 +153,6 @@ export default class AuthController {
                         reject(err);
                     } else {
                         logger.debug(`Destroying user session for userId#${session.user}`);
-                        // await this.userDao.updateUser(session.user, {lastLoggedIn: new Date()});
                         delete session.user;
                         activeUserMetric.dec();
                         resolve(true);

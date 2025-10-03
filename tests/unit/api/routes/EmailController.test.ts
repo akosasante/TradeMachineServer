@@ -76,7 +76,6 @@ describe("EmailController", () => {
 
                 "message-id": "<5d0e2800bbddbd4ed05cc56a@domain.com>",
                 ts_event: 1586556782,
-                /* eslint-enable @typescript-eslint/naming-convention */
             };
 
             await emailController.receiveSendInMailWebhook(webhookEvent, mockRes as unknown as Response);

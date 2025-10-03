@@ -1,1 +1,35 @@
-[{"displayName":"max.brand@hotmail.com","id":"{0129296F-0627-456F-8B25-9DCD518379F7}","isLeagueManager":false},{"displayName":"iandem7557106","id":"{2009C7B7-7B59-4164-BEA6-2F735F7098D3}","isLeagueManager":false},{"displayName":"scottl7553689","id":"{38D77A18-BA4F-4E7D-8422-3B8FA4DA1226}","isLeagueManager":false},{"displayName":"jlim2_","id":"{42B0F372-BEAC-429B-B0F3-72BEACC29BA0}","isLeagueManager":false},{"displayName":"Jatheesh","id":"{45267673-D73A-4DE1-A676-73D73A0DE19A}","isLeagueManager":true},{"displayName":"asmith8686544","id":"{5C0231B6-ABF1-4167-8C25-607C10D1AD5F}","isLeagueManager":false},{"displayName":"kellyr8838728","id":"{639688B1-FB3E-485A-B34F-AD6CF44D556C}","isLeagueManager":false},{"displayName":"Chris958","id":"{65C2F033-6DB6-4E30-82F0-336DB65E30A7}","isLeagueManager":false},{"displayName":"Graembels","id":"{684DF434-3BFC-4B4A-9147-754D3543ADA3}","isLeagueManager":false},{"displayName":"JJuSON_19","id":"{75246790-9D78-4BC0-ACB1-29A0B0127590}","isLeagueManager":false},{"displayName":"TiBen87","id":"{7936E274-BD37-49CF-B6E2-74BD37A9CF72}","isLeagueManager":false},{"displayName":"ryan-neeson@hotmail.com","id":"{8C78C352-76DF-4CD6-8DC8-EC9BB1B1EFF7}","isLeagueManager":false},{"displayName":"TheRhymeMinister","id":"{9C9E5C6D-EB08-4DAE-9E5C-6DEB08ADAE72}","isLeagueManager":true},{"displayName":"TakeoverSolid","id":"{9EE651C5-D078-4193-8429-CA135D69BE2B}","isLeagueManager":false},{"displayName":"Garth MacInnis","id":"{A17B17A3-3489-4A73-BA85-5771F0EF72B3}","isLeagueManager":false},{"displayName":"conkeestedoray","id":"{BEEBE494-C028-4CF1-B0B0-94B3466C2AFD}","isLeagueManager":false},{"displayName":"Jeremiah057206369","id":"{BFD95EC4-5BE8-4EC8-995E-C45BE85EC854}","isLeagueManager":false},{"displayName":"adamclee380","id":"{CB3115AD-3035-4BE2-B40B-800517A78C26}","isLeagueManager":false},{"displayName":"wliao91988863","id":"{D3AC32A7-698C-4FEC-BEAA-6891B135943A}","isLeagueManager":false},{"displayName":"ppppfffft","id":"{D83BF7DC-2473-4A49-B53D-00000D9FF850}","isLeagueManager":true},{"displayName":"luchamel34","id":"{D9FC1E6A-938C-4B19-8E90-B6A0EE37398E}","isLeagueManager":false},{"displayName":"I R Troll","id":"{DCD078FB-FAA8-4DF7-BA84-DFC4592403AF}","isLeagueManager":false},{"displayName":"RichardJET","id":"{DF1ABFE9-1970-492F-B06C-F3812002B4B7}","isLeagueManager":false},{"displayName":"BABYBUENO","id":"{E332A37C-1034-40EE-8D77-9CEF0B1E5F98}","isLeagueManager":false},{"displayName":"jeffreytychow","id":"{F84FF863-662F-4BF4-9957-2E2DDDECF8D3}","isLeagueManager":false}]
+[
+    {
+        "displayName": "max.brand@hotmail.com",
+        "id": "{0129296F-0627-456F-8B25-9DCD518379F7}",
+        "isLeagueManager": false
+    },
+    { "displayName": "iandem7557106", "id": "{2009C7B7-7B59-4164-BEA6-2F735F7098D3}", "isLeagueManager": false },
+    { "displayName": "scottl7553689", "id": "{38D77A18-BA4F-4E7D-8422-3B8FA4DA1226}", "isLeagueManager": false },
+    { "displayName": "jlim2_", "id": "{42B0F372-BEAC-429B-B0F3-72BEACC29BA0}", "isLeagueManager": false },
+    { "displayName": "Jatheesh", "id": "{45267673-D73A-4DE1-A676-73D73A0DE19A}", "isLeagueManager": true },
+    { "displayName": "asmith8686544", "id": "{5C0231B6-ABF1-4167-8C25-607C10D1AD5F}", "isLeagueManager": false },
+    { "displayName": "kellyr8838728", "id": "{639688B1-FB3E-485A-B34F-AD6CF44D556C}", "isLeagueManager": false },
+    { "displayName": "Chris958", "id": "{65C2F033-6DB6-4E30-82F0-336DB65E30A7}", "isLeagueManager": false },
+    { "displayName": "Graembels", "id": "{684DF434-3BFC-4B4A-9147-754D3543ADA3}", "isLeagueManager": false },
+    { "displayName": "JJuSON_19", "id": "{75246790-9D78-4BC0-ACB1-29A0B0127590}", "isLeagueManager": false },
+    { "displayName": "TiBen87", "id": "{7936E274-BD37-49CF-B6E2-74BD37A9CF72}", "isLeagueManager": false },
+    {
+        "displayName": "ryan-neeson@hotmail.com",
+        "id": "{8C78C352-76DF-4CD6-8DC8-EC9BB1B1EFF7}",
+        "isLeagueManager": false
+    },
+    { "displayName": "TheRhymeMinister", "id": "{9C9E5C6D-EB08-4DAE-9E5C-6DEB08ADAE72}", "isLeagueManager": true },
+    { "displayName": "TakeoverSolid", "id": "{9EE651C5-D078-4193-8429-CA135D69BE2B}", "isLeagueManager": false },
+    { "displayName": "Garth MacInnis", "id": "{A17B17A3-3489-4A73-BA85-5771F0EF72B3}", "isLeagueManager": false },
+    { "displayName": "conkeestedoray", "id": "{BEEBE494-C028-4CF1-B0B0-94B3466C2AFD}", "isLeagueManager": false },
+    { "displayName": "Jeremiah057206369", "id": "{BFD95EC4-5BE8-4EC8-995E-C45BE85EC854}", "isLeagueManager": false },
+    { "displayName": "adamclee380", "id": "{CB3115AD-3035-4BE2-B40B-800517A78C26}", "isLeagueManager": false },
+    { "displayName": "wliao91988863", "id": "{D3AC32A7-698C-4FEC-BEAA-6891B135943A}", "isLeagueManager": false },
+    { "displayName": "ppppfffft", "id": "{D83BF7DC-2473-4A49-B53D-00000D9FF850}", "isLeagueManager": true },
+    { "displayName": "luchamel34", "id": "{D9FC1E6A-938C-4B19-8E90-B6A0EE37398E}", "isLeagueManager": false },
+    { "displayName": "I R Troll", "id": "{DCD078FB-FAA8-4DF7-BA84-DFC4592403AF}", "isLeagueManager": false },
+    { "displayName": "RichardJET", "id": "{DF1ABFE9-1970-492F-B06C-F3812002B4B7}", "isLeagueManager": false },
+    { "displayName": "BABYBUENO", "id": "{E332A37C-1034-40EE-8D77-9CEF0B1E5F98}", "isLeagueManager": false },
+    { "displayName": "jeffreytychow", "id": "{F84FF863-662F-4BF4-9957-2E2DDDECF8D3}", "isLeagueManager": false }
+]

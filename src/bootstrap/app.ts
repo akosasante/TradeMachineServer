@@ -13,6 +13,7 @@ import { registerCleanupCallback, setupSignalHandlers } from "./shutdownHandler"
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../api/routes/v2/router";
 import { createContext } from "../api/routes/v2/context";
+import cors from "cors";
 
 export interface ExpressAppOptions {
     startTypeORM: boolean;
@@ -48,7 +49,7 @@ export async function setupExpressApp(
     logger.debug("consumer setup complete");
 
     // Register routes and some global auth middlewares
-    logger.info("setting up route-controllers");
+    logger.debug("setting up route-controllers");
     const developmentOrigins = [/localhost:3030/, /localhost:3031/, /127\.0\.0\.1/, /ngrok/];
     const prodOrigins = [
         /newtrades\.akosua\.xyz/,
@@ -56,8 +57,54 @@ export async function setupExpressApp(
         /trades\.akosua\.xyz/,
         /naughty-wozniak-9fc262\.netlify\.app/,
         /trades\.flexfoxfantasy\.com/,
+        /ffftemp\.netlify\.app/,
     ];
     const allowedOrigins = prodOrigins.concat(process.env.NODE_ENV === "development" ? developmentOrigins : []);
+
+    // Set up tRPC v2 endpoints
+    logger.debug("setting up tRPC v2 routes");
+    // Fix malformed Content-Type headers before tRPC processing
+    expressApp.use("/v2", (req, res, next) => {
+        // Handle duplicate content-type headers that break Express JSON parsing
+        if (req.headers["content-type"] && req.headers["content-type"].includes("application/json, application/json")) {
+            req.headers["content-type"] = "application/json";
+        }
+        next();
+    });
+
+    // Add CORS middleware for tRPC routes to handle OPTIONS requests
+    expressApp.use("/v2", (req, res, next) => {
+        if (req.path.startsWith("/auth") || req.path.startsWith("/client")) {
+            cors({
+                origin: allowedOrigins,
+                credentials: true,
+                methods: ["GET", "POST", "OPTIONS"],
+                allowedHeaders: ["Content-Type", "Authorization", "traceparent"],
+            })(req, res, next);
+        } else {
+            next();
+        }
+    });
+
+    expressApp.use("/v2", (req, res, next) => {
+        // conditional mount to avoid conflict with routing-controllers /v2 routes
+        if (req.path.startsWith("/auth") || req.path.startsWith("/client")) {
+            createExpressMiddleware({
+                router: appRouter,
+                createContext,
+                batching: {
+                    enabled: true,
+                },
+                onError: ({ error, req: failedReq }) => {
+                    logger.error(`tRPC Error: ${error.message}`, error);
+                    rollbar.error(error, failedReq);
+                },
+            })(req, res, next);
+        } else {
+            next();
+        }
+    });
+    logger.debug("tRPC v2 routes complete");
 
     useExpressServer(expressApp, {
         classTransformer: true,
@@ -74,47 +121,32 @@ export async function setupExpressApp(
         authorizationChecker,
         currentUserChecker,
     });
-    logger.info("route-controllers complete");
-
-    // Set up tRPC v2 endpoints
-    logger.info("setting up tRPC v2 routes");
-    // Fix malformed Content-Type headers before tRPC processing
-    expressApp.use("/v2", (req, res, next) => {
-        // Handle duplicate content-type headers that break Express JSON parsing
-        if (req.headers["content-type"] && req.headers["content-type"].includes("application/json, application/json")) {
-            req.headers["content-type"] = "application/json";
-        }
-        next();
-    });
-    logger.info("tRPC v2 pre-processing complete");
-
-    expressApp.use(
-        "/v2",
-        createExpressMiddleware({
-            router: appRouter,
-            createContext,
-            batching: {
-                enabled: true,
-            },
-            onError: ({ error, req }) => {
-                logger.error(`tRPC Error: ${error.message}`, error);
-                rollbar.error(error, req);
-            },
-        })
-    );
-    logger.info("tRPC v2 routes complete");
-
+    logger.debug("route-controllers complete");
     return expressApp;
 }
 
 export default async function startServer(): Promise<Server> {
     try {
+        logger.info("=== Starting server initialization ===");
+        logger.info(
+            `Redis client configuration: host=${process.env.REDIS_IP || "localhost"}, port=${
+                process.env.REDIS_PORT || 6379
+            }`
+        );
+        logger.info("Attempting to connect to Redis...");
         await redisClient.connect();
+        logger.info("Redis connection successful");
+        logger.info("Setting up Express app...");
         const app = await setupExpressApp();
-        const srv = app.listen(app.get("port") as number, app.get("ip") as string, () => {
-            logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
-            logger.info("Press CTRL-C to stop\n");
-            rollbar.info("server_started");
+        logger.info("Express app setup complete");
+        logger.info(`Starting HTTP server on ${app.get("ip")}:${app.get("port")}`);
+        const srv = await new Promise<Server>((resolve) => {
+            const server = app.listen(app.get("port") as number, app.get("ip") as string, () => {
+                logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
+                logger.info("Press CTRL-C to stop\n");
+                rollbar.info("server_started");
+                resolve(server);
+            });
         });
 
         redisClient.on("error", (err: Error) => {

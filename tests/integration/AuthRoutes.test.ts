@@ -1,48 +1,46 @@
 import { Server } from "http";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import User, { TIME_TO_EXPIRE_USER_PASSWORD_IN_MS } from "../../src/models/user";
 import startServer from "../../src/bootstrap/app";
-import { clearDb, makeLoggedInRequest, makePostRequest } from "./helpers";
-import { getConnection } from "typeorm";
+import { clearPrismaDb, makeLoggedInRequest, makePostRequest } from "./helpers";
 import { generateHashedPassword } from "../../src/authentication/auth";
 import { advanceBy, clear } from "jest-date-mock";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
 
 let app: Server;
 let userDAO: UserDAO;
-async function shutdown() {
-    try {
-        await redisClient.disconnect();
-    } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
-    }
-}
+let prismaConn: ExtendedPrismaClient;
 
 beforeAll(async () => {
     logger.debug("~~~~~~AUTH ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
     userDAO = new UserDAO();
     return app;
 });
+
 afterAll(async () => {
     logger.debug("~~~~~~AUTH ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    // Only close the server instance for this test file
+    // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        app.close(() => {
-            logger.debug("CLOSED SERVER");
+        return new Promise<void>(resolve => {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+                resolve();
+            });
         });
     }
-    return shutdownRedis;
 });
 
 describe("Auth API endpoints", () => {
     const testUser = { email: "test@example.com", password: "lol" };
 
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.ORM_CONFIG));
-    }, 40000);
+        return await clearPrismaDb(prismaConn);
+    });
 
     describe("POST /auth/signup", () => {
         const signupRequest =
@@ -79,6 +77,8 @@ describe("Auth API endpoints", () => {
             const updatedUser = await userDAO.findUserWithPasswordByEmail(testUser.email);
             expect(updatedUser!.password).toBeDefined();
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should not allow signing up with the same email for an existing user that already has a password", async () => {
             const hashedPass = await generateHashedPassword(testUser.password);
             await userDAO.createUsers([{ email: testUser.email, password: hashedPass }]);
@@ -158,6 +158,8 @@ describe("Auth API endpoints", () => {
         it("should successfully 'logout' a non-initialized session", async () => {
             await request(app).post("/auth/logout").expect(200);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should successfully logout the user and/ destroy session data", async () => {
             await makeLoggedInRequest(request.agent(app), testUser.email, testUser.password, logoutFunc);
         });
@@ -227,6 +229,7 @@ describe("Auth API endpoints", () => {
             return await userDAO.createUsers([{ email: testUser.email, password: hashedPass }]);
         });
 
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 200 if a logged in user calls the endpoint", async () => {
             await makeLoggedInRequest(request.agent(app), testUser.email, testUser.password, sessionCheckFn);
         });

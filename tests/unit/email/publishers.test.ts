@@ -3,19 +3,21 @@ import Bull from "bull";
 import { UserFactory } from "../../factories/UserFactory";
 import logger from "../../../src/bootstrap/logger";
 import { TradeFactory } from "../../factories/TradeFactory";
+import { mockDeep } from "jest-mock-extended";
+import { clearJobMetricsIntervals } from "../../../src/scheduled_jobs/metrics";
 
-const mockQueue = {
-    add: jest.fn(),
-};
+const mockQueue = mockDeep<Bull.Queue>();
 
 beforeAll(() => {
     logger.debug("~~~~~~EMAIL PUBLISHER TESTS BEGIN~~~~~~");
 });
 afterAll(() => {
+    // Clear job metrics intervals to prevent Jest from hanging
+    clearJobMetricsIntervals();
     logger.debug("~~~~~~EMAIL PUBLISHER COMPLETE~~~~~~");
 });
 afterEach(() => {
-    mockQueue.add.mockReset();
+    jest.clearAllMocks();
 });
 
 describe("EmailPublisher", () => {
@@ -33,7 +35,6 @@ describe("EmailPublisher", () => {
 
         "message-id": "<5d0e2800bbddbd4ed05cc56a@domain.com>",
         ts_event: 1586556782,
-        /* eslint-enable @typescript-eslint/naming-convention */
     };
     const eventJson = JSON.stringify(event);
     const exponentialBackoff = { attempts: 3, backoff: { type: "exponential", delay: 30000 } };

@@ -1,4 +1,3 @@
-/* eslint-disable */
 import initializeDb from "../bootstrap/db";
 import TradeDAO from "../DAO/TradeDAO";
 import { SlackTradeAnnouncer } from "../slack/tradeAnnouncer";
@@ -18,4 +17,3 @@ run()
         console.error(err);
         process.exit(99);
     });
-/* eslint-enable */

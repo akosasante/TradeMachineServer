@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Context } from "./trpc";
+import { Context } from "./trpcHelpers";
 import { getPrismaClientFromRequest } from "../../../bootstrap/prisma-db";
 import Users from "../../../DAO/v2/UserDAO";
 

@@ -43,7 +43,6 @@ describe("Player Class", () => {
         status: "FREEAGENT",
         tradeLocked: false,
     };
-    /* eslint-enable @typescript-eslint/naming-convention */
 
     describe("constructor", () => {
         it("should construct the object as expected", () => {
@@ -78,7 +77,7 @@ describe("Player Class", () => {
     describe("static methods", () => {
         const convertedPlayer = Player.convertEspnMajorLeaguerToPlayer(espnPlayer);
         const {
-            player: { fullName: ignoreFullName },
+            player: { fullName: _ignoreFullName },
             ...noNamePlayer
         } = clone(espnPlayer);
 

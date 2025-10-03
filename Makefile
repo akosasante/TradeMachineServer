@@ -1,11 +1,12 @@
 # List any targets that are not an actual file here to ensure they are always run
 .PHONY: help
-.PHONY: test-ci test-ci-unit test-ci-integration test-unit test-integration test-update-snapshots test-local
+.PHONY: clear-test-cache test-ci test-ci-unit test-ci-integration test-unit test-integration test-update-snapshots test-local
+.PHONY: docker-test-unit docker-test-integration docker-test-all docker-test-standalone
 .PHONY: watch-ts-files watch-js-server dev-server dev-tsx watch-js-debug-server debug-server debug-tsx
 .PHONY: docker-dev-up docker-dev-down docker-dev-logs docker-dev-shell docker-dev-restart docker-dev-rebuild
 .PHONY: docker-infrastructure-up docker-infrastructure-down docker-infrastructure-logs docker-prod-test docker-full-setup
-.PHONY: lint lint-fix format compile-ts copy-email-templates build serve typecheck fullcheck
-.PHONY: generate-migration run-migration revert-migration
+.PHONY: lint lint-fix fix-all format compile-ts copy-email-templates build serve typecheck fullcheck
+.PHONY: generate-migration run-migration revert-migration prisma-migrate-test prisma-push-test prisma-migrate
 
 help: ## show make commands
 	@echo "\n"
@@ -14,18 +15,25 @@ help: ## show make commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 # |----------- TESTING SCRIPTS ---------|
+clear-test-cache:
+	@rm -rf dist/
+	@rm -rf node_modules/.cache/ts-jest
+	@find src -name "*.js" -delete
+	@find src -name "*.d.ts" -delete
+	@npx jest --clearCache
+	$(MAKE) build
 test-ci: ## run tests using CI config, and no logging
 	NODE_ENV=test ORM_CONFIG=test PG_SCHEMA=test \
 	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testTimeout=25000
 
-test-ci-unit: ## run tests using CI config, and no logging
-	NODE_ENV=test ORM_CONFIG=test PG_SCHEMA=test \
+test-ci-unit: ## run tests using CI config, and no logging (uses public schema in CI)
+	NODE_ENV=test ORM_CONFIG=test \
 	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=unit/ --testTimeout=25000
 
-test-ci-integration: ## run tests using CI config, and no logging
-	NODE_ENV=test ORM_CONFIG=test PG_SCHEMA=test \
+test-ci-integration: ## run tests using CI config, and no logging (uses public schema in CI)
+	NODE_ENV=test ORM_CONFIG=test \
 	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=integration/ --testTimeout=25000
 
@@ -111,6 +119,21 @@ test-file: ## Test a specific file
 
 test-local: test-unit test-integration ## run unit, then integration tests using local config
 
+# |----------- DOCKER TEST SCRIPTS ---------|
+docker-test-unit: ## run unit tests in Docker container (requires docker-dev-up)
+	docker-compose exec app sh -c "NODE_ENV=test npx jest --config ./jest.minimal.config.js --testPathPattern=unit/ --runInBand"
+
+docker-test-integration: ## run integration tests in Docker container (requires docker-dev-up)
+	docker-compose exec app sh -c "NODE_ENV=test npx jest --config ./jest.minimal.config.js --testPathPattern=integration/ --runInBand"
+
+docker-test-all: ## run all tests in Docker container (requires docker-dev-up)
+	$(MAKE) docker-test-unit && $(MAKE) docker-test-integration
+
+docker-test-standalone: ## run tests in standalone Docker container (starts and stops infrastructure)
+	make docker-infrastructure-up && sleep 10 && \
+	docker-compose run --rm app sh -c "NODE_ENV=test npx jest --config ./jest.minimal.config.js --runInBand" && \
+	make docker-infrastructure-down
+
 # |----------- LOCAL DEV SCRIPTS ---------|
 watch-ts-files: ## Watch tsconfig input files and compile typescript to javascript files
 	npx tsc --watch
@@ -184,8 +207,11 @@ lint: ## Run typescript linting
 lint-fix: ## Attempt to fix any typescript lint errors
 	npx eslint . --ext .ts,.tsx --fix
 
-format: ## Reformat all files with Prettier (via ESLint)
-	$(MAKE) lint-fix
+fix-all: ## Fix both formatting and linting issues in one command
+	$(MAKE) format && $(MAKE) lint-fix
+
+format: ## Reformat all files with Prettier
+	npx prettier --write "src/**/*.{ts,tsx,js,jsx,json}" "tests/**/*.{ts,tsx,js,jsx,json}" "*.{ts,tsx,js,jsx,json}"
 
 # |----------- BUILD AND SERVE SCRIPTS ---------|
 compile-ts: ## Compile typescript
@@ -202,7 +228,7 @@ serve: ## Serve the node server statically (no restarting on file changes)
 typecheck: ## Check for type errors that would cause failures to build
 	npx tsc --noEmit --incremental false
 
-fullcheck: lint-fix typecheck ## Run all code quality checks (lint, format, typecheck)
+fullcheck: format lint typecheck ## Run all code quality checks (format, lint, typecheck)
 
 # |----------- DATABASE MIGRATION SCRIPTS ---------|
 generate-migration: ## Generate a new migration file with name=MIGRATION_NAME and using config for ENV
@@ -242,6 +268,9 @@ revert-migration: ## Revert the most recently applied migration using config fil
 
 prisma-migrate-test:
 	@export $$(grep -v '^#' tests/.env | xargs) && npx prisma migrate deploy
+
+prisma-push-test:
+	@export $$(grep -v '^#' tests/.env | xargs) && npx prisma db push --accept-data-loss
 
 prisma-migrate:
 	@export $$(grep -v '^#' .env | xargs) && npx prisma migrate deploy
