@@ -445,6 +445,51 @@ describe("[TRPC] Auth Router Unit Tests", () => {
         });
     });
 
+    describe("resetPassword.checkToken", () => {
+        it("should return valid true when token exists", async () => {
+            const mockUser = {
+                id: "user-123",
+                email: "test@example.com",
+            } as unknown as PublicUser;
+
+            const caller = createCallerFactory(authRouter)(createMockContext());
+
+            mockUserDao.findUserByPasswordResetToken.mockResolvedValue(mockUser);
+
+            const result = await caller.resetPassword.checkToken({ token: "valid-token-123" });
+
+            expect(result).toEqual({ valid: true });
+            expect(mockUserDao.findUserByPasswordResetToken).toHaveBeenCalledWith("valid-token-123");
+        });
+
+        it("should throw NOT_FOUND error when token does not exist", async () => {
+            const caller = createCallerFactory(authRouter)(createMockContext());
+
+            mockUserDao.findUserByPasswordResetToken.mockResolvedValue(null);
+
+            await expect(caller.resetPassword.checkToken({ token: "invalid-token" })).rejects.toThrow(
+                new TRPCError({
+                    code: "NOT_FOUND",
+                    message: "Invalid or expired reset token",
+                })
+            );
+
+            expect(mockUserDao.findUserByPasswordResetToken).toHaveBeenCalledWith("invalid-token");
+        });
+
+        it("should validate token is provided", async () => {
+            const caller = createCallerFactory(authRouter)(createMockContext());
+
+            await expect(caller.resetPassword.checkToken({ token: "" })).rejects.toThrow();
+        });
+
+        it("should require token field", async () => {
+            const caller = createCallerFactory(authRouter)(createMockContext());
+
+            await expect(caller.resetPassword.checkToken({} as any)).rejects.toThrow();
+        });
+    });
+
     describe("signup.register", () => {
         it("should successfully register new user", async () => {
             const mockUser = {

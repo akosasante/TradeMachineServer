@@ -31,6 +31,10 @@ const resetPasswordSchema = z.object({
     token: z.string().min(1, "Password reset token is required"),
 });
 
+const checkResetTokenSchema = z.object({
+    token: z.string().min(1, "Password reset token is required"),
+});
+
 export const authRouter = router({
     login: router({
         authenticate: publicProcedure.input(loginSchema).mutation(
@@ -392,12 +396,48 @@ export const authRouter = router({
 
                 logger.info("Password successfully reset via tRPC", { userId: input.id });
 
-            return {
-                status: "success",
-                message: "Password reset successfully",
-            };
-        })
-    ),
+                return {
+                    status: "success",
+                    message: "Password reset successfully",
+                };
+            })
+        ),
+        checkToken: publicProcedure.input(checkResetTokenSchema).mutation(
+            withTracing("trpc.auth.checkResetToken", async (input, ctx, _span) => {
+                logger.debug("tRPC check reset token");
+
+                addSpanAttributes({
+                    "auth.action": "checkResetToken",
+                    "auth.method": "trpc",
+                    "token.provided": !!input.token,
+                });
+
+                addSpanEvent("check_token.start", { tokenProvided: !!input.token });
+
+                // Use v2 DAO for consistency with other tRPC endpoints
+                const user = await ctx.userDao.findUserByPasswordResetToken(input.token);
+
+                if (!user) {
+                    addSpanEvent("check_token.token_not_found");
+                    throw new TRPCError({
+                        code: "NOT_FOUND",
+                        message: "Invalid or expired reset token",
+                    });
+                }
+
+                addSpanAttributes({
+                    "user.found": true,
+                    "token.valid": true,
+                });
+
+                addSpanEvent("check_token.success", { userId: user.id?.toString() || "unknown" });
+
+                logger.debug("Valid reset token found via tRPC");
+
+                return { valid: true };
+            })
+        ),
+    }),
     signup: router({
         register: publicProcedure
             .input(loginSchema) // Reuse loginSchema since it has email and password validation
