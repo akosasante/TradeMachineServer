@@ -314,8 +314,8 @@ describe("tRPC Auth endpoints", () => {
             });
 
             const { body } = await makeTrpcRequest({
-                id: userId,
                 password: "newPassword123",
+                confirmPassword: "newPassword123",
                 token: resetToken,
             });
 
@@ -332,21 +332,19 @@ describe("tRPC Auth endpoints", () => {
             expect(updatedUser?.passwordResetExpiresOn).toBeNull();
         });
 
-        it("should return NOT_FOUND error when user does not exist", async () => {
-            const validUserId = "550e8400-e29b-41d4-a716-446655440000";
-
+        it("should return NOT_FOUND error when token does not exist", async () => {
             const { body } = await makeTrpcRequest(
                 {
-                    id: validUserId,
                     password: "newPassword123",
-                    token: "valid-token",
+                    confirmPassword: "newPassword123",
+                    token: "non-existent-token",
                 },
                 404
             );
 
             expect(body.error).toMatchObject({
                 code: -32004, // tRPC NOT_FOUND error code
-                message: expect.stringContaining("Record not found"),
+                message: expect.stringContaining("Invalid or expired reset token"),
             });
         });
 
@@ -366,8 +364,8 @@ describe("tRPC Auth endpoints", () => {
 
             const { body } = await makeTrpcRequest(
                 {
-                    id: userId,
                     password: "newPassword123",
+                    confirmPassword: "newPassword123",
                     token: "wrong-token",
                 },
                 404
@@ -375,7 +373,7 @@ describe("tRPC Auth endpoints", () => {
 
             expect(body.error).toMatchObject({
                 code: -32004, // tRPC NOT_FOUND error code
-                message: expect.stringContaining("user does not exist"),
+                message: expect.stringContaining("Invalid or expired reset token"),
             });
         });
 
@@ -395,8 +393,8 @@ describe("tRPC Auth endpoints", () => {
 
             const { body } = await makeTrpcRequest(
                 {
-                    id: userId,
                     password: "newPassword123",
+                    confirmPassword: "newPassword123",
                     token: resetToken,
                 },
                 403
@@ -408,11 +406,11 @@ describe("tRPC Auth endpoints", () => {
             });
         });
 
-        it("should return validation error for invalid user ID format", async () => {
+        it("should return validation error when passwords do not match", async () => {
             const { body } = await makeTrpcRequest(
                 {
-                    id: "not-a-uuid",
                     password: "newPassword123",
+                    confirmPassword: "differentPassword",
                     token: "valid-token",
                 },
                 400
@@ -420,15 +418,15 @@ describe("tRPC Auth endpoints", () => {
 
             expect(body.error).toMatchObject({
                 code: -32600, // tRPC PARSE_ERROR code for validation
-                message: expect.stringContaining("UUID"),
+                message: expect.stringContaining("Passwords do not match"),
             });
         });
 
         it("should return validation error for missing required fields", async () => {
             const { body } = await makeTrpcRequest(
                 {
-                    id: "",
                     password: "",
+                    confirmPassword: "",
                     token: "",
                 },
                 400
