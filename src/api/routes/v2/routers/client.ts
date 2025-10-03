@@ -31,6 +31,11 @@ export const clientRouter = router({
                 clientIP = remoteAddress || "unknown";
             }
 
+            // Normalize IPv6-mapped IPv4 addresses (e.g., ::ffff:192.168.1.1 -> 192.168.1.1)
+            if (clientIP.startsWith("::ffff:")) {
+                clientIP = clientIP.substring(7);
+            }
+
             addSpanAttributes({
                 "client.ip": clientIP,
                 "client.ip_source": xForwardedFor ? "x-forwarded-for" : xRealIp ? "x-real-ip" : "direct",
