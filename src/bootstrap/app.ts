@@ -73,33 +73,31 @@ export async function setupExpressApp(
     });
 
     // Add CORS middleware for tRPC routes to handle OPTIONS requests
-    expressApp.use("/v2", (req, res, next) => {
-        if (req.path.startsWith("/auth") || req.path.startsWith("/client")) {
-            cors({
-                origin: allowedOrigins,
-                credentials: true,
-                methods: ["GET", "POST", "OPTIONS"],
-                allowedHeaders: ["Content-Type", "Authorization", "traceparent"],
-            })(req, res, next);
-        } else {
-            next();
-        }
+    const trpcCorsMiddleware = cors({
+        origin: allowedOrigins,
+        credentials: true,
+        methods: ["GET", "POST", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "traceparent"],
     });
 
     expressApp.use("/v2", (req, res, next) => {
         // conditional mount to avoid conflict with routing-controllers /v2 routes
-        if (req.path.startsWith("/auth") || req.path.startsWith("/client")) {
-            createExpressMiddleware({
-                router: appRouter,
-                createContext,
-                batching: {
-                    enabled: true,
-                },
-                onError: ({ error, req: failedReq }) => {
-                    logger.error(`tRPC Error: ${error.message}`, error);
-                    rollbar.error(error, failedReq);
-                },
-            })(req, res, next);
+        // tRPC uses dot notation (e.g., /auth.sessionCheck), so check for that pattern
+        if (req.path.includes("auth.") || req.path.includes("client.")) {
+            // Apply CORS first for tRPC routes
+            trpcCorsMiddleware(req, res, () => {
+                createExpressMiddleware({
+                    router: appRouter,
+                    createContext,
+                    batching: {
+                        enabled: true,
+                    },
+                    onError: ({ error, req: failedReq }) => {
+                        logger.error(`tRPC Error: ${error.message}`, error);
+                        rollbar.error(error, failedReq);
+                    },
+                })(req, res, next);
+            });
         } else {
             next();
         }
