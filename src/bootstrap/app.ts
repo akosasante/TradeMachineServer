@@ -126,8 +126,15 @@ export async function setupExpressApp(
 
 export default async function startServer(): Promise<Server> {
     try {
+        logger.info("=== Starting server initialization ===");
+        logger.info(`Redis client configuration: host=${process.env.REDIS_IP || "localhost"}, port=${process.env.REDIS_PORT || 6379}`);
+        logger.info("Attempting to connect to Redis...");
         await redisClient.connect();
+        logger.info("Redis connection successful");
+        logger.info("Setting up Express app...");
         const app = await setupExpressApp();
+        logger.info("Express app setup complete");
+        logger.info(`Starting HTTP server on ${app.get("ip")}:${app.get("port")}`);
         const srv = app.listen(app.get("port") as number, app.get("ip") as string, () => {
             logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
             logger.info("Press CTRL-C to stop\n");
