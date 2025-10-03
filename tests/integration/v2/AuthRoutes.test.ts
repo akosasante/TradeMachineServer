@@ -444,21 +444,49 @@ describe("tRPC Auth endpoints", () => {
             return request(app).post("/v2/auth.resetPassword.checkToken").send(input).expect(expectedStatus);
         };
 
-        it("should return valid true when token exists", async () => {
-            // Create a user with a reset token
+        it("should return valid true when token exists and is not expired", async () => {
+            // Create a user with a reset token and valid expiry
             const hashedPassword = hashSync(testUser.password, 1);
             const createdUsers = await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
             const userId = createdUsers[0].id;
 
-            // Set password reset token
+            const futureDate = new Date();
+            futureDate.setHours(futureDate.getHours() + 1);
+
+            // Set password reset token with future expiry
             const resetToken = "valid-token-abc123";
             await userDAO.updateUser(userId, {
                 passwordResetToken: resetToken,
+                passwordResetExpiresOn: futureDate,
             });
 
             const { body } = await makeTrpcRequest({ token: resetToken });
 
             expect(body.result.data).toEqual({ valid: true });
+        });
+
+        it("should return FORBIDDEN error when token is expired", async () => {
+            // Create a user with a reset token and expired date
+            const hashedPassword = hashSync(testUser.password, 1);
+            const createdUsers = await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+            const userId = createdUsers[0].id;
+
+            const pastDate = new Date();
+            pastDate.setHours(pastDate.getHours() - 1);
+
+            // Set password reset token with past expiry
+            const resetToken = "expired-token";
+            await userDAO.updateUser(userId, {
+                passwordResetToken: resetToken,
+                passwordResetExpiresOn: pastDate,
+            });
+
+            const { body } = await makeTrpcRequest({ token: resetToken }, 403);
+
+            expect(body.error).toMatchObject({
+                code: -32003, // tRPC FORBIDDEN error code
+                message: expect.stringContaining("expired"),
+            });
         });
 
         it("should return NOT_FOUND error when token does not exist", async () => {

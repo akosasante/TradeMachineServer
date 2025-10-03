@@ -426,6 +426,21 @@ export const authRouter = router({
                     });
                 }
 
+                addSpanEvent("check_token.user_found", { userId: user.id?.toString() || "unknown" });
+
+                // Check if token is expired
+                if (!passwordResetDateIsValid(user.passwordResetExpiresOn || undefined)) {
+                    addSpanEvent("check_token.token_expired", {
+                        userId: user.id?.toString() || "unknown",
+                        expiresOn: user.passwordResetExpiresOn?.toISOString() || "unknown",
+                    });
+
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "Reset token has expired",
+                    });
+                }
+
                 addSpanAttributes({
                     "user.found": true,
                     "token.valid": true,

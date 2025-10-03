@@ -422,10 +422,14 @@ describe("[TRPC] Auth Router Unit Tests", () => {
     });
 
     describe("resetPassword.checkToken", () => {
-        it("should return valid true when token exists", async () => {
+        it("should return valid true when token exists and is not expired", async () => {
+            const futureDate = new Date();
+            futureDate.setHours(futureDate.getHours() + 1);
+
             const mockUser = {
                 id: "user-123",
                 email: "test@example.com",
+                passwordResetExpiresOn: futureDate,
             } as unknown as PublicUser;
 
             const caller = createCallerFactory(authRouter)(createMockContext());
@@ -436,6 +440,30 @@ describe("[TRPC] Auth Router Unit Tests", () => {
 
             expect(result).toEqual({ valid: true });
             expect(mockUserDao.findUserByPasswordResetToken).toHaveBeenCalledWith("valid-token-123");
+        });
+
+        it("should throw FORBIDDEN error when token is expired", async () => {
+            const pastDate = new Date();
+            pastDate.setHours(pastDate.getHours() - 1);
+
+            const mockUser = {
+                id: "user-123",
+                email: "test@example.com",
+                passwordResetExpiresOn: pastDate,
+            } as unknown as PublicUser;
+
+            const caller = createCallerFactory(authRouter)(createMockContext());
+
+            mockUserDao.findUserByPasswordResetToken.mockResolvedValue(mockUser);
+
+            await expect(caller.resetPassword.checkToken({ token: "expired-token" })).rejects.toThrow(
+                new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "Reset token has expired",
+                })
+            );
+
+            expect(mockUserDao.findUserByPasswordResetToken).toHaveBeenCalledWith("expired-token");
         });
 
         it("should throw NOT_FOUND error when token does not exist", async () => {
