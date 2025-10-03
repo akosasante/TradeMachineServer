@@ -11,6 +11,9 @@ import { TeamFactory } from "../../../factories/TeamFactory";
 import { TradeItemType } from "../../../../src/models/tradeItem";
 import { HydratedTrade } from "../../../../src/models/views/hydratedTrades";
 import { mockClear, mockDeep } from "jest-mock-extended";
+import * as TradeTracker from "../../../../src/csv/TradeTracker";
+
+jest.mock("../../../../src/csv/TradeTracker");
 
 describe("TradeController", () => {
     const mockTradeDAO = mockDeep<TradeDAO>();
@@ -476,6 +479,7 @@ describe("TradeController", () => {
             mockTradeDAO.getTradeById.mockReset();
             mockTradeDAO.getTradeById.mockResolvedValueOnce(acceptedTrade);
             mockTradeDAO.hydrateTrade.mockResolvedValueOnce(acceptedTrade);
+            jest.spyOn(TradeTracker, "appendNewTrade").mockResolvedValue(undefined);
         });
 
         it("should throw an error if a non-admin, non-trade participator tries to update it", async () => {
