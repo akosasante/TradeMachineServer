@@ -59,7 +59,7 @@ jobs:
           PGUSER: test_user
           PGPASSWORD: test_password
           PGDATABASE: test_trade_machine
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?schema=test&application_name=tm_test"
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?application_name=tm_ci_test
 
       - name: Run typechecking and linting
         run: make typecheck && make lint
@@ -78,7 +78,7 @@ jobs:
           TRADE_SPREADSHEET_ID: test_spreadsheet
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?schema=test&application_name=tm_test"
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?application_name=tm_ci_test
 
       - name: Run unit tests
         run: make test-ci-unit
@@ -94,5 +94,5 @@ jobs:
           TRADE_SPREADSHEET_ID: test_spreadsheet
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?schema=test&application_name=tm_test"
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_trade_machine?application_name=tm_ci_test
 
