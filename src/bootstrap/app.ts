@@ -52,12 +52,17 @@ export async function setupExpressApp(
     logger.debug("setting up route-controllers");
     const developmentOrigins = [/localhost:3030/, /localhost:3031/, /127\.0\.0\.1/, /ngrok/];
     const prodOrigins = [
+        // Primary domains
         /newtrades\.akosua\.xyz/,
-        /staging\.trades\.akosua\.xyz/,
-        /trades\.akosua\.xyz/,
-        /naughty-wozniak-9fc262\.netlify\.app/,
         /trades\.flexfoxfantasy\.com/,
+        // Staging/pre-prod domains for old frontend
+        /staging\.trades\.akosua\.xyz/,
+        /naughty-wozniak-9fc262\.netlify\.app/,
+        // Staging/pre-prod domains for new frontend
         /ffftemp\.netlify\.app/,
+        /ffftemp\.akosua\.xyz/,
+        // old domain?
+        /trades\.akosua\.xyz/,
     ];
     const allowedOrigins = prodOrigins.concat(process.env.NODE_ENV === "development" ? developmentOrigins : []);
 
