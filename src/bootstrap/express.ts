@@ -65,25 +65,27 @@ const REDIS_OPTS = {
 
 const insecureCookies = process.env.COOKIE_SECURE === "false" || process.env.NODE_ENV === "test";
 
-app.use(
-    expressSession({
-        resave: false,
-        saveUninitialized: true,
-        secret: process.env.SESSION_SECRET || "test",
-        store: new redisStore(REDIS_OPTS),
-        unset: "destroy",
-        name: process.env.ORM_CONFIG === "staging" ? "staging_trades.sid" : "trades.sid",
-        cookie: {
-            // Don't set secure cookies in dev/test
-            secure: !insecureCookies,
-            httpOnly: true,
-            maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
-            sameSite: insecureCookies ? "lax" : "none",
-            // Set domain to share cookies across subdomains (e.g., newtrades.api.akosua.xyz and staging.trades.akosua.xyz)
-            domain: process.env.COOKIE_DOMAIN || undefined,
-        },
-    })
-);
+const sessionConfig = {
+    resave: false,
+    saveUninitialized: true,
+    secret: process.env.SESSION_SECRET || "test",
+    store: new redisStore(REDIS_OPTS),
+    unset: "destroy",
+    name: process.env.ORM_CONFIG === "staging" ? "staging_trades.sid" : "trades.sid",
+    cookie: {
+        // Don't set secure cookies in dev/test
+        secure: !insecureCookies,
+        httpOnly: true,
+        maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
+        sameSite: insecureCookies ? "lax" : "none",
+        // Set domain to share cookies across subdomains (e.g., newtrades.api.akosua.xyz and staging.trades.akosua.xyz)
+        domain: process.env.COOKIE_DOMAIN || undefined,
+    },
+};
+
+logger.info(`[SESSION] Cookie config: domain=${sessionConfig.cookie.domain}, secure=${sessionConfig.cookie.secure}, sameSite=${sessionConfig.cookie.sameSite}, name=${sessionConfig.name}`);
+
+app.use(expressSession(sessionConfig));
 
 app.use(metricsMiddleware as any);
 
