@@ -1,33 +1,30 @@
-// Simplified types for client consumption without server dependencies
+// Direct exports from bundled server types for full type safety
+// @server-dist is a path alias that gets replaced with ./server/ during build
+export type { AppRouter } from "@server-dist/api/routes/v2/router";
+export type { PublicUser } from "@server-dist/DAO/v2/UserDAO";
 
-// Auth login sendResetEmail types
-export interface SendResetEmailInput {
-    email: string;
-}
+// Re-export useful tRPC type utilities for better IDE support
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "@server-dist/api/routes/v2/router";
 
-export interface SendResetEmailOutput {
-    status: string;
-    jobId: string;
-    userId: string;
-}
+/**
+ * Inferred input types for all tRPC procedures.
+ *
+ * @example
+ * ```typescript
+ * type LoginInput = RouterInputs['auth']['login']['authenticate']
+ * // { email: string; password: string }
+ * ```
+ */
+export type RouterInputs = inferRouterInputs<AppRouter>;
 
-// Common user type (simplified to avoid Prisma dependencies)
-export interface PublicUser {
-    id: string;
-    email: string;
-    role: string;
-    status: string;
-    lastLoggedIn: Date | null;
-}
-
-// Router structure for type safety (will be replaced with actual AppRouter type once generated)
-export interface AppRouter {
-    auth: {
-        login: {
-            sendResetEmail: {
-                input: SendResetEmailInput;
-                output: SendResetEmailOutput;
-            };
-        };
-    };
-}
+/**
+ * Inferred output types for all tRPC procedures.
+ *
+ * @example
+ * ```typescript
+ * type LoginOutput = RouterOutputs['auth']['login']['authenticate']
+ * // PublicUser
+ * ```
+ */
+export type RouterOutputs = inferRouterOutputs<AppRouter>;

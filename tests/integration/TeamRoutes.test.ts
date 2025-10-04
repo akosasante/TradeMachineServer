@@ -25,7 +25,6 @@ import startServer from "../../src/bootstrap/app";
 import User from "../../src/models/user";
 import TeamDAO from "../../src/DAO/TeamDAO";
 import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
-import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let ownerUser: User;
@@ -34,13 +33,6 @@ let otherUser: User;
 let userDAO: UserDAO;
 let teamDAO: TeamDAO;
 let prismaConn: ExtendedPrismaClient;
-async function shutdown() {
-    try {
-        await handleExitInTest();
-    } catch (err) {
-        logger.error(`Error while shutting down: ${err}`);
-    }
-}
 
 beforeAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES BEFORE ALL~~~~~~");
@@ -54,13 +46,16 @@ beforeAll(async () => {
 
 afterAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES AFTER ALL~~~~~~");
-    const shutdownResult = await shutdown();
+    // Only close the server instance for this test file
+    // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        app.close(() => {
-            logger.debug("CLOSED SERVER");
+        return new Promise<void>(resolve => {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+                resolve();
+            });
         });
     }
-    return shutdownResult;
 });
 
 describe("Team API endpoints", () => {

@@ -71,7 +71,7 @@ a.button-link {
         <h1 style="line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;">TradeMachine</h1>
         <h2>Forgot Your Password?</h2>
         <p style="line-height: 1.6em; margin: 1em 0;">Hi Jatheesh, you are receiving this email because you have requested a password reset for your account. <br><br></p>
-        <p style="line-height: 1.6em; margin: 1em 0;">Please click on the following link to complete the process:</p><a class="button-link" href="http://localhost:8080/reset_password?u=random-token" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5;"><span>Reset Password</span></a>
+        <p style="line-height: 1.6em; margin: 1em 0;">Please click on the following link to complete the process:</p><a class="button-link" href="http://127.0.0.1:8080/reset_password?u=random-token" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5;"><span>Reset Password</span></a>
         <div class="divider"></div>
       </div>
     </div>
@@ -91,7 +91,7 @@ reset for your account.
 
 Please click on the following link to complete the process:
 
-Reset Password [http://localhost:8080/reset_password?u=random-token]
+Reset Password [http://127.0.0.1:8080/reset_password?u=random-token]
 
 ",
     "to": "test@example.com",
@@ -170,7 +170,7 @@ a.button-link {
         <h1 style="line-height: initial; margin: 0.67em 0; padding: 0; color: #3b459a; font-weight: 600; font-size: 3rem; font-family: 'Lucida Grande', 'Montserrat', 'Roboto', monospace;">TradeMachine</h1>
         <h2>Invitation to Register</h2>
         <p style="line-height: 1.6em; margin: 1em 0;">Hi Jatheesh, you have been invited to register on Trade Machine. This will allow you to submit trades with other members of the Flex Fox Fantasy Baseball League.</p>
-        <p style="line-height: 1.6em; margin: 1em 0;">Please click on the following link to complete the process:</p><a class="button-link" href="http://localhost:8080/register?e=dGVzdEBleGFtcGxlLmNvbQ==" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5;"><span>Register</span></a>
+        <p style="line-height: 1.6em; margin: 1em 0;">Please click on the following link to complete the process:</p><a class="button-link" href="http://127.0.0.1:8080/register?e=dGVzdEBleGFtcGxlLmNvbQ==" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5;"><span>Register</span></a>
         <div class="divider"></div>
       </div>
     </div>
@@ -188,7 +188,7 @@ you to submit trades with other members of the Flex Fox Fantasy Baseball League.
 
 Please click on the following link to complete the process:
 
-Register [http://localhost:8080/register?e=dGVzdEBleGFtcGxlLmNvbQ==]
+Register [http://127.0.0.1:8080/register?e=dGVzdEBleGFtcGxlLmNvbQ==]
 
 ",
     "to": "test@example.com",
@@ -489,7 +489,7 @@ a.button-link {
         <ul class="minors" style="margin-top: initial !important; margin-bottom: initial !important;"></ul>
         <li>MiniMe (Jays - P - Low Minors) from CREATOR_TEAM</li>
         <hr>
-        <div class="button-container"><a class="button-link" href="http://localhost:8080/trade/test-uuid/accept" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;"><span>Accept Trade</span></a><a class="button-link" href="http://localhost:8080/trade/test-uuid/reject" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;"><span>Reject Trade</span></a>
+        <div class="button-container"><a class="button-link" href="http://127.0.0.1:8080/trade/test-uuid/accept" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;"><span>Accept Trade</span></a><a class="button-link" href="http://127.0.0.1:8080/trade/test-uuid/reject" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;"><span>Reject Trade</span></a>
         </div>
       </div>
     </div>
@@ -519,8 +519,8 @@ from CREATOR_TEAM
 
 --------------------------------------------------------------------------------
 
-Accept Trade [http://localhost:8080/trade/test-uuid/accept]Reject Trade
-[http://localhost:8080/trade/test-uuid/reject]
+Accept Trade [http://127.0.0.1:8080/trade/test-uuid/accept]Reject Trade
+[http://127.0.0.1:8080/trade/test-uuid/reject]
 ",
     "to": "test@example.com",
   },
@@ -612,7 +612,7 @@ a.button-link {
           <li>MiniMe (Jays - P - Low Minors) from CREATOR_TEAM</li>
         </div>
         <p style="line-height: 1.6em; margin: 1em 0;">Upon submission of this trade, it will be announced in the <a href="https://flexfoxfantasy.slack.com/archives/C84UJAX5Y" style="text-decoration: none; border-bottom: #d3d6f0 1px solid; color: #2837b8 !important;">#trade_announcements</a> channel.</p>
-        <div class="button-container"><a class="button-link" href="http://localhost:8080/trade/test-uuid/submit" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;"><span>Submit Trade</span></a></div>
+        <div class="button-container"><a class="button-link" href="http://127.0.0.1:8080/trade/test-uuid/submit" style="background-color: #3b459a; display: inline-block; border: 2px solid transparent; color: #fafafa; padding: calc(.375em - 1px) .75em; text-align: center; white-space: nowrap; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); font-size: 1rem; text-decoration: none; height: 1.5em; vertical-align: top; line-height: 1.5; margin-right: 2rem !important;"><span>Submit Trade</span></a></div>
       </div>
     </div>
     <footer style="height: 5%; background: #4b528b; width: 75%; margin-left: auto; margin-right: auto;"></footer>
@@ -638,7 +638,7 @@ from CREATOR_TEAM
 Upon submission of this trade, it will be announced in the #trade_announcements
 [https://flexfoxfantasy.slack.com/archives/C84UJAX5Y] channel.
 
-Submit Trade [http://localhost:8080/trade/test-uuid/submit]
+Submit Trade [http://127.0.0.1:8080/trade/test-uuid/submit]
 ",
     "to": "test@example.com",
   },

@@ -10,10 +10,15 @@ jest.mock("./src/bootstrap/rollbar");
 const matchers = require('jest-extended/all');
 expect.extend(matchers);
 
-// Load Docker-specific test env if running in container, otherwise use local
+// Load Docker-specific test env if running in container, use local env if available
+// Skip loading .env in CI since environment variables are provided by GitHub Actions
+const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
 const isDocker = process.env.CONTAINER_ENV === 'docker' || process.env.PG_HOST === 'postgres';
-const envPath = isDocker
-    ? resolvePath(__dirname, "./tests/.env.docker")
-    : resolvePath(__dirname, "./tests/.env");
 
-dotenvConfig({path: envPath});
+if (!isCI) {
+    const envPath = isDocker
+        ? resolvePath(__dirname, "./tests/.env.docker")
+        : resolvePath(__dirname, "./tests/.env");
+
+    dotenvConfig({path: envPath});
+}

@@ -17,6 +17,9 @@ module.exports = {
         "jest/globals": true,
     },
     settings: {
+        node: {
+            version: ">=20.0.0",
+        },
         jest: {
             version: require("jest/package.json").version,
         },

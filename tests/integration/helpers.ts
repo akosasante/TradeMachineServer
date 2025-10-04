@@ -119,7 +119,10 @@ export const clearDb: (connection: Connection) => Promise<void> = async (connect
     return await connection.synchronize(true);
 };
 
-export const clearPrismaDb = async (prisma: ExtendedPrismaClient, schema = "test"): Promise<number | undefined> => {
+export const clearPrismaDb = async (
+    prisma: ExtendedPrismaClient,
+    schema = process.env.PG_SCHEMA || "public"
+): Promise<number | undefined> => {
     const tableNames = await prisma.$queryRaw<
         { tablename: string }[]
     >`SELECT tablename FROM pg_tables WHERE schemaname=${schema};`;
@@ -129,6 +132,11 @@ export const clearPrismaDb = async (prisma: ExtendedPrismaClient, schema = "test
         .filter(name => !["typeorm_metadata", "_prisma_migrations", "query-result-cache", "oban_jobs"].includes(name))
         .map(name => `"${schema}"."${name}"`)
         .join(", ");
+
+    // If no tables to truncate, return early
+    if (!tables) {
+        return undefined;
+    }
 
     try {
         return await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);

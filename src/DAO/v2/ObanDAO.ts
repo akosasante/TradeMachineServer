@@ -5,6 +5,7 @@ import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
 // Job type interfaces
 export interface EmailJobData {
+    env: "production" | "staging" | "development";
     email_type: "reset_password" | "registration_email";
     data: string; // user ID for reset_password and registration_email
     trace_context?: {
@@ -38,7 +39,7 @@ export default class ObanDAO {
      * Enqueue a job for the Elixir application to process
      */
     public async enqueueJob(jobInput: CreateObanJobInput): Promise<ObanJob> {
-        const job = await this.obanJobsDb.create({
+        return await this.obanJobsDb.create({
             data: {
                 queue: jobInput.queue,
                 worker: jobInput.worker,
@@ -49,7 +50,6 @@ export default class ObanDAO {
                 state: oban_job_state.available,
             },
         });
-        return job;
     }
 
     /**
@@ -71,6 +71,7 @@ export default class ObanDAO {
         traceContext?: { traceparent: string; tracestate?: string }
     ): Promise<ObanJob> {
         return this.enqueueEmailJob({
+            env: (process.env.APP_ENV as EmailJobData["env"]) || "staging",
             email_type: "reset_password",
             data: userId,
             trace_context: traceContext,
@@ -85,6 +86,7 @@ export default class ObanDAO {
         traceContext?: { traceparent: string; tracestate?: string }
     ): Promise<ObanJob> {
         return this.enqueueEmailJob({
+            env: (process.env.APP_ENV as EmailJobData["env"]) || "staging",
             email_type: "registration_email",
             data: userId,
             trace_context: traceContext,

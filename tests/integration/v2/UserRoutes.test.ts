@@ -8,7 +8,7 @@ import { clearPrismaDb, DatePatternRegex, makeGetRequest, setupOwnerAndAdminUser
 import User, { Role as UserRole, UserStatus } from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
 import UserDAO from "../../../src/DAO/UserDAO";
-import { handleExitInTest, registerCleanupCallback } from "../../../src/bootstrap/shutdownHandler";
+import { handleExitInTest } from "../../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let prismaConn: ExtendedPrismaClient;

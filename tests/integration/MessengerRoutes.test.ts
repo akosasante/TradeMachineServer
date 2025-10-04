@@ -1,17 +1,15 @@
 import { Server } from "http";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
 import { EmailPublisher } from "../../src/email/publishers";
 import {
     adminLoggedIn,
-    clearDb,
     clearPrismaDb,
     doLogout,
     makePostRequest,
     ownerLoggedIn,
-    setupOwnerAndAdminUsers
+    setupOwnerAndAdminUsers,
 } from "./helpers";
 import { TradeFactory } from "../factories/TradeFactory";
 import User from "../../src/models/user";
@@ -23,9 +21,7 @@ import { TeamFactory } from "../factories/TeamFactory";
 import TeamDAO from "../../src/DAO/TeamDAO";
 import { v4 as uuid } from "uuid";
 import { SlackPublisher } from "../../src/slack/publishers";
-import { getConnection } from "typeorm";
-import initializeDb, {ExtendedPrismaClient} from "../../src/bootstrap/prisma-db";
-import {handleExitInTest, registerCleanupCallback} from "../../src/bootstrap/shutdownHandler";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
 
 let app: Server;
 let adminUser: User;
@@ -37,14 +33,6 @@ let teamDAO: TeamDAO;
 const emailPublisher = EmailPublisher.getInstance();
 const slackPublisher = SlackPublisher.getInstance();
 let prismaConn: ExtendedPrismaClient;
-async function shutdown() {
-    try {
-        await handleExitInTest();
-    } catch (err) {
-        logger.error(`Error while shutting down: ${err}`);
-    }
-}
-
 beforeAll(async () => {
     logger.debug("~~~~~~MESSENGER ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
@@ -57,14 +45,16 @@ beforeAll(async () => {
 }, 5000);
 
 afterAll(async () => {
-    logger.debug("~~~~~~MESSENGER ROUTES AFTER ALL~~~~~~");
-    const shutdownResult = await shutdown();
+    // Only close the server instance for this test file
+    // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        app.close(() => {
-            logger.debug("CLOSED SERVER");
+        return new Promise<void>(resolve => {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+                resolve();
+            });
         });
     }
-    return shutdownResult;
 });
 
 describe("Messenger API endpoints", () => {
@@ -95,7 +85,6 @@ describe("Messenger API endpoints", () => {
 
         return await tradeDao.createTrade(TradeFactory.getTrade([tradeItem1], tradeParticipants1, status, tradeArgs));
     };
-
 
     describe("POST /requestTrade/:id (send trade request email)", () => {
         const req =

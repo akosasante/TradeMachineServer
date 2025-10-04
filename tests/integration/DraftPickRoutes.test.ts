@@ -25,7 +25,6 @@ import { v4 as uuid } from "uuid";
 import startServer from "../../src/bootstrap/app";
 import DraftPickDAO from "../../src/DAO/DraftPickDAO";
 import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
-import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let adminUser: User;
@@ -34,14 +33,6 @@ let userDAO: UserDAO;
 let teamDAO: TeamDAO;
 let pickDAO: DraftPickDAO;
 let prismaConn: ExtendedPrismaClient;
-
-async function shutdown() {
-    try {
-        await handleExitInTest();
-    } catch (err) {
-        logger.error(`Error while shutting down: ${err}`);
-    }
-}
 
 beforeAll(async () => {
     logger.debug("~~~~~~DRAFT PICK ROUTES BEFORE ALL~~~~~~");
@@ -56,15 +47,16 @@ beforeAll(async () => {
 }, 5000);
 
 afterAll(async () => {
-    logger.debug("~~~~~~DRAFT PICK ROUTES AFTER ALL~~~~~~");
-    process.env.SKIP_CACHE_IN_TEST = "false";
-    const shutdownResult = await shutdown();
+    // Only close the server instance for this test file
+    // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        app.close(() => {
-            logger.debug("CLOSED SERVER");
+        return new Promise<void>(resolve => {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+                resolve();
+            });
         });
     }
-    return shutdownResult;
 });
 
 describe("Pick API endpoints", () => {

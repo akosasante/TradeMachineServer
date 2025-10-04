@@ -16,7 +16,10 @@ help: ## show make commands
 
 # |----------- TESTING SCRIPTS ---------|
 clear-test-cache:
-	@rm -rf dist/ \
+	@rm -rf dist/
+	@rm -rf node_modules/.cache/ts-jest
+	@find src -name "*.js" -delete
+	@find src -name "*.d.ts" -delete
 	@npx jest --clearCache
 	$(MAKE) build
 test-ci: ## run tests using CI config, and no logging
@@ -24,13 +27,13 @@ test-ci: ## run tests using CI config, and no logging
 	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testTimeout=25000
 
-test-ci-unit: ## run tests using CI config, and no logging
-	NODE_ENV=test ORM_CONFIG=test PG_SCHEMA=test \
+test-ci-unit: ## run tests using CI config, and no logging (uses public schema in CI)
+	NODE_ENV=test ORM_CONFIG=test \
 	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=unit/ --testTimeout=25000
 
-test-ci-integration: ## run tests using CI config, and no logging
-	NODE_ENV=test ORM_CONFIG=test PG_SCHEMA=test \
+test-ci-integration: ## run tests using CI config, and no logging (uses public schema in CI)
+	NODE_ENV=test ORM_CONFIG=test \
 	npx jest --config ./jest.ci-config.js \
 	--detectOpenHandles --runInBand --silent --bail --forceExit --ci --testPathPattern=integration/ --testTimeout=25000
 
