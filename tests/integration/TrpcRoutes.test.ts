@@ -6,7 +6,7 @@ import startServer from "../../src/bootstrap/app";
 import { clearPrismaDb } from "./helpers";
 import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
 import UserDAO from "../../src/DAO/v2/UserDAO";
-import { inspect } from "util";
+// import { inspect } from "util";
 
 let app: Server;
 let userDAO: UserDAO;

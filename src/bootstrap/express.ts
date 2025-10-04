@@ -65,7 +65,7 @@ const REDIS_OPTS = {
 
 const insecureCookies = process.env.COOKIE_SECURE === "false" || process.env.NODE_ENV === "test";
 
-const sessionConfig = {
+const sessionConfig: expressSession.SessionOptions = {
     resave: false,
     saveUninitialized: true,
     secret: process.env.SESSION_SECRET || "test",
@@ -83,7 +83,9 @@ const sessionConfig = {
     },
 };
 
-logger.info(`[SESSION] Cookie config: domain=${sessionConfig.cookie.domain}, secure=${sessionConfig.cookie.secure}, sameSite=${sessionConfig.cookie.sameSite}, name=${sessionConfig.name}`);
+logger.info(
+    `[SESSION] Cookie config: domain=${sessionConfig?.cookie?.domain}, secure=${sessionConfig?.cookie?.secure}, sameSite=${sessionConfig?.cookie?.sameSite}, name=${sessionConfig?.name}`
+);
 
 app.use(expressSession(sessionConfig));
 

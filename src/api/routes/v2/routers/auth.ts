@@ -223,7 +223,11 @@ export const authRouter = router({
     }),
     sessionCheck: publicProcedure.query(
         withTracing("trpc.auth.sessionCheck", async (input, ctx, _span) => {
-            logger.info(`[SESSION] sessionCheck called - cookies: ${JSON.stringify(ctx.req.headers.cookie)}, sessionID: ${ctx.req.sessionID}, session user: ${ctx.session?.user}`);
+            logger.info(
+                `[SESSION] sessionCheck called - cookies: ${JSON.stringify(ctx.req.headers.cookie)}, sessionID: ${
+                    ctx.req.sessionID
+                }, session user: ${ctx.session?.user}`
+            );
             logger.debug("tRPC session check");
 
             addSpanAttributes({
@@ -235,7 +239,7 @@ export const authRouter = router({
             addSpanEvent("session_check.start", { hasSession: !!ctx.session?.user });
 
             if (!ctx.session?.user) {
-                logger.info(`[SESSION] sessionCheck failed - no user in session`);
+                logger.info("[SESSION] sessionCheck failed - no user in session");
                 addSpanEvent("session_check.no_user");
                 throw new TRPCError({
                     code: "UNAUTHORIZED",
