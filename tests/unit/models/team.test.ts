@@ -13,7 +13,7 @@ describe("Team Class", () => {
     const team = new Team(teamObj);
 
     describe("constructor", () => {
-        it("should construct the obj as expected", async () => {
+        it("should construct the obj as expected", () => {
             expect(team.name).toEqual(teamObj.name);
             expect(team.espnId).toEqual(teamObj.espnId);
             expect(team.owners).toBeUndefined();

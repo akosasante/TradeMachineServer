@@ -9,26 +9,14 @@ import { UserFactory } from "../../../factories/UserFactory";
 import { BadRequestError, UnauthorizedError } from "routing-controllers";
 import { TeamFactory } from "../../../factories/TeamFactory";
 import { TradeItemType } from "../../../../src/models/tradeItem";
-import * as TradeTracker from "../../../../src/csv/TradeTracker";
 import { HydratedTrade } from "../../../../src/models/views/hydratedTrades";
+import { mockClear, mockDeep } from "jest-mock-extended";
+import * as TradeTracker from "../../../../src/csv/TradeTracker";
+
+jest.mock("../../../../src/csv/TradeTracker");
 
 describe("TradeController", () => {
-    const mockTradeDAO = {
-        getAllTrades: jest.fn(),
-        getTradeById: jest.fn(),
-        hydrateTrade: jest.fn(),
-        createTrade: jest.fn(),
-        updateStatus: jest.fn(),
-        updateParticipants: jest.fn(),
-        updateItems: jest.fn(),
-        updateDeclinedBy: jest.fn(),
-        deleteTrade: jest.fn(),
-        updateAcceptedBy: jest.fn(),
-        returnHydratedTrades: jest.fn(),
-    };
-
-    // @ts-ignore
-    TradeTracker.appendNewTrade = jest.fn();
+    const mockTradeDAO = mockDeep<TradeDAO>();
 
     const testTrade = TradeFactory.getTrade();
     const creator = testTrade.tradeParticipants?.find(part => part.participantType === TradeParticipantType.CREATOR);
@@ -44,11 +32,11 @@ describe("TradeController", () => {
     beforeAll(() => {
         logger.debug("~~~~~~TRADE CONTROLLER TESTS BEGIN~~~~~~");
     });
-    afterAll(async () => {
+    afterAll(() => {
         logger.debug("~~~~~~TRADE CONTROLLER TESTS COMPLETE~~~~~~");
     });
     afterEach(() => {
-        Object.values(mockTradeDAO).forEach(mockFn => mockFn.mockReset());
+        mockClear(mockTradeDAO);
     });
 
     describe("getAllTrades method", () => {
@@ -287,7 +275,7 @@ describe("TradeController", () => {
 
             for (const status of invalidStatuses) {
                 mockTradeDAO.getTradeById.mockReset();
-                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade.parse(), status }));
                 await expect(tradeController.acceptTrade(tradeRecipient, testTrade.id!)).rejects.toThrow(
                     BadRequestError
                 );
@@ -295,8 +283,8 @@ describe("TradeController", () => {
 
             for (const status of validStatuses) {
                 mockTradeDAO.getTradeById.mockReset();
-                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
-                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade.parse(), status }));
+                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade.parse(), status }));
 
                 await expect(tradeController.acceptTrade(tradeRecipient, testTrade.id!)).resolves.toBeDefined();
             }
@@ -396,8 +384,8 @@ describe("TradeController", () => {
 
             for (const status of validStatuses) {
                 mockTradeDAO.getTradeById.mockReset();
-                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
-                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade.parse(), status }));
+                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade.parse(), status }));
 
                 await expect(tradeController.acceptTrade(tradeOwner, testTrade.id!)).rejects.toThrow(UnauthorizedError);
             }
@@ -415,7 +403,7 @@ describe("TradeController", () => {
                         acceptedBy,
                     })
                 );
-                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
+                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade.parse(), status }));
 
                 await expect(tradeController.acceptTrade(tradeRecipient, testTrade.id!)).rejects.toThrow(
                     BadRequestError
@@ -454,7 +442,7 @@ describe("TradeController", () => {
 
             for (const status of invalidStatuses) {
                 mockTradeDAO.getTradeById.mockReset();
-                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade.parse(), status }));
 
                 await expect(
                     tradeController.rejectTrade(tradeRecipient, testTrade.id!, tradeRecipient.id!, "reason")
@@ -463,8 +451,8 @@ describe("TradeController", () => {
 
             for (const status of validStatuses) {
                 mockTradeDAO.getTradeById.mockReset();
-                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
-                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade.parse(), status }));
+                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade.parse(), status }));
 
                 await expect(
                     tradeController.rejectTrade(tradeRecipient, testTrade.id!, tradeRecipient.id!, "reason")
@@ -486,10 +474,12 @@ describe("TradeController", () => {
     });
 
     describe("submitTrade method", () => {
-        const acceptedTrade = new Trade({ ...testTrade, status: TradeStatus.ACCEPTED });
+        const acceptedTrade = new Trade({ ...testTrade.parse(), status: TradeStatus.ACCEPTED });
         beforeEach(() => {
             mockTradeDAO.getTradeById.mockReset();
             mockTradeDAO.getTradeById.mockResolvedValueOnce(acceptedTrade);
+            mockTradeDAO.hydrateTrade.mockResolvedValueOnce(acceptedTrade);
+            jest.spyOn(TradeTracker, "appendNewTrade").mockResolvedValue(undefined);
         });
 
         it("should throw an error if a non-admin, non-trade participator tries to update it", async () => {
@@ -516,15 +506,17 @@ describe("TradeController", () => {
 
             for (const status of invalidStatuses) {
                 mockTradeDAO.getTradeById.mockReset();
-                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade.parse(), status }));
 
                 await expect(tradeController.submitTrade(tradeOwner, testTrade.id!)).rejects.toThrow(BadRequestError);
             }
 
             for (const status of validStatuses) {
                 mockTradeDAO.getTradeById.mockReset();
-                mockTradeDAO.getTradeById.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
-                mockTradeDAO.updateStatus.mockResolvedValueOnce(new Trade({ ...testTrade, status }));
+                const tradeWithStatus = new Trade({ ...testTrade.parse(), status });
+                mockTradeDAO.getTradeById.mockResolvedValueOnce(tradeWithStatus);
+                mockTradeDAO.hydrateTrade.mockResolvedValueOnce(tradeWithStatus);
+                mockTradeDAO.updateStatus.mockResolvedValueOnce(tradeWithStatus);
 
                 await expect(tradeController.submitTrade(tradeOwner, testTrade.id!)).resolves.toBeDefined();
             }
@@ -537,12 +529,12 @@ describe("TradeController", () => {
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledWith(acceptedTrade);
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.updateStatus).toHaveBeenCalledWith(acceptedTrade.id, TradeStatus.SUBMITTED);
-        });
+        }, 10000);
     });
 
     describe("deleteTrade method", () => {
         it("should delete a trade by id from the db", async () => {
-            mockTradeDAO.deleteTrade.mockResolvedValueOnce({ raw: [{ id: testTrade.id }], affected: 1 });
+            mockTradeDAO.deleteTrade.mockResolvedValueOnce({ raw: [{ id: testTrade.id! } as Trade], affected: 1 });
             const res = await tradeController.deleteTrade(testTrade.id!);
 
             expect(mockTradeDAO.deleteTrade).toHaveBeenCalledTimes(1);

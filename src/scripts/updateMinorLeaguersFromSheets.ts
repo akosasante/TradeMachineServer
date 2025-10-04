@@ -1,4 +1,3 @@
-/* eslint-disable */
 import initializeDb from "../bootstrap/db";
 import TeamDAO from "../DAO/TeamDAO";
 import PlayerDAO from "../DAO/PlayerDAO";
@@ -22,8 +21,7 @@ async function run() {
     const playerDAO = new PlayerDAO();
 
     const allTeams = await teamDAO.getAllTeams();
-    const mode: string = "append";
-    // @ts-ignore
+    const mode = "append";
     return await processMinorLeagueCsv(MinorLeagueCsv, allTeams, playerDAO, mode);
 }
 
@@ -36,4 +34,3 @@ run()
         console.error(err);
         process.exit(99);
     });
-/* eslint-enable */

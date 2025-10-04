@@ -11,7 +11,7 @@ const mockedIncomingWebhook = IncomingWebhook as jest.MockedClass<typeof Incomin
 const trade = TradeFactory.getTrade();
 const mockedTradeFormatter = TradeFormatter as jest.MockedObject<typeof TradeFormatter>;
 mockedTradeFormatter.getTradeTextForParticipant.mockResolvedValue("trade participant text");
-mockedTradeFormatter.getNotificationText.mockReturnValue("notification text");
+mockedTradeFormatter.getNotificationText.mockReturnValue("Trade submitted between Team A & Team B");
 mockedTradeFormatter.getTitleText.mockReturnValue("title text");
 mockedTradeFormatter.getSubtitleText.mockReturnValue("subtitle text");
 mockedTradeFormatter.getLinkText.mockReturnValue("link text");
@@ -32,7 +32,7 @@ afterEach(() => {
 
 describe("SlackTradeAnnouncer class", () => {
     const expected = {
-        text: "notification text",
+        text: "Trade submitted between Team A & Team B",
         blocks: [
             { type: "section", text: { type: "mrkdwn", text: "title text" } },
             { type: "context", elements: [{ type: "mrkdwn", text: "subtitle text" }] },

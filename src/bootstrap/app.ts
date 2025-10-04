@@ -13,6 +13,7 @@ import { registerCleanupCallback, setupSignalHandlers } from "./shutdownHandler"
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../api/routes/v2/router";
 import { createContext } from "../api/routes/v2/context";
+import cors from "cors";
 
 export interface ExpressAppOptions {
     startTypeORM: boolean;
@@ -56,22 +57,10 @@ export async function setupExpressApp(
         /trades\.akosua\.xyz/,
         /naughty-wozniak-9fc262\.netlify\.app/,
         /trades\.flexfoxfantasy\.com/,
+        /ffftemp\.netlify\.app/,
+        /ffftemp\.akosua\.xyz/,
     ];
     const allowedOrigins = prodOrigins.concat(process.env.NODE_ENV === "development" ? developmentOrigins : []);
-
-    useExpressServer(expressApp, {
-        classTransformer: true,
-        cors: {
-            origin: allowedOrigins,
-            credentials: true,
-        },
-        controllers: [`${__dirname}/../api/routes/*Controller.{ts,js}`, `${__dirname}/../api/routes/v2/*Controller.{ts,js}`],
-        defaultErrorHandler: false,
-        middlewares: [`${__dirname}/../api/middlewares/**`],
-        authorizationChecker,
-        currentUserChecker,
-    });
-    logger.debug("route-controllers complete");
 
     // Set up tRPC v2 endpoints
     logger.debug("setting up tRPC v2 routes");
@@ -84,33 +73,89 @@ export async function setupExpressApp(
         next();
     });
 
-    expressApp.use(
-        "/v2",
-        createExpressMiddleware({
-            router: appRouter,
-            createContext,
-            batching: {
-                enabled: true,
-            },
-            onError: ({ error, req }) => {
-                logger.error(`tRPC Error: ${error.message}`, error);
-                rollbar.error(error, req);
-            },
-        })
-    );
+    // Add CORS middleware for tRPC routes to handle OPTIONS requests
+    const trpcCorsMiddleware = cors({
+        origin: (origin, callback) => {
+            logger.info(`[CORS] Request origin: ${origin}, path: ${origin ? "checking..." : "no origin"}`);
+            const isAllowed = !origin || allowedOrigins.some(pattern => pattern.test(origin));
+            logger.info(`[CORS] Origin ${origin} is ${isAllowed ? "ALLOWED" : "DENIED"}`);
+            if (isAllowed) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
+        credentials: true,
+        methods: ["GET", "POST", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "traceparent"],
+    });
+
+    expressApp.use("/v2", (req, res, next) => {
+        // conditional mount to avoid conflict with routing-controllers /v2 routes
+        // tRPC uses dot notation (e.g., /auth.sessionCheck), so check for that pattern
+        if (req.path.includes("auth.") || req.path.includes("client.")) {
+            logger.info(`[CORS] Handling tRPC route: ${req.method} ${req.path} from origin: ${req.headers.origin}`);
+            // Apply CORS first for tRPC routes
+            trpcCorsMiddleware(req, res, () => {
+                createExpressMiddleware({
+                    router: appRouter,
+                    createContext,
+                    batching: {
+                        enabled: true,
+                    },
+                    onError: ({ error, req: failedReq }) => {
+                        logger.error(`tRPC Error: ${error.message}`, error);
+                        rollbar.error(error, failedReq);
+                    },
+                })(req, res, next);
+            });
+        } else {
+            next();
+        }
+    });
     logger.debug("tRPC v2 routes complete");
 
+    useExpressServer(expressApp, {
+        classTransformer: true,
+        cors: {
+            origin: allowedOrigins,
+            credentials: true,
+        },
+        controllers: [
+            `${__dirname}/../api/routes/*Controller.{ts,js}`,
+            `${__dirname}/../api/routes/v2/*Controller.{ts,js}`,
+        ],
+        defaultErrorHandler: false,
+        middlewares: [`${__dirname}/../api/middlewares/**`],
+        authorizationChecker,
+        currentUserChecker,
+    });
+    logger.debug("route-controllers complete");
     return expressApp;
 }
 
 export default async function startServer(): Promise<Server> {
     try {
+        logger.info("=== Starting server initialization ===");
+        logger.info(
+            `Redis client configuration: host=${process.env.REDIS_IP || "localhost"}, port=${
+                process.env.REDIS_PORT || 6379
+            }`
+        );
+        logger.info("Attempting to connect to Redis...");
         await redisClient.connect();
+        logger.info("Redis connection successful");
+        logger.info("Setting up Express app...");
         const app = await setupExpressApp();
-        const srv = app.listen(app.get("port") as number, app.get("ip") as string, () => {
-            logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
-            logger.info("Press CTRL-C to stop\n");
-            rollbar.info("server_started");
+        logger.info("Express app setup complete");
+        logger.info(`Starting HTTP server on ${app.get("ip")}:${app.get("port")}`);
+        const srv = await new Promise<Server>(resolve => {
+            const server = app.listen(app.get("port") as number, app.get("ip") as string, () => {
+                logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
+                logger.info("Press CTRL-C to stop\n");
+                rollbar.info("server_started");
+                resolve(server);
+            });
         });
 
         redisClient.on("error", (err: Error) => {

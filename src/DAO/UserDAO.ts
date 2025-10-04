@@ -1,4 +1,4 @@
-import { DeleteResult, FindManyOptions, FindOneOptions, getConnection, In, InsertResult, Repository } from "typeorm";
+import { DeleteResult, FindManyOptions, FindOneOptions, getConnection, Repository } from "typeorm";
 import User from "../models/user";
 import { v4 as uuid } from "uuid";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";

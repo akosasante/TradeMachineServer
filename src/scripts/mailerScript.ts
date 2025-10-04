@@ -1,4 +1,3 @@
-/* eslint-disable */
 import initializeDb from "../bootstrap/db";
 import logger from "../bootstrap/logger";
 import { inspect } from "util";
@@ -53,4 +52,3 @@ initializeDb(true).then(() => {
         });
 });
 // test();
-/* eslint-enable */

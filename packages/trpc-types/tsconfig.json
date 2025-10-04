@@ -8,7 +8,11 @@
     "sourceMap": true,
     "composite": false,
     "incremental": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": "./",
+    "paths": {
+      "@server-dist/*": ["dist/server/*"]
+    }
   },
   "include": [
     "src/**/*"

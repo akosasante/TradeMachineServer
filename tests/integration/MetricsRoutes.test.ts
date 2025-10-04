@@ -4,9 +4,7 @@ import "jest-extended";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
 import { clearPrismaDb } from "./helpers";
-import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
-import initializeDb from "../../src/bootstrap/prisma-db";
-import { PrismaClient } from "@prisma/client";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
 import { EmailPublisher } from "../../src/email/publishers";
 import UserDAO from "../../src/DAO/UserDAO";
 import v2UserDAO from "../../src/DAO/v2/UserDAO";
@@ -14,35 +12,26 @@ import { registerUser } from "../../src/db/seed/helpers/authHelper";
 import { createAdminUser } from "../../src/db/seed/helpers/userCreator";
 
 let app: Server;
-let prismaConn: PrismaClient;
-
-async function shutdown() {
-    try {
-        await handleExitInTest();
-    } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
-    }
-}
+let prismaConn: ExtendedPrismaClient;
 
 beforeAll(async () => {
     logger.debug("~~~~~~METRICS ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
     prismaConn = initializeDb(process.env.DB_LOGS === "true");
-    registerCleanupCallback(async () => {
-        await prismaConn.$disconnect();
-    });
     return app;
 }, 15000);
 
 afterAll(async () => {
-    logger.debug("~~~~~~METRICS ROUTES AFTER ALL~~~~~~");
-    const shutdownResult = await shutdown();
+    // Only close the server instance for this test file
+    // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        app.close(() => {
-            logger.debug("CLOSED SERVER");
+        return new Promise<void>(resolve => {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+                resolve();
+            });
         });
     }
-    return shutdownResult;
 });
 
 describe("Metrics API endpoint", () => {
@@ -146,7 +135,7 @@ describe("Metrics API endpoint", () => {
 
             // register a new user to create a session
             const user = createAdminUser();
-            const res = await registerUser(user, new v2UserDAO(prismaConn.user));
+            await registerUser(user, new v2UserDAO(prismaConn.user));
             await agent.post("/auth/login").send({ email: user.email, password: "testing123" }).expect(200);
 
             const afterLoginMetricsResponse = await agent.get("/metrics").expect(200);
@@ -188,6 +177,6 @@ function getHttpRequestCount(metricsText: string): number {
  * Helper function to extract the total Prisma query count from metrics output
  */
 function getPrismaQueryCount(metricsText: string): number {
-    const match = /prisma_client_queries_total\s+(\d+)/.exec(metricsText);
+    const match = /prisma_client_queries_total{.*}\s+(\d+)/.exec(metricsText);
     return match ? parseInt(match[1], 10) : 0;
 }

@@ -1,4 +1,3 @@
-/* eslint-disable */
 import initializeDb from "../bootstrap/db";
 import { getConnection } from "typeorm";
 import { uniqBy } from "lodash";
@@ -124,4 +123,3 @@ run()
         console.error(err);
         process.exit(99);
     });
-/* eslint-enable */

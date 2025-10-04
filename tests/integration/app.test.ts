@@ -1,16 +1,7 @@
 import { Server } from "http";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import startServer from "../../src/bootstrap/app";
-
-async function shutdown() {
-    try {
-        await redisClient.disconnect();
-    } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
-    }
-}
 
 describe("GET /random-url", () => {
     let app: Server;
@@ -21,13 +12,16 @@ describe("GET /random-url", () => {
     });
     afterAll(async () => {
         logger.debug("~~~~~~BASIC APP ROUTES AFTER ALL~~~~~~");
-        const shutdownRedis = await shutdown();
+        // Only close the server instance for this test file
+        // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
         if (app) {
-            app.close(() => {
-                logger.debug("CLOSED SERVER");
+            return new Promise<void>(resolve => {
+                app.close(() => {
+                    logger.debug("CLOSED SERVER");
+                    resolve();
+                });
             });
         }
-        return shutdownRedis;
     });
 
     it("should return 404", async () => {

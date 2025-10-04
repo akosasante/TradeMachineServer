@@ -9,7 +9,6 @@ describe("CSV Util Functions", () => {
         logger.debug("~~~~~~CSV UTIL TESTS COMPLETE~~~~~~");
     });
     describe("validateRow/2", () => {
-
         const row = { keyA: 1, keyB: 2, "Complex Key C": 3 };
         // tslint:disable-next-line:no-null-keyword
 

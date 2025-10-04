@@ -10,7 +10,7 @@ import { FindOptionsWhere } from "typeorm/find-options/FindOptionsWhere";
 import { v4 as uuid } from "uuid";
 import logger from "../bootstrap/logger";
 
-interface TradeDeleteResult extends DeleteResult {
+export interface TradeDeleteResult extends DeleteResult {
     raw: Trade[];
     affected?: number | null;
 }

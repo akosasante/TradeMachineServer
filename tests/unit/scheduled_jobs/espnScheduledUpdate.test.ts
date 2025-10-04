@@ -26,7 +26,6 @@ describe("Espn Scheduled Update Jobs", () => {
     });
     afterEach(() => {
         [mockTeamDao, mockEspnApi, mockPlayerDao].forEach(mockedThing =>
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
             Object.values(mockedThing).forEach(mockFn => mockFn.mockReset())
         );
     });

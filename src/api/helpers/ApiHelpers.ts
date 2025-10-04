@@ -1,8 +1,6 @@
 import { mkdirSync } from "fs";
 import multer, { FileFilterCallback } from "multer";
 import { FindOperator, IsNull, Not } from "typeorm";
-import { inspect } from "util";
-import logger from "../../bootstrap/logger";
 import { Request } from "express";
 
 const storage: multer.DiskStorageOptions = {
@@ -29,7 +27,7 @@ export function cleanupQuery(initQuery: { [key: string]: string }): {
     inadvertently happen by mutating the original object */
     const query = { ...initQuery };
     const queryWithNull = coerceStringToNull(Object.entries(query)); // [[email, aaa], [name, none]]
-    logger.debug(`queryWithNull: ${inspect(queryWithNull)}`);
+    // logger.debug(`queryWithNull: ${inspect(queryWithNull)}`);
     return queryWithNull;
 }
 

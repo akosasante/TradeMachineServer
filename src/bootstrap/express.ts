@@ -15,7 +15,8 @@ const app = express();
 
 // Express configuration.
 app.set("port", process.env.PORT || "3000");
-app.set("ip", process.env.IP || "localhost");
+// Force IPv4 in test mode to match Redis client and avoid IPv6/IPv4 mismatch in CI
+app.set("ip", process.env.IP || (process.env.NODE_ENV === "test" ? "127.0.0.1" : "localhost"));
 app.set("env", process.env.NODE_ENV || "development");
 app.set("json spaces", 2);
 app.set("trust proxy", 1);
@@ -46,6 +47,7 @@ export const redisClient = createClient({
     socket: {
         host: process.env.REDIS_IP || "localhost",
         port: Number(process.env.REDIS_PORT || 6379),
+        family: 4, // Force IPv4 to avoid Node 20's IPv6 preference
     },
     password: process.env.REDISPASS,
 });
@@ -63,23 +65,29 @@ const REDIS_OPTS = {
 
 const insecureCookies = process.env.COOKIE_SECURE === "false" || process.env.NODE_ENV === "test";
 
-app.use(
-    expressSession({
-        resave: false,
-        saveUninitialized: true,
-        secret: process.env.SESSION_SECRET || "test",
-        store: new redisStore(REDIS_OPTS),
-        unset: "destroy",
-        name: process.env.ORM_CONFIG === "staging" ? "staging_trades.sid" : "trades.sid",
-        cookie: {
-            // Don't set secure cookies in dev/test
-            secure: !insecureCookies,
-            httpOnly: true,
-            maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
-            sameSite: insecureCookies ? "lax" : "none",
-        },
-    })
+const sessionConfig: expressSession.SessionOptions = {
+    resave: false,
+    saveUninitialized: true,
+    secret: process.env.SESSION_SECRET || "test",
+    store: new redisStore(REDIS_OPTS),
+    unset: "destroy",
+    name: process.env.ORM_CONFIG === "staging" ? "staging_trades.sid" : "trades.sid",
+    cookie: {
+        // Don't set secure cookies in dev/test
+        secure: !insecureCookies,
+        httpOnly: true,
+        maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
+        sameSite: insecureCookies ? "lax" : "none",
+        // Set domain to share cookies across subdomains (e.g., newtrades.api.akosua.xyz and staging.trades.akosua.xyz)
+        domain: process.env.COOKIE_DOMAIN || undefined,
+    },
+};
+
+logger.info(
+    `[SESSION] Cookie config: domain=${sessionConfig?.cookie?.domain}, secure=${sessionConfig?.cookie?.secure}, sameSite=${sessionConfig?.cookie?.sameSite}, name=${sessionConfig?.name}`
 );
+
+app.use(expressSession(sessionConfig));
 
 app.use(metricsMiddleware as any);
 

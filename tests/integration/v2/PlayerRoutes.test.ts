@@ -1,28 +1,30 @@
 import { Server } from "http";
 import request from "supertest";
 import "jest-extended";
-import { redisClient } from "../../../src/bootstrap/express";
 import logger from "../../../src/bootstrap/logger";
-import initializeDb from "../../../src/bootstrap/prisma-db";
+import initializeDb, { ExtendedPrismaClient } from "../../../src/bootstrap/prisma-db";
 import startServer from "../../../src/bootstrap/app";
 import { clearPrismaDb, makeGetRequest, setupOwnerAndAdminUsers } from "../helpers";
-import { PrismaClient, Player } from "@prisma/client";
+import { Player } from "@prisma/client";
 import User from "../../../src/models/user";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import PlayerModel, { PlayerLeagueType } from "../../../src/models/player";
+import { handleExitInTest } from "../../../src/bootstrap/shutdownHandler";
 
 let app: Server;
-let prismaConn: PrismaClient;
+let prismaConn: ExtendedPrismaClient;
+/* eslint-disable @typescript-eslint/no-unused-vars */
 let ownerUser: User;
 let adminUser: User;
+/* eslint-enable @typescript-eslint/no-unused-vars */
 let playerDao: PlayerDAO;
 
 async function shutdown() {
     try {
-        await redisClient.disconnect();
+        await handleExitInTest();
     } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
+        logger.error(`Error while shutting down: ${err}`);
     }
 }
 
@@ -30,7 +32,7 @@ beforeAll(async () => {
     logger.debug("~~~~~~[V2] PLAYER ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
     logger.debug("server started");
-    prismaConn = initializeDb(true);
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
     logger.debug("prisma conn started");
     // Create admin and owner users in db for rest of this suite's use
     [adminUser, ownerUser] = await setupOwnerAndAdminUsers();
@@ -44,13 +46,13 @@ beforeAll(async () => {
 
 afterAll(async () => {
     logger.debug("~~~~~~[V2] PLAYER ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    const shutdownResult = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
-    return shutdownRedis;
+    return shutdownResult;
 });
 
 describe("Player V2 API Endpoints", () => {

@@ -3,7 +3,7 @@ import { exclude } from "./helpers";
 import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 import * as crypto from "node:crypto";
 
-type User = Prisma.Result<ExtendedPrismaClient["user"], Record<string, unknown>, "findFirstOrThrow">;
+export type User = Prisma.Result<ExtendedPrismaClient["user"], Record<string, unknown>, "findFirstOrThrow">;
 export type PublicUser = Omit<User, "password">;
 
 export default class UserDAO {
@@ -40,10 +40,28 @@ export default class UserDAO {
     public async findUserWithPasswordByEmail(email: string): Promise<User | null> {
         const user = await this.userDb.findUnique({
             where: { email },
-            select: { id: true, email: true, password: true, role: true, status: true, lastLoggedIn: true },
+            select: {
+                id: true,
+                email: true,
+                password: true,
+                role: true,
+                status: true,
+                lastLoggedIn: true,
+                passwordResetToken: true,
+                passwordResetExpiresOn: true,
+            },
         });
         if (user) {
             return user as User;
+        } else {
+            return null;
+        }
+    }
+
+    public async findUserByPasswordResetToken(token: string): Promise<PublicUser | null> {
+        const user = await this.userDb.findFirst({ where: { passwordResetToken: token } });
+        if (user) {
+            return UserDAO.publicUser(user);
         } else {
             return null;
         }

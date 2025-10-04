@@ -6,7 +6,7 @@ import { ConflictError } from "../../../../src/api/middlewares/ErrorHandler";
 import UserDAO from "../../../../src/DAO/UserDAO";
 import { UserFactory } from "../../../factories/UserFactory";
 import logger from "../../../../src/bootstrap/logger";
-import { Session, SessionData } from "express-session";
+import { Session, SessionData as ExpressSessionData } from "express-session";
 
 // declare the additional fields that we add to express session (via routing-controllers)
 declare module "express-session" {
@@ -14,6 +14,8 @@ declare module "express-session" {
         user: string | undefined;
     }
 }
+
+type AppSessionData = ExpressSessionData;
 
 const mockUserDAO = {
     findUserWithPasswordByEmail: jest.fn(),
@@ -37,7 +39,7 @@ describe("Authentication middleware", () => {
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                session: { save: jest.fn() } as unknown as Session & SessionData,
+                session: { save: jest.fn() } as unknown as Session & AppSessionData,
             };
 
             const loginHandler = new LoginHandler(mockUserDAO as unknown as UserDAO);
@@ -51,7 +53,7 @@ describe("Authentication middleware", () => {
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                session: { destroy: jest.fn() } as unknown as Session & SessionData,
+                session: { destroy: jest.fn() } as unknown as Session & AppSessionData,
             };
 
             const loginHandler = new LoginHandler(mockUserDAO as unknown as UserDAO);
@@ -74,7 +76,7 @@ describe("Authentication middleware", () => {
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                session: {} as unknown as Session & SessionData,
+                session: {} as unknown as Session & AppSessionData,
             };
 
             const registerHandler = new RegisterHandler(mockUserDAO as unknown as UserDAO);
@@ -90,7 +92,7 @@ describe("Authentication middleware", () => {
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                session: {} as unknown as Session & SessionData,
+                session: {} as unknown as Session & AppSessionData,
             };
 
             const registerHandler = new RegisterHandler(mockUserDAO as unknown as UserDAO);

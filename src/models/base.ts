@@ -25,7 +25,7 @@ export class BaseModel {
     }
 
     public parse<T extends BaseModel>(): Partial<T> {
-        return Object.assign({}, this);
+        return Object.assign({}, this) as Partial<T>;
     }
 
     static getKeyByValue(enumField: { [s: string]: unknown }, value: unknown): string | undefined {

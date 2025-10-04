@@ -95,7 +95,7 @@ describe("DraftPickParser", () => {
         expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledTimes(1);
         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledWith(expect.toBeArrayOfSize(6));
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
         expect(mockDAO.batchUpsertPicks.mock.calls[0][0]).toSatisfyAll(pickPredicate);
     });
     it("should call DAO.batchUpsertPicks once even if more than 50 rows", async () => {
@@ -107,7 +107,7 @@ describe("DraftPickParser", () => {
         expect(mockDAO.deleteAllPicks).toHaveBeenCalledTimes(0);
         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledTimes(1);
         expect(mockDAO.batchUpsertPicks).toHaveBeenCalledWith(expect.toBeArrayOfSize(50));
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
         expect(mockDAO.batchUpsertPicks.mock.calls[0][0]).toSatisfyAll(pickPredicate);
     });
 

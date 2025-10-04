@@ -102,7 +102,7 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick from _$
         trade: Trade,
         participant: TradeParticipant,
         deps?: TradeFormatterDeps
-    ) {
+    ): Promise<string> {
         logger.info(`Rendering trade items received by ${participant.team.name} for ${trade}`);
         const header = `*${participant.team.name} receives:*`;
         const receivedItems = TradeItem.itemsReceivedBy(trade.tradeItems!, participant.team);
@@ -118,7 +118,7 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick from _$
         return `${header}\n${playerText ? playerText + "\n\n" : ""}${pickText}`;
     },
 
-    getSubtitleText(trade: Trade) {
+    getSubtitleText(trade: Trade): string {
         logger.info("Rendering subtitle text");
 
         function getSlackUsernamesForOwners(owners: User[]) {
@@ -156,23 +156,26 @@ ${ordinal(pick!.round)} round ${this.getPickTypeString(pick!.type)} pick from _$
 | Trade will be upheld after: ${tradeUpholdTime()}`;
     },
 
-    getNotificationText: (trade: Trade) => {
+    getNotificationText: (
+        trade: Trade
+    ): `Trade submitted between ${string} \
+& ${string}` => {
         logger.info("Rendering notification text");
         return `Trade submitted between ${trade.creator!.name} \
 & ${trade.recipients.map((r: Team) => r.name).join(" & ")}`;
     },
 
-    getTitleText: () => {
+    getTitleText: (): string => {
         logger.info("Rendering title text");
         return ":loud_sound:  *A Trade Has Been Submitted*  :loud_sound:";
     },
 
-    getLinkText: () => {
+    getLinkText: (): string => {
         logger.info("Rendering link text");
         return ":link: Submit trades on the <https://trades.flexfoxfantasy.com|FlexFoxFantasy TradeMachine> by 11:00PM ET";
     },
 
-    getPickTypeString(pickType: LeagueLevel) {
+    getPickTypeString(pickType: LeagueLevel): "Major League" | "High Minors" | "Low Minors" {
         switch (pickType) {
             case LeagueLevel.MAJORS:
                 return "Major League";

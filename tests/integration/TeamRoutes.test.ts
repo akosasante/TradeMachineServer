@@ -1,7 +1,6 @@
 import { Server } from "http";
 import "jest-extended";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import UserDAO from "../../src/DAO/UserDAO";
 import Team from "../../src/models/team";
@@ -10,7 +9,7 @@ import { UserFactory } from "../factories/UserFactory";
 import { v4 as uuid } from "uuid";
 import {
     adminLoggedIn,
-    clearDb,
+    clearPrismaDb,
     DatePatternRegex,
     doLogout,
     makeDeleteRequest,
@@ -20,12 +19,12 @@ import {
     makePutRequest,
     ownerLoggedIn,
     setupOwnerAndAdminUsers,
-    stringifyQuery
+    stringifyQuery,
 } from "./helpers";
 import startServer from "../../src/bootstrap/app";
 import User from "../../src/models/user";
 import TeamDAO from "../../src/DAO/TeamDAO";
-import { getConnection } from "typeorm";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
 
 let app: Server;
 let ownerUser: User;
@@ -33,18 +32,12 @@ let adminUser: User;
 let otherUser: User;
 let userDAO: UserDAO;
 let teamDAO: TeamDAO;
-
-async function shutdown() {
-    try {
-        await redisClient.disconnect();
-    } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
-    }
-}
+let prismaConn: ExtendedPrismaClient;
 
 beforeAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
 
     userDAO = new UserDAO();
     teamDAO = new TeamDAO();
@@ -53,13 +46,16 @@ beforeAll(async () => {
 
 afterAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    // Only close the server instance for this test file
+    // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        app.close(() => {
-            logger.debug("CLOSED SERVER");
+        return new Promise<void>(resolve => {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+                resolve();
+            });
         });
     }
-    return shutdownRedis;
 });
 
 describe("Team API endpoints", () => {
@@ -71,8 +67,8 @@ describe("Team API endpoints", () => {
     });
 
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.ORM_CONFIG));
-    }, 40000);
+        return await clearPrismaDb(prismaConn);
+    });
 
     describe("POST /teams (create new team)", () => {
         const expectQueryFailedErrorString = expect.stringMatching(/QueryFailedError/);
@@ -105,7 +101,7 @@ describe("Team API endpoints", () => {
                 ]),
                 app
             );
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
             const { body } = await getOneRequest(createBody[0].id);
 
             expect(body).toMatchObject({ ...testTeam1.parse(), owners: expect.any(Array) });
@@ -116,11 +112,15 @@ describe("Team API endpoints", () => {
 
             expect(body.stack).toEqual(expectQueryFailedErrorString);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to create a team", async () => {
             const testTeam1 = TeamFactory.getTeam();
 
             await ownerLoggedIn(postRequest([testTeam1.parse()], 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             const testTeam1 = TeamFactory.getTeam();
 
@@ -182,6 +182,8 @@ describe("Team API endpoints", () => {
             expect(body).toBeObject();
             expect(body).toMatchObject(testTeam1);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no team with that ID", async () => {
             await getOneRequest(uuid(), 404);
         });
@@ -200,6 +202,8 @@ describe("Team API endpoints", () => {
             expect(body).toBeArrayOfSize(1);
             expect(body[0]).toMatchObject(teams[1]);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 error if no team with that query is found", async () => {
             await findRequest({ espnId: 999 }, 404);
         });
@@ -236,12 +240,18 @@ describe("Team API endpoints", () => {
             expect(getOneBody).toMatchObject(testTeam1);
             expect(getOneBody.blah).toBeUndefined();
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no team with that ID", async () => {
             await adminLoggedIn(putTeamRequest(uuid(), updatedTeamObj, 404), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-admin tries to update a team", async () => {
             await ownerLoggedIn(putTeamRequest(uuid(), updatedTeamObj, 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await putTeamRequest(uuid(), updatedTeamObj, 403)(request(app));
         });
@@ -275,12 +285,18 @@ describe("Team API endpoints", () => {
             expect(body.owners).toBeArrayOfSize(2);
             expect(body.owners.map((owner: User) => owner.id)).toIncludeSameMembers([adminUser.id, ownerUser.id]);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no team with that ID", async () => {
             await adminLoggedIn(patchTeamRequest(uuid(), [otherUser], [], 404), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-admin tries to update a team's owners", async () => {
             await ownerLoggedIn(patchTeamRequest(uuid(), [otherUser], [], 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await patchTeamRequest(uuid(), [otherUser], [], 403)(request(app));
         });
@@ -325,12 +341,18 @@ describe("Team API endpoints", () => {
             const otherUserWithoutTeamId = bodyAfter.find((u: User) => u.id === otherUser.id);
             expect(otherUserWithoutTeamId.team).toBeNull();
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no team with that ID", async () => {
             await adminLoggedIn(deleteTeamRequest(uuid(), 404), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-admin tries to delete a team", async () => {
             await ownerLoggedIn(deleteTeamRequest(uuid(), 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await deleteTeamRequest(uuid(), 403)(request(app));
         });
