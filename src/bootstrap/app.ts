@@ -75,7 +75,16 @@ export async function setupExpressApp(
 
     // Add CORS middleware for tRPC routes to handle OPTIONS requests
     const trpcCorsMiddleware = cors({
-        origin: allowedOrigins,
+        origin: (origin, callback) => {
+            logger.info(`[CORS] Request origin: ${origin}, path: ${origin ? "checking..." : "no origin"}`);
+            const isAllowed = !origin || allowedOrigins.some(pattern => pattern.test(origin));
+            logger.info(`[CORS] Origin ${origin} is ${isAllowed ? "ALLOWED" : "DENIED"}`);
+            if (isAllowed) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
         credentials: true,
         methods: ["GET", "POST", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization", "traceparent"],
@@ -85,6 +94,7 @@ export async function setupExpressApp(
         // conditional mount to avoid conflict with routing-controllers /v2 routes
         // tRPC uses dot notation (e.g., /auth.sessionCheck), so check for that pattern
         if (req.path.includes("auth.") || req.path.includes("client.")) {
+            logger.info(`[CORS] Handling tRPC route: ${req.method} ${req.path} from origin: ${req.headers.origin}`);
             // Apply CORS first for tRPC routes
             trpcCorsMiddleware(req, res, () => {
                 createExpressMiddleware({
