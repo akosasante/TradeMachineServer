@@ -79,6 +79,8 @@ app.use(
             httpOnly: true,
             maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
             sameSite: insecureCookies ? "lax" : "none",
+            // Set domain to share cookies across subdomains (e.g., newtrades.api.akosua.xyz and staging.trades.akosua.xyz)
+            domain: process.env.COOKIE_DOMAIN || undefined,
         },
     })
 );
