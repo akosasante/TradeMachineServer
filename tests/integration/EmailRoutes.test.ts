@@ -5,20 +5,11 @@ import User from "../../src/models/user";
 import startServer from "../../src/bootstrap/app";
 import { clearPrismaDb, makePostRequest, setupOwnerAndAdminUsers } from "./helpers";
 import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
-import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let ownerUser: User;
 
 let prismaConn: ExtendedPrismaClient;
-async function shutdown() {
-    try {
-        await handleExitInTest();
-    } catch (err) {
-        logger.error(`Error while shutting down: ${err}`);
-    }
-}
-
 beforeAll(async () => {
     logger.debug("~~~~~~EMAIL ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
@@ -27,14 +18,16 @@ beforeAll(async () => {
 }, 5000);
 
 afterAll(async () => {
-    logger.debug("~~~~~~EMAIL ROUTES AFTER ALL~~~~~~");
-    const shutdownResult = await shutdown();
+    // Only close the server instance for this test file
+    // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        app.close(() => {
-            logger.debug("CLOSED SERVER");
+        return new Promise<void>(resolve => {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+                resolve();
+            });
         });
     }
-    return shutdownResult;
 });
 
 describe("Email API endpoints", () => {

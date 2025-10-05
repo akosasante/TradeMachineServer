@@ -10,7 +10,7 @@ import User from "../../../src/models/user";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import PlayerDAO from "../../../src/DAO/PlayerDAO";
 import PlayerModel, { PlayerLeagueType } from "../../../src/models/player";
-import { handleExitInTest, registerCleanupCallback } from "../../../src/bootstrap/shutdownHandler";
+import { handleExitInTest } from "../../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let prismaConn: ExtendedPrismaClient;

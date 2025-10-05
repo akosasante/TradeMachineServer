@@ -22,9 +22,9 @@ jobs:
       postgres:
         image: postgres
         env:
-          POSTGRES_USER: ${{ secrets.PG_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.PG_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.PG_DB }}
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_trade_machine
         ports:
           - 5432:5432
         # Set health checks to wait until postgres has started
@@ -40,22 +40,33 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '16.x'
+          node-version: '20.x'
           cache: 'npm'
           cache-dependency-path: 'package-lock.json'
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Wait for services to be ready
+        run: |
+          timeout 60 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/localhost/5432; do sleep 1; done'
+          timeout 60 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/localhost/6379; do sleep 1; done'
+          echo "Services are ready"
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
       - name: Build js files
         run: make build
 
-      - name: Setup db
+      - name: Setup db and run migrations
         run: node db_setup.js
         env:
-          PGUSER: ${{ secrets.PG_USER }}
-          PGPASSWORD: ${{ secrets.PG_PASSWORD }}
-          PGDATABASE: ${{ secrets.PG_DB }}
+          PGUSER: test_user
+          PGPASSWORD: test_password
+          PGDATABASE: test_trade_machine
+          PGHOST: 127.0.0.1
+          DATABASE_URL: postgresql://test_user:test_password@127.0.0.1:5432/test_trade_machine?application_name=tm_ci_test
 
       - name: Run typechecking and linting
         run: make typecheck && make lint
@@ -63,32 +74,37 @@ jobs:
       - name: Run integration tests
         run: make test-ci-integration
         env:
-          PG_USER: ${{ secrets.PG_USER }}
-          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
-          PG_DB: ${{ secrets.PG_DB }}
+          PG_USER: test_user
+          PG_PASSWORD: test_password
+          PG_DB: test_trade_machine
+          PG_HOST: 127.0.0.1
+          REDIS_IP: 127.0.0.1
           BASE_DIR: ${{ github.workspace }}
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
-          BASE_URL: http://localhost:8080
+          BASE_URL: http://127.0.0.1:8080
           TRADE_WORKSHEET_ID: 9999
           TRADE_SPREADSHEET_ID: test_spreadsheet
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          DATABASE_URL: postgresql://test_user:test_password@127.0.0.1:5432/test_trade_machine?application_name=tm_ci_test
 
       - name: Run unit tests
         run: make test-ci-unit
         env:
-          PG_USER: ${{ secrets.PG_USER }}
-          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
-          PG_DB: ${{ secrets.PG_DB }}
+          PG_USER: test_user
+          PG_PASSWORD: test_password
+          PG_DB: test_trade_machine
+          PG_HOST: 127.0.0.1
+          REDIS_IP: 127.0.0.1
           BASE_DIR: ${{ github.workspace }}
+          SHEETS_CREDENTIAL_FILE: "fake_creds.json"
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
-          BASE_URL: http://localhost:8080
+          BASE_URL: http://127.0.0.1:8080
           TRADE_WORKSHEET_ID: 9999
           TRADE_SPREADSHEET_ID: test_spreadsheet
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          DATABASE_URL: postgresql://test_user:test_password@127.0.0.1:5432/test_trade_machine?application_name=tm_ci_test
 

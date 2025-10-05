@@ -58,6 +58,15 @@ export default class UserDAO {
         }
     }
 
+    public async findUserByPasswordResetToken(token: string): Promise<PublicUser | null> {
+        const user = await this.userDb.findFirst({ where: { passwordResetToken: token } });
+        if (user) {
+            return UserDAO.publicUser(user);
+        } else {
+            return null;
+        }
+    }
+
     public async createUsers(userObjs: Partial<User>[]): Promise<PublicUser[]> {
         await this.userDb.createMany({
             data: userObjs.map(user => ({
