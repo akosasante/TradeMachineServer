@@ -35,6 +35,10 @@ export class LoginHandler implements ExpressMiddlewareInterface {
                 });
                 return next(new UnauthorizedError(message));
             } else {
+                // Clear old cookies without domain attribute to prevent duplicates
+                const cookieName = process.env.ORM_CONFIG === "staging" ? "staging_trades.sid" : "trades.sid";
+                response.clearCookie(cookieName, { path: "/" });
+
                 request.session.user = serializeUser(user);
                 request.session.save((sessionErr: any) => {
                     logger.debug(inspect(request.session));

@@ -39,11 +39,14 @@ describe("Authentication middleware", () => {
             const next: NextFunction = jest.fn();
             const request: Pick<Request, "body" | "session"> = {
                 body: { email: testUser.email, password: testUser.password! },
-                session: { save: jest.fn() } as unknown as Session & AppSessionData,
+                session: { save: jest.fn(), destroy: jest.fn() } as unknown as Session & AppSessionData,
+            };
+            const response: Pick<Response, "clearCookie"> = {
+                clearCookie: jest.fn(),
             };
 
             const loginHandler = new LoginHandler(mockUserDAO as unknown as UserDAO);
-            await loginHandler.use(request as Request, {} as Response, next);
+            await loginHandler.use(request as Request, response as Response, next);
 
             expect(request.session.save).toHaveBeenCalledTimes(1);
             expect(request.session.user).toBeDefined();

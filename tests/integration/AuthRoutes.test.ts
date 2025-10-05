@@ -8,18 +8,10 @@ import { clearPrismaDb, makeLoggedInRequest, makePostRequest } from "./helpers";
 import { generateHashedPassword } from "../../src/authentication/auth";
 import { advanceBy, clear } from "jest-date-mock";
 import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
-import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let userDAO: UserDAO;
 let prismaConn: ExtendedPrismaClient;
-async function shutdown() {
-    try {
-        await handleExitInTest();
-    } catch (err) {
-        logger.error(`Error while shutting down: ${err}`);
-    }
-}
 
 beforeAll(async () => {
     logger.debug("~~~~~~AUTH ROUTES BEFORE ALL~~~~~~");
@@ -28,15 +20,19 @@ beforeAll(async () => {
     userDAO = new UserDAO();
     return app;
 });
+
 afterAll(async () => {
     logger.debug("~~~~~~AUTH ROUTES AFTER ALL~~~~~~");
-    const shutdownResult = await shutdown();
+    // Only close the server instance for this test file
+    // Shared infrastructure (Redis, Prisma) is cleaned up in globalTeardown
     if (app) {
-        app.close(() => {
-            logger.debug("CLOSED SERVER");
+        return new Promise<void>(resolve => {
+            app.close(() => {
+                logger.debug("CLOSED SERVER");
+                resolve();
+            });
         });
     }
-    return shutdownResult;
 });
 
 describe("Auth API endpoints", () => {

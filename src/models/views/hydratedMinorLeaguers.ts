@@ -23,13 +23,13 @@ SELECT id,
                name,
                league,
                (SELECT json_build_object('id', "id", 'name', "name")
-                FROM ${process.env.PG_SCHEMA}.team t
+                FROM ${process.env.PG_SCHEMA || "public"}.team t
                 WHERE t.id = "leagueTeamId")                          AS "ownerTeam",
                meta -> 'minorLeaguePlayerFromSheet' ->> 'mlbTeam'     AS "minorTeam",
                meta -> 'minorLeaguePlayerFromSheet' ->> 'position'    as "position",
                meta -> 'minorLeaguePlayerFromSheet' ->> 'leagueLevel' as "minorLeagueLevel"
-        FROM ${process.env.PG_SCHEMA}.player
-        WHERE ${process.env.PG_SCHEMA}.player.league::text = '2';
+        FROM ${process.env.PG_SCHEMA || "public"}.player
+        WHERE ${process.env.PG_SCHEMA || "public"}.player.league::text = '2';
     `,
 })
 export class HydratedMinorLeaguer {

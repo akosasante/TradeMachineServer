@@ -17,12 +17,12 @@ SELECT id,
                round,
                "pickNumber",
                (SELECT json_build_object('id', "id", 'name', "name")
-                FROM ${process.env.PG_SCHEMA}.team t
+                FROM ${process.env.PG_SCHEMA || "public"}.team t
                 WHERE t.id = "currentOwnerId")  AS "currentPickHolder",
                (SELECT json_build_object('id', "id", 'name', "name")
-                FROM ${process.env.PG_SCHEMA}.team t
+                FROM ${process.env.PG_SCHEMA || "public"}.team t
                 WHERE t.id = "originalOwnerId") AS "originalPickOwner"
-        FROM ${process.env.PG_SCHEMA}.draft_pick;
+        FROM ${process.env.PG_SCHEMA || "public"}.draft_pick;
     `,
 })
 export class HydratedPick {

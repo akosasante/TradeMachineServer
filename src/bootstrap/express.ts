@@ -15,7 +15,8 @@ const app = express();
 
 // Express configuration.
 app.set("port", process.env.PORT || "3000");
-app.set("ip", process.env.IP || "localhost");
+// Force IPv4 in test mode to match Redis client and avoid IPv6/IPv4 mismatch in CI
+app.set("ip", process.env.IP || (process.env.NODE_ENV === "test" ? "127.0.0.1" : "localhost"));
 app.set("env", process.env.NODE_ENV || "development");
 app.set("json spaces", 2);
 app.set("trust proxy", 1);
@@ -46,6 +47,7 @@ export const redisClient = createClient({
     socket: {
         host: process.env.REDIS_IP || "localhost",
         port: Number(process.env.REDIS_PORT || 6379),
+        family: 4, // Force IPv4 to avoid Node 20's IPv6 preference
     },
     password: process.env.REDISPASS,
 });
@@ -77,6 +79,8 @@ app.use(
             httpOnly: true,
             maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
             sameSite: insecureCookies ? "lax" : "none",
+            // Set domain to share cookies across subdomains (e.g., newtrades.api.akosua.xyz and staging.trades.akosua.xyz)
+            domain: process.env.COOKIE_DOMAIN || undefined,
         },
     })
 );

@@ -52,11 +52,17 @@ export async function setupExpressApp(
     logger.debug("setting up route-controllers");
     const developmentOrigins = [/localhost:3030/, /localhost:3031/, /127\.0\.0\.1/, /ngrok/];
     const prodOrigins = [
+        // Primary domains
         /newtrades\.akosua\.xyz/,
-        /staging\.trades\.akosua\.xyz/,
-        /trades\.akosua\.xyz/,
-        /naughty-wozniak-9fc262\.netlify\.app/,
         /trades\.flexfoxfantasy\.com/,
+        // Staging/pre-prod domains for old frontend
+        /staging\.trades\.akosua\.xyz/,
+        /naughty-wozniak-9fc262\.netlify\.app/,
+        // Staging/pre-prod domains for new frontend
+        /ffftemp\.netlify\.app/,
+        /ffftemp\.akosua\.xyz/,
+        // old domain?
+        /trades\.akosua\.xyz/,
     ];
     const allowedOrigins = prodOrigins.concat(process.env.NODE_ENV === "development" ? developmentOrigins : []);
 
@@ -72,33 +78,31 @@ export async function setupExpressApp(
     });
 
     // Add CORS middleware for tRPC routes to handle OPTIONS requests
-    expressApp.use("/v2", (req, res, next) => {
-        if (req.path.startsWith("/auth")) {
-            cors({
-                origin: allowedOrigins,
-                credentials: true,
-                methods: ["GET", "POST", "OPTIONS"],
-                allowedHeaders: ["Content-Type", "Authorization", "traceparent"],
-            })(req, res, next);
-        } else {
-            next();
-        }
+    const trpcCorsMiddleware = cors({
+        origin: allowedOrigins,
+        credentials: true,
+        methods: ["GET", "POST", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "traceparent"],
     });
 
     expressApp.use("/v2", (req, res, next) => {
         // conditional mount to avoid conflict with routing-controllers /v2 routes
-        if (req.path.startsWith("/auth")) {
-            createExpressMiddleware({
-                router: appRouter,
-                createContext,
-                batching: {
-                    enabled: true,
-                },
-                onError: ({ error, req: failedReq }) => {
-                    logger.error(`tRPC Error: ${error.message}`, error);
-                    rollbar.error(error, failedReq);
-                },
-            })(req, res, next);
+        // tRPC uses dot notation (e.g., /auth.sessionCheck), so check for that pattern
+        if (req.path.includes("auth.") || req.path.includes("client.")) {
+            // Apply CORS first for tRPC routes
+            trpcCorsMiddleware(req, res, () => {
+                createExpressMiddleware({
+                    router: appRouter,
+                    createContext,
+                    batching: {
+                        enabled: true,
+                    },
+                    onError: ({ error, req: failedReq }) => {
+                        logger.error(`tRPC Error: ${error.message}`, error);
+                        rollbar.error(error, failedReq);
+                    },
+                })(req, res, next);
+            });
         } else {
             next();
         }
@@ -126,12 +130,26 @@ export async function setupExpressApp(
 
 export default async function startServer(): Promise<Server> {
     try {
+        logger.info("=== Starting server initialization ===");
+        logger.info(
+            `Redis client configuration: host=${process.env.REDIS_IP || "localhost"}, port=${
+                process.env.REDIS_PORT || 6379
+            }`
+        );
+        logger.info("Attempting to connect to Redis...");
         await redisClient.connect();
+        logger.info("Redis connection successful");
+        logger.info("Setting up Express app...");
         const app = await setupExpressApp();
-        const srv = app.listen(app.get("port") as number, app.get("ip") as string, () => {
-            logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
-            logger.info("Press CTRL-C to stop\n");
-            rollbar.info("server_started");
+        logger.info("Express app setup complete");
+        logger.info(`Starting HTTP server on ${app.get("ip")}:${app.get("port")}`);
+        const srv = await new Promise<Server>(resolve => {
+            const server = app.listen(app.get("port") as number, app.get("ip") as string, () => {
+                logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
+                logger.info("Press CTRL-C to stop\n");
+                rollbar.info("server_started");
+                resolve(server);
+            });
         });
 
         redisClient.on("error", (err: Error) => {
