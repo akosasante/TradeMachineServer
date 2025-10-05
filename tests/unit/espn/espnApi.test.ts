@@ -1,5 +1,5 @@
 import "jest-extended";
-import axios, { AxiosPromise } from "axios";
+import { AxiosPromise } from "axios";
 import EspnAPI from "../../../src/espn/espnApi";
 import allDataJson from "../../resources/espn-general-resp.json";
 import membersJson from "../../resources/espn-members-resp.json";
@@ -15,7 +15,6 @@ import logger from "../../../src/bootstrap/logger";
 
 const mockedGet = jest.fn();
 const headers = {
-
     "x-fantasy-filter-player-count": 1,
 };
 
@@ -55,7 +54,7 @@ describe("EspnApi Class", () => {
 
     it("getAllLeagueData/1 - should return general league data", async () => {
         mockedGet.mockResolvedValueOnce({ data: allDataJson } as unknown as AxiosPromise);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         const res = await Api.getAllLeagueData(2019);
         expect(res).toEqual(allDataJson);
     });

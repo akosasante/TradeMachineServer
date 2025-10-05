@@ -1,8 +1,8 @@
 {
-  "extends": "./tsconfig.json",
-  "include": ["./src/**/*.ts", "./tests/**/*.ts", "./declarations/*.ts", "./packages/**/src/**/*.ts"],
-  "exclude": ["./dist", "./node_modules", "./ai_plans", "./packages/**/node_modules", "./packages/**/dist"],
-  "compilerOptions": {
-    "esModuleInterop": true
-  }
+    "extends": "./tsconfig.json",
+    "include": ["./src/**/*.ts", "./tests/**/*.ts", "./declarations/*.ts", "./packages/**/src/**/*.ts"],
+    "exclude": ["./dist", "./node_modules", "./ai_plans", "./packages/**/node_modules", "./packages/**/dist"],
+    "compilerOptions": {
+        "esModuleInterop": true
+    }
 }

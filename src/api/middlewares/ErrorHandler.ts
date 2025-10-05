@@ -50,6 +50,9 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
         } else if (error instanceof QueryFailedError || error instanceof EntityPropertyNotFoundError) {
             logger.error(`Database/Entity Error: ${inspect(error.message)}`);
             response.status(400).json(CustomErrorHandler.cleanErrorObject(error));
+        } else if (error instanceof SyntaxError && error.message.includes("not valid JSON")) {
+            logger.error(`Syntax Error (probably thrown by body-parser json() middleware): ${error.message}`);
+            response.status(400).json({ message: "Invalid JSON in request body", stack: error.stack || "" });
         } else {
             logger.error(`Unknown Error: ${JSON.stringify(Object.getPrototypeOf(error))}`);
             response.status(500).json(error);

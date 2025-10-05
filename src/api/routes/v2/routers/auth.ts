@@ -7,7 +7,7 @@ import {
     addSpanEvent,
     createSpanFromRequest,
     extractTraceContext,
-    finishSpanWithStatusCode
+    finishSpanWithStatusCode,
 } from "../../../../utils/tracing";
 import logger from "../../../../bootstrap/logger";
 import ObanDAO from "../../../../DAO/v2/ObanDAO";
@@ -17,7 +17,7 @@ import {
     passwordResetDateIsValid,
     serializeUser,
     signInAuthentication,
-    signUpAuthentication
+    signUpAuthentication,
 } from "../../../../authentication/auth";
 import { activeUserMetric } from "../../../../bootstrap/metrics";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";

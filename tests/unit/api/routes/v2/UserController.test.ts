@@ -1,9 +1,9 @@
 import UserController from "../../../../../src/api/routes/v2/UserController";
 import UserDAO from "../../../../../src/DAO/v2/UserDAO";
+import type { User } from "../../../../../src/DAO/v2/UserDAO";
 import { mockDeep, mockClear } from "jest-mock-extended";
 import logger from "../../../../../src/bootstrap/logger";
 import { UserFactory } from "../../../../factories/UserFactory";
-import { User } from "@prisma/client";
 
 describe("[V2] UserController", () => {
     const testUser: User = UserFactory.getPrismaUser();

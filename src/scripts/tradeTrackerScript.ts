@@ -1,4 +1,3 @@
-/* eslint-disable */
 import TradeDAO from "../DAO/TradeDAO";
 import { appendNewTrade } from "../csv/TradeTracker";
 import initializeDb from "../bootstrap/db";
@@ -19,4 +18,3 @@ run()
         console.error(err);
         process.exit(99);
     });
-/* eslint-enable */

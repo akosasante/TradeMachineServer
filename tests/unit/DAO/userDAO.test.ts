@@ -2,25 +2,18 @@ import logger from "../../../src/bootstrap/logger";
 import UserDAO from "../../../src/DAO/UserDAO";
 import User from "../../../src/models/user";
 import { UserFactory } from "../../factories/UserFactory";
-import { mockDeleteChain, mockExecute, MockObj, mockWhereInIds } from "./daoHelpers";
-import { Repository, FindOperator } from "typeorm";
+import { mockDeleteChain, mockExecute, mockWhereInIds } from "./daoHelpers";
+import { Repository } from "typeorm";
+import { mockDeep } from "jest-mock-extended";
 
 describe("UserDAO", () => {
-    const mockUserDb: MockObj = {
-        find: jest.fn(),
-        findOneOrFail: jest.fn(),
-        findOne: jest.fn(),
-        insert: jest.fn(),
-        update: jest.fn(),
-        createQueryBuilder: jest.fn(),
-    };
+    const mockUserDb = mockDeep<Repository<User>>();
 
     const testUser = UserFactory.getUser();
-    const userDAO: UserDAO = new UserDAO(mockUserDb as unknown as Repository<User>);
+    const userDAO: UserDAO = new UserDAO(mockUserDb as any);
 
-    afterEach(async () => {
-        Object.values(mockUserDb).forEach(mockFn => mockFn.mockReset());
-
+    afterEach(() => {
+        jest.clearAllMocks();
         mockExecute.mockClear();
         mockWhereInIds.mockClear();
     });
@@ -117,7 +110,7 @@ describe("UserDAO", () => {
                 where: whereFn.mockReturnThis(),
                 getOne: getOneFn,
             };
-            mockUserDb.createQueryBuilder.mockReturnValueOnce(findUserWithPasswordChain);
+            mockUserDb.createQueryBuilder.mockReturnValueOnce(findUserWithPasswordChain as any);
 
             const condition = testUser.email;
             const res = await userDAO.findUserWithPasswordByEmail(condition);
@@ -133,27 +126,15 @@ describe("UserDAO", () => {
 
     describe("createUsers", () => {
         it("should create users in the db for all the objs passed in", async () => {
-            mockUserDb.insert.mockResolvedValueOnce({
-                identifiers: [{ id: testUser.id! }],
-                generatedMaps: [],
-                raw: [],
-            });
-            mockUserDb.find.mockResolvedValueOnce([testUser]);
-            const res = await userDAO.createUsers([testUser.parse()]);
+            const parsedUser = testUser.parse();
+            mockUserDb.create.mockReturnValue(testUser);
+            mockUserDb.save.mockResolvedValueOnce([testUser] as any);
+            const res = await userDAO.createUsers([parsedUser]);
 
-            expect(mockUserDb.insert).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.insert).toHaveBeenCalledWith([testUser.parse()]);
-            expect(mockUserDb.find).toHaveBeenCalledTimes(1);
-            expect(mockUserDb.find).toHaveBeenCalledWith({
-                where: {
-                    id: expect.objectContaining({
-                        _multipleParameters: true,
-                        _type: "in",
-                        _useParameter: true,
-                        _value: [testUser.id],
-                    }),
-                },
-            });
+            expect(mockUserDb.create).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.create).toHaveBeenCalledWith(parsedUser);
+            expect(mockUserDb.save).toHaveBeenCalledTimes(1);
+            expect(mockUserDb.save).toHaveBeenCalledWith([testUser]);
 
             expect(res).toEqual([testUser]);
         });
@@ -176,7 +157,7 @@ describe("UserDAO", () => {
     describe("deleteUser", () => {
         it("should return a delete result", async () => {
             mockUserDb.findOneOrFail.mockResolvedValueOnce(testUser);
-            mockUserDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain);
+            mockUserDb.createQueryBuilder.mockReturnValueOnce(mockDeleteChain as any);
             const deleteResult = { affected: 1, raw: { id: testUser.id! } };
             mockExecute.mockResolvedValueOnce(deleteResult);
             const res = await userDAO.deleteUser(testUser.id!);

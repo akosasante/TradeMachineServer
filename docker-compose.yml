@@ -45,6 +45,11 @@ services:
       - ./.env:/app/.env:cached
       - ./tsconfig.json:/app/tsconfig.json:cached
       - ./ormconfig.js:/app/ormconfig.js:cached
+      - ./jest.config.js:/app/jest.config.js:cached
+      - ./jest.ci-config.js:/app/jest.ci-config.js:cached
+      - ./jest.docker.config.js:/app/jest.docker.config.js:cached
+      - ./jestSetupFile.mjs:/app/jestSetupFile.mjs:cached
+      - ./jestSetupFile.docker.mjs:/app/jestSetupFile.docker.mjs:cached
       # Secret files (mount as read-only)
       - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
       # Named volume for node_modules to avoid cross-platform issues

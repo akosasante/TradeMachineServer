@@ -1,9 +1,9 @@
 import { TradeFactory } from "../../factories/TradeFactory";
 import logger from "../../../src/bootstrap/logger";
-import {processTradeAnnounceJob, SlackJob} from "../../../src/slack/processors";
-import {Job} from "bull";
-import {SlackTradeAnnouncer} from "../../../src/slack/tradeAnnouncer";
-import {mockDeep} from "jest-mock-extended";
+import { processTradeAnnounceJob, SlackJob } from "../../../src/slack/processors";
+import { Job } from "bull";
+import { SlackTradeAnnouncer } from "../../../src/slack/tradeAnnouncer";
+import { mockDeep } from "jest-mock-extended";
 
 const mockSlackAnnouncer = mockDeep<typeof SlackTradeAnnouncer>();
 
@@ -17,7 +17,7 @@ afterAll(() => {
     logger.debug("~~~~~~SLACK QUEUE PROCESSORS TESTS COMPLETE~~~~~~");
 });
 afterEach(() => {
-    Object.values(mockSlackAnnouncer).forEach(mockFn => mockFn.mockReset());
+    jest.clearAllMocks();
 });
 
 describe("Slack queue processors", () => {
