@@ -9,7 +9,7 @@ import {
     Req,
     Res,
     Session,
-    UseBefore
+    UseBefore,
 } from "routing-controllers";
 import { deserializeUser, generateHashedPassword, passwordResetDateIsValid } from "../../authentication/auth";
 import logger from "../../bootstrap/logger";
@@ -29,7 +29,7 @@ import {
     finishSpanWithStatusCode,
     addSpanAttributes,
     addSpanEvent,
-    extractTraceContext
+    extractTraceContext,
 } from "../../utils/tracing";
 import { context } from "@opentelemetry/api";
 
@@ -153,7 +153,6 @@ export default class AuthController {
                         reject(err);
                     } else {
                         logger.debug(`Destroying user session for userId#${session.user}`);
-                        // await this.userDao.updateUser(session.user, {lastLoggedIn: new Date()});
                         delete session.user;
                         activeUserMetric.dec();
                         resolve(true);

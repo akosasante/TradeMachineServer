@@ -1,23 +1,23 @@
 import "jest-extended";
 import { Server } from "http";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import Settings from "../../src/models/settings";
 import User from "../../src/models/user";
 import { SettingsFactory } from "../factories/SettingsFactory";
 import {
     adminLoggedIn,
-    clearDb,
+    clearPrismaDb,
     doLogout,
     makeGetRequest,
     makePostRequest,
     ownerLoggedIn,
-    setupOwnerAndAdminUsers
+    setupOwnerAndAdminUsers,
 } from "./helpers";
 import startServer from "../../src/bootstrap/app";
-import { getConnection } from "typeorm";
 import SettingsDAO from "../../src/DAO/SettingsDAO";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
+import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let adminUser: User;
@@ -49,31 +49,32 @@ let mergedSettings: {
     tradeWindowEnd: string | undefined;
 };
 let settingsDAO: SettingsDAO;
-
+let prismaConn: ExtendedPrismaClient;
 async function shutdown() {
     try {
-        await redisClient.disconnect();
+        await handleExitInTest();
     } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
+        logger.error(`Error while shutting down: ${err}`);
     }
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~SETTINGS ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
     settingsDAO = new SettingsDAO();
     return app;
 }, 5000);
 
 afterAll(async () => {
     logger.debug("~~~~~~SETTINGS ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    const shutdownResult = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
-    return shutdownRedis;
+    return shutdownResult;
 });
 
 describe("Settings API endpoints for general settings", () => {
@@ -136,8 +137,8 @@ describe("Settings API endpoints for general settings", () => {
         return [adminUser, ownerUser];
     });
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.ORM_CONFIG));
-    }, 40000);
+        return await clearPrismaDb(prismaConn);
+    });
 
     describe("GET /settings (get all settings lines)", () => {
         const getAllRequest =
@@ -157,9 +158,13 @@ describe("Settings API endpoints for general settings", () => {
             expect(returnedSetting).toMatchObject(expectedTestSettings);
         });
 
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {
             await ownerLoggedIn(getAllRequest(403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await getAllRequest(403)(request(app));
         });
@@ -181,9 +186,13 @@ describe("Settings API endpoints for general settings", () => {
             expect(body).toMatchObject(mergedSettings);
         });
 
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {
             await ownerLoggedIn(getRecentRequest(403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await getRecentRequest(403)(request(app));
         });
@@ -205,9 +214,13 @@ describe("Settings API endpoints for general settings", () => {
             expect(body).toMatchObject(expectedTestSettings);
         });
 
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {
             await ownerLoggedIn(getOneRequest(testSettings.id!, 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await getOneRequest(testSettings.id!, 403)(request(app));
         });
@@ -240,7 +253,7 @@ describe("Settings API endpoints for general settings", () => {
                 } as Partial<Settings>),
                 app
             );
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
             const { body } = await adminLoggedIn(getOneRequest(createBody.id), app);
 
             expect(body).toMatchObject(expectedTestSettings2);
@@ -254,9 +267,11 @@ describe("Settings API endpoints for general settings", () => {
         });
         it("should unset any fields that are passed in with a value of null", async () => {
             await settingsDAO.insertNewSettings(testSettings);
-            // @ts-ignore
             // tslint:disable-next-line:no-null-keyword
-            const { body } = await adminLoggedIn(postRequest({ ...testSettings2.parse(), tradeWindowEnd: null }), app);
+            const { body } = await adminLoggedIn(
+                postRequest({ ...testSettings2.parse(), tradeWindowEnd: null as unknown as undefined }),
+                app
+            );
 
             expect(body.tradeWindowStart).toBeDefined();
             expect(body.tradeWindowEnd).toBeNull();
@@ -274,9 +289,13 @@ describe("Settings API endpoints for general settings", () => {
             );
             expect(body.message).toEqual(expectErrorString);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-admin tries to create a setting", async () => {
             await ownerLoggedIn(postRequest({ ...testSettings.parse() }, 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 403 Forbidden error if a non-logged in request is used", async () => {
             await postRequest(testSettings.parse(), 403)(request(app));
         });

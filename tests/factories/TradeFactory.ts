@@ -14,7 +14,12 @@ export class TradeFactory {
         tradeParticipants: TradeParticipant[] = TradeFactory.getTradeParticipants(),
         status = TradeStatus.DRAFT,
         rest: Partial<Trade> = {}
-    ) {
+    ): {
+        tradeItems: TradeItem[];
+        tradeParticipants: TradeParticipant[];
+        status: TradeStatus;
+        id: string;
+    } {
         return { tradeItems, tradeParticipants, status, id: uuid(), ...rest };
     }
 
@@ -23,13 +28,13 @@ export class TradeFactory {
         participants?: TradeParticipant[],
         status = TradeStatus.DRAFT,
         rest: Partial<Trade> = {}
-    ) {
+    ): Trade {
         const tradeParticipants = participants || TradeFactory.getTradeParticipants();
         const tradeItems = items || TradeFactory.getTradeItems(tradeParticipants[0].team, tradeParticipants[1].team);
         return new Trade(TradeFactory.getTradeObject(tradeItems, tradeParticipants, status, rest));
     }
 
-    public static getTradeItems(sender?: Team, recipient?: Team) {
+    public static getTradeItems(sender?: Team, recipient?: Team): TradeItem[] {
         const majorPlayer = TradeFactory.getTradedMajorPlayer(
             PlayerFactory.getPlayer("Pete Buttjudge", PlayerLeagueType.MAJOR),
             sender,
@@ -43,7 +48,7 @@ export class TradeFactory {
     public static getTradeParticipants(
         teamA = TeamFactory.getTeam("CREATOR_TEAM"),
         teamB = TeamFactory.getTeam("RECIPIENT_TEAM")
-    ) {
+    ): TradeParticipant[] {
         const creator = TradeFactory.getTradeCreator(teamA);
         const recipient = TradeFactory.getTradeRecipient(teamB);
         return [creator, recipient];
@@ -54,7 +59,7 @@ export class TradeFactory {
         sender = TeamFactory.getTeam("CREATOR_TEAM"),
         recipient = TeamFactory.getTeam("RECIPIENT_TEAM"),
         rest = {}
-    ) {
+    ): TradeItem {
         return new TradeItem({
             id: uuid(),
             tradeItemType: TradeItemType.PLAYER,
@@ -71,7 +76,7 @@ export class TradeFactory {
         sender = TeamFactory.getTeam("CREATOR_TEAM"),
         recipient = TeamFactory.getTeam("RECIPIENT_TEAM"),
         rest = {}
-    ) {
+    ): TradeItem {
         return new TradeItem({
             id: uuid(),
             tradeItemType: TradeItemType.PLAYER,
@@ -88,7 +93,7 @@ export class TradeFactory {
         sender = TeamFactory.getTeam("RECIPIENT_TEAM"),
         recipient = TeamFactory.getTeam("CREATOR_TEAM"),
         rest = {}
-    ) {
+    ): TradeItem {
         return new TradeItem({
             id: uuid(),
             tradeItemType: TradeItemType.PICK,
@@ -100,11 +105,11 @@ export class TradeFactory {
         });
     }
 
-    public static getTradeCreator(team?: Team, trade?: Trade) {
+    public static getTradeCreator(team?: Team, trade?: Trade): TradeParticipant {
         return new TradeParticipant({ id: uuid(), participantType: TradeParticipantType.CREATOR, team, trade });
     }
 
-    public static getTradeRecipient(team?: Team, trade?: Trade) {
+    public static getTradeRecipient(team?: Team, trade?: Trade): TradeParticipant {
         return new TradeParticipant({ id: uuid(), participantType: TradeParticipantType.RECIPIENT, trade, team });
     }
 }

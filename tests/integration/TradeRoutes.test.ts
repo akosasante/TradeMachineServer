@@ -1,7 +1,6 @@
 import { Server } from "http";
 import "jest-extended";
 import request from "supertest";
-import { redisClient } from "../../src/bootstrap/express";
 import logger from "../../src/bootstrap/logger";
 import DraftPickDAO from "../../src/DAO/DraftPickDAO";
 import PlayerDAO from "../../src/DAO/PlayerDAO";
@@ -14,7 +13,7 @@ import { TeamFactory } from "../factories/TeamFactory";
 import { TradeFactory } from "../factories/TradeFactory";
 import {
     adminLoggedIn,
-    clearDb,
+    clearPrismaDb,
     DatePatternRegex,
     doLogout,
     makeDeleteRequest,
@@ -22,17 +21,18 @@ import {
     makePostRequest,
     makePutRequest,
     ownerLoggedIn,
-    setupOwnerAndAdminUsers
+    setupOwnerAndAdminUsers,
 } from "./helpers";
 import { v4 as uuid } from "uuid";
 import * as TradeTracker from "../../src/csv/TradeTracker";
-import { getConnection } from "typeorm";
 import TradeDAO from "../../src/DAO/TradeDAO";
 import TradeItem from "../../src/models/tradeItem";
 import { HydratedTrade } from "../../src/models/views/hydratedTrades";
 import { HydratedPick } from "../../src/models/views/hydratedPicks";
 import { HydratedMajorLeaguer } from "../../src/models/views/hydratedMajorLeaguers";
 import { HydratedMinorLeaguer } from "../../src/models/views/hydratedMinorLeaguers";
+import initializeDb, { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
+import { handleExitInTest, registerCleanupCallback } from "../../src/bootstrap/shutdownHandler";
 
 let app: Server;
 let adminUser: User;
@@ -41,20 +41,20 @@ let pickDAO: DraftPickDAO;
 let teamDAO: TeamDAO;
 let tradeDAO: TradeDAO;
 
-// @ts-ignore
-TradeTracker.appendNewTrade = jest.fn();
-
+jest.spyOn(TradeTracker, "appendNewTrade").mockImplementation(() => Promise.resolve());
+let prismaConn: ExtendedPrismaClient;
 async function shutdown() {
     try {
-        await redisClient.disconnect();
+        await handleExitInTest();
     } catch (err) {
-        logger.error(`Error while closing redis: ${err}`);
+        logger.error(`Error while shutting down: ${err}`);
     }
 }
 
 beforeAll(async () => {
     logger.debug("~~~~~~TRADE ROUTES BEFORE ALL~~~~~~");
     app = await startServer();
+    prismaConn = initializeDb(process.env.DB_LOGS === "true");
 
     playerDAO = new PlayerDAO();
     pickDAO = new DraftPickDAO();
@@ -66,13 +66,13 @@ beforeAll(async () => {
 
 afterAll(async () => {
     logger.debug("~~~~~~TEAM ROUTES AFTER ALL~~~~~~");
-    const shutdownRedis = await shutdown();
+    const shutdownResult = await shutdown();
     if (app) {
         app.close(() => {
             logger.debug("CLOSED SERVER");
         });
     }
-    return shutdownRedis;
+    return shutdownResult;
 });
 
 describe("Trade API endpoints", () => {
@@ -83,8 +83,8 @@ describe("Trade API endpoints", () => {
     });
 
     afterEach(async () => {
-        return await clearDb(getConnection(process.env.ORM_CONFIG));
-    }, 40000);
+        return await clearPrismaDb(prismaConn);
+    });
 
     describe("POST /trades (create new trade)", () => {
         const expectErrorString = expect.stringMatching(/Trade is not valid/);
@@ -118,8 +118,7 @@ describe("Trade API endpoints", () => {
         });
         it("should ignore any invalid properties from the object passed in", async () => {
             const testTrade = TradeFactory.getTrade();
-            // @ts-ignore
-            await adminLoggedIn(postRequest({ ...testTrade.parse(), blah: "boop" }), app);
+            await adminLoggedIn(postRequest({ ...testTrade.parse(), blah: "boop" } as unknown as Partial<Trade>), app);
             const { body } = await getOneRequest(testTrade.id!);
 
             const expected = {
@@ -140,6 +139,8 @@ describe("Trade API endpoints", () => {
 
             expect(body.message).toEqual(expectErrorString);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should return a 401 Unauthorized error if a non-logged in request is used", async () => {
             const testTrade = TradeFactory.getTrade();
 
@@ -303,6 +304,8 @@ describe("Trade API endpoints", () => {
                 (ti: TradeItem) => pickIds.includes(ti.entity!.id) || playerIds.includes(ti.entity!.id)
             );
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
@@ -347,12 +350,13 @@ describe("Trade API endpoints", () => {
             expect(body).toMatchObject({
                 id: testTrade.id,
                 tradeParticipants: expect.toSatisfyAll(participant =>
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     updatedTradeParticipantIds.includes(participant.id)
                 ),
                 tradeItems: expect.toSatisfyAll(item => newItem.id === item.id),
             });
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
@@ -379,6 +383,8 @@ describe("Trade API endpoints", () => {
                 app
             );
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 401 Unauthorized error if a non-admin non-participant tries to update a trade", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
@@ -405,6 +411,8 @@ describe("Trade API endpoints", () => {
                 app
             );
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             const testTrade = TradeFactory.getTrade();
             await tradeDAO.createTrade(testTrade.parse());
@@ -431,7 +439,6 @@ describe("Trade API endpoints", () => {
     });
 
     describe("PUT /trades/:id/:action (accept/reject/submit a trade)", () => {
-
         type actionBody = { declinedById: string; declinedReason: string } | undefined;
         const putTradeRequest =
             (action: string, id: string, actionObj: actionBody, status = 200) =>
@@ -513,12 +520,18 @@ describe("Trade API endpoints", () => {
             const { body: getAllRes } = await request(app).get("/trades").expect(200);
             expect(getAllRes).toBeArrayOfSize(0);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 404 Not Found error if there is no trade with that ID", async () => {
             await adminLoggedIn(deleteTradeRequest(uuid(), 404), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-admin tries to delete a trade", async () => {
             await ownerLoggedIn(deleteTradeRequest(uuid(), 403), app);
         });
+        // assertion happens inside api call helper function
+        // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
             await deleteTradeRequest(uuid(), 403)(request(app));
         });

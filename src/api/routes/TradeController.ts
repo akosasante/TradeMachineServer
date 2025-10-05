@@ -13,7 +13,7 @@ import {
     Put,
     QueryParam,
     Req,
-    UnauthorizedError
+    UnauthorizedError,
 } from "routing-controllers";
 import { inspect } from "util";
 import logger from "../../bootstrap/logger";
@@ -26,9 +26,10 @@ import { HydratedTrade } from "../../models/views/hydratedTrades";
 import { appendNewTrade } from "../../csv/TradeTracker";
 import { rollbar } from "../../bootstrap/rollbar";
 import { Request } from "express";
+import { PublicUser } from "../../DAO/v2/UserDAO";
 
-function validateOwnerOfTrade(user: User, trade: Trade): boolean {
-    if (user.role === Role.ADMIN) {
+function validateOwnerOfTrade(user: User | PublicUser, trade: Trade): boolean {
+    if (user?.isAdmin() || user?.role === Role.ADMIN) {
         return true;
     } else {
         const belongsToUser = trade.creator?.owners?.map(u => u.id).includes(user.id);
@@ -36,8 +37,8 @@ function validateOwnerOfTrade(user: User, trade: Trade): boolean {
         return belongsToUser || false;
     }
 }
-function validateRecipientOfTrade(user: User, trade: Trade): boolean {
-    if (user.role === Role.ADMIN) {
+function validateRecipientOfTrade(user: User | PublicUser, trade: Trade): boolean {
+    if (user?.isAdmin() || user?.role === Role.ADMIN) {
         return true;
     } else {
         const belongsToUser = trade.recipients
@@ -48,14 +49,14 @@ function validateRecipientOfTrade(user: User, trade: Trade): boolean {
     }
 }
 
-function validateParticipantInTrade(user: User, trade: Trade): boolean {
-    if (user.role === Role.ADMIN) {
+function validateParticipantInTrade(user: User | PublicUser, trade: Trade): boolean {
+    if (user?.isAdmin() || user?.role === Role.ADMIN) {
         return true;
     } else {
         const belongsToUser = (trade.tradeParticipants?.flatMap(tp => tp.team.owners?.map(u => u.id)) || []).includes(
             user.id
         );
-        logger.debug(`Trade (${trade} belongs to ${user}? = ${belongsToUser}`);
+        logger.debug(`Trade (${trade} belongs to ${user.id}? = ${belongsToUser}`);
         return belongsToUser || false;
     }
 }

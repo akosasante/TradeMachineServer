@@ -2,7 +2,6 @@ import { IsNull, Not } from "typeorm";
 import { cleanupQuery } from "../../../../src/api/helpers/ApiHelpers";
 import logger from "../../../../src/bootstrap/logger";
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
 describe("ApiHelpers utility functions", () => {
     beforeAll(() => {
         logger.debug("~~~~~~API HELPERS TESTS BEGIN~~~~~~");
@@ -16,7 +15,7 @@ describe("ApiHelpers utility functions", () => {
             const keys = ["null", "undefined"];
             for (const key of keys) {
                 const query = { ...baseQuery, field: key };
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
                 const returned: any = cleanupQuery(query);
                 expect(returned.field.value).toEqual(IsNull().value);
                 expect(returned.field._type).toBe("isNull");
@@ -26,7 +25,7 @@ describe("ApiHelpers utility functions", () => {
             const keys = ["not null", "!undefined"];
             for (const key of keys) {
                 const query = { ...baseQuery, field: key };
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
                 const returned: any = cleanupQuery(query);
                 expect(returned.field.value).toEqual(Not(IsNull()).value);
                 expect(returned.field._type).toBe("not");
@@ -34,4 +33,3 @@ describe("ApiHelpers utility functions", () => {
         });
     });
 });
-/* eslint-enable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */

@@ -96,10 +96,10 @@ make docker-prod-test           # Test production Docker build locally
 ### **Code Quality**
 ```bash
 make lint           # Run ESLint
-make lint-fix       # Auto-fix ESLint issues
-make format         # Format with Prettier
+make lint-fix       # Auto-fix ESLint issues and format with Prettier
+make format         # Format with Prettier (via ESLint)
 make typecheck      # TypeScript type checking
-make fullcheck      # Run all: lint-fix, typecheck, format, lint
+make fullcheck      # Run all: lint-fix, typecheck
 ```
 
 ### **Testing**

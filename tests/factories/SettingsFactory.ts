@@ -3,7 +3,6 @@ import User from "../../src/models/user";
 import { UserFactory } from "./UserFactory";
 import { v4 as uuid } from "uuid";
 
-
 export class SettingsFactory {
     public static DEFAULT_WINDOW_START = "18:00:00";
     public static DEFAULT_WINDOW_END = "08:00:00";
@@ -15,7 +14,13 @@ export class SettingsFactory {
         modifiedBy: User = UserFactory.getUser(),
         tradeWindow?: TradeWindowSettings,
         downtimeWindows?: DowntimeSettings
-    ) {
+    ): {
+        id: string;
+        modifiedBy: User;
+        tradeWindowStart: string | undefined;
+        tradeWindowEnd: string | undefined;
+        downtime: DowntimeSettings | undefined;
+    } {
         return {
             id: uuid(),
             modifiedBy,
