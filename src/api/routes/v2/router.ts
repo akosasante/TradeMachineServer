@@ -1,4 +1,4 @@
-import { router } from "./trpcHelpers";
+import { router } from "./utils/trpcHelpers";
 import { authRouter } from "./routers/auth";
 import { clientRouter } from "./routers/client";
 

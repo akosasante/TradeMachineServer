@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { publicProcedure, router, withTracing } from "../trpcHelpers";
+import { publicProcedure, router, withTracing } from "../utils/trpcHelpers";
 import { addSpanAttributes, addSpanEvent, extractTraceContext } from "../../../../utils/tracing";
 import logger from "../../../../bootstrap/logger";
 import ObanDAO from "../../../../DAO/v2/ObanDAO";
