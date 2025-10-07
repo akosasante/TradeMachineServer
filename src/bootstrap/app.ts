@@ -12,7 +12,7 @@ import { Server } from "http";
 import { registerCleanupCallback, setupSignalHandlers } from "./shutdownHandler";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../api/routes/v2/router";
-import { createContext } from "../api/routes/v2/context";
+import { createContext } from "../api/routes/v2/utils/context";
 import cors from "cors";
 
 export interface ExpressAppOptions {

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { mockDeep, mockClear } from "jest-mock-extended";
-import { createContext } from "../../../../../../src/api/routes/v2/context";
+import { createContext } from "../../../../../../src/api/routes/v2/utils/context";
 import { ExtendedPrismaClient } from "../../../../../../src/bootstrap/prisma-db";
 import UserDAO from "../../../../../../src/DAO/v2/UserDAO";
 import logger from "../../../../../../src/bootstrap/logger";

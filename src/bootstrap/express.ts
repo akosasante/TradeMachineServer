@@ -60,7 +60,7 @@ const REDIS_OPTS = {
     logErrors: true,
     ttl: COOKIE_MAX_AGE_SECONDS,
     client: redisClient,
-    prefix: process.env.ORM_CONFIG === "staging" ? "stg_sess:" : "sess:",
+    prefix: process.env.APP_ENV === "staging" ? "stg_sess:" : "sess:",
 };
 
 const insecureCookies = process.env.COOKIE_SECURE === "false" || process.env.NODE_ENV === "test";
@@ -72,7 +72,7 @@ app.use(
         secret: process.env.SESSION_SECRET || "test",
         store: new redisStore(REDIS_OPTS),
         unset: "destroy",
-        name: process.env.ORM_CONFIG === "staging" ? "staging_trades.sid" : "trades.sid",
+        name: process.env.APP_ENV === "staging" ? "staging_trades.sid" : "trades.sid",
         cookie: {
             // Don't set secure cookies in dev/test
             secure: !insecureCookies,
