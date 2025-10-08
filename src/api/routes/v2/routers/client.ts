@@ -79,10 +79,15 @@ export const clientRouter = router({
                 });
                 addSpanEvent("create_redirect_token.start");
 
-                const url = new URL(input.redirectTo);
-                if (!SSO_CONFIG.ALLOWED_REDIRECT_HOSTS.has(url.host)) {
-                    transferTokenFailedMetric.inc({ reason: "invalid_redirect_host" });
+                const redirectUrl = new URL(input.redirectTo);
+                const originUrl = new URL(input.origin);
+                if (!SSO_CONFIG.ALLOWED_REDIRECT_HOSTS.has(redirectUrl.origin)) {
+                    transferTokenFailedMetric.inc({ reason: "invalid_redirect_host", value: redirectUrl.origin });
                     throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid redirect host" });
+                }
+                if (!SSO_CONFIG.ALLOWED_REDIRECT_HOSTS.has(originUrl.origin)) {
+                    transferTokenFailedMetric.inc({ reason: "invalid_request_host", value: originUrl.origin });
+                    throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid request host" });
                 }
 
                 const token = await createTransferToken({ sessionId: ctx.req.sessionID, userId: ctx.session!.user! });
@@ -109,8 +114,9 @@ export const clientRouter = router({
         .mutation(
             withTracing("trpc.client.exchangeRedirectToken", async (input, ctx, _span) => {
                 addSpanEvent("exchange_redirect_token.start", { tokenFragment: input.token.slice(0, 8) });
-                if (!SSO_CONFIG.ALLOWED_REDIRECT_HOSTS.has(ctx.req.hostname)) {
-                    transferTokenFailedMetric.inc({ reason: "invalid_request_host" });
+                const originHeader = ctx.req.header("Origin");
+                if (!SSO_CONFIG.ALLOWED_REDIRECT_HOSTS.has(originHeader || "")) {
+                    transferTokenFailedMetric.inc({ reason: "invalid_request_host", value: originHeader });
                     throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid request host" });
                 }
 

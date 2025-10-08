@@ -149,6 +149,6 @@ export const transferTokenExchangedMetric = new promClient.Counter({
 export const transferTokenFailedMetric = new promClient.Counter({
     name: "transfer_token_failed_total",
     help: "Total number of failed transfer token exchanges",
-    labelNames: ["reason"], // expired, invalid, user_not_found
+    labelNames: ["reason", "value"], // expired, invalid, user_not_found
     registers: [metricsRegistry],
 });
