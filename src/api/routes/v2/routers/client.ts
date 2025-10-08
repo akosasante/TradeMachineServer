@@ -13,6 +13,13 @@ import { serializeUser } from "../../../../authentication/auth";
 import { consumeTransferToken, createTransferToken, loadOriginalSession, SSO_CONFIG } from "../utils/ssoTokens";
 import { TRPCError } from "@trpc/server";
 
+// Declare the additional fields that we add to express session
+declare module "express-session" {
+    interface SessionData {
+        user: string | undefined;
+    }
+}
+
 export const clientRouter = router({
     getIP: publicProcedure.query(
         withTracing("trpc.client.getIP", async (input, ctx, _span) => {
