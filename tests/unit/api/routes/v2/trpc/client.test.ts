@@ -84,6 +84,12 @@ describe("[TRPC] Client Router Unit Tests", () => {
             sessionID: "test-session-id",
             hostname: hostname || "trades.flexfoxfantasy.com",
             session, // This is ctx.req.session for the exchange procedure
+            header: jest.fn((name: string) => {
+                if (name === "Origin") {
+                    return `https://${hostname || "trades.flexfoxfantasy.com"}`;
+                }
+                return headers[name.toLowerCase()];
+            }),
         } as unknown as Request;
 
         return {
