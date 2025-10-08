@@ -38,6 +38,8 @@ jest.mock("../../../../../../src/api/routes/v2/utils/ssoTokens", () => ({
     createTransferToken: jest.fn(),
     consumeTransferToken: jest.fn(),
     loadOriginalSession: jest.fn(),
+    storeSessionMapping: jest.fn(),
+    destroyAllUserSessions: jest.fn(),
 }));
 
 describe("[TRPC] Client Router Unit Tests", () => {
@@ -553,6 +555,52 @@ describe("[TRPC] Client Router Unit Tests", () => {
             });
 
             expect(mockContext.req.session.user).toBe("123"); // serializeUser returns user ID
+        });
+    });
+
+    describe("logoutAllSessions", () => {
+        beforeEach(() => {
+            mockSsoTokens.destroyAllUserSessions.mockClear();
+        });
+
+        it("should successfully logout all user sessions", async () => {
+            const caller = createCallerFactory(clientRouter)(createMockContext({}, { user: "123" }));
+            mockSsoTokens.destroyAllUserSessions.mockResolvedValue(2);
+
+            const result = await caller.logoutAllSessions();
+
+            expect(mockSsoTokens.destroyAllUserSessions).toHaveBeenCalledWith("123", "test-session-id");
+            expect(result).toEqual({
+                success: true,
+                sessionsDestroyed: 2,
+            });
+        });
+
+        it("should reject unauthenticated requests", async () => {
+            const caller = createCallerFactory(clientRouter)(createMockContext({}));
+
+            await expect(caller.logoutAllSessions()).rejects.toThrow(TRPCError);
+            expect(mockSsoTokens.destroyAllUserSessions).not.toHaveBeenCalled();
+        });
+
+        it("should handle session destruction failure", async () => {
+            const caller = createCallerFactory(clientRouter)(createMockContext({}, { user: "123" }));
+            mockSsoTokens.destroyAllUserSessions.mockRejectedValue(new Error("Session destruction failed"));
+
+            await expect(caller.logoutAllSessions()).rejects.toThrow(TRPCError);
+            expect(mockSsoTokens.destroyAllUserSessions).toHaveBeenCalledWith("123", "test-session-id");
+        });
+
+        it("should handle single session destruction", async () => {
+            const caller = createCallerFactory(clientRouter)(createMockContext({}, { user: "123" }));
+            mockSsoTokens.destroyAllUserSessions.mockResolvedValue(1);
+
+            const result = await caller.logoutAllSessions();
+
+            expect(result).toEqual({
+                success: true,
+                sessionsDestroyed: 1,
+            });
         });
     });
 });

@@ -69,3 +69,58 @@ export async function loadOriginalSession(sessionId: string): Promise<StoredSess
         return null;
     }
 }
+
+// Session mapping for cross-domain logout
+export async function storeSessionMapping(
+    originalSessionId: string,
+    newSessionId: string,
+    _userId: string
+): Promise<void> {
+    const mappingTTL = 7 * 24 * 60 * 60; // 7 days (same as session lifetime)
+
+    // Store bidirectional mapping so we can find either session from the other
+    await Promise.all([
+        redisClientV4.setEx(`sso:session_map:${originalSessionId}`, mappingTTL, newSessionId),
+        redisClientV4.setEx(`sso:session_map:${newSessionId}`, mappingTTL, originalSessionId),
+    ]);
+}
+
+export async function getRelatedSessionId(sessionId: string): Promise<string | null> {
+    return await redisClientV4.get(`sso:session_map:${sessionId}`);
+}
+
+export async function destroyAllUserSessions(userId: string, currentSessionId: string): Promise<number> {
+    const sessionPrefix = process.env.APP_ENV === "staging" ? "stg_sess" : "sess";
+    const sessionsToDestroy = new Set<string>();
+
+    // Always include the current session
+    sessionsToDestroy.add(currentSessionId);
+
+    try {
+        // Use the efficient mapping lookup instead of scanning all sessions
+        const relatedSessionId = await getRelatedSessionId(currentSessionId);
+        if (relatedSessionId) {
+            sessionsToDestroy.add(relatedSessionId);
+
+            // Clean up the mapping keys since we're destroying both sessions
+            await Promise.all([
+                redisClientV4.del(`sso:session_map:${currentSessionId}`),
+                redisClientV4.del(`sso:session_map:${relatedSessionId}`),
+            ]);
+        }
+    } catch (mappingError) {
+        // If mapping lookup fails, we'll still destroy the current session
+        // Silent failure - mapping might not exist for single-session users
+    }
+
+    // Destroy all identified sessions
+    const sessionKeys = Array.from(sessionsToDestroy).map(sessionId => `${sessionPrefix}:${sessionId}`);
+
+    try {
+        await Promise.all(sessionKeys.map(key => redisClientV4.del(key)));
+        return sessionsToDestroy.size;
+    } catch (error) {
+        // Let the calling function handle logging
+        throw error;
+    }
+}

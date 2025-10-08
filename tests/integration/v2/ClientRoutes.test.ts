@@ -272,5 +272,446 @@ describe("Client API endpoints", () => {
                 }
             });
         });
+
+        describe("POST /v2/client.exchangeRedirectToken", () => {
+            const makeTrpcRequest = (input: any, headers: Record<string, string> = {}, expectedStatus = 200) => {
+                return request(app)
+                    .post("/v2/client.exchangeRedirectToken")
+                    .set(headers)
+                    .send(input)
+                    .expect(expectedStatus);
+            };
+
+            it("should successfully exchange a valid token and create new session", async () => {
+                // Create a user first with hashed password
+                const hashedPassword = hashSync(testUser.password, 1);
+                await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+                // Create first session and generate token (simulate old client)
+                const agent1 = request.agent(app);
+                await agent1
+                    .post("/v2/auth.login.authenticate")
+                    .send({
+                        email: testUser.email,
+                        password: testUser.password,
+                    })
+                    .expect(200);
+
+                // Create redirect token
+                const { body: tokenResponse } = await agent1
+                    .post("/v2/client.createRedirectToken")
+                    .send({
+                        redirectTo: "https://ffftemp.akosua.xyz/dashboard",
+                        origin: "https://staging.trades.akosua.xyz",
+                    })
+                    .expect(200);
+
+                // Exchange token (simulate new client)
+                const { body } = await makeTrpcRequest(
+                    {
+                        token: tokenResponse.result.data.token,
+                    },
+                    {
+                        Origin: "https://ffftemp.akosua.xyz",
+                    }
+                );
+
+                // Validate response structure
+                expect(body.result.data).toMatchObject({
+                    success: true,
+                    user: expect.objectContaining({
+                        id: expect.any(String),
+                        email: testUser.email,
+                        displayName: expect.any(String),
+                        role: expect.any(String),
+                    }),
+                });
+
+                // Verify user object doesn't contain sensitive data
+                expect(body.result.data.user).not.toHaveProperty("password");
+                expect(body.result.data.user).not.toHaveProperty("passwordResetToken");
+            });
+
+            it("should create session mapping between original and new sessions", async () => {
+                // Create a user first with hashed password
+                const hashedPassword = hashSync(testUser.password, 1);
+                await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+                // Create first session and generate token
+                const agent1 = request.agent(app);
+                await agent1
+                    .post("/v2/auth.login.authenticate")
+                    .send({
+                        email: testUser.email,
+                        password: testUser.password,
+                    })
+                    .expect(200);
+
+                // Create redirect token
+                const { body: tokenResponse } = await agent1
+                    .post("/v2/client.createRedirectToken")
+                    .send({
+                        redirectTo: "https://ffftemp.akosua.xyz/dashboard",
+                        origin: "https://staging.trades.akosua.xyz",
+                    })
+                    .expect(200);
+
+                // Exchange token with new agent (simulate new client)
+                const agent2 = request.agent(app);
+                await agent2
+                    .post("/v2/client.exchangeRedirectToken")
+                    .set("Origin", "https://ffftemp.akosua.xyz")
+                    .send({
+                        token: tokenResponse.result.data.token,
+                    })
+                    .expect(200);
+
+                // Verify both sessions are valid and authenticated
+                await agent1.get("/v2/auth.sessionCheck").expect(200);
+                await agent2.get("/v2/auth.sessionCheck").expect(200);
+
+                // Verify session mapping works by logging out from first session
+                const { body: logoutResponse } = await agent1.post("/v2/client.logoutAllSessions").send({}).expect(200);
+
+                // Should destroy both sessions due to mapping
+                expect(logoutResponse.result.data.sessionsDestroyed).toBe(2);
+
+                // Both sessions should now be invalid
+                await agent1.get("/v2/auth.sessionCheck").expect(401);
+                await agent2.get("/v2/auth.sessionCheck").expect(401);
+            });
+
+            it("should return BAD_REQUEST error for invalid token format", async () => {
+                const { body } = await makeTrpcRequest(
+                    {
+                        token: "invalid-token-format",
+                    },
+                    {
+                        Origin: "https://ffftemp.akosua.xyz",
+                    },
+                    400
+                );
+
+                expect(body.error).toMatchObject({
+                    code: -32600, // tRPC PARSE_ERROR for validation errors
+                });
+            });
+
+            it("should return BAD_REQUEST error for non-existent or expired token", async () => {
+                // Use a valid format but non-existent token
+                const fakeToken = "a".repeat(64); // 64 character hex string
+
+                const { body } = await makeTrpcRequest(
+                    {
+                        token: fakeToken,
+                    },
+                    {
+                        Origin: "https://ffftemp.akosua.xyz",
+                    },
+                    400
+                );
+
+                expect(body.error).toMatchObject({
+                    code: -32600, // tRPC BAD_REQUEST
+                    message: "Invalid or expired token",
+                });
+            });
+
+            it("should return BAD_REQUEST error for invalid request host", async () => {
+                // Create a user and token first
+                const hashedPassword = hashSync(testUser.password, 1);
+                await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+                const agent = request.agent(app);
+                await agent
+                    .post("/v2/auth.login.authenticate")
+                    .send({
+                        email: testUser.email,
+                        password: testUser.password,
+                    })
+                    .expect(200);
+
+                const { body: tokenResponse } = await agent
+                    .post("/v2/client.createRedirectToken")
+                    .send({
+                        redirectTo: "https://ffftemp.akosua.xyz/dashboard",
+                        origin: "https://staging.trades.akosua.xyz",
+                    })
+                    .expect(200);
+
+                // Try to exchange token from invalid host
+                const { body } = await makeTrpcRequest(
+                    {
+                        token: tokenResponse.result.data.token,
+                    },
+                    {
+                        Origin: "https://malicious-site.com",
+                    },
+                    400
+                );
+
+                expect(body.error).toMatchObject({
+                    code: -32600, // tRPC BAD_REQUEST
+                    message: "Invalid request host",
+                });
+            });
+
+            it("should return BAD_REQUEST error when original session has expired", async () => {
+                // Create a user first
+                const hashedPassword = hashSync(testUser.password, 1);
+                await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+                // Create session and token
+                const agent = request.agent(app);
+                await agent
+                    .post("/v2/auth.login.authenticate")
+                    .send({
+                        email: testUser.email,
+                        password: testUser.password,
+                    })
+                    .expect(200);
+
+                const { body: tokenResponse } = await agent
+                    .post("/v2/client.createRedirectToken")
+                    .send({
+                        redirectTo: "https://ffftemp.akosua.xyz/dashboard",
+                        origin: "https://staging.trades.akosua.xyz",
+                    })
+                    .expect(200);
+
+                // Manually logout to invalidate the original session
+                await agent.post("/v2/auth.logout").send({}).expect(200);
+
+                // Try to exchange token - should fail because original session is gone
+                const { body } = await makeTrpcRequest(
+                    {
+                        token: tokenResponse.result.data.token,
+                    },
+                    {
+                        Origin: "https://ffftemp.akosua.xyz",
+                    },
+                    400
+                );
+
+                expect(body.error).toMatchObject({
+                    code: -32600, // tRPC BAD_REQUEST
+                    message: "Original session not found or expired",
+                });
+            });
+
+            it("should work with all allowed request hosts", async () => {
+                const hashedPassword = hashSync(testUser.password, 1);
+                await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+                // Test with different allowed hosts from SSO_CONFIG.ALLOWED_REDIRECT_HOSTS
+                const allowedOrigins = [
+                    "https://ffftemp.akosua.xyz",
+                    "https://ffftemp.netlify.app",
+                    "https://trades.flexfoxfantasy.com",
+                    "https://staging.trades.akosua.xyz",
+                ];
+
+                for (const origin of allowedOrigins) {
+                    // Create fresh session and token for each test
+                    const agent = request.agent(app);
+                    await agent
+                        .post("/v2/auth.login.authenticate")
+                        .send({
+                            email: testUser.email,
+                            password: testUser.password,
+                        })
+                        .expect(200);
+
+                    const { body: tokenResponse } = await agent
+                        .post("/v2/client.createRedirectToken")
+                        .send({
+                            redirectTo: `${origin}/dashboard`,
+                            origin: "https://staging.trades.akosua.xyz",
+                        })
+                        .expect(200);
+
+                    // Exchange token from the specified origin
+                    const { body } = await makeTrpcRequest(
+                        {
+                            token: tokenResponse.result.data.token,
+                        },
+                        {
+                            Origin: origin,
+                        }
+                    );
+
+                    expect(body.result.data).toMatchObject({
+                        success: true,
+                        user: expect.objectContaining({
+                            email: testUser.email,
+                        }),
+                    });
+                }
+            });
+
+            it("should consume token only once (single-use verification)", async () => {
+                // Create a user first
+                const hashedPassword = hashSync(testUser.password, 1);
+                await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+                // Create session and token
+                const agent = request.agent(app);
+                await agent
+                    .post("/v2/auth.login.authenticate")
+                    .send({
+                        email: testUser.email,
+                        password: testUser.password,
+                    })
+                    .expect(200);
+
+                const { body: tokenResponse } = await agent
+                    .post("/v2/client.createRedirectToken")
+                    .send({
+                        redirectTo: "https://ffftemp.akosua.xyz/dashboard",
+                        origin: "https://staging.trades.akosua.xyz",
+                    })
+                    .expect(200);
+
+                const token = tokenResponse.result.data.token;
+
+                // First exchange should succeed
+                await makeTrpcRequest({ token }, { Origin: "https://ffftemp.akosua.xyz" });
+
+                // Second exchange with same token should fail
+                const { body } = await makeTrpcRequest({ token }, { Origin: "https://ffftemp.akosua.xyz" }, 400);
+
+                expect(body.error).toMatchObject({
+                    code: -32600, // tRPC BAD_REQUEST
+                    message: "Invalid or expired token",
+                });
+            });
+        });
+
+        describe("POST /v2/client.logoutAllSessions", () => {
+            const makeTrpcRequest = (agent: request.SuperAgentTest, expectedStatus = 200) => {
+                return agent.post("/v2/client.logoutAllSessions").send({}).expect(expectedStatus);
+            };
+
+            it("should successfully logout all user sessions", async () => {
+                // Create a user first with hashed password
+                const hashedPassword = hashSync(testUser.password, 1);
+                await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+                // Create an agent to persist session cookies
+                const agent = request.agent(app);
+
+                // Authenticate to create session
+                await agent
+                    .post("/v2/auth.login.authenticate")
+                    .send({
+                        email: testUser.email,
+                        password: testUser.password,
+                    })
+                    .expect(200);
+
+                // Call logout all sessions
+                const { body } = await makeTrpcRequest(agent);
+
+                // Validate response structure
+                expect(body.result.data).toMatchObject({
+                    success: true,
+                    sessionsDestroyed: expect.any(Number),
+                });
+
+                // Should destroy at least 1 session (the current one)
+                expect(body.result.data.sessionsDestroyed).toBeGreaterThanOrEqual(1);
+            });
+
+            it("should return UNAUTHORIZED error when user is not authenticated", async () => {
+                const { body } = await request(app).post("/v2/client.logoutAllSessions").send({}).expect(401);
+
+                expect(body.error).toMatchObject({
+                    code: -32001, // tRPC UNAUTHORIZED error code
+                    message: "Authentication required",
+                });
+            });
+
+            it("should destroy sessions across domains (session mapping scenario)", async () => {
+                // Create a user first with hashed password
+                const hashedPassword = hashSync(testUser.password, 1);
+                await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+                // Create first session (simulate old client)
+                const agent1 = request.agent(app);
+                await agent1
+                    .post("/v2/auth.login.authenticate")
+                    .send({
+                        email: testUser.email,
+                        password: testUser.password,
+                    })
+                    .expect(200);
+
+                // Create redirect token from first session
+                const { body: tokenResponse } = await agent1
+                    .post("/v2/client.createRedirectToken")
+                    .send({
+                        redirectTo: "https://ffftemp.akosua.xyz/dashboard",
+                        origin: "https://staging.trades.akosua.xyz",
+                    })
+                    .expect(200);
+
+                // Create second session by exchanging token (simulate new client)
+                const agent2 = request.agent(app);
+                await agent2
+                    .post("/v2/client.exchangeRedirectToken")
+                    .set("Origin", "https://ffftemp.akosua.xyz")
+                    .send({
+                        token: tokenResponse.result.data.token,
+                    })
+                    .expect(200);
+
+                // Verify both agents are authenticated before logout
+                await agent1.get("/v2/auth.sessionCheck").expect(200);
+                await agent2.get("/v2/auth.sessionCheck").expect(200);
+
+                // Logout from first session (old client)
+                const { body } = await makeTrpcRequest(agent1);
+
+                // Should destroy both sessions (mapped sessions)
+                expect(body.result.data).toMatchObject({
+                    success: true,
+                    sessionsDestroyed: 2, // Both sessions should be destroyed
+                });
+
+                // Verify both sessions are now invalid
+                await agent1.get("/v2/auth.sessionCheck").expect(401);
+                await agent2.get("/v2/auth.sessionCheck").expect(401);
+            });
+
+            it("should handle logout when no session mapping exists", async () => {
+                // Create a user first with hashed password
+                const hashedPassword = hashSync(testUser.password, 1);
+                await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+                // Create an agent to persist session cookies
+                const agent = request.agent(app);
+
+                // Authenticate to create session (without any token exchange)
+                await agent
+                    .post("/v2/auth.login.authenticate")
+                    .send({
+                        email: testUser.email,
+                        password: testUser.password,
+                    })
+                    .expect(200);
+
+                // Call logout all sessions
+                const { body } = await makeTrpcRequest(agent);
+
+                // Should destroy only the current session
+                expect(body.result.data).toMatchObject({
+                    success: true,
+                    sessionsDestroyed: 1, // Only current session
+                });
+
+                // Verify session is now invalid
+                await agent.get("/v2/auth.sessionCheck").expect(401);
+            });
+        });
     });
 });

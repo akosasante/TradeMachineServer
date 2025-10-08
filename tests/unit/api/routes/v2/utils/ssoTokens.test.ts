@@ -178,4 +178,121 @@ describe("ssoTokens utils", () => {
             expect(ssoTokens.SSO_CONFIG.ALLOWED_REDIRECT_HOSTS.has("https://ffftemp.akosua.xyz")).toBe(true);
         });
     });
+
+    describe("storeSessionMapping", () => {
+        it("should store bidirectional session mapping", async () => {
+            mockRedisClientV4.setEx.mockResolvedValue("OK");
+
+            await ssoTokens.storeSessionMapping("original-session", "new-session", "user123");
+
+            expect(mockRedisClientV4.setEx).toHaveBeenCalledTimes(2);
+            expect(mockRedisClientV4.setEx).toHaveBeenCalledWith(
+                "sso:session_map:original-session",
+                7 * 24 * 60 * 60, // 7 days TTL
+                "new-session"
+            );
+            expect(mockRedisClientV4.setEx).toHaveBeenCalledWith(
+                "sso:session_map:new-session",
+                7 * 24 * 60 * 60, // 7 days TTL
+                "original-session"
+            );
+        });
+
+        it("should handle redis errors gracefully", async () => {
+            mockRedisClientV4.setEx.mockRejectedValue(new Error("Redis connection failed"));
+
+            await expect(ssoTokens.storeSessionMapping("original-session", "new-session", "user123")).rejects.toThrow(
+                "Redis connection failed"
+            );
+        });
+    });
+
+    describe("getRelatedSessionId", () => {
+        it("should return related session ID if mapping exists", async () => {
+            mockRedisClientV4.get.mockResolvedValue("related-session-id");
+
+            const result = await ssoTokens.getRelatedSessionId("current-session-id");
+
+            expect(result).toBe("related-session-id");
+            expect(mockRedisClientV4.get).toHaveBeenCalledWith("sso:session_map:current-session-id");
+        });
+
+        it("should return null if no mapping exists", async () => {
+            mockRedisClientV4.get.mockResolvedValue(null);
+
+            const result = await ssoTokens.getRelatedSessionId("non-existent-session");
+
+            expect(result).toBeNull();
+            expect(mockRedisClientV4.get).toHaveBeenCalledWith("sso:session_map:non-existent-session");
+        });
+    });
+
+    describe("destroyAllUserSessions", () => {
+        const originalEnv = process.env.APP_ENV;
+
+        afterEach(() => {
+            process.env.APP_ENV = originalEnv;
+        });
+
+        it("should destroy current session and related session if mapping exists", async () => {
+            process.env.APP_ENV = "production";
+            mockRedisClientV4.get.mockResolvedValue("related-session-id");
+            mockRedisClientV4.del.mockResolvedValue(1);
+
+            const result = await ssoTokens.destroyAllUserSessions("user123", "current-session-id");
+
+            expect(result).toBe(2); // Both sessions destroyed
+            expect(mockRedisClientV4.get).toHaveBeenCalledWith("sso:session_map:current-session-id");
+            expect(mockRedisClientV4.del).toHaveBeenCalledWith("sso:session_map:current-session-id");
+            expect(mockRedisClientV4.del).toHaveBeenCalledWith("sso:session_map:related-session-id");
+            expect(mockRedisClientV4.del).toHaveBeenCalledWith("sess:current-session-id");
+            expect(mockRedisClientV4.del).toHaveBeenCalledWith("sess:related-session-id");
+        });
+
+        it("should destroy only current session if no mapping exists", async () => {
+            process.env.APP_ENV = "production";
+            mockRedisClientV4.get.mockResolvedValue(null);
+            mockRedisClientV4.del.mockResolvedValue(1);
+
+            const result = await ssoTokens.destroyAllUserSessions("user123", "current-session-id");
+
+            expect(result).toBe(1); // Only current session destroyed
+            expect(mockRedisClientV4.get).toHaveBeenCalledWith("sso:session_map:current-session-id");
+            expect(mockRedisClientV4.del).toHaveBeenCalledWith("sess:current-session-id");
+            expect(mockRedisClientV4.del).toHaveBeenCalledTimes(1); // No mapping cleanup
+        });
+
+        it("should use staging prefix when APP_ENV is staging", async () => {
+            process.env.APP_ENV = "staging";
+            mockRedisClientV4.get.mockResolvedValue("related-session-id");
+            mockRedisClientV4.del.mockResolvedValue(1);
+
+            const result = await ssoTokens.destroyAllUserSessions("user123", "current-session-id");
+
+            expect(result).toBe(2);
+            expect(mockRedisClientV4.del).toHaveBeenCalledWith("stg_sess:current-session-id");
+            expect(mockRedisClientV4.del).toHaveBeenCalledWith("stg_sess:related-session-id");
+        });
+
+        it("should handle mapping lookup failure gracefully", async () => {
+            process.env.APP_ENV = "production";
+            mockRedisClientV4.get.mockRejectedValue(new Error("Redis lookup failed"));
+            mockRedisClientV4.del.mockResolvedValue(1);
+
+            const result = await ssoTokens.destroyAllUserSessions("user123", "current-session-id");
+
+            expect(result).toBe(1); // Still destroys current session
+            expect(mockRedisClientV4.del).toHaveBeenCalledWith("sess:current-session-id");
+        });
+
+        it("should throw error if session destruction fails", async () => {
+            process.env.APP_ENV = "production";
+            mockRedisClientV4.get.mockResolvedValue(null);
+            mockRedisClientV4.del.mockRejectedValue(new Error("Session destruction failed"));
+
+            await expect(ssoTokens.destroyAllUserSessions("user123", "current-session-id")).rejects.toThrow(
+                "Session destruction failed"
+            );
+        });
+    });
 });
