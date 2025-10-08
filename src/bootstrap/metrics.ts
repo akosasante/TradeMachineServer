@@ -133,3 +133,22 @@ export const activeUserMetric = (() => {
         registers: [metricsRegistry],
     });
 })();
+
+export const transferTokenGeneratedMetric = new promClient.Counter({
+    name: "transfer_token_generated_total",
+    help: "Total number of transfer tokens generated",
+    registers: [metricsRegistry],
+});
+
+export const transferTokenExchangedMetric = new promClient.Counter({
+    name: "transfer_token_exchanged_total",
+    help: "Total number of transfer tokens successfully exchanged",
+    registers: [metricsRegistry],
+});
+
+export const transferTokenFailedMetric = new promClient.Counter({
+    name: "transfer_token_failed_total",
+    help: "Total number of failed transfer token exchanges",
+    labelNames: ["reason", "value"], // expired, invalid, user_not_found
+    registers: [metricsRegistry],
+});

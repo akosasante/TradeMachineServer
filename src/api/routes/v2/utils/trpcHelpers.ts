@@ -4,14 +4,14 @@ import { Session } from "express-session";
 import { context } from "@opentelemetry/api";
 import type { Span } from "@opentelemetry/api";
 import { Prisma } from "@prisma/client";
-import { ExtendedPrismaClient } from "../../../bootstrap/prisma-db";
-import Users from "../../../DAO/v2/UserDAO";
+import { ExtendedPrismaClient } from "../../../../bootstrap/prisma-db";
+import Users from "../../../../DAO/v2/UserDAO";
 import {
     createSpanFromRequest,
     finishSpanWithStatusCode,
     addSpanAttributes,
     addSpanEvent,
-} from "../../../utils/tracing";
+} from "../../../../utils/tracing";
 
 /**
  * Error handling strategy:

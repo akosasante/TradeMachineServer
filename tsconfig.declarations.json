@@ -1,0 +1,15 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "declaration": true,
+        "declarationMap": true,
+        "emitDeclarationOnly": true,
+        "outDir": "./dist"
+    },
+    "include": [
+        "src/api/routes/v2/router.ts",
+        "src/api/routes/v2/utils/trpcHelpers.ts",
+        "src/api/routes/v2/routers/**/*.ts",
+        "src/DAO/v2/UserDAO.ts"
+    ]
+}
