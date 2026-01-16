@@ -8,7 +8,6 @@ import UserDAO, { PublicUser } from "../../../../../../src/DAO/v2/UserDAO";
 import ObanDAO from "../../../../../../src/DAO/v2/ObanDAO";
 import { Request, Response } from "express";
 import { hashSync } from "bcryptjs";
-import { redisClient } from "../../../../../../src/bootstrap/express";
 
 // Mock the tracing utilities
 jest.mock("../../../../../../src/utils/tracing", () => ({
@@ -33,21 +32,29 @@ jest.mock("../../../../../../src/bootstrap/rollbar", () => ({
 // Mock ObanDAO
 jest.mock("../../../../../../src/DAO/v2/ObanDAO");
 
-// Mock Redis client - define inside mock factory to avoid hoisting issues
-let mockRedisV4: {
-    keys: jest.Mock;
-    get: jest.Mock;
-    del: jest.Mock;
-};
+// Mock Redis client - use global to avoid hoisting issues
+let mockKeys: jest.Mock;
+let mockGet: jest.Mock;
+let mockDel: jest.Mock;
 
 jest.mock("../../../../../../src/bootstrap/express", () => {
+    // Create mock functions inside the factory to avoid hoisting issues
+    const keys = jest.fn(() => Promise.resolve([]));
+    const get = jest.fn(() => Promise.resolve(null));
+    const del = jest.fn(() => Promise.resolve(1));
+    
+    // Store references in global for test access
+    (global as any).__mockRedisKeys__ = keys;
+    (global as any).__mockRedisGet__ = get;
+    (global as any).__mockRedisDel__ = del;
+    
     const mockV4 = {
-        keys: jest.fn().mockResolvedValue([]),
-        get: jest.fn().mockResolvedValue(null),
-        del: jest.fn().mockResolvedValue(1),
+        keys,
+        get,
+        del,
     };
-    // Store reference for test access
-    mockRedisV4 = mockV4;
+    // Store reference in global for test access
+    (global as any).__mockRedisV4__ = mockV4;
     return {
         redisClient: {
             v4: mockV4,
@@ -55,6 +62,9 @@ jest.mock("../../../../../../src/bootstrap/express", () => {
         getSessionCookieName: jest.fn(() => "trades.sid"),
     };
 });
+
+// Get reference to mocked Redis client for tests
+const getMockRedisV4 = () => (global as any).__mockRedisV4__;
 
 describe("[TRPC] Auth Router Unit Tests", () => {
     const mockPrisma = mockDeep<ExtendedPrismaClient>();
@@ -84,13 +94,24 @@ describe("[TRPC] Auth Router Unit Tests", () => {
         mockPrisma.obanJob = mockDeep<any>();
         (ObanDAO as jest.MockedClass<typeof ObanDAO>).mockImplementation(() => mockObanDao);
         
+        // Get references to Redis mocks from global
+        mockKeys = (global as any).__mockRedisKeys__;
+        mockGet = (global as any).__mockRedisGet__;
+        mockDel = (global as any).__mockRedisDel__;
+        
         // Reset Redis mocks - ensure they return promises immediately
-        mockRedisV4.keys.mockClear();
-        mockRedisV4.keys.mockImplementation(() => Promise.resolve([]));
-        mockRedisV4.get.mockClear();
-        mockRedisV4.get.mockImplementation(() => Promise.resolve(null));
-        mockRedisV4.del.mockClear();
-        mockRedisV4.del.mockImplementation(() => Promise.resolve(1));
+        if (mockKeys) {
+            mockKeys.mockClear();
+            mockKeys.mockResolvedValue([]);
+        }
+        if (mockGet) {
+            mockGet.mockClear();
+            mockGet.mockResolvedValue(null);
+        }
+        if (mockDel) {
+            mockDel.mockClear();
+            mockDel.mockResolvedValue(1);
+        }
     });
 
     afterEach(() => {
@@ -498,13 +519,15 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                 destroy: jest.fn((cb: (err: Error | null) => void) => cb(null)),
             };
             mockReq.sessionID = "session-123";
+            // Set mockReq.session so ctx.req.session.destroy() works
+            mockReq.session = mockSession as any;
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 
             const result = await caller.logout();
 
             expect(result).toBe(true);
             expect(mockSession.destroy).toHaveBeenCalled();
-            expect(mockRedisV4.keys).toHaveBeenCalled();
+            expect(mockKeys).toHaveBeenCalled();
         });
 
         it("should return true when no session exists", async () => {
@@ -521,6 +544,8 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                 destroy: jest.fn((cb: (err: Error | null) => void) => cb(new Error("Destroy failed"))),
             };
             mockReq.sessionID = "session-123";
+            // Set mockReq.session so ctx.req.session.destroy() works
+            mockReq.session = mockSession as any;
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 
             await expect(caller.logout()).rejects.toThrow(
@@ -529,7 +554,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                     message: "Error destroying session",
                 })
             );
-            expect(mockRedisV4.keys).toHaveBeenCalled();
+            expect(mockKeys).toHaveBeenCalled();
         });
     });
 

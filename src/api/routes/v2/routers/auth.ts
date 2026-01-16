@@ -309,8 +309,6 @@ export const authRouter = router({
     ),
     logout: publicProcedure.mutation(
         withTracing("trpc.auth.logout", async (input, ctx, _span) => {
-            logger.debug("tRPC logout");
-
             addSpanAttributes({
                 "auth.action": "logout",
                 "auth.method": "trpc",
@@ -320,10 +318,9 @@ export const authRouter = router({
             addSpanEvent("logout.start", { hasSession: !!ctx.session?.user });
 
             const userId = ctx.session?.user;
+
             if (!userId) {
                 // No session to log out of, return success
-                logger.debug("Resolving empty session logout via tRPC");
-
                 addSpanEvent("logout.no_session");
                 addSpanAttributes({
                     "logout.successful": true,
@@ -361,9 +358,8 @@ export const authRouter = router({
                                 matchingSessionIds.push(sessionId);
                             }
                         }
-                    } catch (error) {
+                    } catch {
                         // Skip invalid session data
-                        logger.debug(`Error parsing session data for key ${key}:`, error);
                     }
                 }
             } catch (error) {
@@ -381,7 +377,6 @@ export const authRouter = router({
                     const sessionKey = `${sessionPrefix}${sessionId}`;
                     await redisClientV4.del(sessionKey);
                     sessionsDestroyed++;
-                    logger.debug(`Destroyed session ${sessionId} for user ${userId}`);
                 } catch (error) {
                     logger.error(`Error destroying session ${sessionId}:`, error);
                 }
@@ -437,7 +432,7 @@ export const authRouter = router({
                 sessionsFound: matchingSessionIds.length,
             });
 
-            logger.debug(
+            logger.info(
                 `Logout: destroyed ${sessionsDestroyed} session(s) for user ${userId} (found ${matchingSessionIds.length} total)`
             );
 

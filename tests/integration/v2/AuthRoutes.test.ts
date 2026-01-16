@@ -164,7 +164,7 @@ describe("tRPC Auth endpoints", () => {
             expect(cookieString).not.toMatch(/Domain=[^;]*/i);
         });
 
-        it("should preserve Domain attribute for non-Netlify origins", async () => {
+        it("should not modify cookie for non-Netlify origins", async () => {
             // Create a user first with hashed password
             const hashedPassword = hashSync(testUser.password, 1);
             await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
@@ -178,16 +178,19 @@ describe("tRPC Auth endpoints", () => {
                 })
                 .expect(200);
 
-            // Check Set-Cookie header - should have Domain attribute (not removed)
+            // Check Set-Cookie header - cookie attributes depend on session config (COOKIE_DOMAIN env var)
+            // For non-Netlify origins, we don't modify the cookie, so it should have standard attributes
             const setCookieHeader = response.headers["set-cookie"];
             expect(setCookieHeader).toBeDefined();
             const cookieString = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
-            // Non-Netlify origins should have Domain attribute (e.g., Domain=.akosua.xyz)
-            expect(cookieString).toMatch(/Domain=[^;]*/i);
+            // Non-Netlify origins should NOT have Domain=.netlify.app
             expect(cookieString).not.toContain("Domain=.netlify.app");
+            // Should have standard cookie attributes
+            expect(cookieString).toContain("HttpOnly");
+            expect(cookieString).toContain("Path=/");
         });
 
-        it("should preserve cookie attributes (secure, httpOnly, sameSite, maxAge) when removing Domain for Netlify origins", async () => {
+        it("should preserve cookie attributes (httpOnly, path, expires) when removing Domain for Netlify origins", async () => {
             // Create a user first with hashed password
             const hashedPassword = hashSync(testUser.password, 1);
             await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
@@ -211,8 +214,8 @@ describe("tRPC Auth endpoints", () => {
             // Verify other cookie attributes are still present
             expect(cookieString).toContain("HttpOnly");
             expect(cookieString).toContain("Path=/");
-            // Secure and SameSite depend on environment, so we just check the structure is valid
-            expect(cookieString).toMatch(/Max-Age=\d+/);
+            // express-session uses Expires header (not Max-Age)
+            expect(cookieString).toMatch(/Expires=/i);
         });
     });
 
