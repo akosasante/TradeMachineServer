@@ -15,7 +15,7 @@ import {
 import { activeUserMetric } from "../../../../bootstrap/metrics";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import { isNetlifyOrigin } from "../../../middlewares/CookieDomainHandler";
-import { getCookieConfig as _getCookieConfig, getSessionCookieName } from "../../../../bootstrap/express";
+import { getSessionCookieName } from "../../../../bootstrap/express";
 
 // Input validation schemas
 const emailSchema = z.object({
@@ -117,21 +117,17 @@ export const authRouter = router({
                     const originalSetHeader = ctx.res.setHeader.bind(ctx.res);
                     ctx.res.setHeader = function (name: string, value: string | string[]) {
                         if (name.toLowerCase() === "set-cookie") {
-                            // Modify the Set-Cookie header to use .netlify.app domain
+                            // Modify the Set-Cookie header to remove Domain attribute for Netlify origins
+                            // Browsers reject cookies with Domain=.netlify.app (public suffix)
+                            // By removing the Domain attribute, the cookie is scoped to the exact origin
+                            // (e.g., staging--ffftemp.netlify.app), which browsers will accept
                             const cookies = Array.isArray(value) ? value : [value];
                             const modifiedCookies = cookies.map(cookie => {
-                                // Replace Domain=.akosua.xyz with Domain=.netlify.app
-                                // or add Domain=.netlify.app if no domain is present
                                 if (cookie.includes(cookieName)) {
-                                    // Remove existing Domain attribute
-                                    let modified = cookie.replace(/;\s*Domain=[^;]*/gi, "");
-                                    // Add our custom domain
-                                    modified = modified.replace(/(;\s*Path=\/)/, "; Domain=.netlify.app$1");
-                                    // If Path wasn't found, append domain at the end
-                                    if (!modified.includes("Domain=.netlify.app")) {
-                                        modified = `${modified}; Domain=.netlify.app`;
-                                    }
-                                    logger.debug(`Modified Set-Cookie header for Netlify: ${cookieName}`);
+                                    // Remove existing Domain attribute entirely
+                                    // This scopes the cookie to the exact origin (e.g., staging--ffftemp.netlify.app)
+                                    const modified = cookie.replace(/;\s*Domain=[^;]*/gi, "");
+                                    logger.debug(`Removed Domain attribute from Set-Cookie header for Netlify origin: ${cookieName}`);
                                     return modified;
                                 }
                                 return cookie;
@@ -154,12 +150,10 @@ export const authRouter = router({
                     });
                 });
 
-                // Restore original setHeader if we intercepted it
+                // Log that we modified the cookie for Netlify origins
                 if (isNetlify) {
-                    // The interception will have already modified the header, so we can restore
-                    // (though the response may have already been sent)
                     addSpanAttributes({
-                        "cookie.domain": ".netlify.app",
+                        "cookie.domain": "none (origin-scoped)",
                         "cookie.set_for_netlify": true,
                     });
                 }

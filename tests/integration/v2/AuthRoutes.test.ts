@@ -120,7 +120,7 @@ describe("tRPC Auth endpoints", () => {
             });
         });
 
-        it("should set cookie domain to .netlify.app when Origin header is https://staging--ffftemp.netlify.app", async () => {
+        it("should remove Domain attribute for Netlify origins (browsers reject Domain=.netlify.app)", async () => {
             // Create a user first with hashed password
             const hashedPassword = hashSync(testUser.password, 1);
             await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
@@ -134,15 +134,15 @@ describe("tRPC Auth endpoints", () => {
                 })
                 .expect(200);
 
-            // Check Set-Cookie header
+            // Check Set-Cookie header - Domain attribute should be removed (not present)
             const setCookieHeader = response.headers["set-cookie"];
             expect(setCookieHeader).toBeDefined();
-            expect(Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader).toContain(
-                "Domain=.netlify.app"
-            );
+            const cookieString = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
+            // Domain attribute should be removed for Netlify origins (browsers reject public suffixes)
+            expect(cookieString).not.toMatch(/Domain=[^;]*/i);
         });
 
-        it("should set cookie domain to .netlify.app when Origin header is https://ffftemp.akosua.xyz", async () => {
+        it("should remove Domain attribute for https://ffftemp.akosua.xyz origin (Netlify)", async () => {
             // Create a user first with hashed password
             const hashedPassword = hashSync(testUser.password, 1);
             await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
@@ -156,15 +156,15 @@ describe("tRPC Auth endpoints", () => {
                 })
                 .expect(200);
 
-            // Check Set-Cookie header
+            // Check Set-Cookie header - Domain attribute should be removed (not present)
             const setCookieHeader = response.headers["set-cookie"];
             expect(setCookieHeader).toBeDefined();
-            expect(Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader).toContain(
-                "Domain=.netlify.app"
-            );
+            const cookieString = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
+            // Domain attribute should be removed for Netlify origins (browsers reject public suffixes)
+            expect(cookieString).not.toMatch(/Domain=[^;]*/i);
         });
 
-        it("should NOT set cookie domain to .netlify.app for other origins", async () => {
+        it("should preserve Domain attribute for non-Netlify origins", async () => {
             // Create a user first with hashed password
             const hashedPassword = hashSync(testUser.password, 1);
             await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
@@ -178,15 +178,16 @@ describe("tRPC Auth endpoints", () => {
                 })
                 .expect(200);
 
-            // Check Set-Cookie header - should not contain Domain=.netlify.app
+            // Check Set-Cookie header - should have Domain attribute (not removed)
             const setCookieHeader = response.headers["set-cookie"];
             expect(setCookieHeader).toBeDefined();
             const cookieString = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
-            // Should either not have Domain attribute, or have a different domain
+            // Non-Netlify origins should have Domain attribute (e.g., Domain=.akosua.xyz)
+            expect(cookieString).toMatch(/Domain=[^;]*/i);
             expect(cookieString).not.toContain("Domain=.netlify.app");
         });
 
-        it("should preserve cookie attributes (secure, httpOnly, sameSite, maxAge) when setting .netlify.app domain", async () => {
+        it("should preserve cookie attributes (secure, httpOnly, sameSite, maxAge) when removing Domain for Netlify origins", async () => {
             // Create a user first with hashed password
             const hashedPassword = hashSync(testUser.password, 1);
             await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
@@ -200,13 +201,14 @@ describe("tRPC Auth endpoints", () => {
                 })
                 .expect(200);
 
-            // Check Set-Cookie header contains all required attributes
+            // Check Set-Cookie header contains all required attributes (except Domain, which is removed)
             const setCookieHeader = response.headers["set-cookie"];
             expect(setCookieHeader).toBeDefined();
             const cookieString = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
 
-            // Verify cookie attributes are present
-            expect(cookieString).toContain("Domain=.netlify.app");
+            // Verify Domain attribute is removed (browsers reject Domain=.netlify.app)
+            expect(cookieString).not.toMatch(/Domain=[^;]*/i);
+            // Verify other cookie attributes are still present
             expect(cookieString).toContain("HttpOnly");
             expect(cookieString).toContain("Path=/");
             // Secure and SameSite depend on environment, so we just check the structure is valid
