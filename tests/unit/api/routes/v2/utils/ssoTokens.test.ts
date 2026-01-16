@@ -1,16 +1,19 @@
 import { mockClear, mockDeep } from "jest-mock-extended";
 import type { RedisClientType } from "redis";
-import * as ssoTokens from "../../../../../../src/api/routes/v2/utils/ssoTokens";
 
-// Mock the redis client
+// Mock the redis client with v4 API
+const mockRedisV4 = mockDeep<RedisClientType>();
 jest.mock("../../../../../../src/bootstrap/express", () => ({
-    redisClient: mockDeep<RedisClientType>(),
+    redisClient: {
+        v4: mockRedisV4,
+    },
 }));
 
-import { redisClient } from "../../../../../../src/bootstrap/express";
+import { redisClient as _redisClient } from "../../../../../../src/bootstrap/express";
+import * as ssoTokens from "../../../../../../src/api/routes/v2/utils/ssoTokens";
 
 describe("ssoTokens utils", () => {
-    const mockRedisClient = redisClient as jest.Mocked<RedisClientType>;
+    const mockRedisClient = mockRedisV4 as jest.Mocked<RedisClientType>;
 
     beforeEach(() => {
         mockClear(mockRedisClient);
@@ -18,38 +21,45 @@ describe("ssoTokens utils", () => {
 
     describe("createTransferToken", () => {
         it("should generate a token and store it in redis", async () => {
-            mockRedisClient.set.mockResolvedValue("OK");
+            mockRedisClient.setNX.mockResolvedValue(true);
+            mockRedisClient.expire.mockResolvedValue(true);
 
             const payload = { sessionId: "sessid", userId: "userid" };
             const token = await ssoTokens.createTransferToken(payload);
 
             expect(token).toHaveLength(64);
             expect(token).toMatch(/^[0-9a-f]{64}$/); // Hex string
-            expect(mockRedisClient.set).toHaveBeenCalledWith(`sso:transfer:${token}`, JSON.stringify(payload), {
-                EX: ssoTokens.SSO_CONFIG.TRANSFER_TOKEN_TTL_SECONDS,
-                NX: true,
-            });
+            expect(mockRedisClient.setNX).toHaveBeenCalledWith(
+                `sso:transfer:${token}`,
+                JSON.stringify({ sessionId: "sessid", userId: "userid" })
+            );
+            expect(mockRedisClient.expire).toHaveBeenCalledWith(
+                `sso:transfer:${token}`,
+                ssoTokens.SSO_CONFIG.TRANSFER_TOKEN_TTL_SECONDS
+            );
         });
 
         it("should handle redis set collision (NX returns null)", async () => {
-            mockRedisClient.set.mockResolvedValue(null);
+            mockRedisClient.setNX.mockResolvedValue(false);
 
             const payload = { sessionId: "sessid", userId: "userid" };
             const token = await ssoTokens.createTransferToken(payload);
 
             expect(token).toHaveLength(64);
-            expect(mockRedisClient.set).toHaveBeenCalled();
+            expect(mockRedisClient.setNX).toHaveBeenCalled();
+            expect(mockRedisClient.expire).not.toHaveBeenCalled();
         });
 
         it("should generate unique tokens on subsequent calls", async () => {
-            mockRedisClient.set.mockResolvedValue("OK");
+            mockRedisClient.setNX.mockResolvedValue(true);
+            mockRedisClient.expire.mockResolvedValue(true);
 
             const payload = { sessionId: "sessid", userId: "userid" };
             const token1 = await ssoTokens.createTransferToken(payload);
             const token2 = await ssoTokens.createTransferToken(payload);
 
             expect(token1).not.toBe(token2);
-            expect(mockRedisClient.set).toHaveBeenCalledTimes(2);
+            expect(mockRedisClient.setNX).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -169,8 +179,8 @@ describe("ssoTokens utils", () => {
             expect(ssoTokens.SSO_CONFIG.TRANSFER_TOKEN_TTL_SECONDS).toBe(60);
             expect(ssoTokens.SSO_CONFIG.TOKEN_LENGTH).toBe(64);
             expect(ssoTokens.SSO_CONFIG.ALLOWED_REDIRECT_HOSTS).toBeInstanceOf(Set);
-            expect(ssoTokens.SSO_CONFIG.ALLOWED_REDIRECT_HOSTS.has("trades.flexfoxfantasy.com")).toBe(true);
-            expect(ssoTokens.SSO_CONFIG.ALLOWED_REDIRECT_HOSTS.has("ffftemp.akosua.xyz")).toBe(true);
+            expect(ssoTokens.SSO_CONFIG.ALLOWED_REDIRECT_HOSTS.has("https://trades.flexfoxfantasy.com")).toBe(true);
+            expect(ssoTokens.SSO_CONFIG.ALLOWED_REDIRECT_HOSTS.has("https://ffftemp.akosua.xyz")).toBe(true);
         });
     });
 });

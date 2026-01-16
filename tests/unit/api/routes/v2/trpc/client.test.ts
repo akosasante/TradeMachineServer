@@ -76,13 +76,27 @@ describe("[TRPC] Client Router Unit Tests", () => {
             ...sessionData,
         } as Session & { user?: string };
 
+        // Set Origin header based on hostname if provided
+        const finalHostname = hostname || "trades.flexfoxfantasy.com";
+        const finalHeaders: Record<string, string | string[]> = {
+            ...headers,
+            origin: headers.origin || `https://${finalHostname}`,
+        };
+
         const req = {
             ...mockReq,
-            headers,
+            headers: finalHeaders,
+            header: (name: string) => {
+                const value = finalHeaders[name.toLowerCase()];
+                if (Array.isArray(value)) {
+                    return value[0];
+                }
+                return value as string | undefined;
+            },
             connection: { remoteAddress: "192.168.1.100" },
             socket: { remoteAddress: "192.168.1.100" },
             sessionID: "test-session-id",
-            hostname: hostname || "trades.flexfoxfantasy.com",
+            hostname: finalHostname,
             session, // This is ctx.req.session for the exchange procedure
         } as unknown as Request;
 

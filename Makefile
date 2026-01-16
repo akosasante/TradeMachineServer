@@ -98,8 +98,8 @@ test-watch: ## Watch for changes and run tests for git changed files
 	NODE_ENV=test ORM_CONFIG=local-test \
 	npx jest --watch --config ./jest.config.js
 
-test-file: ## Test a specific file
-	@read -r -p $$'\e[4m\e[96m Exact file name to run: ' PATH_NAME; \
+test-file: ## Test a specific file (accepts filename pattern like "CookieDomainHandler" or full path)
+	@read -r -p $$'\e[4m\e[96m File name or pattern to run: ' PATH_NAME; \
 	read -r -p $$'\e[4m\e[96m Do you want to enable logging? [Y/n]\e[0m: ' GENERAL_LOGGING_ENABLED; \
 	read -r -p $$'\e[4m\e[96m Do you want to enable database logging? [Y/n]\e[0m: ' DB_LOGGING_ENABLED; \
 	if [[ $$GENERAL_LOGGING_ENABLED = '' || $$GENERAL_LOGGING_ENABLED = 'y' || $$GENERAL_LOGGING_ENABLED = 'Y' ]]; \
@@ -115,7 +115,7 @@ test-file: ## Test a specific file
 	  export DB_LOGS=false; \
 	fi; \
 	NODE_ENV=test ORM_CONFIG=local-test \
-	npx jest --watch --runTestsByPath $$PATH_NAME --config ./jest.config.js
+	npx jest --watch --testPathPattern="$$PATH_NAME" --config ./jest.config.js
 
 test-local: test-unit test-integration ## run unit, then integration tests using local config
 

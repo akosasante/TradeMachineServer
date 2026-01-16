@@ -137,7 +137,9 @@ describe("tRPC Auth endpoints", () => {
             // Check Set-Cookie header
             const setCookieHeader = response.headers["set-cookie"];
             expect(setCookieHeader).toBeDefined();
-            expect(Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader).toContain("Domain=.netlify.app");
+            expect(Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader).toContain(
+                "Domain=.netlify.app"
+            );
         });
 
         it("should set cookie domain to .netlify.app when Origin header is https://ffftemp.akosua.xyz", async () => {
@@ -157,7 +159,9 @@ describe("tRPC Auth endpoints", () => {
             // Check Set-Cookie header
             const setCookieHeader = response.headers["set-cookie"];
             expect(setCookieHeader).toBeDefined();
-            expect(Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader).toContain("Domain=.netlify.app");
+            expect(Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader).toContain(
+                "Domain=.netlify.app"
+            );
         });
 
         it("should NOT set cookie domain to .netlify.app for other origins", async () => {
@@ -200,7 +204,7 @@ describe("tRPC Auth endpoints", () => {
             const setCookieHeader = response.headers["set-cookie"];
             expect(setCookieHeader).toBeDefined();
             const cookieString = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
-            
+
             // Verify cookie attributes are present
             expect(cookieString).toContain("Domain=.netlify.app");
             expect(cookieString).toContain("HttpOnly");

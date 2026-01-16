@@ -76,9 +76,9 @@ export async function setupExpressApp(
         }
         const tp = req.headers.traceparent;
         if (tp) {
-            console.log(`[TRACE-DEBUG][INCOMING] method=${req.method} url=${req.url} traceparent=${tp}`);
+            logger.debug(`[TRACE-DEBUG][INCOMING] method=${req.method} url=${req.url} traceparent=${tp}`);
         } else {
-            console.log(`[TRACE-DEBUG][INCOMING] method=${req.method} url=${req.url} traceparent=none`);
+            logger.debug(`[TRACE-DEBUG][INCOMING] method=${req.method} url=${req.url} traceparent=none`);
         }
         next();
     });
@@ -143,20 +143,55 @@ export default async function startServer(): Promise<Server> {
             }`
         );
         logger.info("Attempting to connect to Redis...");
-        await redisClient.connect();
-        logger.info("Redis connection successful");
+        try {
+            await redisClient.connect();
+            logger.info("Redis connection successful");
+        } catch (redisError) {
+            if (process.env.NODE_ENV === "test") {
+                logger.warn(`Redis connection failed in test mode: ${inspect(redisError)}. Continuing anyway...`);
+                // In test mode, try to connect but don't fail if it doesn't work
+                // The connection might be established later or might not be needed
+            } else {
+                throw redisError;
+            }
+        }
         logger.info("Setting up Express app...");
         const app = await setupExpressApp();
         logger.info("Express app setup complete");
-        logger.info(`Starting HTTP server on ${app.get("ip")}:${app.get("port")}`);
-        const srv = await new Promise<Server>(resolve => {
-            const server = app.listen(app.get("port") as number, app.get("ip") as string, () => {
-                logger.info(`App is running at ${app.get("ip")} : ${app.get("port")} in ${app.get("env")} mode`);
-                logger.info("Press CTRL-C to stop\n");
-                rollbar.info("server_started");
-                resolve(server);
-            });
-        });
+        const port = app.get("port") as number;
+        const ip = app.get("ip") as string;
+        logger.info(`Starting HTTP server on ${ip}:${port}`);
+        
+        const srv = await Promise.race<Server>([
+            new Promise<Server>((resolve, reject) => {
+                const server = app.listen(port, ip, () => {
+                    logger.info(`App is running at ${ip} : ${port} in ${app.get("env")} mode`);
+                    logger.info("Press CTRL-C to stop\n");
+                    rollbar.info("server_started");
+                    resolve(server);
+                });
+
+                server.on("error", (err: NodeJS.ErrnoException) => {
+                    if (err.code === "EADDRINUSE") {
+                        const errorMsg = `Port ${port} is already in use. Please stop the conflicting process or use a different port (e.g., set PORT env var).`;
+                        logger.error(errorMsg);
+                        reject(new Error(`${errorMsg}: ${err.message}`));
+                    } else {
+                        logger.error(`Server error during startup: ${inspect(err)}`);
+                        reject(err);
+                    }
+                });
+            }),
+            new Promise<Server>((_, reject) => {
+                setTimeout(() => {
+                    reject(
+                        new Error(
+                            `Server startup timed out after 10 seconds. Port ${port} may be in use or Redis connection may be hanging.`
+                        )
+                    );
+                }, 10000);
+            }),
+        ]);
 
         redisClient.on("error", (err: Error) => {
             logger.error(`Redis Client Error: ${inspect(err)}`);

@@ -87,8 +87,8 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                 destroy: jest.fn(),
             };
 
-            mockReq.get = jest.fn(() => undefined); // No Origin header
-            mockRes.cookie = jest.fn();
+            mockReq.get.mockReturnValue(undefined); // No Origin header
+            mockRes.cookie.mockReturnValue(mockRes);
 
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 
@@ -126,14 +126,14 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                 destroy: jest.fn(),
             };
 
-            mockReq.get = jest.fn((header: string) => {
+            mockReq.get.mockImplementation((header: string) => {
                 if (header === "Origin") {
                     return "https://staging--ffftemp.netlify.app";
                 }
                 return undefined;
             });
             mockReq.sessionID = "session-123";
-            mockRes.cookie = jest.fn();
+            mockRes.cookie.mockReturnValue(mockRes);
 
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 
@@ -182,14 +182,14 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                 destroy: jest.fn(),
             };
 
-            mockReq.get = jest.fn((header: string) => {
+            mockReq.get.mockImplementation((header: string) => {
                 if (header === "Origin") {
                     return "https://ffftemp.akosua.xyz";
                 }
                 return undefined;
             });
             mockReq.sessionID = "session-456";
-            mockRes.cookie = jest.fn();
+            mockRes.cookie.mockReturnValue(mockRes);
 
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 
@@ -233,14 +233,14 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                 destroy: jest.fn(),
             };
 
-            mockReq.get = jest.fn((header: string) => {
+            mockReq.get.mockImplementation((header: string) => {
                 if (header === "Origin") {
                     return "https://staging.trades.akosua.xyz";
                 }
                 return undefined;
             });
             mockReq.sessionID = "session-789";
-            mockRes.cookie = jest.fn();
+            mockRes.cookie.mockReturnValue(mockRes);
 
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 

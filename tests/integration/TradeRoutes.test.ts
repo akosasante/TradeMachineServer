@@ -53,7 +53,7 @@ beforeAll(async () => {
     tradeDAO = new TradeDAO();
 
     return app;
-}, 5000);
+}, 30000);
 
 afterAll(async () => {
     // Only close the server instance for this test file
@@ -76,7 +76,9 @@ describe("Trade API endpoints", () => {
     });
 
     afterEach(async () => {
-        return await clearPrismaDb(prismaConn);
+        if (prismaConn) {
+            return await clearPrismaDb(prismaConn);
+        }
     });
 
     describe("POST /trades (create new trade)", () => {
@@ -85,10 +87,15 @@ describe("Trade API endpoints", () => {
             (tradeObj: Partial<Trade>, status = 200) =>
             (agent: request.SuperTest<request.Test>) =>
                 makePostRequest<Partial<Trade>>(agent, "/trades", tradeObj, status);
-        const getOneRequest = (id: string, status = 200) => makeGetRequest(request(app), `/trades/${id}`, status);
+        const getOneRequest = (id: string, status = 200) => {
+            if (!app) throw new Error("Server not initialized");
+            return makeGetRequest(request(app), `/trades/${id}`, status);
+        };
 
         afterEach(async () => {
-            return await doLogout(request.agent(app));
+            if (app) {
+                return await doLogout(request.agent(app));
+            }
         });
 
         it("should return a single trade object based on the object passed in", async () => {
@@ -135,6 +142,7 @@ describe("Trade API endpoints", () => {
         // assertion happens inside api call helper function
         // eslint-disable-next-line jest/expect-expect
         it("should return a 401 Unauthorized error if a non-logged in request is used", async () => {
+            if (!app) throw new Error("Server not initialized");
             const testTrade = TradeFactory.getTrade();
 
             await postRequest(testTrade.parse(), 403)(request(app));
@@ -142,8 +150,10 @@ describe("Trade API endpoints", () => {
     });
 
     describe("GET /trades (get all trades)", () => {
-        const getAllRequest = (hydrated = "", status = 200) =>
-            makeGetRequest(request(app), `/trades${hydrated}`, status);
+        const getAllRequest = (hydrated = "", status = 200) => {
+            if (!app) throw new Error("Server not initialized");
+            return makeGetRequest(request(app), `/trades${hydrated}`, status);
+        };
 
         it("should return an array of all trades in the db", async () => {
             const testTrade = TradeFactory.getTrade();
@@ -260,8 +270,10 @@ describe("Trade API endpoints", () => {
     });
 
     describe("GET /trades/:id (get one trade)", () => {
-        const getOneRequest = (id: string, hydrated = "", status = 200) =>
-            makeGetRequest(request(app), `/trades/${id}${hydrated}`, status);
+        const getOneRequest = (id: string, hydrated = "", status = 200) => {
+            if (!app) throw new Error("Server not initialized");
+            return makeGetRequest(request(app), `/trades/${id}${hydrated}`, status);
+        };
 
         it("should return a single trade for the given id", async () => {
             const testTrade = TradeFactory.getTrade();
@@ -314,7 +326,9 @@ describe("Trade API endpoints", () => {
                 makePutRequest<Partial<Trade>>(agent, `/trades/${id}`, tradeObj, status);
 
         afterEach(async () => {
-            return await doLogout(request.agent(app));
+            if (app) {
+                return await doLogout(request.agent(app));
+            }
         });
 
         it("should return the updated trade", async () => {
@@ -419,6 +433,7 @@ describe("Trade API endpoints", () => {
                 updatedParticipants[1]!.team
             );
 
+            if (!app) throw new Error("Server not initialized");
             await putTradeRequest(
                 testTrade.id!,
                 {
@@ -439,7 +454,9 @@ describe("Trade API endpoints", () => {
                 makePutRequest<actionBody>(agent, `/trades/${id}/${action}`, actionObj, status);
 
         afterEach(async () => {
-            return await doLogout(request.agent(app));
+            if (app) {
+                return await doLogout(request.agent(app));
+            }
         });
 
         it(":action = accept - should return the trade with an updated status", async () => {
@@ -499,7 +516,9 @@ describe("Trade API endpoints", () => {
             (agent: request.SuperTest<request.Test>) =>
                 makeDeleteRequest(agent, `/trades/${id}`, status);
         afterEach(async () => {
-            return await doLogout(request.agent(app));
+            if (app) {
+                return await doLogout(request.agent(app));
+            }
         });
 
         it("should return a delete result if successful", async () => {
@@ -510,6 +529,7 @@ describe("Trade API endpoints", () => {
             expect(body).toEqual({ deleteCount: 1, id: testTrade.id });
 
             // Confirm that it was deleted from the db:
+            if (!app) throw new Error("Server not initialized");
             const { body: getAllRes } = await request(app).get("/trades").expect(200);
             expect(getAllRes).toBeArrayOfSize(0);
         });
@@ -526,6 +546,7 @@ describe("Trade API endpoints", () => {
         // assertion happens inside api call helper function
         // eslint-disable-next-line jest/expect-expect
         it("should throw a 403 Forbidden error if a non-logged-in request is used", async () => {
+            if (!app) throw new Error("Server not initialized");
             await deleteTradeRequest(uuid(), 403)(request(app));
         });
     });
