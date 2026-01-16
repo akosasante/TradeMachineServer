@@ -43,6 +43,7 @@ src/**/*.js
 src/db/migrations-old
 #src/db/migrations
 tests/coverage
+tests/.env*
 sheet_creds.json
 /.prod.env
 /tsconfig.old.json

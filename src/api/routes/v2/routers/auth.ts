@@ -15,7 +15,7 @@ import {
 import { activeUserMetric } from "../../../../bootstrap/metrics";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import { isNetlifyOrigin } from "../../../middlewares/CookieDomainHandler";
-import { getCookieConfig, getSessionCookieName } from "../../../../bootstrap/express";
+import { getCookieConfig as _getCookieConfig, getSessionCookieName } from "../../../../bootstrap/express";
 
 // Input validation schemas
 const emailSchema = z.object({
