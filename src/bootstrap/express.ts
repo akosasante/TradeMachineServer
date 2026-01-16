@@ -69,7 +69,13 @@ export const insecureCookies = process.env.COOKIE_SECURE === "false" || process.
  * Get cookie configuration for manual cookie setting
  * Used when we need to set cookies with custom domains (e.g., for Netlify origins)
  */
-export function getCookieConfig() {
+export function getCookieConfig(): {
+    secure: boolean;
+    httpOnly: boolean;
+    maxAge: number;
+    sameSite: "lax" | "none" | "strict";
+    path: string;
+} {
     return {
         secure: !insecureCookies,
         httpOnly: true,

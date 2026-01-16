@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { isNetlifyOrigin } from "../../../../../src/api/middlewares/CookieDomainHandler";
+import { isNetlifyOrigin } from "../../../../src/api/middlewares/CookieDomainHandler";
 
 describe("CookieDomainHandler", () => {
     describe("isNetlifyOrigin", () => {

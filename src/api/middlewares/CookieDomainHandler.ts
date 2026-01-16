@@ -4,13 +4,11 @@ import logger from "../../bootstrap/logger";
 /**
  * Allowed Netlify origins that should have cookies set with .netlify.app domain
  */
-const ALLOWED_NETLIFY_ORIGINS = [
-    "https://staging--ffftemp.netlify.app",
-    "https://ffftemp.akosua.xyz",
-] as const;
+const ALLOWED_NETLIFY_ORIGINS = ["https://staging--ffftemp.netlify.app", "https://ffftemp.akosua.xyz"] as const;
 
 /**
- * Extract origin from a URL string
+ * Extract origin from a URL string.
+ *
  * Handles URLs with or without trailing slashes, query params, and paths
  */
 function extractOriginFromUrl(url: string): string | null {
@@ -26,7 +24,8 @@ function extractOriginFromUrl(url: string): string | null {
 }
 
 /**
- * Check if the request origin matches one of the allowed Netlify origins
+ * Check if the request origin matches one of the allowed Netlify origins.
+ *
  * @param req Express request object
  * @returns true if the origin matches an allowed Netlify origin, false otherwise
  */
@@ -35,17 +34,26 @@ export function isNetlifyOrigin(req: Request): boolean {
     const origin = req.get("Origin");
     if (origin) {
         const extractedOrigin = extractOriginFromUrl(origin);
-        if (extractedOrigin && ALLOWED_NETLIFY_ORIGINS.includes(extractedOrigin as any)) {
+        if (
+            extractedOrigin &&
+            (ALLOWED_NETLIFY_ORIGINS[0] === extractedOrigin || ALLOWED_NETLIFY_ORIGINS[1] === extractedOrigin)
+        ) {
             logger.debug(`Detected Netlify origin from Origin header: ${extractedOrigin}`);
             return true;
         }
+        // If Origin header exists but doesn't match, return false immediately
+        // (don't fall back to Referer - Origin takes priority)
+        return false;
     }
 
-    // Fall back to Referer header if Origin is not available
+    // Fall back to Referer header only if Origin is not available
     const referer = req.get("Referer");
     if (referer) {
         const extractedOrigin = extractOriginFromUrl(referer);
-        if (extractedOrigin && ALLOWED_NETLIFY_ORIGINS.includes(extractedOrigin as any)) {
+        if (
+            extractedOrigin &&
+            (ALLOWED_NETLIFY_ORIGINS[0] === extractedOrigin || ALLOWED_NETLIFY_ORIGINS[1] === extractedOrigin)
+        ) {
             logger.debug(`Detected Netlify origin from Referer header: ${extractedOrigin}`);
             return true;
         }
