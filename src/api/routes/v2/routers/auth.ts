@@ -107,6 +107,16 @@ export const authRouter = router({
                 // Set session like the original LoginHandler does
                 ctx.session.user = serializeUser(authenticatedUser);
 
+                // If request is from a Netlify origin, prevent express-session from setting its default cookie
+                // by temporarily removing the domain, then we'll set our custom cookie after save
+                const isNetlify = isNetlifyOrigin(ctx.req);
+                const originalCookieDomain = ctx.session.cookie?.domain;
+                if (isNetlify && ctx.session.cookie) {
+                    // Temporarily remove domain so express-session doesn't set a cookie with .akosua.xyz
+                    // We'll set our custom cookie manually after save
+                    ctx.session.cookie.domain = undefined;
+                }
+
                 // Save session and increment metrics
                 await new Promise<void>((resolve, reject) => {
                     ctx.session!.save((sessionErr: Error | null) => {
@@ -120,7 +130,7 @@ export const authRouter = router({
                 });
 
                 // If request is from a Netlify origin, manually set cookie with .netlify.app domain
-                if (isNetlifyOrigin(ctx.req)) {
+                if (isNetlify) {
                     const cookieName = getSessionCookieName();
                     const cookieConfig = getCookieConfig();
                     // Use sessionID from request, which is the actual session identifier
@@ -128,6 +138,8 @@ export const authRouter = router({
 
                     if (sessionId) {
                         logger.debug(`Setting cookie with .netlify.app domain for Netlify origin: ${cookieName}`);
+
+                        // Set our custom cookie with .netlify.app domain
                         ctx.res.cookie(cookieName, sessionId, {
                             ...cookieConfig,
                             domain: ".netlify.app",
@@ -139,6 +151,11 @@ export const authRouter = router({
                         });
                     } else {
                         logger.warn("Session ID not available when trying to set Netlify cookie");
+                    }
+
+                    // Restore original cookie domain for future requests
+                    if (ctx.session.cookie && originalCookieDomain !== undefined) {
+                        ctx.session.cookie.domain = originalCookieDomain;
                     }
                 }
 
