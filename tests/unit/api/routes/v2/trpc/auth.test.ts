@@ -110,7 +110,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             expect(mockRes.cookie).not.toHaveBeenCalled();
         });
 
-        it("should set cookie with .netlify.app domain when origin is https://staging--ffftemp.netlify.app", async () => {
+        it("should remove Domain attribute for Netlify origin (https://staging--ffftemp.netlify.app)", async () => {
             const hashedPassword = hashSync("password123", 1);
             const mockUser = {
                 id: "user-123",
@@ -178,7 +178,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             expect(cookieValue).toContain("session-123");
         });
 
-        it("should set cookie with .netlify.app domain when origin is https://ffftemp.akosua.xyz", async () => {
+        it("should remove Domain attribute for Netlify origin (https://ffftemp.akosua.xyz)", async () => {
             const hashedPassword = hashSync("password123", 1);
             const mockUser = {
                 id: "user-123",
@@ -246,7 +246,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             expect(cookieValue).toContain("session-456");
         });
 
-        it("should not set cookie with .netlify.app domain for non-Netlify origin", async () => {
+        it("should preserve Domain attribute for non-Netlify origins", async () => {
             const hashedPassword = hashSync("password123", 1);
             const mockUser = {
                 id: "user-123",

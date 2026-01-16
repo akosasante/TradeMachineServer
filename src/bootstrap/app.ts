@@ -161,7 +161,7 @@ export default async function startServer(): Promise<Server> {
         const port = app.get("port") as number;
         const ip = app.get("ip") as string;
         logger.info(`Starting HTTP server on ${ip}:${port}`);
-        
+
         const srv = await Promise.race<Server>([
             new Promise<Server>((resolve, reject) => {
                 const server = app.listen(port, ip, () => {

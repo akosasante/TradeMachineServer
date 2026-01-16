@@ -17,6 +17,7 @@ const ALLOWED_REDIRECT_HOSTS = new Set([
     "https://staging.trades.akosua.xyz",
     "https://ffftemp.akosua.xyz",
     "https://ffftemp.netlify.app",
+    "https://staging--ffftemp.netlify.app",
     "http://localhost:3030",
     "http://localhost:3031",
 ]);

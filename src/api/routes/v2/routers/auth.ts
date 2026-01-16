@@ -127,7 +127,9 @@ export const authRouter = router({
                                     // Remove existing Domain attribute entirely
                                     // This scopes the cookie to the exact origin (e.g., staging--ffftemp.netlify.app)
                                     const modified = cookie.replace(/;\s*Domain=[^;]*/gi, "");
-                                    logger.debug(`Removed Domain attribute from Set-Cookie header for Netlify origin: ${cookieName}`);
+                                    logger.debug(
+                                        `Removed Domain attribute from Set-Cookie header for Netlify origin: ${cookieName}`
+                                    );
                                     return modified;
                                 }
                                 return cookie;
