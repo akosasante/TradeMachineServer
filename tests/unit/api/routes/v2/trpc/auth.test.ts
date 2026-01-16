@@ -8,6 +8,7 @@ import UserDAO, { PublicUser } from "../../../../../../src/DAO/v2/UserDAO";
 import ObanDAO from "../../../../../../src/DAO/v2/ObanDAO";
 import { Request, Response } from "express";
 import { hashSync } from "bcryptjs";
+import { redisClient } from "../../../../../../src/bootstrap/express";
 
 // Mock the tracing utilities
 jest.mock("../../../../../../src/utils/tracing", () => ({
@@ -31,6 +32,29 @@ jest.mock("../../../../../../src/bootstrap/rollbar", () => ({
 
 // Mock ObanDAO
 jest.mock("../../../../../../src/DAO/v2/ObanDAO");
+
+// Mock Redis client - define inside mock factory to avoid hoisting issues
+let mockRedisV4: {
+    keys: jest.Mock;
+    get: jest.Mock;
+    del: jest.Mock;
+};
+
+jest.mock("../../../../../../src/bootstrap/express", () => {
+    const mockV4 = {
+        keys: jest.fn().mockResolvedValue([]),
+        get: jest.fn().mockResolvedValue(null),
+        del: jest.fn().mockResolvedValue(1),
+    };
+    // Store reference for test access
+    mockRedisV4 = mockV4;
+    return {
+        redisClient: {
+            v4: mockV4,
+        },
+        getSessionCookieName: jest.fn(() => "trades.sid"),
+    };
+});
 
 describe("[TRPC] Auth Router Unit Tests", () => {
     const mockPrisma = mockDeep<ExtendedPrismaClient>();
@@ -59,6 +83,14 @@ describe("[TRPC] Auth Router Unit Tests", () => {
         // Setup mocks
         mockPrisma.obanJob = mockDeep<any>();
         (ObanDAO as jest.MockedClass<typeof ObanDAO>).mockImplementation(() => mockObanDao);
+        
+        // Reset Redis mocks - ensure they return promises immediately
+        mockRedisV4.keys.mockClear();
+        mockRedisV4.keys.mockImplementation(() => Promise.resolve([]));
+        mockRedisV4.get.mockClear();
+        mockRedisV4.get.mockImplementation(() => Promise.resolve(null));
+        mockRedisV4.del.mockClear();
+        mockRedisV4.del.mockImplementation(() => Promise.resolve(1));
     });
 
     afterEach(() => {
@@ -128,7 +160,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             mockReq.sessionID = "session-123";
             // Track setHeader calls - express-session will call this to set the cookie
             const setHeaderCalls: { name: string; value: string | number | readonly string[] }[] = [];
-            const setHeaderSpy = jest
+            const _setHeaderSpy = jest
                 .spyOn(mockRes, "setHeader")
                 .mockImplementation((name: string, value: string | number | readonly string[]) => {
                     setHeaderCalls.push({ name, value });
@@ -196,7 +228,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             mockReq.sessionID = "session-456";
             // Track setHeader calls - express-session will call this to set the cookie
             const setHeaderCalls: { name: string; value: string | number | readonly string[] }[] = [];
-            const setHeaderSpy = jest
+            const _setHeaderSpy = jest
                 .spyOn(mockRes, "setHeader")
                 .mockImplementation((name: string, value: string | number | readonly string[]) => {
                     setHeaderCalls.push({ name, value });
@@ -465,12 +497,14 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                 user: "user-123",
                 destroy: jest.fn((cb: (err: Error | null) => void) => cb(null)),
             };
+            mockReq.sessionID = "session-123";
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 
             const result = await caller.logout();
 
             expect(result).toBe(true);
             expect(mockSession.destroy).toHaveBeenCalled();
+            expect(mockRedisV4.keys).toHaveBeenCalled();
         });
 
         it("should return true when no session exists", async () => {
@@ -486,6 +520,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                 user: "user-123",
                 destroy: jest.fn((cb: (err: Error | null) => void) => cb(new Error("Destroy failed"))),
             };
+            mockReq.sessionID = "session-123";
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 
             await expect(caller.logout()).rejects.toThrow(
@@ -494,6 +529,7 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                     message: "Error destroying session",
                 })
             );
+            expect(mockRedisV4.keys).toHaveBeenCalled();
         });
     });
 

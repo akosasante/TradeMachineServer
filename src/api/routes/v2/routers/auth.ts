@@ -15,7 +15,9 @@ import {
 import { activeUserMetric } from "../../../../bootstrap/metrics";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import { isNetlifyOrigin } from "../../../middlewares/CookieDomainHandler";
-import { getSessionCookieName } from "../../../../bootstrap/express";
+import { getSessionCookieName, redisClient } from "../../../../bootstrap/express";
+
+const redisClientV4 = redisClient.v4 as unknown as typeof redisClient;
 
 // Input validation schemas
 const emailSchema = z.object({
@@ -317,18 +319,94 @@ export const authRouter = router({
 
             addSpanEvent("logout.start", { hasSession: !!ctx.session?.user });
 
-            return await new Promise<boolean>((resolve, reject) => {
-                if (ctx.session && ctx.session.user) {
-                    addSpanEvent("logout.destroying_session", { userId: ctx.session.user });
+            const userId = ctx.session?.user;
+            if (!userId) {
+                // No session to log out of, return success
+                logger.debug("Resolving empty session logout via tRPC");
 
-                    ctx.session.destroy((err: Error | null) => {
+                addSpanEvent("logout.no_session");
+                addSpanAttributes({
+                    "logout.successful": true,
+                    "logout.had_session": false,
+                });
+
+                return true;
+            }
+
+            const currentSessionId = ctx.req.sessionID;
+            let sessionsDestroyed = 0;
+
+            // Get the session prefix based on environment
+            const sessionPrefix = process.env.APP_ENV === "staging" ? "stg_sess:" : "sess:";
+
+            // Find all sessions belonging to this user
+            // Note: Using KEYS is blocking, but acceptable for logout operations (infrequent)
+            // In production with many sessions, consider using SCAN with cursor iteration
+            const matchingSessionIds: string[] = [];
+
+            try {
+                // Get all session keys matching the prefix
+                // Use v4 API's keys method which returns a promise
+                const allSessionKeys = (await redisClientV4.keys(`${sessionPrefix}*`)) || [];
+
+                // Check each session to see if it belongs to this user
+                for (const key of allSessionKeys) {
+                    try {
+                        const sessionData = await redisClientV4.get(key);
+                        if (sessionData) {
+                            const parsed = JSON.parse(sessionData) as { user?: string };
+                            if (parsed.user === userId) {
+                                // Extract session ID from key (remove prefix)
+                                const sessionId = key.replace(sessionPrefix, "");
+                                matchingSessionIds.push(sessionId);
+                            }
+                        }
+                    } catch (error) {
+                        // Skip invalid session data
+                        logger.debug(`Error parsing session data for key ${key}:`, error);
+                    }
+                }
+            } catch (error) {
+                logger.error("Error scanning Redis for user sessions:", error);
+                // Continue with destroying current session even if scan fails
+            }
+
+            addSpanEvent("logout.sessions_found", {
+                count: matchingSessionIds.length,
+            });
+
+            // Destroy all matching sessions
+            const destroyPromises = matchingSessionIds.map(async sessionId => {
+                try {
+                    const sessionKey = `${sessionPrefix}${sessionId}`;
+                    await redisClientV4.del(sessionKey);
+                    sessionsDestroyed++;
+                    logger.debug(`Destroyed session ${sessionId} for user ${userId}`);
+                } catch (error) {
+                    logger.error(`Error destroying session ${sessionId}:`, error);
+                }
+            });
+
+            await Promise.all(destroyPromises);
+
+            // Also destroy the current session via express-session (handles cookie cleanup)
+            // Only if it wasn't already destroyed above
+            if (matchingSessionIds.includes(currentSessionId)) {
+                await new Promise<void>((resolve, _reject) => {
+                    ctx.req.session.destroy((err: Error | null) => {
                         if (err) {
-                            logger.error("Error destroying session in tRPC logout");
-
-                            addSpanEvent("logout.error", {
-                                error: err.message,
-                            });
-
+                            logger.error("Error destroying current session via express-session", err);
+                            // Don't reject - we've already destroyed it in Redis
+                        }
+                        resolve();
+                    });
+                });
+            } else {
+                // Current session wasn't in the list, destroy it separately
+                await new Promise<void>((resolve, reject) => {
+                    ctx.req.session.destroy((err: Error | null) => {
+                        if (err) {
+                            logger.error("Error destroying current session", err);
                             reject(
                                 new TRPCError({
                                     code: "INTERNAL_SERVER_ERROR",
@@ -336,38 +414,34 @@ export const authRouter = router({
                                 })
                             );
                         } else {
-                            const userId = ctx.session?.user;
-                            logger.debug(`Destroying user session for userId#${userId}`);
-
-                            // Clear the user from session (already destroyed but for consistency)
-                            if (ctx.session?.user) {
-                                delete ctx.session.user;
-                            }
-
-                            activeUserMetric.dec();
-
-                            addSpanEvent("logout.success", { userId: userId || "unknown" });
-                            addSpanAttributes({
-                                "user.id": userId || "unknown",
-                                "logout.successful": true,
-                            });
-
-                            resolve(true);
+                            sessionsDestroyed++;
+                            resolve();
                         }
                     });
-                } else {
-                    // No session to log out of, return success
-                    logger.debug("Resolving empty session logout via tRPC");
+                });
+            }
 
-                    addSpanEvent("logout.no_session");
-                    addSpanAttributes({
-                        "logout.successful": true,
-                        "logout.had_session": false,
-                    });
+            // Update metrics (decrement for each session destroyed)
+            for (let i = 0; i < sessionsDestroyed; i++) {
+                activeUserMetric.dec();
+            }
 
-                    resolve(true);
-                }
+            addSpanAttributes({
+                "logout.sessions_destroyed": sessionsDestroyed,
+                "logout.user_id": userId,
+                "logout.sessions_found": matchingSessionIds.length,
+                "logout.successful": true,
             });
+            addSpanEvent("logout.success", {
+                sessionsDestroyed,
+                sessionsFound: matchingSessionIds.length,
+            });
+
+            logger.debug(
+                `Logout: destroyed ${sessionsDestroyed} session(s) for user ${userId} (found ${matchingSessionIds.length} total)`
+            );
+
+            return true;
         })
     ),
     resetPassword: router({

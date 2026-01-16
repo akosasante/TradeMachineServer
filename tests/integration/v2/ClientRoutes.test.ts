@@ -375,14 +375,13 @@ describe("Client API endpoints", () => {
                 await agent2.get("/v2/auth.sessionCheck").expect(200);
 
                 // Verify session mapping works by logging out from first session
-                const { body: logoutResponse } = await agent1.post("/v2/client.logoutAllSessions").send({}).expect(200);
-
-                // Should destroy both sessions due to mapping
-                expect(logoutResponse.result.data.sessionsDestroyed).toBe(2);
+                await agent1.post("/v2/auth.logout").send({}).expect(200);
 
                 // Both sessions should now be invalid
-                await agent1.get("/v2/auth.sessionCheck").expect(401);
-                await agent2.get("/v2/auth.sessionCheck").expect(401);
+                const check1 = await agent1.get("/v2/auth.sessionCheck").expect(401);
+                const check2 = await agent2.get("/v2/auth.sessionCheck").expect(401);
+                expect(check1.status).toBe(401);
+                expect(check2.status).toBe(401);
             });
 
             it("should return BAD_REQUEST error for invalid token format", async () => {
@@ -591,9 +590,9 @@ describe("Client API endpoints", () => {
             });
         });
 
-        describe("POST /v2/client.logoutAllSessions", () => {
+        describe("POST /v2/auth.logout", () => {
             const makeTrpcRequest = (agent: request.SuperAgentTest, expectedStatus = 200) => {
-                return agent.post("/v2/client.logoutAllSessions").send({}).expect(expectedStatus);
+                return agent.post("/v2/auth.logout").send({}).expect(expectedStatus);
             };
 
             it("should successfully logout all user sessions", async () => {
@@ -613,26 +612,20 @@ describe("Client API endpoints", () => {
                     })
                     .expect(200);
 
-                // Call logout all sessions
+                // Call logout - should destroy all sessions for this user
                 const { body } = await makeTrpcRequest(agent);
 
-                // Validate response structure
-                expect(body.result.data).toMatchObject({
-                    success: true,
-                    sessionsDestroyed: expect.any(Number),
-                });
+                // Validate response structure - logout returns boolean true
+                expect(body.result.data).toBe(true);
 
-                // Should destroy at least 1 session (the current one)
-                expect(body.result.data.sessionsDestroyed).toBeGreaterThanOrEqual(1);
+                // Verify session is now invalid
+                await agent.get("/v2/auth.sessionCheck").expect(401);
             });
 
-            it("should return UNAUTHORIZED error when user is not authenticated", async () => {
-                const { body } = await request(app).post("/v2/client.logoutAllSessions").send({}).expect(401);
-
-                expect(body.error).toMatchObject({
-                    code: -32001, // tRPC UNAUTHORIZED error code
-                    message: "Authentication required",
-                });
+            it("should return success even when user is not authenticated", async () => {
+                // logout is publicProcedure, so it should succeed even without auth
+                const { body } = await request(app).post("/v2/auth.logout").send({}).expect(200);
+                expect(body.result.data).toBe(true);
             });
 
             it("should destroy sessions across domains (session mapping scenario)", async () => {
@@ -673,21 +666,17 @@ describe("Client API endpoints", () => {
                 await agent1.get("/v2/auth.sessionCheck").expect(200);
                 await agent2.get("/v2/auth.sessionCheck").expect(200);
 
-                // Logout from first session (old client)
-                const { body } = await makeTrpcRequest(agent1);
-
-                // Should destroy both sessions (mapped sessions)
-                expect(body.result.data).toMatchObject({
-                    success: true,
-                    sessionsDestroyed: 2, // Both sessions should be destroyed
-                });
+                // Logout from first session (old client) - should destroy both sessions
+                await makeTrpcRequest(agent1);
 
                 // Verify both sessions are now invalid
-                await agent1.get("/v2/auth.sessionCheck").expect(401);
-                await agent2.get("/v2/auth.sessionCheck").expect(401);
+                const check1 = await agent1.get("/v2/auth.sessionCheck").expect(401);
+                const check2 = await agent2.get("/v2/auth.sessionCheck").expect(401);
+                expect(check1.status).toBe(401);
+                expect(check2.status).toBe(401);
             });
 
-            it("should handle logout when no session mapping exists", async () => {
+            it("should handle logout when only one session exists", async () => {
                 // Create a user first with hashed password
                 const hashedPassword = hashSync(testUser.password, 1);
                 await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
@@ -704,14 +693,11 @@ describe("Client API endpoints", () => {
                     })
                     .expect(200);
 
-                // Call logout all sessions
+                // Call logout
                 const { body } = await makeTrpcRequest(agent);
 
-                // Should destroy only the current session
-                expect(body.result.data).toMatchObject({
-                    success: true,
-                    sessionsDestroyed: 1, // Only current session
-                });
+                // Should return true
+                expect(body.result.data).toBe(true);
 
                 // Verify session is now invalid
                 await agent.get("/v2/auth.sessionCheck").expect(401);
