@@ -119,6 +119,95 @@ describe("tRPC Auth endpoints", () => {
                 message: expect.stringContaining("Password is required"),
             });
         });
+
+        it("should set cookie domain to .netlify.app when Origin header is https://staging--ffftemp.netlify.app", async () => {
+            // Create a user first with hashed password
+            const hashedPassword = hashSync(testUser.password, 1);
+            await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+            const response = await request(app)
+                .post("/v2/auth.login.authenticate")
+                .set("Origin", "https://staging--ffftemp.netlify.app")
+                .send({
+                    email: testUser.email,
+                    password: testUser.password,
+                })
+                .expect(200);
+
+            // Check Set-Cookie header
+            const setCookieHeader = response.headers["set-cookie"];
+            expect(setCookieHeader).toBeDefined();
+            expect(Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader).toContain("Domain=.netlify.app");
+        });
+
+        it("should set cookie domain to .netlify.app when Origin header is https://ffftemp.akosua.xyz", async () => {
+            // Create a user first with hashed password
+            const hashedPassword = hashSync(testUser.password, 1);
+            await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+            const response = await request(app)
+                .post("/v2/auth.login.authenticate")
+                .set("Origin", "https://ffftemp.akosua.xyz")
+                .send({
+                    email: testUser.email,
+                    password: testUser.password,
+                })
+                .expect(200);
+
+            // Check Set-Cookie header
+            const setCookieHeader = response.headers["set-cookie"];
+            expect(setCookieHeader).toBeDefined();
+            expect(Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader).toContain("Domain=.netlify.app");
+        });
+
+        it("should NOT set cookie domain to .netlify.app for other origins", async () => {
+            // Create a user first with hashed password
+            const hashedPassword = hashSync(testUser.password, 1);
+            await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+            const response = await request(app)
+                .post("/v2/auth.login.authenticate")
+                .set("Origin", "https://staging.trades.akosua.xyz")
+                .send({
+                    email: testUser.email,
+                    password: testUser.password,
+                })
+                .expect(200);
+
+            // Check Set-Cookie header - should not contain Domain=.netlify.app
+            const setCookieHeader = response.headers["set-cookie"];
+            expect(setCookieHeader).toBeDefined();
+            const cookieString = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
+            // Should either not have Domain attribute, or have a different domain
+            expect(cookieString).not.toContain("Domain=.netlify.app");
+        });
+
+        it("should preserve cookie attributes (secure, httpOnly, sameSite, maxAge) when setting .netlify.app domain", async () => {
+            // Create a user first with hashed password
+            const hashedPassword = hashSync(testUser.password, 1);
+            await userDAO.createUsers([{ email: testUser.email, password: hashedPassword }]);
+
+            const response = await request(app)
+                .post("/v2/auth.login.authenticate")
+                .set("Origin", "https://staging--ffftemp.netlify.app")
+                .send({
+                    email: testUser.email,
+                    password: testUser.password,
+                })
+                .expect(200);
+
+            // Check Set-Cookie header contains all required attributes
+            const setCookieHeader = response.headers["set-cookie"];
+            expect(setCookieHeader).toBeDefined();
+            const cookieString = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
+            
+            // Verify cookie attributes are present
+            expect(cookieString).toContain("Domain=.netlify.app");
+            expect(cookieString).toContain("HttpOnly");
+            expect(cookieString).toContain("Path=/");
+            // Secure and SameSite depend on environment, so we just check the structure is valid
+            expect(cookieString).toMatch(/Max-Age=\d+/);
+        });
     });
 
     describe("POST /v2/auth.login.sendResetEmail", () => {

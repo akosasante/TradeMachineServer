@@ -14,6 +14,8 @@ import {
 } from "../../../../authentication/auth";
 import { activeUserMetric } from "../../../../bootstrap/metrics";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
+import { isNetlifyOrigin } from "../../../middlewares/CookieDomainHandler";
+import { getCookieConfig, getSessionCookieName } from "../../../../bootstrap/express";
 
 // Input validation schemas
 const emailSchema = z.object({
@@ -116,6 +118,29 @@ export const authRouter = router({
                         }
                     });
                 });
+
+                // If request is from a Netlify origin, manually set cookie with .netlify.app domain
+                if (isNetlifyOrigin(ctx.req)) {
+                    const cookieName = getSessionCookieName();
+                    const cookieConfig = getCookieConfig();
+                    // Use sessionID from request, which is the actual session identifier
+                    const sessionId = ctx.req.sessionID;
+
+                    if (sessionId) {
+                        logger.debug(`Setting cookie with .netlify.app domain for Netlify origin: ${cookieName}`);
+                        ctx.res.cookie(cookieName, sessionId, {
+                            ...cookieConfig,
+                            domain: ".netlify.app",
+                        });
+
+                        addSpanAttributes({
+                            "cookie.domain": ".netlify.app",
+                            "cookie.set_for_netlify": true,
+                        });
+                    } else {
+                        logger.warn("Session ID not available when trying to set Netlify cookie");
+                    }
+                }
 
                 activeUserMetric.inc();
 

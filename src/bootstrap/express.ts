@@ -38,7 +38,7 @@ export function getAppSettings(req: Request | undefined): ExpressAppSettings | u
 }
 
 // Session tracking
-const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 60 sec * 60 min * 24hr * 7 = 7 days
+export const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 60 sec * 60 min * 24hr * 7 = 7 days
 const redisStore = connectRedis(expressSession);
 
 export const redisClient = createClient({
@@ -63,7 +63,28 @@ const REDIS_OPTS = {
     prefix: process.env.APP_ENV === "staging" ? "stg_sess:" : "sess:",
 };
 
-const insecureCookies = process.env.COOKIE_SECURE === "false" || process.env.NODE_ENV === "test";
+export const insecureCookies = process.env.COOKIE_SECURE === "false" || process.env.NODE_ENV === "test";
+
+/**
+ * Get cookie configuration for manual cookie setting
+ * Used when we need to set cookies with custom domains (e.g., for Netlify origins)
+ */
+export function getCookieConfig() {
+    return {
+        secure: !insecureCookies,
+        httpOnly: true,
+        maxAge: COOKIE_MAX_AGE_SECONDS * 1000,
+        sameSite: (insecureCookies ? "lax" : "none") as "lax" | "none" | "strict",
+        path: "/",
+    };
+}
+
+/**
+ * Get the session cookie name based on environment
+ */
+export function getSessionCookieName(): string {
+    return process.env.APP_ENV === "staging" ? "staging_trades.sid" : "trades.sid";
+}
 
 app.use(
     expressSession({

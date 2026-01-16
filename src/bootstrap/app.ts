@@ -74,6 +74,12 @@ export async function setupExpressApp(
         if (req.headers["content-type"] && req.headers["content-type"].includes("application/json, application/json")) {
             req.headers["content-type"] = "application/json";
         }
+        const tp = req.headers.traceparent;
+        if (tp) {
+            console.log(`[TRACE-DEBUG][INCOMING] method=${req.method} url=${req.url} traceparent=${tp}`);
+        } else {
+            console.log(`[TRACE-DEBUG][INCOMING] method=${req.method} url=${req.url} traceparent=none`);
+        }
         next();
     });
 

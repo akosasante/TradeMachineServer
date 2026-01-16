@@ -82,9 +82,13 @@ describe("[TRPC] Auth Router Unit Tests", () => {
 
             const mockSession = {
                 user: undefined as string | undefined,
+                id: "session-123",
                 save: jest.fn(cb => cb(null)),
                 destroy: jest.fn(),
             };
+
+            mockReq.get = jest.fn(() => undefined); // No Origin header
+            mockRes.cookie = jest.fn();
 
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 
@@ -102,6 +106,160 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             expect(result).toBeDefined();
             expect(result.id).toBe("user-123");
             expect(mockSession.save).toHaveBeenCalled();
+            // Should not set cookie with .netlify.app domain for non-Netlify origin
+            expect(mockRes.cookie).not.toHaveBeenCalled();
+        });
+
+        it("should set cookie with .netlify.app domain when origin is https://staging--ffftemp.netlify.app", async () => {
+            const hashedPassword = hashSync("password123", 1);
+            const mockUser = {
+                id: "user-123",
+                email: "test@example.com",
+                password: hashedPassword,
+                isAdmin: () => false,
+            } as unknown as PublicUser;
+
+            const mockSession = {
+                user: undefined as string | undefined,
+                id: "session-123",
+                save: jest.fn(cb => cb(null)),
+                destroy: jest.fn(),
+            };
+
+            mockReq.get = jest.fn((header: string) => {
+                if (header === "Origin") {
+                    return "https://staging--ffftemp.netlify.app";
+                }
+                return undefined;
+            });
+            mockReq.sessionID = "session-123";
+            mockRes.cookie = jest.fn();
+
+            const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
+
+            mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(
+                mockUser as unknown as ReturnType<UserDAO["findUserWithPasswordByEmail"]>
+            );
+            mockUserDao.updateUser.mockResolvedValue(mockUser);
+            mockUserDao.getUserById.mockResolvedValue(mockUser);
+
+            const result = await caller.login.authenticate({
+                email: "test@example.com",
+                password: "password123",
+            });
+
+            expect(result).toBeDefined();
+            expect(result.id).toBe("user-123");
+            expect(mockSession.save).toHaveBeenCalled();
+            // Should set cookie with .netlify.app domain
+            expect(mockRes.cookie).toHaveBeenCalledWith(
+                expect.any(String), // cookie name
+                "session-123",
+                expect.objectContaining({
+                    domain: ".netlify.app",
+                    secure: expect.any(Boolean),
+                    httpOnly: true,
+                    sameSite: expect.any(String),
+                    maxAge: expect.any(Number),
+                    path: "/",
+                })
+            );
+        });
+
+        it("should set cookie with .netlify.app domain when origin is https://ffftemp.akosua.xyz", async () => {
+            const hashedPassword = hashSync("password123", 1);
+            const mockUser = {
+                id: "user-123",
+                email: "test@example.com",
+                password: hashedPassword,
+                isAdmin: () => false,
+            } as unknown as PublicUser;
+
+            const mockSession = {
+                user: undefined as string | undefined,
+                id: "session-456",
+                save: jest.fn(cb => cb(null)),
+                destroy: jest.fn(),
+            };
+
+            mockReq.get = jest.fn((header: string) => {
+                if (header === "Origin") {
+                    return "https://ffftemp.akosua.xyz";
+                }
+                return undefined;
+            });
+            mockReq.sessionID = "session-456";
+            mockRes.cookie = jest.fn();
+
+            const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
+
+            mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(
+                mockUser as unknown as ReturnType<UserDAO["findUserWithPasswordByEmail"]>
+            );
+            mockUserDao.updateUser.mockResolvedValue(mockUser);
+            mockUserDao.getUserById.mockResolvedValue(mockUser);
+
+            const result = await caller.login.authenticate({
+                email: "test@example.com",
+                password: "password123",
+            });
+
+            expect(result).toBeDefined();
+            expect(result.id).toBe("user-123");
+            expect(mockSession.save).toHaveBeenCalled();
+            // Should set cookie with .netlify.app domain
+            expect(mockRes.cookie).toHaveBeenCalledWith(
+                expect.any(String), // cookie name
+                "session-456",
+                expect.objectContaining({
+                    domain: ".netlify.app",
+                })
+            );
+        });
+
+        it("should not set cookie with .netlify.app domain for non-Netlify origin", async () => {
+            const hashedPassword = hashSync("password123", 1);
+            const mockUser = {
+                id: "user-123",
+                email: "test@example.com",
+                password: hashedPassword,
+                isAdmin: () => false,
+            } as unknown as PublicUser;
+
+            const mockSession = {
+                user: undefined as string | undefined,
+                id: "session-789",
+                save: jest.fn(cb => cb(null)),
+                destroy: jest.fn(),
+            };
+
+            mockReq.get = jest.fn((header: string) => {
+                if (header === "Origin") {
+                    return "https://staging.trades.akosua.xyz";
+                }
+                return undefined;
+            });
+            mockReq.sessionID = "session-789";
+            mockRes.cookie = jest.fn();
+
+            const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
+
+            mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(
+                mockUser as unknown as ReturnType<UserDAO["findUserWithPasswordByEmail"]>
+            );
+            mockUserDao.updateUser.mockResolvedValue(mockUser);
+            mockUserDao.getUserById.mockResolvedValue(mockUser);
+
+            const result = await caller.login.authenticate({
+                email: "test@example.com",
+                password: "password123",
+            });
+
+            expect(result).toBeDefined();
+            expect(result.id).toBe("user-123");
+            expect(mockSession.save).toHaveBeenCalled();
+            // Should not set cookie with .netlify.app domain
+            expect(mockRes.cookie).not.toHaveBeenCalled();
         });
 
         it("should throw UNAUTHORIZED error with invalid credentials", async () => {
