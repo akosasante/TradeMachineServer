@@ -107,14 +107,39 @@ export const authRouter = router({
                 // Set session like the original LoginHandler does
                 ctx.session.user = serializeUser(authenticatedUser);
 
-                // If request is from a Netlify origin, prevent express-session from setting its default cookie
-                // by temporarily removing the domain, then we'll set our custom cookie after save
+                // If request is from a Netlify origin, intercept and modify the Set-Cookie header
+                // that express-session will set after session.save()
                 const isNetlify = isNetlifyOrigin(ctx.req);
-                const originalCookieDomain = ctx.session.cookie?.domain;
-                if (isNetlify && ctx.session.cookie) {
-                    // Temporarily remove domain so express-session doesn't set a cookie with .akosua.xyz
-                    // We'll set our custom cookie manually after save
-                    ctx.session.cookie.domain = undefined;
+                const cookieName = getSessionCookieName();
+
+                // Intercept Set-Cookie header if this is a Netlify origin
+                if (isNetlify) {
+                    const originalSetHeader = ctx.res.setHeader.bind(ctx.res);
+                    ctx.res.setHeader = function (name: string, value: string | string[]) {
+                        if (name.toLowerCase() === "set-cookie") {
+                            // Modify the Set-Cookie header to use .netlify.app domain
+                            const cookies = Array.isArray(value) ? value : [value];
+                            const modifiedCookies = cookies.map(cookie => {
+                                // Replace Domain=.akosua.xyz with Domain=.netlify.app
+                                // or add Domain=.netlify.app if no domain is present
+                                if (cookie.includes(cookieName)) {
+                                    // Remove existing Domain attribute
+                                    let modified = cookie.replace(/;\s*Domain=[^;]*/gi, "");
+                                    // Add our custom domain
+                                    modified = modified.replace(/(;\s*Path=\/)/, "; Domain=.netlify.app$1");
+                                    // If Path wasn't found, append domain at the end
+                                    if (!modified.includes("Domain=.netlify.app")) {
+                                        modified = `${modified}; Domain=.netlify.app`;
+                                    }
+                                    logger.debug(`Modified Set-Cookie header for Netlify: ${cookieName}`);
+                                    return modified;
+                                }
+                                return cookie;
+                            });
+                            return originalSetHeader(name, modifiedCookies);
+                        }
+                        return originalSetHeader(name, value);
+                    };
                 }
 
                 // Save session and increment metrics
@@ -129,34 +154,14 @@ export const authRouter = router({
                     });
                 });
 
-                // If request is from a Netlify origin, manually set cookie with .netlify.app domain
+                // Restore original setHeader if we intercepted it
                 if (isNetlify) {
-                    const cookieName = getSessionCookieName();
-                    const cookieConfig = getCookieConfig();
-                    // Use sessionID from request, which is the actual session identifier
-                    const sessionId = ctx.req.sessionID;
-
-                    if (sessionId) {
-                        logger.debug(`Setting cookie with .netlify.app domain for Netlify origin: ${cookieName}`);
-
-                        // Set our custom cookie with .netlify.app domain
-                        ctx.res.cookie(cookieName, sessionId, {
-                            ...cookieConfig,
-                            domain: ".netlify.app",
-                        });
-
-                        addSpanAttributes({
-                            "cookie.domain": ".netlify.app",
-                            "cookie.set_for_netlify": true,
-                        });
-                    } else {
-                        logger.warn("Session ID not available when trying to set Netlify cookie");
-                    }
-
-                    // Restore original cookie domain for future requests
-                    if (ctx.session.cookie && originalCookieDomain !== undefined) {
-                        ctx.session.cookie.domain = originalCookieDomain;
-                    }
+                    // The interception will have already modified the header, so we can restore
+                    // (though the response may have already been sent)
+                    addSpanAttributes({
+                        "cookie.domain": ".netlify.app",
+                        "cookie.set_for_netlify": true,
+                    });
                 }
 
                 activeUserMetric.inc();
