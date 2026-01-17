@@ -42,12 +42,12 @@ jest.mock("../../../../../../src/bootstrap/express", () => {
     const keys = jest.fn(() => Promise.resolve([]));
     const get = jest.fn(() => Promise.resolve(null));
     const del = jest.fn(() => Promise.resolve(1));
-    
+
     // Store references in global for test access
     (global as any).__mockRedisKeys__ = keys;
     (global as any).__mockRedisGet__ = get;
     (global as any).__mockRedisDel__ = del;
-    
+
     const mockV4 = {
         keys,
         get,
@@ -93,12 +93,12 @@ describe("[TRPC] Auth Router Unit Tests", () => {
         // Setup mocks
         mockPrisma.obanJob = mockDeep<any>();
         (ObanDAO as jest.MockedClass<typeof ObanDAO>).mockImplementation(() => mockObanDao);
-        
+
         // Get references to Redis mocks from global
         mockKeys = (global as any).__mockRedisKeys__;
         mockGet = (global as any).__mockRedisGet__;
         mockDel = (global as any).__mockRedisDel__;
-        
+
         // Reset Redis mocks - ensure they return promises immediately
         if (mockKeys) {
             mockKeys.mockClear();

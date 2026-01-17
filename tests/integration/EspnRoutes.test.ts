@@ -48,7 +48,9 @@ describe("ESPN API endpoints", () => {
                 return makeGetRequest(agent, `/espn/teams${yearParam}`, status);
             };
 
-        it("should return all teams in the default year", async () => {
+        it("should return all teams in the default year (uses smart default based on current month)", async () => {
+            // The controller uses getDefaultEspnYear() which returns previous year if before April
+            // This ensures we always have valid ESPN data even early in the calendar year
             const { body } = await adminLoggedIn(getAllRequest(), app);
             expect(body).toBeArray();
             // There are other keys, but these are the ones we definitely want to know if they're gone
@@ -80,7 +82,9 @@ describe("ESPN API endpoints", () => {
                 return makeGetRequest(agent, `/espn/members${yearParam}`, status);
             };
 
-        it("should return all members in the default year", async () => {
+        it("should return all members in the default year (uses smart default based on current month)", async () => {
+            // The controller uses getDefaultEspnYear() which returns previous year if before April
+            // This ensures we always have valid ESPN data even early in the calendar year
             const { body } = await adminLoggedIn(getAllRequest(), app);
             expect(body).toBeArray();
             expect(body[0]).toContainAllKeys(["id", "isLeagueManager", "displayName"]);
