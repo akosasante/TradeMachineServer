@@ -126,7 +126,17 @@ export const availableJobMetrics = (() => {
     return initializeJobMetrics(metricsRegistry);
 })();
 
+// Tracks unique logged-in users (inc on login, dec on logout - once per user regardless of sessions)
 export const activeUserMetric = (() => {
+    return new promClient.Gauge({
+        name: "trade_machine_active_users",
+        help: "Number of unique users currently logged in",
+        registers: [metricsRegistry],
+    });
+})();
+
+// Tracks individual sessions (inc for each session created, dec for each destroyed)
+export const activeSessionsMetric = (() => {
     return new promClient.Gauge({
         name: "trade_machine_active_sessions",
         help: "Number of active user sessions",

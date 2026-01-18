@@ -3,7 +3,7 @@ import { addSpanAttributes, addSpanEvent } from "../../../../utils/tracing";
 import logger from "../../../../bootstrap/logger";
 import { z } from "zod";
 import {
-    activeUserMetric,
+    activeSessionsMetric,
     transferTokenExchangedMetric,
     transferTokenFailedMetric,
     transferTokenGeneratedMetric,
@@ -156,7 +156,8 @@ export const clientRouter = router({
                     });
                 });
 
-                activeUserMetric.inc();
+                // Only increment sessions metric - user is already logged in, just creating a new session
+                activeSessionsMetric.inc();
 
                 // Copy over the user identity, to ensure express-session knows to resave the session
                 ctx.req.session.user = serializeUser(user);
