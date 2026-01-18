@@ -12,12 +12,11 @@ import {
     signInAuthentication,
     signUpAuthentication,
 } from "../../../../authentication/auth";
-import { activeUserMetric } from "../../../../bootstrap/metrics";
+import { activeUserMetric, activeSessionsMetric } from "../../../../bootstrap/metrics";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import { isNetlifyOrigin } from "../../../middlewares/CookieDomainHandler";
-import { getSessionCookieName, redisClient } from "../../../../bootstrap/express";
-
-const redisClientV4 = redisClient.v4 as unknown as typeof redisClient;
+import { getSessionCookieName } from "../../../../bootstrap/express";
+import { destroyAllUserSessions } from "../utils/ssoTokens";
 
 // Input validation schemas
 const emailSchema = z.object({
@@ -163,6 +162,7 @@ export const authRouter = router({
                 }
 
                 activeUserMetric.inc();
+                activeSessionsMetric.inc();
 
                 // Return the deserialized user like the original endpoint
                 const deserializedUser = await deserializeUser(ctx.session.user!, ctx.userDao);
@@ -327,116 +327,60 @@ export const authRouter = router({
                     "logout.had_session": false,
                 });
 
-                return true;
+                return { success: true, sessionsDestroyed: 0 };
             }
 
-            const currentSessionId = ctx.req.sessionID;
+            // Use helper to destroy all user sessions in Redis
             let sessionsDestroyed = 0;
-
-            // Get the session prefix based on environment
-            const sessionPrefix = process.env.APP_ENV === "staging" ? "stg_sess:" : "sess:";
-
-            // Find all sessions belonging to this user
-            // Note: Using KEYS is blocking, but acceptable for logout operations (infrequent)
-            // In production with many sessions, consider using SCAN with cursor iteration
-            const matchingSessionIds: string[] = [];
+            let sessionsSkipped = 0;
 
             try {
-                // Get all session keys matching the prefix
-                // Use v4 API's keys method which returns a promise
-                const allSessionKeys = (await redisClientV4.keys(`${sessionPrefix}*`)) || [];
-
-                // Check each session to see if it belongs to this user
-                for (const key of allSessionKeys) {
-                    try {
-                        const sessionData = await redisClientV4.get(key);
-                        if (sessionData) {
-                            const parsed = JSON.parse(sessionData) as { user?: string };
-                            if (parsed.user === userId) {
-                                // Extract session ID from key (remove prefix)
-                                const sessionId = key.replace(sessionPrefix, "");
-                                matchingSessionIds.push(sessionId);
-                            }
-                        }
-                    } catch {
-                        // Skip invalid session data
-                    }
-                }
+                const result = await destroyAllUserSessions(userId);
+                sessionsDestroyed = result.sessionsDestroyed;
+                sessionsSkipped = result.sessionsSkipped;
             } catch (error) {
-                logger.error("Error scanning Redis for user sessions:", error);
-                // Continue with destroying current session even if scan fails
+                logger.error("Error destroying user sessions:", error);
+                // Continue with destroying current session even if helper fails
             }
 
             addSpanEvent("logout.sessions_found", {
-                count: matchingSessionIds.length,
+                count: sessionsDestroyed,
+                skipped: sessionsSkipped,
             });
-
-            // Destroy all matching sessions
-            const destroyPromises = matchingSessionIds.map(async sessionId => {
-                try {
-                    const sessionKey = `${sessionPrefix}${sessionId}`;
-                    await redisClientV4.del(sessionKey);
-                    sessionsDestroyed++;
-                } catch (error) {
-                    logger.error(`Error destroying session ${sessionId}:`, error);
-                }
-            });
-
-            await Promise.all(destroyPromises);
 
             // Also destroy the current session via express-session (handles cookie cleanup)
-            // Only if it wasn't already destroyed above
-            if (matchingSessionIds.includes(currentSessionId)) {
-                await new Promise<void>((resolve, _reject) => {
-                    ctx.req.session.destroy((err: Error | null) => {
-                        if (err) {
-                            logger.error("Error destroying current session via express-session", err);
-                            // Don't reject - we've already destroyed it in Redis
-                        }
-                        resolve();
-                    });
+            await new Promise<void>((resolve, _reject) => {
+                ctx.req.session.destroy((err: Error | null) => {
+                    if (err) {
+                        logger.error("Error destroying current session via express-session", err);
+                        // Don't reject - we've already destroyed sessions in Redis
+                    }
+                    resolve();
                 });
-            } else {
-                // Current session wasn't in the list, destroy it separately
-                await new Promise<void>((resolve, reject) => {
-                    ctx.req.session.destroy((err: Error | null) => {
-                        if (err) {
-                            logger.error("Error destroying current session", err);
-                            reject(
-                                new TRPCError({
-                                    code: "INTERNAL_SERVER_ERROR",
-                                    message: "Error destroying session",
-                                })
-                            );
-                        } else {
-                            sessionsDestroyed++;
-                            resolve();
-                        }
-                    });
-                });
-            }
+            });
 
-            // Update metrics (decrement for each session destroyed)
+            // Update metrics:
+            // - activeUserMetric: decrement ONCE (one user logging out)
+            // - activeSessionsMetric: decrement for EACH session destroyed
+            activeUserMetric.dec();
             for (let i = 0; i < sessionsDestroyed; i++) {
-                activeUserMetric.dec();
+                activeSessionsMetric.dec();
             }
 
             addSpanAttributes({
                 "logout.sessions_destroyed": sessionsDestroyed,
+                "logout.sessions_skipped": sessionsSkipped,
                 "logout.user_id": userId,
-                "logout.sessions_found": matchingSessionIds.length,
                 "logout.successful": true,
             });
             addSpanEvent("logout.success", {
                 sessionsDestroyed,
-                sessionsFound: matchingSessionIds.length,
+                sessionsSkipped,
             });
 
-            logger.info(
-                `Logout: destroyed ${sessionsDestroyed} session(s) for user ${userId} (found ${matchingSessionIds.length} total)`
-            );
+            logger.info(`Logout: destroyed ${sessionsDestroyed} session(s) for user ${userId}`);
 
-            return true;
+            return { success: true, sessionsDestroyed };
         })
     ),
     resetPassword: router({
@@ -626,6 +570,7 @@ export const authRouter = router({
 
                     // Increment metrics like the original signup endpoint
                     activeUserMetric.inc();
+                    activeSessionsMetric.inc();
 
                     // Return the deserialized user like the original endpoint
                     const deserializedUser = await deserializeUser(ctx.session.user!, ctx.userDao);

@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { redisClient } from "../../../../bootstrap/express";
 import { SessionData } from "express-session";
+import logger from "../../../../bootstrap/logger";
 
 interface StoredSessionPayload {
     sessionId: string;
@@ -69,4 +70,51 @@ export async function loadOriginalSession(sessionId: string): Promise<StoredSess
     } catch {
         return null;
     }
+}
+
+export interface DestroySessionsResult {
+    sessionsDestroyed: number;
+    sessionsSkipped: number;
+}
+
+/**
+ * Destroys all Redis sessions belonging to a specific user.
+ * This is used for "logout everywhere" functionality.
+ *
+ * Note: Using KEYS is blocking, but acceptable for logout operations (infrequent).
+ * In production with many sessions, consider using SCAN with cursor iteration.
+ *
+ * Important: This function does NOT touch metrics - callers are responsible for
+ * updating activeUserMetric and activeSessionsMetric appropriately.
+ */
+export async function destroyAllUserSessions(userId: string): Promise<DestroySessionsResult> {
+    const sessionPrefix = process.env.APP_ENV === "staging" ? "stg_sess:" : "sess:";
+    const allSessionKeys = (await redisClientV4.keys(`${sessionPrefix}*`)) || [];
+
+    const matchingKeys: string[] = [];
+    let sessionsSkipped = 0;
+
+    for (const key of allSessionKeys) {
+        try {
+            const sessionData = await redisClientV4.get(key);
+            if (sessionData) {
+                const parsed = JSON.parse(sessionData) as { user?: string };
+                if (parsed.user === userId) {
+                    matchingKeys.push(key);
+                }
+            }
+        } catch (error) {
+            sessionsSkipped++;
+            logger.warn(`Skipped invalid session data for key ${key}:`, error);
+        }
+    }
+
+    if (matchingKeys.length > 0) {
+        await Promise.all(matchingKeys.map(key => redisClientV4.del(key)));
+    }
+
+    return {
+        sessionsDestroyed: matchingKeys.length,
+        sessionsSkipped,
+    };
 }
