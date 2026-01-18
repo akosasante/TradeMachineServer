@@ -615,8 +615,11 @@ describe("Client API endpoints", () => {
                 // Call logout - should destroy all sessions for this user
                 const { body } = await makeTrpcRequest(agent);
 
-                // Validate response structure - logout returns boolean true
-                expect(body.result.data).toBe(true);
+                // Validate response structure - logout returns {success, sessionsDestroyed}
+                expect(body.result.data).toEqual({
+                    success: true,
+                    sessionsDestroyed: expect.any(Number),
+                });
 
                 // Verify session is now invalid
                 await agent.get("/v2/auth.sessionCheck").expect(401);
@@ -625,7 +628,10 @@ describe("Client API endpoints", () => {
             it("should return success even when user is not authenticated", async () => {
                 // logout is publicProcedure, so it should succeed even without auth
                 const { body } = await request(app).post("/v2/auth.logout").send({}).expect(200);
-                expect(body.result.data).toBe(true);
+                expect(body.result.data).toEqual({
+                    success: true,
+                    sessionsDestroyed: 0,
+                });
             });
 
             it("should destroy sessions across domains (session mapping scenario)", async () => {
@@ -696,8 +702,11 @@ describe("Client API endpoints", () => {
                 // Call logout
                 const { body } = await makeTrpcRequest(agent);
 
-                // Should return true
-                expect(body.result.data).toBe(true);
+                // Should return success with sessions destroyed count
+                expect(body.result.data).toEqual({
+                    success: true,
+                    sessionsDestroyed: expect.any(Number),
+                });
 
                 // Verify session is now invalid
                 await agent.get("/v2/auth.sessionCheck").expect(401);

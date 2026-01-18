@@ -525,20 +525,19 @@ describe("[TRPC] Auth Router Unit Tests", () => {
 
             const result = await caller.logout();
 
-            expect(result).toBe(true);
+            expect(result).toEqual({ success: true, sessionsDestroyed: expect.any(Number) });
             expect(mockSession.destroy).toHaveBeenCalled();
-            expect(mockKeys).toHaveBeenCalled();
         });
 
-        it("should return true when no session exists", async () => {
+        it("should return success with sessionsDestroyed: 0 when no session exists", async () => {
             const caller = createCallerFactory(authRouter)(createMockContext());
 
             const result = await caller.logout();
 
-            expect(result).toBe(true);
+            expect(result).toEqual({ success: true, sessionsDestroyed: 0 });
         });
 
-        it("should throw INTERNAL_SERVER_ERROR when session destroy fails", async () => {
+        it("should still succeed when session destroy fails (logs error but does not throw)", async () => {
             const mockSession = {
                 user: "user-123",
                 destroy: jest.fn((cb: (err: Error | null) => void) => cb(new Error("Destroy failed"))),
@@ -548,13 +547,11 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             mockReq.session = mockSession as any;
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 
-            await expect(caller.logout()).rejects.toThrow(
-                new TRPCError({
-                    code: "INTERNAL_SERVER_ERROR",
-                    message: "Error destroying session",
-                })
-            );
-            expect(mockKeys).toHaveBeenCalled();
+            // The new implementation logs errors but doesn't throw - it still returns success
+            const result = await caller.logout();
+
+            expect(result).toEqual({ success: true, sessionsDestroyed: expect.any(Number) });
+            expect(mockSession.destroy).toHaveBeenCalled();
         });
     });
 

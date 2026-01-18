@@ -25,6 +25,7 @@ jest.mock("../../../../../../src/utils/tracing", () => ({
 // Mock metrics using mockDeep
 jest.mock("../../../../../../src/bootstrap/metrics", () => ({
     activeUserMetric: mockDeep(),
+    activeSessionsMetric: mockDeep(),
     transferTokenExchangedMetric: mockDeep(),
     transferTokenFailedMetric: mockDeep(),
     transferTokenGeneratedMetric: mockDeep(),
