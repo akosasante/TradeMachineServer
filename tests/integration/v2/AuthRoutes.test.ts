@@ -584,7 +584,10 @@ describe("tRPC Auth endpoints", () => {
             // Now logout
             const { body } = await makeTrpcRequest(agent);
 
-            expect(body.result.data).toBe(true);
+            expect(body.result.data).toEqual({
+                success: true,
+                sessionsDestroyed: 1,
+            });
 
             // Verify session is destroyed by checking session
             const { body: sessionCheckBody } = await agent.get("/v2/auth.sessionCheck").expect(401);
@@ -598,7 +601,10 @@ describe("tRPC Auth endpoints", () => {
         it("should return success when no session exists", async () => {
             const { body } = await request(app).post("/v2/auth.logout").send({}).expect(200);
 
-            expect(body.result.data).toBe(true);
+            expect(body.result.data).toEqual({
+                success: true,
+                sessionsDestroyed: 0,
+            });
         });
     });
 });
