@@ -12,8 +12,11 @@ import {
     signInAuthentication,
     signUpAuthentication,
 } from "../../../../authentication/auth";
-import { activeUserMetric } from "../../../../bootstrap/metrics";
+import { activeUserMetric, activeSessionsMetric } from "../../../../bootstrap/metrics";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
+import { isNetlifyOrigin } from "../../../middlewares/CookieDomainHandler";
+import { getSessionCookieName } from "../../../../bootstrap/express";
+import { destroyAllUserSessions } from "../utils/ssoTokens";
 
 // Input validation schemas
 const emailSchema = z.object({
@@ -105,6 +108,39 @@ export const authRouter = router({
                 // Set session like the original LoginHandler does
                 ctx.session.user = serializeUser(authenticatedUser);
 
+                // If request is from a Netlify origin, intercept and modify the Set-Cookie header
+                // that express-session will set after session.save()
+                const isNetlify = isNetlifyOrigin(ctx.req);
+                const cookieName = getSessionCookieName();
+
+                // Intercept Set-Cookie header if this is a Netlify origin
+                if (isNetlify) {
+                    const originalSetHeader = ctx.res.setHeader.bind(ctx.res);
+                    ctx.res.setHeader = function (name: string, value: string | string[]) {
+                        if (name.toLowerCase() === "set-cookie") {
+                            // Modify the Set-Cookie header to remove Domain attribute for Netlify origins
+                            // Browsers reject cookies with Domain=.netlify.app (public suffix)
+                            // By removing the Domain attribute, the cookie is scoped to the exact origin
+                            // (e.g., staging--ffftemp.netlify.app), which browsers will accept
+                            const cookies = Array.isArray(value) ? value : [value];
+                            const modifiedCookies = cookies.map(cookie => {
+                                if (cookie.includes(cookieName)) {
+                                    // Remove existing Domain attribute entirely
+                                    // This scopes the cookie to the exact origin (e.g., staging--ffftemp.netlify.app)
+                                    const modified = cookie.replace(/;\s*Domain=[^;]*/gi, "");
+                                    logger.debug(
+                                        `Removed Domain attribute from Set-Cookie header for Netlify origin: ${cookieName}`
+                                    );
+                                    return modified;
+                                }
+                                return cookie;
+                            });
+                            return originalSetHeader(name, modifiedCookies);
+                        }
+                        return originalSetHeader(name, value);
+                    };
+                }
+
                 // Save session and increment metrics
                 await new Promise<void>((resolve, reject) => {
                     ctx.session!.save((sessionErr: Error | null) => {
@@ -117,7 +153,16 @@ export const authRouter = router({
                     });
                 });
 
+                // Log that we modified the cookie for Netlify origins
+                if (isNetlify) {
+                    addSpanAttributes({
+                        "cookie.domain": "none (origin-scoped)",
+                        "cookie.set_for_netlify": true,
+                    });
+                }
+
                 activeUserMetric.inc();
+                activeSessionsMetric.inc();
 
                 // Return the deserialized user like the original endpoint
                 const deserializedUser = await deserializeUser(ctx.session.user!, ctx.userDao);
@@ -264,8 +309,6 @@ export const authRouter = router({
     ),
     logout: publicProcedure.mutation(
         withTracing("trpc.auth.logout", async (input, ctx, _span) => {
-            logger.debug("tRPC logout");
-
             addSpanAttributes({
                 "auth.action": "logout",
                 "auth.method": "trpc",
@@ -274,57 +317,70 @@ export const authRouter = router({
 
             addSpanEvent("logout.start", { hasSession: !!ctx.session?.user });
 
-            return await new Promise<boolean>((resolve, reject) => {
-                if (ctx.session && ctx.session.user) {
-                    addSpanEvent("logout.destroying_session", { userId: ctx.session.user });
+            const userId = ctx.session?.user;
 
-                    ctx.session.destroy((err: Error | null) => {
-                        if (err) {
-                            logger.error("Error destroying session in tRPC logout");
+            if (!userId) {
+                // No session to log out of, return success
+                addSpanEvent("logout.no_session");
+                addSpanAttributes({
+                    "logout.successful": true,
+                    "logout.had_session": false,
+                });
 
-                            addSpanEvent("logout.error", {
-                                error: err.message,
-                            });
+                return { success: true, sessionsDestroyed: 0 };
+            }
 
-                            reject(
-                                new TRPCError({
-                                    code: "INTERNAL_SERVER_ERROR",
-                                    message: "Error destroying session",
-                                })
-                            );
-                        } else {
-                            const userId = ctx.session?.user;
-                            logger.debug(`Destroying user session for userId#${userId}`);
+            // Use helper to destroy all user sessions in Redis
+            let sessionsDestroyed = 0;
+            let sessionsSkipped = 0;
 
-                            // Clear the user from session (already destroyed but for consistency)
-                            if (ctx.session?.user) {
-                                delete ctx.session.user;
-                            }
+            try {
+                const result = await destroyAllUserSessions(userId);
+                sessionsDestroyed = result.sessionsDestroyed;
+                sessionsSkipped = result.sessionsSkipped;
+            } catch (error) {
+                logger.error("Error destroying user sessions:", error);
+                // Continue with destroying current session even if helper fails
+            }
 
-                            activeUserMetric.dec();
-
-                            addSpanEvent("logout.success", { userId: userId || "unknown" });
-                            addSpanAttributes({
-                                "user.id": userId || "unknown",
-                                "logout.successful": true,
-                            });
-
-                            resolve(true);
-                        }
-                    });
-                } else {
-                    // No session to log out of, return success
-                    logger.debug("Resolving empty session logout via tRPC");
-
-                    addSpanEvent("logout.no_session");
-                    addSpanAttributes({
-                        "logout.successful": true,
-                        "logout.had_session": false,
-                    });
-
-                    resolve(true);
-                }
+            addSpanEvent("logout.sessions_found", {
+                count: sessionsDestroyed,
+                skipped: sessionsSkipped,
             });
+
+            // Also destroy the current session via express-session (handles cookie cleanup)
+            await new Promise<void>((resolve, _reject) => {
+                ctx.req.session.destroy((err: Error | null) => {
+                    if (err) {
+                        logger.error("Error destroying current session via express-session", err);
+                        // Don't reject - we've already destroyed sessions in Redis
+                    }
+                    resolve();
+                });
+            });
+
+            // Update metrics:
+            // - activeUserMetric: decrement ONCE (one user logging out)
+            // - activeSessionsMetric: decrement for EACH session destroyed
+            activeUserMetric.dec();
+            for (let i = 0; i < sessionsDestroyed; i++) {
+                activeSessionsMetric.dec();
+            }
+
+            addSpanAttributes({
+                "logout.sessions_destroyed": sessionsDestroyed,
+                "logout.sessions_skipped": sessionsSkipped,
+                "logout.user_id": userId,
+                "logout.successful": true,
+            });
+            addSpanEvent("logout.success", {
+                sessionsDestroyed,
+                sessionsSkipped,
+            });
+
+            logger.info(`Logout: destroyed ${sessionsDestroyed} session(s) for user ${userId}`);
+
+            return { success: true, sessionsDestroyed };
         })
     ),
     resetPassword: router({
@@ -514,6 +570,7 @@ export const authRouter = router({
 
                     // Increment metrics like the original signup endpoint
                     activeUserMetric.inc();
+                    activeSessionsMetric.inc();
 
                     // Return the deserialized user like the original endpoint
                     const deserializedUser = await deserializeUser(ctx.session.user!, ctx.userDao);
