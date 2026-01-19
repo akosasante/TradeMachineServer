@@ -73,6 +73,8 @@ module.exports = [
     {
         ...commonOpts,
         name: "production",
+        host: process.env.PG_HOST || "localhost",
+        port: parseInt(process.env.PG_PORT || "5432", 10),
         schema: "public",
         cli: {
             entitiesDir: "dist/models",
@@ -96,6 +98,8 @@ module.exports = [
     {
         ...commonOpts,
         name: "staging",
+        host: process.env.PG_HOST || "localhost",
+        port: parseInt(process.env.PG_PORT || "5435", 10),
         schema: "staging",
         cli: {
             entitiesDir: "dist/models",
