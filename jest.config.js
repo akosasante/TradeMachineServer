@@ -56,7 +56,7 @@ module.exports = {
     // globalSetup: null,
 
     // A path to a module which exports an async function that is triggered once after all test suites
-    globalTeardown: "./tests/globalTeardown.js",
+    // globalTeardown: "./tests/globalTeardown.js", // Replaced by setupAfterEnv.ts for proper module isolation
 
     // A set of global variables that need to be available in all test environments
     // globals: {
@@ -123,7 +123,7 @@ module.exports = {
     // runner: "jest-runner",
 
     // The paths to modules that run some code to configure or set up the testing environment before each test
-    setupFilesAfterEnv: ["jest-extended/all", "jest-date-mock", "./jestSetupFile.mjs"],
+    setupFilesAfterEnv: ["jest-extended/all", "jest-date-mock", "./jestSetupFile.mjs", "./tests/setupAfterEnv.ts"],
 
     // The path to a module that runs some code to configure or set up the testing framework before each test
     // setupTestFrameworkScriptFile: "jest-extended",

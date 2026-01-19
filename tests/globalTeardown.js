@@ -1,4 +1,15 @@
 /**
+ * DEPRECATED: This file is no longer used.
+ *
+ * The cleanup logic has been moved to tests/setupAfterEnv.ts which runs via
+ * setupFilesAfterEnv in jest.config.js. This solves the module isolation issue
+ * where this file (running in a separate Node process) would load different
+ * module instances than the tests used, causing cleanup callbacks to be empty.
+ *
+ * This file is kept for reference. You can safely delete it.
+ *
+ * ---
+ * Original description:
  * Global teardown that runs ONCE after all test files complete.
  * This ensures shared infrastructure (Redis, Prisma, server) is properly cleaned up
  * without interfering with test execution across multiple files.
@@ -7,11 +18,5 @@
  * so it must require compiled JS files from dist/ instead of TypeScript source files.
  */
 module.exports = async function globalTeardown() {
-    // Require compiled JS files from dist/ since this runs outside Jest's TypeScript compilation
-    const { handleExitInTest } = require("../dist/bootstrap/shutdownHandler");
-    const logger = require("../dist/bootstrap/logger").default;
-
-    logger.info("Running global teardown after all tests");
-    await handleExitInTest();
-    logger.info("Global teardown complete");
+    // No-op: cleanup is now handled by tests/setupAfterEnv.ts
 };

@@ -43,6 +43,7 @@ src/**/*.js
 src/db/migrations-old
 #src/db/migrations
 tests/coverage
+tests/.env*
 sheet_creds.json
 /.prod.env
 /tsconfig.old.json
@@ -56,3 +57,8 @@ ai_plans
 TradeMachineElixirApp
 TradeMachineElixirApp/
 TradeMachineElixirApp/**
+prod_nginx_site_copy
+prod_pm2_backup/
+backup-db.sh
+docker-compose.stg-postgres.yml
+grafana-dashboard.json
