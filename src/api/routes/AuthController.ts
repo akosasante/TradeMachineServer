@@ -19,7 +19,7 @@ import User from "../../models/user";
 import { EmailPublisher } from "../../email/publishers";
 import { rollbar } from "../../bootstrap/rollbar";
 import { SessionData } from "express-session";
-import { activeUserMetric } from "../../bootstrap/metrics";
+import { activeUserMetric, activeSessionsMetric } from "../../bootstrap/metrics";
 import Users, { PublicUser } from "../../DAO/v2/UserDAO";
 import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
 import ObanDAO from "../../DAO/v2/ObanDAO";
@@ -67,6 +67,7 @@ export default class AuthController {
         return await context.with(traceContext, async () => {
             rollbar.info("login", request);
             activeUserMetric.inc();
+            activeSessionsMetric.inc();
 
             addSpanAttributes({
                 "auth.session.exists": !!session.user,
@@ -119,6 +120,7 @@ export default class AuthController {
     public async signup(@Req() request: Request, @Session() session: SessionData): Promise<User | PublicUser> {
         rollbar.info("signup", request);
         activeUserMetric.inc();
+        activeSessionsMetric.inc();
         return await deserializeUser(session.user!, this.userDao);
     }
 
@@ -155,6 +157,7 @@ export default class AuthController {
                         logger.debug(`Destroying user session for userId#${session.user}`);
                         delete session.user;
                         activeUserMetric.dec();
+                        activeSessionsMetric.dec();
                         resolve(true);
                     }
                 });
