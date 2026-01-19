@@ -3,21 +3,14 @@ import { addSpanAttributes, addSpanEvent } from "../../../../utils/tracing";
 import logger from "../../../../bootstrap/logger";
 import { z } from "zod";
 import {
-    activeUserMetric,
+    activeSessionsMetric,
     transferTokenExchangedMetric,
     transferTokenFailedMetric,
     transferTokenGeneratedMetric,
 } from "../../../../bootstrap/metrics";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import { serializeUser } from "../../../../authentication/auth";
-import {
-    consumeTransferToken,
-    createTransferToken,
-    loadOriginalSession,
-    SSO_CONFIG,
-    storeSessionMapping,
-    destroyAllUserSessions,
-} from "../utils/ssoTokens";
+import { consumeTransferToken, createTransferToken, loadOriginalSession, SSO_CONFIG } from "../utils/ssoTokens";
 import { TRPCError } from "@trpc/server";
 
 // Declare the additional fields that we add to express session
@@ -163,13 +156,11 @@ export const clientRouter = router({
                     });
                 });
 
-                activeUserMetric.inc();
+                // Only increment sessions metric - user is already logged in, just creating a new session
+                activeSessionsMetric.inc();
 
                 // Copy over the user identity, to ensure express-session knows to resave the session
                 ctx.req.session.user = serializeUser(user);
-
-                // Store session mapping for cross-domain logout
-                await storeSessionMapping(storedSession.sessionId, ctx.req.sessionID, user.id);
 
                 addSpanAttributes({
                     "exchange_redirect_token.new_session_id": ctx.req.sessionID,
@@ -177,7 +168,6 @@ export const clientRouter = router({
                     "exchange_redirect_token.new_session_cookie_expires":
                         originalSession.cookie?.expires?.toString() || "undefined",
                     "exchange_redirect_token.token_consumed": true,
-                    "exchange_redirect_token.session_mapping_stored": true,
                 });
                 addSpanEvent("exchange_redirect_token.session_regenerated");
                 transferTokenExchangedMetric.inc();
@@ -185,43 +175,4 @@ export const clientRouter = router({
                 return { success: true, user };
             })
         ),
-    /* SSO logout - destroys all user sessions across domains */
-    logoutAllSessions: protectedProcedure.mutation(
-        withTracing("trpc.client.logoutAllSessions", async (input, ctx, _span) => {
-            addSpanEvent("logout_all_sessions.start");
-
-            const userId = ctx.session!.user!;
-
-            addSpanAttributes({
-                "logout_all_sessions.user_id": userId,
-                "logout_all_sessions.current_session_id": ctx.req.sessionID,
-            });
-
-            try {
-                // Destroy all user sessions using centralized function
-                const sessionsDestroyed = await destroyAllUserSessions(userId, ctx.req.sessionID);
-
-                addSpanEvent("logout_all_sessions.sessions_destroyed", {
-                    userId,
-                    sessionsDestroyed,
-                });
-
-                addSpanEvent("logout_all_sessions.success");
-                transferTokenExchangedMetric.inc(); // Reuse existing metric
-
-                return {
-                    success: true,
-                    sessionsDestroyed,
-                };
-            } catch (error) {
-                logger.error("Failed to destroy user sessions:", error);
-                addSpanEvent("logout_all_sessions.error", { error: String(error) });
-
-                throw new TRPCError({
-                    code: "INTERNAL_SERVER_ERROR",
-                    message: "Logout failed",
-                });
-            }
-        })
-    ),
 });
