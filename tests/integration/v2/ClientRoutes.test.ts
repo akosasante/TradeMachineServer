@@ -331,7 +331,7 @@ describe("Client API endpoints", () => {
                 expect(body.result.data.user).toHaveProperty("email", testUser.email);
                 expect(body.result.data.user).toHaveProperty("role");
                 expect(body.result.data.user).not.toHaveProperty("password");
-                
+
                 // passwordResetToken should be null/falsy for security (field might be present but empty)
                 expect(body.result.data.user.passwordResetToken).toBeFalsy();
             });
