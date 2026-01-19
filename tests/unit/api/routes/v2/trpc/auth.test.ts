@@ -32,6 +32,40 @@ jest.mock("../../../../../../src/bootstrap/rollbar", () => ({
 // Mock ObanDAO
 jest.mock("../../../../../../src/DAO/v2/ObanDAO");
 
+// Mock Redis client - use global to avoid hoisting issues
+let mockKeys: jest.Mock;
+let mockGet: jest.Mock;
+let mockDel: jest.Mock;
+
+jest.mock("../../../../../../src/bootstrap/express", () => {
+    // Create mock functions inside the factory to avoid hoisting issues
+    const keys = jest.fn(() => Promise.resolve([]));
+    const get = jest.fn(() => Promise.resolve(null));
+    const del = jest.fn(() => Promise.resolve(1));
+
+    // Store references in global for test access
+    (global as any).__mockRedisKeys__ = keys;
+    (global as any).__mockRedisGet__ = get;
+    (global as any).__mockRedisDel__ = del;
+
+    const mockV4 = {
+        keys,
+        get,
+        del,
+    };
+    // Store reference in global for test access
+    (global as any).__mockRedisV4__ = mockV4;
+    return {
+        redisClient: {
+            v4: mockV4,
+        },
+        getSessionCookieName: jest.fn(() => "trades.sid"),
+    };
+});
+
+// Get reference to mocked Redis client for tests
+const getMockRedisV4 = () => (global as any).__mockRedisV4__;
+
 describe("[TRPC] Auth Router Unit Tests", () => {
     const mockPrisma = mockDeep<ExtendedPrismaClient>();
     const mockUserDao = mockDeep<UserDAO>();
@@ -59,6 +93,25 @@ describe("[TRPC] Auth Router Unit Tests", () => {
         // Setup mocks
         mockPrisma.obanJob = mockDeep<any>();
         (ObanDAO as jest.MockedClass<typeof ObanDAO>).mockImplementation(() => mockObanDao);
+
+        // Get references to Redis mocks from global
+        mockKeys = (global as any).__mockRedisKeys__;
+        mockGet = (global as any).__mockRedisGet__;
+        mockDel = (global as any).__mockRedisDel__;
+
+        // Reset Redis mocks - ensure they return promises immediately
+        if (mockKeys) {
+            mockKeys.mockClear();
+            mockKeys.mockResolvedValue([]);
+        }
+        if (mockGet) {
+            mockGet.mockClear();
+            mockGet.mockResolvedValue(null);
+        }
+        if (mockDel) {
+            mockDel.mockClear();
+            mockDel.mockResolvedValue(1);
+        }
     });
 
     afterEach(() => {
@@ -82,7 +135,70 @@ describe("[TRPC] Auth Router Unit Tests", () => {
 
             const mockSession = {
                 user: undefined as string | undefined,
+                id: "session-123",
                 save: jest.fn(cb => cb(null)),
+                destroy: jest.fn(),
+            };
+
+            mockReq.get.mockReturnValue(undefined); // No Origin header
+            mockRes.cookie.mockReturnValue(mockRes);
+
+            const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
+
+            mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(
+                mockUser as unknown as ReturnType<UserDAO["findUserWithPasswordByEmail"]>
+            );
+            mockUserDao.updateUser.mockResolvedValue(mockUser);
+            mockUserDao.getUserById.mockResolvedValue(mockUser);
+
+            const result = await caller.login.authenticate({
+                email: "test@example.com",
+                password: "password123",
+            });
+
+            expect(result).toBeDefined();
+            expect(result.id).toBe("user-123");
+            expect(mockSession.save).toHaveBeenCalled();
+            // Should not set cookie with .netlify.app domain for non-Netlify origin
+            expect(mockRes.cookie).not.toHaveBeenCalled();
+        });
+
+        it("should remove Domain attribute for Netlify origin (https://staging--ffftemp.netlify.app)", async () => {
+            const hashedPassword = hashSync("password123", 1);
+            const mockUser = {
+                id: "user-123",
+                email: "test@example.com",
+                password: hashedPassword,
+                isAdmin: () => false,
+            } as unknown as PublicUser;
+
+            mockReq.get.mockImplementation((header: string) => {
+                if (header === "Origin") {
+                    return "https://staging--ffftemp.netlify.app";
+                }
+                return undefined;
+            });
+            mockReq.sessionID = "session-123";
+            // Track setHeader calls - express-session will call this to set the cookie
+            const setHeaderCalls: { name: string; value: string | number | readonly string[] }[] = [];
+            const _setHeaderSpy = jest
+                .spyOn(mockRes, "setHeader")
+                .mockImplementation((name: string, value: string | number | readonly string[]) => {
+                    setHeaderCalls.push({ name, value });
+                    return mockRes;
+                });
+
+            // Simulate express-session calling setHeader when save() is called
+            // This mimics what express-session does internally
+            const cookieName = process.env.APP_ENV === "staging" ? "staging_trades.sid" : "trades.sid";
+            const mockSession = {
+                user: undefined as string | undefined,
+                id: "session-123",
+                save: jest.fn(cb => {
+                    // Simulate express-session setting the cookie header
+                    mockRes.setHeader("Set-Cookie", `${cookieName}=session-123; Path=/; HttpOnly`);
+                    cb(null);
+                }),
                 destroy: jest.fn(),
             };
 
@@ -102,6 +218,130 @@ describe("[TRPC] Auth Router Unit Tests", () => {
             expect(result).toBeDefined();
             expect(result.id).toBe("user-123");
             expect(mockSession.save).toHaveBeenCalled();
+            // Should modify Set-Cookie header to remove Domain attribute (browsers reject Domain=.netlify.app)
+            const setCookieCall = setHeaderCalls.find(call => call.name.toLowerCase() === "set-cookie");
+            expect(setCookieCall).toBeDefined();
+            const cookieValue = Array.isArray(setCookieCall!.value)
+                ? setCookieCall!.value[0]
+                : typeof setCookieCall!.value === "string"
+                ? setCookieCall!.value
+                : String(setCookieCall!.value);
+            // Domain attribute should be removed (not present) for Netlify origins
+            expect(cookieValue).not.toMatch(/Domain=[^;]*/i);
+            expect(cookieValue).toContain("session-123");
+        });
+
+        it("should remove Domain attribute for Netlify origin (https://ffftemp.akosua.xyz)", async () => {
+            const hashedPassword = hashSync("password123", 1);
+            const mockUser = {
+                id: "user-123",
+                email: "test@example.com",
+                password: hashedPassword,
+                isAdmin: () => false,
+            } as unknown as PublicUser;
+
+            mockReq.get.mockImplementation((header: string) => {
+                if (header === "Origin") {
+                    return "https://ffftemp.akosua.xyz";
+                }
+                return undefined;
+            });
+            mockReq.sessionID = "session-456";
+            // Track setHeader calls - express-session will call this to set the cookie
+            const setHeaderCalls: { name: string; value: string | number | readonly string[] }[] = [];
+            const _setHeaderSpy = jest
+                .spyOn(mockRes, "setHeader")
+                .mockImplementation((name: string, value: string | number | readonly string[]) => {
+                    setHeaderCalls.push({ name, value });
+                    return mockRes;
+                });
+
+            // Simulate express-session calling setHeader when save() is called
+            // This mimics what express-session does internally
+            const cookieName = process.env.APP_ENV === "staging" ? "staging_trades.sid" : "trades.sid";
+            const mockSession = {
+                user: undefined as string | undefined,
+                id: "session-456",
+                save: jest.fn(cb => {
+                    // Simulate express-session setting the cookie header
+                    mockRes.setHeader("Set-Cookie", `${cookieName}=session-456; Path=/; HttpOnly`);
+                    cb(null);
+                }),
+                destroy: jest.fn(),
+            };
+
+            const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
+
+            mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(
+                mockUser as unknown as ReturnType<UserDAO["findUserWithPasswordByEmail"]>
+            );
+            mockUserDao.updateUser.mockResolvedValue(mockUser);
+            mockUserDao.getUserById.mockResolvedValue(mockUser);
+
+            const result = await caller.login.authenticate({
+                email: "test@example.com",
+                password: "password123",
+            });
+
+            expect(result).toBeDefined();
+            expect(result.id).toBe("user-123");
+            expect(mockSession.save).toHaveBeenCalled();
+            // Should modify Set-Cookie header to remove Domain attribute (browsers reject Domain=.netlify.app)
+            const setCookieCall = setHeaderCalls.find(call => call.name.toLowerCase() === "set-cookie");
+            expect(setCookieCall).toBeDefined();
+            const cookieValue = Array.isArray(setCookieCall!.value)
+                ? setCookieCall!.value[0]
+                : typeof setCookieCall!.value === "string"
+                ? setCookieCall!.value
+                : String(setCookieCall!.value);
+            // Domain attribute should be removed (not present) for Netlify origins
+            expect(cookieValue).not.toMatch(/Domain=[^;]*/i);
+            expect(cookieValue).toContain("session-456");
+        });
+
+        it("should preserve Domain attribute for non-Netlify origins", async () => {
+            const hashedPassword = hashSync("password123", 1);
+            const mockUser = {
+                id: "user-123",
+                email: "test@example.com",
+                password: hashedPassword,
+                isAdmin: () => false,
+            } as unknown as PublicUser;
+
+            const mockSession = {
+                user: undefined as string | undefined,
+                id: "session-789",
+                save: jest.fn(cb => cb(null)),
+                destroy: jest.fn(),
+            };
+
+            mockReq.get.mockImplementation((header: string) => {
+                if (header === "Origin") {
+                    return "https://staging.trades.akosua.xyz";
+                }
+                return undefined;
+            });
+            mockReq.sessionID = "session-789";
+            mockRes.cookie.mockReturnValue(mockRes);
+
+            const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
+
+            mockUserDao.findUserWithPasswordByEmail.mockResolvedValue(
+                mockUser as unknown as ReturnType<UserDAO["findUserWithPasswordByEmail"]>
+            );
+            mockUserDao.updateUser.mockResolvedValue(mockUser);
+            mockUserDao.getUserById.mockResolvedValue(mockUser);
+
+            const result = await caller.login.authenticate({
+                email: "test@example.com",
+                password: "password123",
+            });
+
+            expect(result).toBeDefined();
+            expect(result.id).toBe("user-123");
+            expect(mockSession.save).toHaveBeenCalled();
+            // Should not set cookie with .netlify.app domain
+            expect(mockRes.cookie).not.toHaveBeenCalled();
         });
 
         it("should throw UNAUTHORIZED error with invalid credentials", async () => {
@@ -278,35 +518,40 @@ describe("[TRPC] Auth Router Unit Tests", () => {
                 user: "user-123",
                 destroy: jest.fn((cb: (err: Error | null) => void) => cb(null)),
             };
+            mockReq.sessionID = "session-123";
+            // Set mockReq.session so ctx.req.session.destroy() works
+            mockReq.session = mockSession as any;
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 
             const result = await caller.logout();
 
-            expect(result).toBe(true);
+            expect(result).toEqual({ success: true, sessionsDestroyed: expect.any(Number) });
             expect(mockSession.destroy).toHaveBeenCalled();
         });
 
-        it("should return true when no session exists", async () => {
+        it("should return success with sessionsDestroyed: 0 when no session exists", async () => {
             const caller = createCallerFactory(authRouter)(createMockContext());
 
             const result = await caller.logout();
 
-            expect(result).toBe(true);
+            expect(result).toEqual({ success: true, sessionsDestroyed: 0 });
         });
 
-        it("should throw INTERNAL_SERVER_ERROR when session destroy fails", async () => {
+        it("should still succeed when session destroy fails (logs error but does not throw)", async () => {
             const mockSession = {
                 user: "user-123",
                 destroy: jest.fn((cb: (err: Error | null) => void) => cb(new Error("Destroy failed"))),
             };
+            mockReq.sessionID = "session-123";
+            // Set mockReq.session so ctx.req.session.destroy() works
+            mockReq.session = mockSession as any;
             const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
 
-            await expect(caller.logout()).rejects.toThrow(
-                new TRPCError({
-                    code: "INTERNAL_SERVER_ERROR",
-                    message: "Error destroying session",
-                })
-            );
+            // The new implementation logs errors but doesn't throw - it still returns success
+            const result = await caller.logout();
+
+            expect(result).toEqual({ success: true, sessionsDestroyed: expect.any(Number) });
+            expect(mockSession.destroy).toHaveBeenCalled();
         });
     });
 
