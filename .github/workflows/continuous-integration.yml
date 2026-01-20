@@ -20,7 +20,7 @@ jobs:
           --entrypoint redis-server
 
       postgres:
-        image: postgres
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: test_user
           POSTGRES_PASSWORD: test_password

@@ -62,3 +62,4 @@ prod_pm2_backup/
 backup-db.sh
 docker-compose.stg-postgres.yml
 grafana-dashboard.json
+docker-compose.prod-postgres.yml
