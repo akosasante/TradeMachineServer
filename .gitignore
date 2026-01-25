@@ -60,6 +60,15 @@ TradeMachineElixirApp/**
 prod_nginx_site_copy
 prod_pm2_backup/
 backup-db.sh
+backup-stg-db.sh  
 docker-compose.stg-postgres.yml
+docker-compose.stg-postgres-old.yml
+docker-compose.stg-infra.yml
+docker-compose.staging.yml
+docker-compose.staging-old.yml
+docker-compose.prod.yml
+docker-compose.prod-postgres.yml
 grafana-dashboard.json
 docker-compose.prod-postgres.yml
+old_prod_server_backup/
+
