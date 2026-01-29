@@ -3,7 +3,11 @@ services:
     image: ghcr.io/akosasante/trade-machine-server:${IMAGE_TAG}
     container_name: staging_trademachine
     restart: always
-    network_mode: "host"
+    networks:
+      - monitoring
+      - staging_trademachine_infra
+    ports:
+      - "3015:3015"  # Add explicit port mapping since not using host networking
     env_file:
       - .env
     environment:
@@ -12,11 +16,16 @@ services:
     volumes:
       # Secret files (mount as read-only)
       - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
-    # When using network_mode: "host", the ports section is ignored
-    # because the container shares the host's network stack
+    ports:
+      - "3015:3015" # expose app port to host now that we're not doing 'host'-mode networking
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3015/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 20s
+networks:
+  staging_trademachine_infra:
+    external: true # App joins the network created by infra docker compose
+  monitoring:
+    external: true # App joins the network created by the alloy etc docker compose

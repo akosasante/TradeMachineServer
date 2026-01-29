@@ -3,7 +3,11 @@ services:
     image: ghcr.io/akosasante/trade-machine-server:${IMAGE_TAG}
     container_name: prod_trademachine
     restart: always
-    network_mode: "host"
+    networks:
+      - monitoring
+      - production_trademachine_infra
+    ports:
+      - "3005:3005"  # Add explicit port mapping since not using host networking
     env_file:
       - .env
     environment:
@@ -18,3 +22,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
+networks:
+  staging_trademachine_infra:
+    external: true # App joins the network created by infra docker compose
+  monitoring:
+    external: true # App joins the network created by the alloy etc docker compose
