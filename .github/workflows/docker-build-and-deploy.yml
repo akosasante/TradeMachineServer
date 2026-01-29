@@ -269,13 +269,13 @@ jobs:
             # Update compose file if it doesn't exist
             if [ ! -f "${{ matrix.compose_file }}" ]; then
               echo "Downloading ${{ matrix.compose_file }} from repository..."
-              curl -o "${{ matrix.compose_file }}" "https://raw.githubusercontent.com/${{ github.repository }}/main/${{ matrix.compose_file }}"
+              curl -o "docker-compose.yml" "https://raw.githubusercontent.com/${{ github.repository }}/main/${{ matrix.compose_file }}"
             fi
 
             # Deploy with zero-downtime strategy
             echo "Starting ${{ matrix.environment }} deployment..."
-            docker compose -f ${{ matrix.compose_file }} pull app
-            docker compose -f ${{ matrix.compose_file }} up -d app
+            docker compose pull app
+            docker compose up -d app
 
             # Health check with proper timeout
             echo "Performing health check..."
@@ -296,10 +296,10 @@ jobs:
             if [ "$health_check_passed" = "false" ]; then
               echo "${{ matrix.environment }} health check failed after 90 seconds"
               echo "Container logs:"
-              docker compose -f ${{ matrix.compose_file }} logs app
+              docker compose logs app
 
               echo "Rolling back deployment..."
-              docker compose -f ${{ matrix.compose_file }} down
+              docker compose down
               exit 1
             fi
 
