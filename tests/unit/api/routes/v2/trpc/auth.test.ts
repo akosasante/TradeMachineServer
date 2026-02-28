@@ -64,7 +64,7 @@ jest.mock("../../../../../../src/bootstrap/express", () => {
 });
 
 // Get reference to mocked Redis client for tests
-const getMockRedisV4 = () => (global as any).__mockRedisV4__;
+const _getMockRedisV4 = () => (global as any).__mockRedisV4__;
 
 describe("[TRPC] Auth Router Unit Tests", () => {
     const mockPrisma = mockDeep<ExtendedPrismaClient>();
