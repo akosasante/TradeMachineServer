@@ -35,6 +35,7 @@ model DraftPick {
   @@index([originalOwnerId], map: "IDX_5e448065a1f32514925e8045b6")
   @@index([currentOwnerId], map: "IDX_edbfdecf43bec56ee160c9ba6b")
   @@index([lastSyncedAt])
+  @@index([type, lastSyncedAt])
   @@map("draft_pick")
 }
 
@@ -88,6 +89,7 @@ model Player {
   @@index([leagueTeamId, league], map: "IDX_a49ffcdb6d07eb76e0052d5784")
   @@index([league], map: "IDX_d94a2974262e7c6129a4c5e690")
   @@index([lastSyncedAt])
+  @@index([league, lastSyncedAt])
   @@map("player")
 }
 
