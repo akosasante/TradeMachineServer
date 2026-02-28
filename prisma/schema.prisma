@@ -21,6 +21,8 @@ model DraftPick {
   season          Int
   // Major league, high minors (triple A and above), low minors
   type            PickLeagueLevel
+  // Track when this pick's data was last synced from Google Sheets
+  lastSyncedAt    DateTime?       @db.Timestamp(6)
   // [n-1] Maps to the FFF team that currently owns this pick (after trades). TODO: Should this field be marked as mandatory?
   currentOwnerId  String?         @db.Uuid
   currentOwner    Team?           @relation("draft_pick_currentOwnerIdToteam", fields: [currentOwnerId], references: [id], onUpdate: NoAction, map: "FK_edbfdecf43bec56ee160c9ba6bd")
@@ -73,6 +75,8 @@ model Player {
   meta         Json?
   // The ESPN id of the player; currently only set for major leaguers to allow deduplication.
   playerDataId Int?
+  // Track when this player's data was last synced (ESPN for majors, Sheets for minors)
+  lastSyncedAt DateTime?          @db.Timestamp(6)
   // [n-1] The team in FFF who currently owns this player, if any.
   leagueTeamId String?            @db.Uuid
   ownerTeam    Team?              @relation(fields: [leagueTeamId], references: [id], onUpdate: NoAction, map: "FK_1aad05b09bda2079429cd8ba9d8")
@@ -137,6 +141,8 @@ model Team {
   status             TeamStatus         @default(DISABLED)
   // Unstructured data pulled from ESPN; mostly not currently used
   espnTeam           Json?
+  // Track when this team's data was last synced from ESPN
+  lastSyncedAt       DateTime?          @db.Timestamp(6)
   // [1-n] A list of the draft picks that this team owned at the beginning of a season (not filtered by year or anything)
   originalDraftPicks DraftPick[]        @relation("draft_pick_originalOwnerIdToteam")
   // [1-n] A list of the draft picks that this team currently owns (not filtered by year or anything)
