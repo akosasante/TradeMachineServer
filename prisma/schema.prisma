@@ -315,6 +315,49 @@ model oban_peers {
   @@ignore
 }
 
+enum SyncJobType {
+  espn_team_sync
+  minors_sync
+  mlb_players_sync
+  draft_picks_sync
+}
+
+enum SyncDatabaseScope {
+  production
+  staging
+  both
+}
+
+enum SyncJobStatus {
+  started
+  completed
+  failed
+}
+
+model SyncJobExecution {
+  id               String            @id @default(uuid()) @db.Uuid
+  dateCreated      DateTime          @default(now()) @db.Timestamp(6)
+  dateModified     DateTime          @default(now()) @db.Timestamp(6)
+  jobType          SyncJobType
+  databaseScope    SyncDatabaseScope
+  status           SyncJobStatus
+  startedAt        DateTime          @db.Timestamp(6)
+  completedAt      DateTime?         @db.Timestamp(6)
+  durationMs       Int?
+  recordsProcessed Int?
+  recordsUpdated   Int?
+  recordsSkipped   Int?
+  errorMessage     String?           @db.Text
+  obanJobId        BigInt?
+  traceId          String?           @db.VarChar
+  metadata         Json?
+
+  @@index([jobType, startedAt])
+  @@index([status, jobType])
+  @@index([databaseScope, jobType])
+  @@map("sync_job_execution")
+}
+
 enum PickLeagueLevel {
   MAJORS     @map("1")
   HIGHMINORS @map("2")
