@@ -36,6 +36,7 @@ export class PlayerFactory {
             mlbTeam: null,
             meta: {},
             playerDataId: parseInt(faker.random.numeric(5), 10),
+            lastSyncedAt: null,
             leagueTeamId: null,
         };
     }
