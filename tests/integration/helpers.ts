@@ -7,6 +7,7 @@ import { Connection } from "typeorm";
 import User from "../../src/models/user";
 import logger from "../../src/bootstrap/logger";
 import { ExtendedPrismaClient } from "../../src/bootstrap/prisma-db";
+import { redisClient } from "../../src/bootstrap/express";
 
 export async function makeLoggedInRequest(
     agent: request.SuperTest<request.Test>,
@@ -142,5 +143,25 @@ export const clearPrismaDb = async (
         return await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);
     } catch (error) {
         logger.error({ error });
+    }
+};
+
+/**
+ * Clears all test-created Redis keys (sessions, user session sets, SSO tokens).
+ * Call in afterEach to prevent stale sessions from accumulating across test runs.
+ */
+export const clearRedisTestData = async (): Promise<void> => {
+    const client = redisClient.v4 as any;
+    const prefix = process.env.APP_ENV === "staging" ? "stg_sess:" : "sess:";
+
+    const [sessionKeys, userSessionKeys, ssoKeys] = await Promise.all([
+        client.keys(`${prefix}*`) as Promise<string[]>,
+        client.keys("user_sessions:*") as Promise<string[]>,
+        client.keys("sso:transfer:*") as Promise<string[]>,
+    ]);
+
+    const allKeys: string[] = [...sessionKeys, ...userSessionKeys, ...ssoKeys];
+    if (allKeys.length > 0) {
+        await Promise.all(allKeys.map((k: string) => client.del(k)));
     }
 };
