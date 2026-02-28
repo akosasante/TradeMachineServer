@@ -84,8 +84,16 @@ export async function loadOriginalSession(sessionId: string): Promise<StoredSess
  */
 export async function registerUserSession(userId: string, sessionId: string): Promise<void> {
     const key = `${USER_SESSIONS_PREFIX}${userId}`;
-    await redisClientV4.sAdd(key, sessionId);
-    await redisClientV4.expire(key, COOKIE_MAX_AGE_SECONDS);
+    logger.info(`[registerUserSession] Attempting SADD key="${key}" member="${sessionId}"`);
+    try {
+        const sAddResult = await redisClientV4.sAdd(key, sessionId);
+        logger.info(`[registerUserSession] SADD result=${sAddResult} (type=${typeof sAddResult})`);
+        const expireResult = await redisClientV4.expire(key, COOKIE_MAX_AGE_SECONDS);
+        logger.info(`[registerUserSession] EXPIRE result=${String(expireResult)} ttl=${COOKIE_MAX_AGE_SECONDS}`);
+    } catch (err) {
+        logger.error(`[registerUserSession] Failed for key="${key}":`, err);
+        throw err;
+    }
 }
 
 export interface DestroySessionsResult {
@@ -103,9 +111,14 @@ export interface DestroySessionsResult {
  */
 export async function destroyAllUserSessions(userId: string): Promise<DestroySessionsResult> {
     const userSessionsKey = `${USER_SESSIONS_PREFIX}${userId}`;
+    logger.info(`[destroyAllUserSessions] Looking up sessions for key="${userSessionsKey}"`);
     const sessionIds = await redisClientV4.sMembers(userSessionsKey);
+    logger.info(
+        `[destroyAllUserSessions] SMEMBERS result: ${sessionIds?.length ?? 0} sessions (type=${typeof sessionIds})`
+    );
 
     if (!sessionIds || sessionIds.length === 0) {
+        logger.info(`[destroyAllUserSessions] No sessions found for user ${userId}`);
         return { sessionsDestroyed: 0, sessionsSkipped: 0 };
     }
 
