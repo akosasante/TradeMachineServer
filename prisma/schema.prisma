@@ -34,6 +34,7 @@ model DraftPick {
   @@index([currentOwnerId, originalOwnerId], map: "IDX_0de9414ff65ab246290e2793ac")
   @@index([originalOwnerId], map: "IDX_5e448065a1f32514925e8045b6")
   @@index([currentOwnerId], map: "IDX_edbfdecf43bec56ee160c9ba6b")
+  @@index([lastSyncedAt])
   @@map("draft_pick")
 }
 
@@ -86,6 +87,7 @@ model Player {
   @@index([name], map: "IDX_40e3ad1d41d05dda60e9ba76cc")
   @@index([leagueTeamId, league], map: "IDX_a49ffcdb6d07eb76e0052d5784")
   @@index([league], map: "IDX_d94a2974262e7c6129a4c5e690")
+  @@index([lastSyncedAt])
   @@map("player")
 }
 
@@ -158,6 +160,7 @@ model Team {
   // [1-n] A list of users that are owners of this team.
   owners             User[]
 
+  @@index([lastSyncedAt])
   @@map("team")
 }
 
