@@ -275,7 +275,7 @@ jobs:
             # Deploy with zero-downtime strategy
             echo "Starting ${{ matrix.environment }} deployment..."
             docker compose pull app
-            docker compose up -d app
+            docker compose up -d --force-recreate app
 
             # Health check with proper timeout
             echo "Performing health check..."
