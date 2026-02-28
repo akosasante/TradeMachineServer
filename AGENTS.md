@@ -27,6 +27,7 @@ This file provides guidance to AI Assistants when working with code in this repo
 - Format: `make format` (runs Prettier via ESLint)
 - Type check: `make typecheck`
 - Full check (lint, format, typecheck): `make fullcheck`
+- **Set up test database**: `make prisma-migrate-test` (required once before running integration tests, and again after any new Prisma migrations — see "Test Database Setup" below)
 - Run single test file: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --bail --forceExit --testPathPattern=<path-to-test-file>`
 - Run single test by name: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --bail --forceExit --testNamePattern="<name-or-regex>"` (can also be combined with --testPathPattern)
 - Run unit tests: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --bail --forceExit --testNamePattern=unit/`
@@ -35,6 +36,14 @@ This file provides guidance to AI Assistants when working with code in this repo
 - Test coverage: `NODE_ENV=test ORM_CONFIG=local-test npx jest --config ./jest.config.js --detectOpenHandles --bail --forceExit --coverage`
 - When writing tests for new code, prefer using Prisma and the DAO v2 pattern. Integration tests should use NO mocks. Unit tests can use mocks as needed. We generally mock one layer down from the code being tested (e.g. mock DAO methods when testing controllers); or only mock the DAO methods that would hit the database.
 - Never delete tests unless explicitly asked to. If a test is consistently failing and you're having trouble fixing it, then comment it out (and add an eslint-disable comment) and leave a clear TODO comment explaining why it was disabled and what needs to be done to fix it.
+
+### Test Database Setup
+Integration tests run against a separate PostgreSQL schema called `test` so they don't interfere with development data. The test code does **not** create the schema or run migrations — it assumes the schema already exists with the correct table structure.
+
+- **`make prisma-migrate-test`**: Sources `tests/.env` (which sets `DATABASE_URL` with `?schema=test`) and runs `prisma migrate deploy` against the `test` schema. Run this once before running integration tests for the first time, and again whenever new Prisma migrations are added.
+- **`make prisma-push-test`**: Same idea but runs `prisma db push --accept-data-loss` instead. More aggressive — useful if the test schema is out of sync or corrupted and you want to force-reset it to match the Prisma schema without applying migrations incrementally.
+- At test runtime, `afterEach` hooks call `clearPrismaDb()` (in `tests/integration/helpers.ts`) to truncate all tables between tests. Factories in `tests/factories/` create fresh test data as needed.
+- TypeORM connects to the `test` schema via `ORM_CONFIG=local-test` (defined in `ormconfig.js`). Prisma connects via the `DATABASE_URL` in `tests/.env`.
 
 ## Modern Development Environment
 

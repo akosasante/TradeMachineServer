@@ -104,13 +104,34 @@ make fullcheck      # Run all: lint-fix, typecheck
 
 ### **Testing**
 ```bash
-make test-unit         # Unit tests with logging prompts
-make test-integration  # Integration tests with logging prompts
-make test-local        # Both unit and integration tests
-make test-watch        # Watch mode for tests
-make test-file         # Test specific file (prompts for path)
-make test-ci           # CI tests (silent, no logging)
+make prisma-migrate-test  # Set up test DB schema (required before integration tests)
+make test-unit            # Unit tests with logging prompts
+make test-integration     # Integration tests with logging prompts
+make test-local           # Both unit and integration tests
+make test-watch           # Watch mode for tests
+make test-file            # Test specific file (prompts for path)
+make test-ci              # CI tests (silent, no logging)
 ```
+
+#### Test Database Setup
+
+Integration tests run against a dedicated `test` schema in PostgreSQL, separate from your development data. Before running integration tests locally for the first time (or after new Prisma migrations are added), you need to set up this schema:
+
+```bash
+# Apply all Prisma migrations to the test schema
+make prisma-migrate-test
+```
+
+This sources `tests/.env` (which points `DATABASE_URL` at the `test` schema) and runs `prisma migrate deploy`. The test schema lives in the same database as development but is fully isolated.
+
+If the test schema gets out of sync or corrupted, you can force-reset it:
+
+```bash
+# Force-push the Prisma schema (drops and recreates tables — destructive)
+make prisma-push-test
+```
+
+At runtime, each integration test file truncates all tables between tests automatically via `clearPrismaDb()`, so you only need to run the migration command when the schema itself changes.
 
 ### **Database Migrations** (TypeORM)
 ```bash
