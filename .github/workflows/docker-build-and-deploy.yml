@@ -266,6 +266,9 @@ jobs:
             # Set IMAGE_TAG environment variable
             export IMAGE_TAG="${{ matrix.image_tag }}"
 
+            # Authenticate with container registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
             # Update compose file if it doesn't exist
             if [ ! -f "${{ matrix.compose_file }}" ]; then
               echo "Downloading ${{ matrix.compose_file }} from repository..."

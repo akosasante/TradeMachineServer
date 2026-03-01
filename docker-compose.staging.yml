@@ -16,8 +16,6 @@ services:
     volumes:
       # Secret files (mount as read-only)
       - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
-    ports:
-      - "3015:3015" # expose app port to host now that we're not doing 'host'-mode networking
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3015/health"]
       interval: 30s
