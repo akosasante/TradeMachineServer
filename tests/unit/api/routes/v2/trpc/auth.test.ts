@@ -42,6 +42,10 @@ jest.mock("../../../../../../src/bootstrap/express", () => {
     const keys = jest.fn(() => Promise.resolve([]));
     const get = jest.fn(() => Promise.resolve(null));
     const del = jest.fn(() => Promise.resolve(1));
+    const sAdd = jest.fn(() => Promise.resolve(1));
+    const sMembers = jest.fn(() => Promise.resolve([]));
+    const expire = jest.fn(() => Promise.resolve(true));
+    const setNX = jest.fn(() => Promise.resolve(true));
 
     // Store references in global for test access
     (global as any).__mockRedisKeys__ = keys;
@@ -52,6 +56,10 @@ jest.mock("../../../../../../src/bootstrap/express", () => {
         keys,
         get,
         del,
+        sAdd,
+        sMembers,
+        expire,
+        setNX,
     };
     // Store reference in global for test access
     (global as any).__mockRedisV4__ = mockV4;
@@ -59,12 +67,13 @@ jest.mock("../../../../../../src/bootstrap/express", () => {
         redisClient: {
             v4: mockV4,
         },
+        COOKIE_MAX_AGE_SECONDS: 604800,
         getSessionCookieName: jest.fn(() => "trades.sid"),
     };
 });
 
 // Get reference to mocked Redis client for tests
-const getMockRedisV4 = () => (global as any).__mockRedisV4__;
+const _getMockRedisV4 = () => (global as any).__mockRedisV4__;
 
 describe("[TRPC] Auth Router Unit Tests", () => {
     const mockPrisma = mockDeep<ExtendedPrismaClient>();

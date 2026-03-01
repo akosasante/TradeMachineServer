@@ -10,7 +10,13 @@ import {
 } from "../../../../bootstrap/metrics";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import { serializeUser } from "../../../../authentication/auth";
-import { consumeTransferToken, createTransferToken, loadOriginalSession, SSO_CONFIG } from "../utils/ssoTokens";
+import {
+    consumeTransferToken,
+    createTransferToken,
+    loadOriginalSession,
+    registerUserSession,
+    SSO_CONFIG,
+} from "../utils/ssoTokens";
 import { TRPCError } from "@trpc/server";
 
 // Declare the additional fields that we add to express session
@@ -161,6 +167,8 @@ export const clientRouter = router({
 
                 // Copy over the user identity, to ensure express-session knows to resave the session
                 ctx.req.session.user = serializeUser(user);
+
+                await registerUserSession(user.id!, ctx.req.sessionID);
 
                 addSpanAttributes({
                     "exchange_redirect_token.new_session_id": ctx.req.sessionID,

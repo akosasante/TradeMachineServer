@@ -3,7 +3,7 @@ import request from "supertest";
 import { hashSync } from "bcryptjs";
 import logger from "../../../src/bootstrap/logger";
 import startServer from "../../../src/bootstrap/app";
-import { clearPrismaDb } from "../helpers";
+import { clearPrismaDb, clearRedisTestData } from "../helpers";
 import initializeDb, { ExtendedPrismaClient } from "../../../src/bootstrap/prisma-db";
 import { handleExitInTest, registerCleanupCallback } from "../../../src/bootstrap/shutdownHandler";
 import UserDAO from "../../../src/DAO/v2/UserDAO";
@@ -47,6 +47,7 @@ describe("Client API endpoints", () => {
     const testUser = { email: "test@example.com", password: "testpassword123" };
 
     afterEach(async () => {
+        await clearRedisTestData();
         return await clearPrismaDb(prisma);
     });
 

@@ -39,6 +39,7 @@ jest.mock("../../../../../../src/api/routes/v2/utils/ssoTokens", () => ({
     createTransferToken: jest.fn(),
     consumeTransferToken: jest.fn(),
     loadOriginalSession: jest.fn(),
+    registerUserSession: jest.fn(() => Promise.resolve()),
 }));
 
 describe("[TRPC] Client Router Unit Tests", () => {

@@ -7,6 +7,7 @@ import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import UserDO from "../../models/user";
 import { PublicUser } from "../../DAO/v2/UserDAO";
+import { registerUserSession } from "../routes/v2/utils/ssoTokens";
 
 // declare the additional fields that we add to express session (via routing-controllers)
 declare module "express-session" {
@@ -46,6 +47,12 @@ export class LoginHandler implements ExpressMiddlewareInterface {
                         logger.error(inspect(sessionErr));
                         return next(new Error("Could not save session"));
                     }
+                    const userId = serializeUser(user);
+                    if (userId) {
+                        registerUserSession(userId, request.sessionID).catch(registerErr =>
+                            logger.warn("Failed to register user session:", registerErr)
+                        );
+                    }
                     return next();
                 });
             }
@@ -76,6 +83,12 @@ export class RegisterHandler implements ExpressMiddlewareInterface {
             } else {
                 logger.debug(`registered user: ${user}`);
                 request.session.user = serializeUser(user);
+                const userId = serializeUser(user);
+                if (userId) {
+                    registerUserSession(userId, request.sessionID).catch(registerErr =>
+                        logger.warn("Failed to register user session:", registerErr)
+                    );
+                }
                 return next();
             }
         });

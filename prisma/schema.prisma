@@ -21,6 +21,8 @@ model DraftPick {
   season          Int
   // Major league, high minors (triple A and above), low minors
   type            PickLeagueLevel
+  // Track when this pick's data was last synced from Google Sheets
+  lastSyncedAt    DateTime?       @db.Timestamp(6)
   // [n-1] Maps to the FFF team that currently owns this pick (after trades). TODO: Should this field be marked as mandatory?
   currentOwnerId  String?         @db.Uuid
   currentOwner    Team?           @relation("draft_pick_currentOwnerIdToteam", fields: [currentOwnerId], references: [id], onUpdate: NoAction, map: "FK_edbfdecf43bec56ee160c9ba6bd")
@@ -32,6 +34,8 @@ model DraftPick {
   @@index([currentOwnerId, originalOwnerId], map: "IDX_0de9414ff65ab246290e2793ac")
   @@index([originalOwnerId], map: "IDX_5e448065a1f32514925e8045b6")
   @@index([currentOwnerId], map: "IDX_edbfdecf43bec56ee160c9ba6b")
+  @@index([lastSyncedAt])
+  @@index([type, lastSyncedAt])
   @@map("draft_pick")
 }
 
@@ -73,6 +77,8 @@ model Player {
   meta         Json?
   // The ESPN id of the player; currently only set for major leaguers to allow deduplication.
   playerDataId Int?
+  // Track when this player's data was last synced (ESPN for majors, Sheets for minors)
+  lastSyncedAt DateTime?          @db.Timestamp(6)
   // [n-1] The team in FFF who currently owns this player, if any.
   leagueTeamId String?            @db.Uuid
   ownerTeam    Team?              @relation(fields: [leagueTeamId], references: [id], onUpdate: NoAction, map: "FK_1aad05b09bda2079429cd8ba9d8")
@@ -82,6 +88,8 @@ model Player {
   @@index([name], map: "IDX_40e3ad1d41d05dda60e9ba76cc")
   @@index([leagueTeamId, league], map: "IDX_a49ffcdb6d07eb76e0052d5784")
   @@index([league], map: "IDX_d94a2974262e7c6129a4c5e690")
+  @@index([lastSyncedAt])
+  @@index([league, lastSyncedAt])
   @@map("player")
 }
 
@@ -137,6 +145,8 @@ model Team {
   status             TeamStatus         @default(DISABLED)
   // Unstructured data pulled from ESPN; mostly not currently used
   espnTeam           Json?
+  // Track when this team's data was last synced from ESPN
+  lastSyncedAt       DateTime?          @db.Timestamp(6)
   // [1-n] A list of the draft picks that this team owned at the beginning of a season (not filtered by year or anything)
   originalDraftPicks DraftPick[]        @relation("draft_pick_originalOwnerIdToteam")
   // [1-n] A list of the draft picks that this team currently owns (not filtered by year or anything)
@@ -152,6 +162,7 @@ model Team {
   // [1-n] A list of users that are owners of this team.
   owners             User[]
 
+  @@index([lastSyncedAt])
   @@map("team")
 }
 
@@ -313,6 +324,49 @@ model oban_peers {
   expires_at DateTime @db.Timestamp(6)
 
   @@ignore
+}
+
+enum SyncJobType {
+  espn_team_sync
+  minors_sync
+  mlb_players_sync
+  draft_picks_sync
+}
+
+enum SyncDatabaseScope {
+  production
+  staging
+  both
+}
+
+enum SyncJobStatus {
+  started
+  completed
+  failed
+}
+
+model SyncJobExecution {
+  id               String            @id @default(uuid()) @db.Uuid
+  dateCreated      DateTime          @default(now()) @db.Timestamp(6)
+  dateModified     DateTime          @default(now()) @db.Timestamp(6)
+  jobType          SyncJobType
+  databaseScope    SyncDatabaseScope
+  status           SyncJobStatus
+  startedAt        DateTime          @db.Timestamp(6)
+  completedAt      DateTime?         @db.Timestamp(6)
+  durationMs       Int?
+  recordsProcessed Int?
+  recordsUpdated   Int?
+  recordsSkipped   Int?
+  errorMessage     String?           @db.Text
+  obanJobId        BigInt?
+  traceId          String?           @db.VarChar
+  metadata         Json?
+
+  @@index([jobType, startedAt])
+  @@index([status, jobType])
+  @@index([databaseScope, jobType])
+  @@map("sync_job_execution")
 }
 
 enum PickLeagueLevel {

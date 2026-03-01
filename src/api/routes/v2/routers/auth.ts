@@ -16,7 +16,7 @@ import { activeUserMetric, activeSessionsMetric } from "../../../../bootstrap/me
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import { isNetlifyOrigin } from "../../../middlewares/CookieDomainHandler";
 import { getSessionCookieName } from "../../../../bootstrap/express";
-import { destroyAllUserSessions } from "../utils/ssoTokens";
+import { destroyAllUserSessions, registerUserSession } from "../utils/ssoTokens";
 
 // Input validation schemas
 const emailSchema = z.object({
@@ -152,6 +152,8 @@ export const authRouter = router({
                         }
                     });
                 });
+
+                await registerUserSession(serializeUser(authenticatedUser)!, ctx.req.sessionID);
 
                 // Log that we modified the cookie for Netlify origins
                 if (isNetlify) {
@@ -567,6 +569,8 @@ export const authRouter = router({
 
                     // Set session like RegisterHandler does
                     ctx.session.user = serializeUser(registeredUser);
+
+                    await registerUserSession(serializeUser(registeredUser)!, ctx.req.sessionID);
 
                     // Increment metrics like the original signup endpoint
                     activeUserMetric.inc();

@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { redisClient } from "../../../../bootstrap/express";
+import { COOKIE_MAX_AGE_SECONDS, redisClient } from "../../../../bootstrap/express";
 import { SessionData } from "express-session";
 import logger from "../../../../bootstrap/logger";
 
@@ -10,7 +10,13 @@ interface StoredSessionPayload {
 
 type StoredSessionData = Partial<SessionData>;
 
-const redisClientV4 = redisClient.v4 as unknown as typeof redisClient;
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const redisClientV4: typeof redisClient & {
+    sAdd: (key: string, member: string) => Promise<number>;
+    sMembers: (key: string) => Promise<string[]>;
+} = redisClient.v4 as any;
+
+const USER_SESSIONS_PREFIX = "user_sessions:";
 
 // Allow only these redirect hosts
 const ALLOWED_REDIRECT_HOSTS = new Set([
@@ -72,6 +78,24 @@ export async function loadOriginalSession(sessionId: string): Promise<StoredSess
     }
 }
 
+/**
+ * Registers a session ID in a per-user Redis Set so we can efficiently
+ * find and destroy all sessions for a user without scanning all keys.
+ */
+export async function registerUserSession(userId: string, sessionId: string): Promise<void> {
+    const key = `${USER_SESSIONS_PREFIX}${userId}`;
+    logger.info(`[registerUserSession] Attempting SADD key="${key}" member="${sessionId}"`);
+    try {
+        const sAddResult = await redisClientV4.sAdd(key, sessionId);
+        logger.info(`[registerUserSession] SADD result=${sAddResult} (type=${typeof sAddResult})`);
+        const expireResult = await redisClientV4.expire(key, COOKIE_MAX_AGE_SECONDS);
+        logger.info(`[registerUserSession] EXPIRE result=${String(expireResult)} ttl=${COOKIE_MAX_AGE_SECONDS}`);
+    } catch (err) {
+        logger.error(`[registerUserSession] Failed for key="${key}":`, err);
+        throw err;
+    }
+}
+
 export interface DestroySessionsResult {
     sessionsDestroyed: number;
     sessionsSkipped: number;
@@ -79,42 +103,43 @@ export interface DestroySessionsResult {
 
 /**
  * Destroys all Redis sessions belonging to a specific user.
- * This is used for "logout everywhere" functionality.
- *
- * Note: Using KEYS is blocking, but acceptable for logout operations (infrequent).
- * In production with many sessions, consider using SCAN with cursor iteration.
+ * Uses a per-user Redis Set (populated by registerUserSession) for O(1)
+ * lookup instead of scanning all keys with KEYS.
  *
  * Important: This function does NOT touch metrics - callers are responsible for
  * updating activeUserMetric and activeSessionsMetric appropriately.
  */
 export async function destroyAllUserSessions(userId: string): Promise<DestroySessionsResult> {
+    const userSessionsKey = `${USER_SESSIONS_PREFIX}${userId}`;
+    logger.info(`[destroyAllUserSessions] Looking up sessions for key="${userSessionsKey}"`);
+    const sessionIds = await redisClientV4.sMembers(userSessionsKey);
+    logger.info(
+        `[destroyAllUserSessions] SMEMBERS result: ${sessionIds?.length ?? 0} sessions (type=${typeof sessionIds})`
+    );
+
+    if (!sessionIds || sessionIds.length === 0) {
+        logger.info(`[destroyAllUserSessions] No sessions found for user ${userId}`);
+        return { sessionsDestroyed: 0, sessionsSkipped: 0 };
+    }
+
     const sessionPrefix = process.env.APP_ENV === "staging" ? "stg_sess:" : "sess:";
-    const allSessionKeys = (await redisClientV4.keys(`${sessionPrefix}*`)) || [];
+    const keysToDelete = sessionIds.map(sid => `${sessionPrefix}${sid}`);
 
-    const matchingKeys: string[] = [];
-    let sessionsSkipped = 0;
+    let sessionsDestroyed = 0;
+    const results = await Promise.all(
+        keysToDelete.map(key =>
+            redisClientV4.del(key).catch(err => {
+                logger.warn(`Failed to delete session key ${key}:`, err);
+                return 0;
+            })
+        )
+    );
+    sessionsDestroyed = results.filter(r => r > 0).length;
 
-    for (const key of allSessionKeys) {
-        try {
-            const sessionData = await redisClientV4.get(key);
-            if (sessionData) {
-                const parsed = JSON.parse(sessionData) as { user?: string };
-                if (parsed.user === userId) {
-                    matchingKeys.push(key);
-                }
-            }
-        } catch (error) {
-            sessionsSkipped++;
-            logger.warn(`Skipped invalid session data for key ${key}:`, error);
-        }
-    }
-
-    if (matchingKeys.length > 0) {
-        await Promise.all(matchingKeys.map(key => redisClientV4.del(key)));
-    }
+    await redisClientV4.del(userSessionsKey);
 
     return {
-        sessionsDestroyed: matchingKeys.length,
-        sessionsSkipped,
+        sessionsDestroyed,
+        sessionsSkipped: sessionIds.length - sessionsDestroyed,
     };
 }
