@@ -3,7 +3,6 @@ import { inspect } from "util";
 import logger from "../bootstrap/logger";
 import { EmailJob, EmailJobName, TradeEmail } from "./processors";
 import User from "../models/user";
-import { EmailStatusEvent } from "../api/routes/EmailController";
 import Trade from "../models/trade";
 import { Publisher } from "../scheduled_jobs/publisher";
 import { recordJobMetrics } from "../scheduled_jobs/metrics";
@@ -58,16 +57,6 @@ export class EmailPublisher extends Publisher {
 
     public async queueTestEmail(user: User): Promise<Job<EmailJob> | undefined> {
         return await this.queueEmail(user, "test_email");
-    }
-
-    public async queueWebhookResponse(event: EmailStatusEvent): Promise<Bull.Job> {
-        const jobName = "handle_webhook";
-        const job: EmailJob = {
-            event: JSON.stringify(event),
-        };
-        const opts: JobOptions = { attempts: 3, backoff: 10000 };
-        logger.debug(`queuing webhook response: ${inspect(event)}`);
-        return await this.queue!.add(jobName, job, opts);
     }
 
     public async queueTradeRequestMail(trade: Trade, email: string): Promise<Job<TradeEmail> | undefined> {

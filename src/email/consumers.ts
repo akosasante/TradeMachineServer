@@ -56,7 +56,6 @@ export function setupEmailConsumers(): void {
     void emailQueue.process("reset_pass", handleEmailJob);
     void emailQueue.process("registration_email", handleEmailJob);
     void emailQueue.process("test_email", handleEmailJob);
-    void emailQueue.process("handle_webhook", handleEmailJob);
     void emailQueue.process("request_trade", handleTradeEmailJob);
     void emailQueue.process("trade_declined", handleTradeEmailJob);
     void emailQueue.process("trade_accepted", handleTradeEmailJob);

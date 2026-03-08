@@ -26,10 +26,18 @@ export interface DiscordJobData {
     };
 }
 
+export interface WebhookStatusJobData {
+    env: ObanEnv;
+    message_id: string;
+    event: string; // e.g. "delivered", "opened", "bounced"
+    email?: string;
+    reason?: string;
+}
+
 export interface CreateObanJobInput {
     queue: string;
     worker: string;
-    args: EmailJobData | DiscordJobData;
+    args: EmailJobData | DiscordJobData | WebhookStatusJobData;
     scheduled_at?: Date;
     priority?: number;
     max_attempts?: number;
@@ -113,6 +121,18 @@ export default class ObanDAO {
             queue: "discord",
             worker: "TradeMachine.Jobs.DiscordWorker",
             args: discordJobData,
+            max_attempts: 3,
+        });
+    }
+
+    /**
+     * Enqueue a webhook status update job (convenience method)
+     */
+    public async enqueueEmailWebhookJob(webhookJobData: WebhookStatusJobData): Promise<ObanJob> {
+        return this.enqueueJob({
+            queue: "emails",
+            worker: "TradeMachine.Jobs.EmailWebhookWorker",
+            args: webhookJobData,
             max_attempts: 3,
         });
     }
