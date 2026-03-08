@@ -76,5 +76,4 @@ describe("Email queue processors", () => {
             expect(EMAILER.sendTradeSubmissionEmail).toHaveBeenCalledWith("me@example.com", trade);
         });
     });
-
 });
