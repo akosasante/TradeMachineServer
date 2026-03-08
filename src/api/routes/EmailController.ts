@@ -52,7 +52,7 @@ export default class EmailController {
         logger.debug(`Received email webhook: ${inspect(event)}`);
 
         const prisma = getPrismaClientFromRequest(request);
-        if (!prisma.obanJob) {
+        if (!prisma || !prisma.obanJob) {
             logger.error("obanJob model not available in Prisma client");
             return response.status(500).json({ error: "obanJob not available in Prisma client" });
         }

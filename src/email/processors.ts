@@ -75,7 +75,7 @@ export async function handleTradeEmailJob(emailJob: Job<TradeEmail>): Promise<Se
                 );
             }
         }
-        return emailTask(emailJob.data.recipient, trade);
+        return (emailTask as TradeEmailFunction)(emailJob.data.recipient, trade);
     }
 }
 
