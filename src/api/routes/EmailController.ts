@@ -7,6 +7,7 @@ import { EmailPublisher } from "../../email/publishers";
 import { rollbar } from "../../bootstrap/rollbar";
 import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
 import ObanDAO, { WebhookStatusJobData } from "../../DAO/v2/ObanDAO";
+import { extractTraceContext } from "../../utils/tracing";
 
 export interface EmailStatusEvent {
     id: number;
@@ -57,12 +58,14 @@ export default class EmailController {
         }
 
         const obanDao = new ObanDAO(prisma.obanJob);
+        const traceContext = extractTraceContext();
         await obanDao.enqueueEmailWebhookJob({
             env: envFromTags(event.tags),
             message_id: event["message-id"],
             event: event.event,
             email: event.email,
             reason: event.reason,
+            trace_context: traceContext || undefined,
         });
 
         return response.status(200).json({});

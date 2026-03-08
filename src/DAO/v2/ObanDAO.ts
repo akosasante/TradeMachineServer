@@ -32,6 +32,10 @@ export interface WebhookStatusJobData {
     event: string; // e.g. "delivered", "opened", "bounced"
     email?: string;
     reason?: string;
+    trace_context?: {
+        traceparent: string;
+        tracestate?: string;
+    };
 }
 
 export interface CreateObanJobInput {
