@@ -265,6 +265,8 @@ model User {
   displayName            String?    @db.VarChar
   // used to `@` mention the correct person in slack when posting the trade submitted message
   slackUsername          String?    @db.VarChar
+  // Discord user ID (snowflake) for `@` mentions in Discord trade announcements
+  discordUserId          String?    @db.VarChar
   // Used for access control; whether they're a regular-degular owner, a privelged commissioner, or all-powerful admin
   role                   UserRole   @default(OWNER)
   // used for cookies
