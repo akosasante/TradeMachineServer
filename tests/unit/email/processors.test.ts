@@ -1,14 +1,7 @@
 import { UserFactory } from "../../factories/UserFactory";
-import {
-    EmailJob,
-    handleEmailJob,
-    handleTradeEmailJob,
-    handleWebhookResponse,
-    TradeEmail,
-} from "../../../src/email/processors";
+import { EmailJob, handleEmailJob, handleTradeEmailJob, TradeEmail } from "../../../src/email/processors";
 import { EMAILER } from "../../../src/email/mailer";
 import logger from "../../../src/bootstrap/logger";
-import EmailDAO from "../../../src/DAO/EmailDAO";
 import { TradeFactory } from "../../factories/TradeFactory";
 import { Job } from "bull";
 
@@ -23,11 +16,6 @@ jest.mock("../../../src/email/mailer", () => ({
     },
 }));
 
-const mockEmailDAO = {
-    getEmailByMessageId: jest.fn(),
-    updateEmail: jest.fn(),
-};
-
 const user = UserFactory.getUser();
 const trade = TradeFactory.getTrade();
 const userJson = JSON.stringify(user);
@@ -40,7 +28,7 @@ afterAll(() => {
     logger.debug("~~~~~~EMAIL QUEUE PROCESSORS TESTS COMPLETE~~~~~~");
 });
 afterEach(() => {
-    [EMAILER, mockEmailDAO].forEach(mockedThing => Object.values(mockedThing).forEach(mockFn => mockFn.mockReset()));
+    Object.values(EMAILER).forEach(mockFn => mockFn.mockReset());
 });
 
 describe("Email queue processors", () => {
@@ -89,19 +77,4 @@ describe("Email queue processors", () => {
         });
     });
 
-    it("handleWebhookResponse - it should get the email by id and that's it for now", async () => {
-        const webhookEvent = {
-            event: "request",
-            email: "example@example.com",
-            id: 134503,
-            date: "2020-04-11 00:13:02",
-            ts: 1586556782,
-
-            "message-id": "<5d0e2800bbddbd4ed05cc56a@domain.com>",
-            ts_event: 1586556782,
-        };
-        await handleWebhookResponse(webhookEvent, mockEmailDAO as unknown as EmailDAO);
-        expect(mockEmailDAO.getEmailByMessageId).toHaveBeenCalledTimes(1);
-        expect(mockEmailDAO.getEmailByMessageId).toHaveBeenCalledWith("<5d0e2800bbddbd4ed05cc56a@domain.com>");
-    });
 });

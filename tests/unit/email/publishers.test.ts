@@ -26,19 +26,7 @@ describe("EmailPublisher", () => {
     const trade = TradeFactory.getTrade();
     const userJson = JSON.stringify(user);
     const tradeJson = JSON.stringify(trade);
-    const event = {
-        event: "request",
-        email: "example@example+test.com",
-        id: 134503,
-        date: "2020-04-11 00:13:02",
-        ts: 1586556782,
-
-        "message-id": "<5d0e2800bbddbd4ed05cc56a@domain.com>",
-        ts_event: 1586556782,
-    };
-    const eventJson = JSON.stringify(event);
     const exponentialBackoff = { attempts: 3, backoff: { type: "exponential", delay: 30000 } };
-    const linearBackoff = { attempts: 3, backoff: 10000 };
 
     it("queueResetEmail/1 - should add email job with correct parameters to the emailQueue", async () => {
         await publisher.queueResetEmail(user);
@@ -56,12 +44,6 @@ describe("EmailPublisher", () => {
         await publisher.queueTestEmail(user);
         expect(mockQueue.add).toHaveBeenCalledTimes(1);
         expect(mockQueue.add).toHaveBeenCalledWith("test_email", { user: userJson }, exponentialBackoff);
-    });
-
-    it("queueWebhookResponse/1 - should add job to handle the webhook response", async () => {
-        await publisher.queueWebhookResponse(event);
-        expect(mockQueue.add).toHaveBeenCalledTimes(1);
-        expect(mockQueue.add).toHaveBeenCalledWith("handle_webhook", { event: eventJson }, linearBackoff);
     });
 
     it("queueTradeRequestMail/1 - should add email job with correct parameters to emailQueue", async () => {
