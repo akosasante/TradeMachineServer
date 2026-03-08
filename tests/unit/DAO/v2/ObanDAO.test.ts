@@ -200,4 +200,78 @@ describe("ObanDAO Unit Tests", () => {
             });
         });
     });
+
+    describe("enqueueTradeAnnouncement", () => {
+        it("should enqueue a trade announcement with trace context when provided", async () => {
+            process.env.APP_ENV = "production";
+
+            const tradeId = "trade-uuid-123";
+            const traceContext = {
+                traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+                tracestate: "grafana=sessionId:abc123",
+            };
+
+            const mockJob = { id: BigInt(9), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeAnnouncement(tradeId, traceContext);
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    queue: "discord",
+                    worker: "TradeMachine.Jobs.DiscordWorker",
+                    args: expect.objectContaining({
+                        env: "production",
+                        job_type: "trade_announcement",
+                        data: tradeId,
+                        trace_context: traceContext,
+                    }),
+                }),
+            });
+        });
+
+        it("should enqueue a trade announcement without trace context when not provided", async () => {
+            process.env.APP_ENV = "staging";
+
+            const tradeId = "trade-uuid-456";
+
+            const mockJob = { id: BigInt(10), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeAnnouncement(tradeId);
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    queue: "discord",
+                    worker: "TradeMachine.Jobs.DiscordWorker",
+                    args: expect.objectContaining({
+                        env: "staging",
+                        job_type: "trade_announcement",
+                        data: tradeId,
+                    }),
+                }),
+            });
+        });
+
+        it("should default env to 'staging' when APP_ENV is not set", async () => {
+            delete process.env.APP_ENV;
+
+            const tradeId = "trade-uuid-789";
+
+            const mockJob = { id: BigInt(11), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeAnnouncement(tradeId);
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    args: expect.objectContaining({
+                        env: "staging",
+                        job_type: "trade_announcement",
+                        data: tradeId,
+                    }),
+                }),
+            });
+        });
+    });
 });

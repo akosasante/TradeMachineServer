@@ -20,6 +20,10 @@ export interface DiscordJobData {
     env: ObanEnv;
     job_type: "trade_announcement";
     data: string; // trade ID
+    trace_context?: {
+        traceparent: string;
+        tracestate?: string;
+    };
 }
 
 export interface CreateObanJobInput {
@@ -116,11 +120,15 @@ export default class ObanDAO {
     /**
      * Enqueue a trade announcement for the Discord channel
      */
-    public async enqueueTradeAnnouncement(tradeId: string): Promise<ObanJob> {
+    public async enqueueTradeAnnouncement(
+        tradeId: string,
+        traceContext?: { traceparent: string; tracestate?: string }
+    ): Promise<ObanJob> {
         return this.enqueueDiscordJob({
             env: (process.env.APP_ENV as ObanEnv) || "staging",
             job_type: "trade_announcement",
             data: tradeId,
+            trace_context: traceContext,
         });
     }
 

@@ -9,6 +9,7 @@ import { TradeStatus } from "../../models/trade";
 import { SlackPublisher } from "../../slack/publishers";
 import { rollbar } from "../../bootstrap/rollbar";
 import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
+import { extractTraceContext } from "../../utils/tracing";
 
 @Controller("/messenger")
 export default class MessengerController {
@@ -111,7 +112,8 @@ export default class MessengerController {
                 const prisma = getPrismaClientFromRequest(request);
                 if (prisma) {
                     const obanDao = new ObanDAO(prisma.obanJob);
-                    await obanDao.enqueueTradeAnnouncement(id);
+                    const traceContext = extractTraceContext() || undefined;
+                    await obanDao.enqueueTradeAnnouncement(id, traceContext);
                     logger.info(`Discord trade announcement job enqueued for tradeId: ${id}`);
                 } else {
                     logger.warn(`Prisma client not available, skipping Discord announcement for tradeId: ${id}`);
