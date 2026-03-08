@@ -118,6 +118,7 @@ describe("[TRPC] Client Router Unit Tests", () => {
         email: "test@example.com",
         displayName: "Test User",
         slackUsername: "testuser",
+        discordUserId: null,
         role: UserRole.ADMIN,
         lastLoggedIn: new Date(),
         passwordResetExpiresOn: null,

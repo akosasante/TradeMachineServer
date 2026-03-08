@@ -36,6 +36,7 @@ export class UserFactory {
             dateCreated: new Date(),
             dateModified: new Date(),
             slackUsername: null,
+            discordUserId: null,
             lastLoggedIn: null,
             passwordResetExpiresOn: null,
             passwordResetToken: null,
