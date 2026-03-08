@@ -28,7 +28,7 @@ afterAll(() => {
     logger.debug("~~~~~~EMAIL QUEUE PROCESSORS TESTS COMPLETE~~~~~~");
 });
 afterEach(() => {
-    Object.values(EMAILER).forEach(mockFn => mockFn.mockReset());
+    Object.values(EMAILER).forEach(mockFn => (mockFn as jest.Mock).mockReset());
 });
 
 describe("Email queue processors", () => {
