@@ -16,6 +16,10 @@ services:
     volumes:
       # Secret files (mount as read-only)
       - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
+    deploy:
+      resources:
+        limits:
+          memory: 200m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3015/health"]
       interval: 30s
