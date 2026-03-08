@@ -3,10 +3,12 @@ import { EmailPublisher } from "../../email/publishers";
 import { UUID_PATTERN } from "../helpers/ApiHelpers";
 import logger from "../../bootstrap/logger";
 import TradeDAO from "../../DAO/TradeDAO";
+import ObanDAO from "../../DAO/v2/ObanDAO";
 import { Request, Response } from "express";
 import { TradeStatus } from "../../models/trade";
 import { SlackPublisher } from "../../slack/publishers";
 import { rollbar } from "../../bootstrap/rollbar";
+import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
 
 @Controller("/messenger")
 export default class MessengerController {
@@ -104,6 +106,21 @@ export default class MessengerController {
         if (trade.status === TradeStatus.SUBMITTED) {
             trade = await this.tradeDao.hydrateTrade(trade);
             await this.slackPublisher.queueTradeAnnouncement(trade);
+
+            try {
+                const prisma = getPrismaClientFromRequest(request);
+                if (prisma) {
+                    const obanDao = new ObanDAO(prisma.obanJob);
+                    await obanDao.enqueueTradeAnnouncement(id);
+                    logger.info(`Discord trade announcement job enqueued for tradeId: ${id}`);
+                } else {
+                    logger.warn(`Prisma client not available, skipping Discord announcement for tradeId: ${id}`);
+                }
+            } catch (err) {
+                logger.error(`Failed to enqueue Discord trade announcement for tradeId: ${id}`, err);
+                rollbar.error("Failed to enqueue Discord trade announcement", err as Error, request);
+            }
+
             return response.status(202).json({ status: "accepted trade announcement queued" });
         } else {
             throw new BadRequestError("Cannot send trade announcement for this trade based on its status");

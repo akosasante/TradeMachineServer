@@ -3,9 +3,11 @@
 import { Prisma, oban_job_state } from "@prisma/client";
 import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
+type ObanEnv = "production" | "staging" | "development";
+
 // Job type interfaces
 export interface EmailJobData {
-    env: "production" | "staging" | "development";
+    env: ObanEnv;
     email_type: "reset_password" | "registration_email";
     data: string; // user ID for reset_password and registration_email
     trace_context?: {
@@ -14,10 +16,16 @@ export interface EmailJobData {
     };
 }
 
+export interface DiscordJobData {
+    env: ObanEnv;
+    job_type: "trade_announcement";
+    data: string; // trade ID
+}
+
 export interface CreateObanJobInput {
     queue: string;
     worker: string;
-    args: EmailJobData;
+    args: EmailJobData | DiscordJobData;
     scheduled_at?: Date;
     priority?: number;
     max_attempts?: number;
@@ -90,6 +98,29 @@ export default class ObanDAO {
             email_type: "registration_email",
             data: userId,
             trace_context: traceContext,
+        });
+    }
+
+    /**
+     * Enqueue a Discord job (convenience method)
+     */
+    public async enqueueDiscordJob(discordJobData: DiscordJobData): Promise<ObanJob> {
+        return this.enqueueJob({
+            queue: "discord",
+            worker: "TradeMachine.Jobs.DiscordWorker",
+            args: discordJobData,
+            max_attempts: 3,
+        });
+    }
+
+    /**
+     * Enqueue a trade announcement for the Discord channel
+     */
+    public async enqueueTradeAnnouncement(tradeId: string): Promise<ObanJob> {
+        return this.enqueueDiscordJob({
+            env: (process.env.APP_ENV as ObanEnv) || "staging",
+            job_type: "trade_announcement",
+            data: tradeId,
         });
     }
 
