@@ -53,11 +53,9 @@ function validateParticipantInTrade(user: User | PublicUser, trade: Trade): bool
     if (user?.isAdmin() || user?.role === Role.ADMIN) {
         return true;
     } else {
-        const belongsToUser = (trade.tradeParticipants?.flatMap(tp => tp.team.owners?.map(u => u.id)) || []).includes(
-            user.id
-        );
+        const belongsToUser = trade.includesUser(user.id!);
         logger.debug(`Trade (${trade} belongs to ${user.id}? = ${belongsToUser}`);
-        return belongsToUser || false;
+        return belongsToUser;
     }
 }
 
@@ -93,7 +91,7 @@ function validateStatusChange(user: User, trade: Trade, newStatus: TradeStatus):
 }
 
 function validateTradeDecliner(trade: Trade, declinedById: string) {
-    return trade.tradeParticipants?.flatMap(tp => tp.team.owners?.map(u => u.id) || []).includes(declinedById);
+    return trade.includesUser(declinedById);
 }
 
 function allRecipientTeamsAccepted(acceptedBy: string[], trade: Trade): boolean {

@@ -278,11 +278,7 @@ export const EMAILER = {
         let rejectUrl: string;
 
         if (useV3TradeLinks && v3BaseDomain && trade.id) {
-            // Find the owner id for this recipient email within the trade participants
-            const ownerForRecipient = trade.tradeParticipants
-                ?.flatMap(tp => tp.team.owners ?? [])
-                .find(owner => owner.email === recipient);
-            const userId = ownerForRecipient?.id;
+            const userId = trade.ownerByEmail(recipient)?.id;
 
             if (userId) {
                 const [acceptToken, declineToken] = await Promise.all([
@@ -392,9 +388,7 @@ export const EMAILER = {
         let acceptUrl: string;
 
         if (useV3TradeLinks && v3BaseDomain && trade.id) {
-            // The submission email goes to the trade creator; find their owner record by email
-            const creatorOwner = trade.creator?.owners?.find(owner => owner.email === recipient);
-            const userId = creatorOwner?.id;
+            const userId = trade.ownerByEmail(recipient)?.id;
 
             if (userId) {
                 const submitToken = await createTradeActionToken({ userId, tradeId: trade.id, action: "submit" });
