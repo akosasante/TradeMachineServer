@@ -5,6 +5,8 @@ import { DraftPickFactory } from "../../factories/DraftPickFactory";
 import { PlayerFactory } from "../../factories/PlayerFactory";
 import { TeamFactory } from "../../factories/TeamFactory";
 import { TradeFactory } from "../../factories/TradeFactory";
+import { UserFactory } from "../../factories/UserFactory";
+import { Role } from "../../../src/models/user";
 import logger from "../../../src/bootstrap/logger";
 import { LeagueLevel } from "../../../src/models/draftPick";
 
@@ -90,6 +92,71 @@ describe("Trade Class", () => {
         });
         it("lowMinorPicks/0 - should return array of only low minor league picks", () => {
             expect(testTrade.lowMinorPicks).toEqual([lowPick]);
+        });
+    });
+
+    describe("owner lookup methods", () => {
+        const ownerA = UserFactory.getUser("ownera@example+test.com", undefined, undefined, Role.OWNER);
+        const ownerB = UserFactory.getUser("ownerb@example+test.com", undefined, undefined, Role.OWNER);
+        const outsider = UserFactory.getUser("outsider@example+test.com", undefined, undefined, Role.OWNER);
+
+        // Clone so we don't mutate the shared testTrade fixture
+        const tradeWithOwners = clone(testTrade);
+        tradeWithOwners.tradeParticipants = [clone(sender), clone(recipient)];
+        tradeWithOwners.tradeParticipants[0].team = clone(creatorTeam);
+        tradeWithOwners.tradeParticipants[0].team.owners = [ownerA];
+        tradeWithOwners.tradeParticipants[1].team = clone(recipientTeam);
+        tradeWithOwners.tradeParticipants[1].team.owners = [ownerB];
+
+        const tradeNoOwners = clone(testTrade);
+        tradeNoOwners.tradeParticipants = [clone(sender), clone(recipient)];
+        tradeNoOwners.tradeParticipants[0].team = clone(creatorTeam);
+        tradeNoOwners.tradeParticipants[0].team.owners = [];
+        tradeNoOwners.tradeParticipants[1].team = clone(recipientTeam);
+        tradeNoOwners.tradeParticipants[1].team.owners = [];
+
+        describe("allOwners", () => {
+            it("should return all owners flattened across all participant teams", () => {
+                expect(tradeWithOwners.allOwners).toEqual([ownerA, ownerB]);
+            });
+            it("should return an empty array when no participant teams have owners", () => {
+                expect(tradeNoOwners.allOwners).toEqual([]);
+            });
+            it("should return an empty array when tradeParticipants is undefined", () => {
+                const noParticipants = clone(testTrade);
+                noParticipants.tradeParticipants = undefined;
+                expect(noParticipants.allOwners).toEqual([]);
+            });
+        });
+
+        describe("includesUser", () => {
+            it("should return true if the userId belongs to a creator team owner", () => {
+                expect(tradeWithOwners.includesUser(ownerA.id!)).toBe(true);
+            });
+            it("should return true if the userId belongs to a recipient team owner", () => {
+                expect(tradeWithOwners.includesUser(ownerB.id!)).toBe(true);
+            });
+            it("should return false if the userId does not belong to any participant team", () => {
+                expect(tradeWithOwners.includesUser(outsider.id!)).toBe(false);
+            });
+            it("should return false when no participant teams have owners", () => {
+                expect(tradeNoOwners.includesUser(ownerA.id!)).toBe(false);
+            });
+        });
+
+        describe("ownerByEmail", () => {
+            it("should return the owner record matching the given email", () => {
+                expect(tradeWithOwners.ownerByEmail(ownerA.email)).toEqual(ownerA);
+            });
+            it("should find an owner in a recipient team by email", () => {
+                expect(tradeWithOwners.ownerByEmail(ownerB.email)).toEqual(ownerB);
+            });
+            it("should return undefined when no owner matches the email", () => {
+                expect(tradeWithOwners.ownerByEmail("notanowner@test.com")).toBeUndefined();
+            });
+            it("should return undefined when no participant teams have owners", () => {
+                expect(tradeNoOwners.ownerByEmail(ownerA.email)).toBeUndefined();
+            });
         });
     });
 
