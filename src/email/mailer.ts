@@ -267,7 +267,11 @@ export const EMAILER = {
             });
     },
 
-    async sendTradeRequestEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse | undefined> {
+    async sendTradeRequestEmail(
+        this: void,
+        recipient: string,
+        trade: Trade
+    ): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`preparing trade req email for tradeId: ${trade.id}.`);
 
         let acceptUrl: string;
@@ -289,7 +293,9 @@ export const EMAILER = {
                 rejectUrl = `${v3BaseDomain}/trades/${trade.id}?action=decline&token=${declineToken}`;
                 logger.debug(`[sendTradeRequestEmail] Using V3 magic-link URLs for userId=${userId}`);
             } else {
-                logger.warn(`[sendTradeRequestEmail] Could not find owner for recipient=${recipient} in trade ${trade.id}, falling back to V2 URLs`);
+                logger.warn(
+                    `[sendTradeRequestEmail] Could not find owner for recipient=${recipient} in trade ${trade.id}, falling back to V2 URLs`
+                );
                 acceptUrl = `${baseDomain}/trade/${trade.id}/accept`;
                 rejectUrl = `${baseDomain}/trade/${trade.id}/reject`;
             }
@@ -376,7 +382,11 @@ export const EMAILER = {
             });
     },
 
-    async sendTradeSubmissionEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse | undefined> {
+    async sendTradeSubmissionEmail(
+        this: void,
+        recipient: string,
+        trade: Trade
+    ): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`got a trade submission email request for tradeId: ${trade.id}.`);
 
         let acceptUrl: string;
@@ -391,7 +401,9 @@ export const EMAILER = {
                 acceptUrl = `${v3BaseDomain}/trades/${trade.id}?action=submit&token=${submitToken}`;
                 logger.debug(`[sendTradeSubmissionEmail] Using V3 magic-link URL for userId=${userId}`);
             } else {
-                logger.warn(`[sendTradeSubmissionEmail] Could not find creator owner for recipient=${recipient} in trade ${trade.id}, falling back to V2 URL`);
+                logger.warn(
+                    `[sendTradeSubmissionEmail] Could not find creator owner for recipient=${recipient} in trade ${trade.id}, falling back to V2 URL`
+                );
                 acceptUrl = `${baseDomain}/trade/${trade.id}/submit`;
             }
         } else {

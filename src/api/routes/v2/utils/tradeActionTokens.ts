@@ -43,7 +43,9 @@ export async function createTradeActionToken(payload: TradeActionTokenPayload): 
     const setResult = await redisClientV4.setNX(key, JSON.stringify(redisPayload));
     if (setResult) {
         await redisClientV4.expire(key, TRADE_ACTION_TOKEN_CONFIG.TTL_SECONDS);
-        logger.debug(`[createTradeActionToken] Created token for userId=${payload.userId} tradeId=${payload.tradeId} action=${payload.action}`);
+        logger.debug(
+            `[createTradeActionToken] Created token for userId=${payload.userId} tradeId=${payload.tradeId} action=${payload.action}`
+        );
     } else {
         logger.warn(`[createTradeActionToken] Token collision or duplicate — key already existed: ${key}`);
     }
@@ -69,7 +71,9 @@ export async function consumeTradeActionToken(token: string): Promise<TradeActio
 
     try {
         const payload = JSON.parse(val) as TradeActionTokenPayload;
-        logger.debug(`[consumeTradeActionToken] Token consumed for userId=${payload.userId} tradeId=${payload.tradeId} action=${payload.action}`);
+        logger.debug(
+            `[consumeTradeActionToken] Token consumed for userId=${payload.userId} tradeId=${payload.tradeId} action=${payload.action}`
+        );
         return payload;
     } catch {
         logger.warn(`[consumeTradeActionToken] Failed to parse token payload for key=${key}`);

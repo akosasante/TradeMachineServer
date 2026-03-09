@@ -244,7 +244,9 @@ export const clientRouter = router({
                 addSpanEvent("exchange_trade_action_token.session_created");
                 tradeActionTokenExchangedMetric.inc({ action: payload.action });
 
-                logger.info(`[exchangeTradeActionToken] Session created for userId=${user.id} tradeId=${payload.tradeId} action=${payload.action}`);
+                logger.info(
+                    `[exchangeTradeActionToken] Session created for userId=${user.id} tradeId=${payload.tradeId} action=${payload.action}`
+                );
 
                 return { success: true, user, tradeId: payload.tradeId, action: payload.action };
             })
