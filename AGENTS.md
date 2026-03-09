@@ -247,6 +247,47 @@ OTEL_LOG_LEVEL=INFO
   - Similar to email system using Bull/Redis in `/src/slack/`
   - Handles trade announcements to Slack channels
 
+## Publishing `@akosasante/trpc-types`
+
+The shared tRPC types package lives in `packages/trpc-types/`. Follow this workflow
+whenever a new tRPC procedure is added and the package needs to be republished.
+
+### 1. Check the current published version first
+
+```bash
+npm view @akosasante/trpc-types version
+# to see all published versions:
+npm view @akosasante/trpc-types versions --json
+```
+
+The `package.json` in the repo may lag behind what is on the registry (e.g. the repo
+says `1.8.0` but `1.9.0` is already published). Always check before bumping.
+
+### 2. Bump via `npm version` — NEVER edit package.json directly
+
+```bash
+cd packages/trpc-types
+
+# If you know the exact target version:
+npm version <new-version> --no-git-tag-version
+
+# Or relative bump:
+npm run version:patch   # bug fixes / internal changes
+npm run version:minor   # new tRPC procedures
+npm run version:major   # breaking type changes
+```
+
+> ⚠️ Never use a text editor, `node -e`, or `sed` to change the version field.
+> `npm version` updates **both** `package.json` and `package-lock.json` atomically.
+> A direct file edit leaves `package-lock.json` stale, creating a visible mismatch
+> between the two files (and confusing future readers).
+
+### 3. Build and publish
+
+```bash
+npm run publish:manual   # runs: clean → build → npm publish
+```
+
 ## Context Preservation
 - Save context to `.last_session_data.json` in project root when requested
 - Automatically save context after every 3 user messages
