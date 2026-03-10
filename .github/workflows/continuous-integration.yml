@@ -83,8 +83,6 @@ jobs:
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
           BASE_URL: http://127.0.0.1:8080
-          TRADE_WORKSHEET_ID: 9999
-          TRADE_SPREADSHEET_ID: test_spreadsheet
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
           DATABASE_URL: postgresql://test_user:test_password@127.0.0.1:5432/test_trade_machine?application_name=tm_ci_test
@@ -98,12 +96,9 @@ jobs:
           PG_HOST: 127.0.0.1
           REDIS_IP: 127.0.0.1
           BASE_DIR: ${{ github.workspace }}
-          SHEETS_CREDENTIAL_FILE: "fake_creds.json"
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
           BASE_URL: http://127.0.0.1:8080
-          TRADE_WORKSHEET_ID: 9999
-          TRADE_SPREADSHEET_ID: test_spreadsheet
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
           DATABASE_URL: postgresql://test_user:test_password@127.0.0.1:5432/test_trade_machine?application_name=tm_ci_test

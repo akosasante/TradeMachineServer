@@ -23,7 +23,6 @@ import User, { Role } from "../../models/user";
 import { UUID_PATTERN } from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
 import { HydratedTrade } from "../../models/views/hydratedTrades";
-import { appendNewTrade } from "../../csv/TradeTracker";
 import { rollbar } from "../../bootstrap/rollbar";
 import { Request } from "express";
 import { PublicUser } from "../../DAO/v2/UserDAO";
@@ -346,7 +345,6 @@ export default class TradeController {
         }
 
         const hydratedTrade = await this.dao.hydrateTrade(trade);
-        await appendNewTrade(hydratedTrade);
         return await this.dao.updateStatus(id, TradeStatus.SUBMITTED);
     }
 

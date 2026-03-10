@@ -48,10 +48,9 @@ services:
       - ./jest.config.js:/app/jest.config.js:cached
       - ./jest.ci-config.js:/app/jest.ci-config.js:cached
       - ./jest.docker.config.js:/app/jest.docker.config.js:cached
+      - ./jest.minimal.config.js:/app/jest.minimal.config.js:cached
       - ./jestSetupFile.mjs:/app/jestSetupFile.mjs:cached
       - ./jestSetupFile.docker.mjs:/app/jestSetupFile.docker.mjs:cached
-      # Secret files (mount as read-only)
-      - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
       # Named volume for node_modules to avoid cross-platform issues
       - node_modules_volume:/app/node_modules
       # Performance: exclude common directories that cause churn
@@ -90,9 +89,6 @@ services:
       - REDIS_IP=redis
       - REDIS_PORT=6379
       - DATABASE_URL=postgresql://${DATABASE_USER:-trader_user}:${DATABASE_PASSWORD:-dev_password_change_me}@postgres:5432/${DATABASE_NAME:-trade_dn}?schema=dev
-    volumes:
-      # Secret files (mount as read-only)
-      - ./${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:/app/${SHEETS_CREDENTIAL_FILE:-sheet_creds.json}:ro
     networks:
       - trade_machine_shared
     profiles:
