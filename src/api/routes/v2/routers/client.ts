@@ -158,6 +158,9 @@ export const clientRouter = router({
 
                 addSpanEvent("exchange_redirect_token.original_session_loaded");
 
+                // Regenerate the session to prevent session fixation attacks — if an attacker
+                // knew the session ID before the SSO token was redeemed, this invalidates it and
+                // issues a fresh session ID before we associate any user identity with it.
                 await new Promise<void>((resolve, reject) => {
                     ctx.req.session.regenerate(err => {
                         if (err) return reject(err);
@@ -226,6 +229,9 @@ export const clientRouter = router({
                 });
                 addSpanEvent("exchange_trade_action_token.token_valid");
 
+                // Regenerate the session to prevent session fixation attacks — if an attacker
+                // knew the session ID before the magic link was used, this invalidates it and
+                // issues a fresh session ID before we associate any user identity with it.
                 await new Promise<void>((resolve, reject) => {
                     ctx.req.session.regenerate(err => {
                         if (err) return reject(err);
