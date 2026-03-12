@@ -16,6 +16,19 @@ export interface EmailJobData {
     };
 }
 
+export interface TradeRequestJobData {
+    env: ObanEnv;
+    email_type: "trade_request";
+    trade_id: string;
+    recipient_user_id: string;
+    accept_url: string;
+    decline_url: string;
+    trace_context?: {
+        traceparent: string;
+        tracestate?: string;
+    };
+}
+
 export interface DiscordJobData {
     env: ObanEnv;
     job_type: "trade_announcement";
@@ -41,7 +54,7 @@ export interface WebhookStatusJobData {
 export interface CreateObanJobInput {
     queue: string;
     worker: string;
-    args: EmailJobData | DiscordJobData | WebhookStatusJobData;
+    args: EmailJobData | TradeRequestJobData | DiscordJobData | WebhookStatusJobData;
     scheduled_at?: Date;
     priority?: number;
     max_attempts?: number;
@@ -114,6 +127,33 @@ export default class ObanDAO {
             email_type: "registration_email",
             data: userId,
             trace_context: traceContext,
+        });
+    }
+
+    /**
+     * Enqueue a trade request email for Elixir to process.
+     * TypeScript pre-computes accept_url and decline_url (V3 magic-link or V2 plain)
+     * so Elixir can remain feature-flag agnostic.
+     */
+    public async enqueueTradeRequestEmail(
+        tradeId: string,
+        recipientUserId: string,
+        acceptUrl: string,
+        declineUrl: string,
+        traceContext?: { traceparent: string; tracestate?: string }
+    ): Promise<ObanJob> {
+        return this.enqueueJob({
+            queue: "emails",
+            worker: "TradeMachine.Jobs.EmailWorker",
+            args: {
+                env: (process.env.APP_ENV as ObanEnv) || "staging",
+                email_type: "trade_request",
+                trade_id: tradeId,
+                recipient_user_id: recipientUserId,
+                accept_url: acceptUrl,
+                decline_url: declineUrl,
+                trace_context: traceContext,
+            } as TradeRequestJobData,
         });
     }
 

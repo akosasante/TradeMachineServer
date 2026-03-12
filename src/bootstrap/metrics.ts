@@ -183,3 +183,9 @@ export const tradeActionTokenFailedMetric = new promClient.Counter({
     labelNames: ["reason"],
     registers: [metricsRegistry],
 });
+
+export const tradeRequestEmailEnqueuedMetric = new promClient.Counter({
+    name: "trade_request_email_enqueued_total",
+    help: "Total number of trade request emails enqueued to Oban",
+    registers: [metricsRegistry],
+});

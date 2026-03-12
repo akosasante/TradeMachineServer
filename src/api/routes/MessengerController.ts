@@ -10,17 +10,23 @@ import { SlackPublisher } from "../../slack/publishers";
 import { rollbar } from "../../bootstrap/rollbar";
 import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
 import { extractTraceContext } from "../../utils/tracing";
+import { createTradeActionToken } from "./v2/utils/tradeActionTokens";
+import { tradeActionTokenGeneratedMetric, tradeRequestEmailEnqueuedMetric } from "../../bootstrap/metrics";
+
+const TRADE_REQUEST_OWNER_RELATIONS = ["tradeParticipants", "tradeParticipants.team", "tradeParticipants.team.owners"];
 
 @Controller("/messenger")
 export default class MessengerController {
     private emailPublisher: EmailPublisher;
     private slackPublisher: SlackPublisher;
     private tradeDao: TradeDAO;
+    private obanDao?: ObanDAO;
 
-    constructor(publisher?: EmailPublisher, tradeDao?: TradeDAO, slackPublisher?: SlackPublisher) {
+    constructor(publisher?: EmailPublisher, tradeDao?: TradeDAO, slackPublisher?: SlackPublisher, obanDao?: ObanDAO) {
         this.emailPublisher = publisher || EmailPublisher.getInstance();
         this.tradeDao = tradeDao || new TradeDAO();
         this.slackPublisher = slackPublisher || SlackPublisher.getInstance();
+        this.obanDao = obanDao;
     }
 
     @Post(`/requestTrade${UUID_PATTERN}`)
@@ -31,19 +37,60 @@ export default class MessengerController {
     ): Promise<Response> {
         rollbar.info("sendRequestTradeMessage", { tradeId: id }, request);
         logger.debug(`queuing trade request email for tradeId: ${id}`);
-        let trade = await this.tradeDao.getTradeById(id);
-        if (trade.status === TradeStatus.REQUESTED) {
-            trade = await this.tradeDao.hydrateTrade(trade);
-            const recipientEmails = trade.recipients.flatMap(recipTeam => recipTeam.owners?.map(owner => owner.email));
-            for (const email of recipientEmails) {
-                if (email) {
-                    await this.emailPublisher.queueTradeRequestMail(trade, email);
-                }
-            }
-            return response.status(202).json({ status: "trade request queued" });
-        } else {
+
+        const trade = await this.tradeDao.getTradeById(id, TRADE_REQUEST_OWNER_RELATIONS);
+
+        if (trade.status !== TradeStatus.REQUESTED) {
             throw new BadRequestError("Cannot send trade request for this trade based on its status");
         }
+
+        const obanDao =
+            this.obanDao ??
+            (() => {
+                const prisma = getPrismaClientFromRequest(request);
+                return prisma ? new ObanDAO(prisma.obanJob) : null;
+            })();
+
+        if (!obanDao) {
+            logger.warn(`Prisma client not available, cannot enqueue trade request emails for tradeId: ${id}`);
+            rollbar.error("Prisma client unavailable for trade request email enqueue", { tradeId: id }, request);
+            return response.status(202).json({ status: "trade request queued" });
+        }
+
+        const traceContext = extractTraceContext() || undefined;
+        const baseDomain = process.env.BASE_URL;
+        const v3BaseDomain = process.env.V3_BASE_URL;
+        const useV3TradeLinks = process.env.USE_V3_TRADE_LINKS === "true";
+
+        const recipientOwners = trade.recipients.flatMap(recipTeam => recipTeam.owners ?? []);
+
+        for (const owner of recipientOwners) {
+            if (!owner.email) continue;
+
+            let acceptUrl: string;
+            let declineUrl: string;
+
+            if (useV3TradeLinks && v3BaseDomain && trade.id && owner.id) {
+                const [acceptToken, declineToken] = await Promise.all([
+                    createTradeActionToken({ userId: owner.id, tradeId: trade.id, action: "accept" }),
+                    createTradeActionToken({ userId: owner.id, tradeId: trade.id, action: "decline" }),
+                ]);
+                tradeActionTokenGeneratedMetric.inc({ action: "accept" });
+                tradeActionTokenGeneratedMetric.inc({ action: "decline" });
+                acceptUrl = `${v3BaseDomain}/trades/${trade.id}?action=accept&token=${acceptToken}`;
+                declineUrl = `${v3BaseDomain}/trades/${trade.id}?action=decline&token=${declineToken}`;
+                logger.debug(`[sendRequestTradeMessage] Using V3 magic-link URLs for userId=${owner.id}`);
+            } else {
+                acceptUrl = `${baseDomain}/trade/${trade.id}/accept`;
+                declineUrl = `${baseDomain}/trade/${trade.id}/reject`;
+            }
+
+            await obanDao.enqueueTradeRequestEmail(trade.id!, owner.id!, acceptUrl, declineUrl, traceContext);
+            tradeRequestEmailEnqueuedMetric.inc();
+            logger.debug(`[sendRequestTradeMessage] Enqueued trade request email for userId=${owner.id}`);
+        }
+
+        return response.status(202).json({ status: "trade request queued" });
     }
 
     @Post(`/declineTrade${UUID_PATTERN}`)

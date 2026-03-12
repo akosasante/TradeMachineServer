@@ -201,6 +201,75 @@ describe("ObanDAO Unit Tests", () => {
         });
     });
 
+    describe("enqueueTradeRequestEmail", () => {
+        const tradeId = "trade-req-uuid-123";
+        const recipientUserId = "user-uuid-456";
+        const acceptUrl = "https://staging--ffftemp.netlify.app/trades/trade-req-uuid-123?action=accept&token=abc";
+        const declineUrl = "https://staging--ffftemp.netlify.app/trades/trade-req-uuid-123?action=decline&token=def";
+
+        it("should enqueue a trade_request email job with all required fields", async () => {
+            process.env.APP_ENV = "staging";
+
+            const mockJob = { id: BigInt(20), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeRequestEmail(tradeId, recipientUserId, acceptUrl, declineUrl);
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    queue: "emails",
+                    worker: "TradeMachine.Jobs.EmailWorker",
+                    args: expect.objectContaining({
+                        env: "staging",
+                        email_type: "trade_request",
+                        trade_id: tradeId,
+                        recipient_user_id: recipientUserId,
+                        accept_url: acceptUrl,
+                        decline_url: declineUrl,
+                    }),
+                }),
+            });
+        });
+
+        it("should include trace_context when provided", async () => {
+            process.env.APP_ENV = "production";
+
+            const traceContext = { traceparent: "00-abc-def-01", tracestate: "grafana=abc" };
+            const mockJob = { id: BigInt(21), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeRequestEmail(tradeId, recipientUserId, acceptUrl, declineUrl, traceContext);
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    args: expect.objectContaining({
+                        env: "production",
+                        email_type: "trade_request",
+                        trace_context: traceContext,
+                    }),
+                }),
+            });
+        });
+
+        it("should default env to staging when APP_ENV is not set", async () => {
+            delete process.env.APP_ENV;
+
+            const mockJob = { id: BigInt(22), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeRequestEmail(tradeId, recipientUserId, acceptUrl, declineUrl);
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    args: expect.objectContaining({
+                        env: "staging",
+                        email_type: "trade_request",
+                    }),
+                }),
+            });
+        });
+    });
+
     describe("enqueueTradeAnnouncement", () => {
         it("should enqueue a trade announcement with trace context when provided", async () => {
             process.env.APP_ENV = "production";

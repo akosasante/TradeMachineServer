@@ -274,31 +274,11 @@ export const EMAILER = {
     ): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`preparing trade req email for tradeId: ${trade.id}.`);
 
-        let acceptUrl: string;
-        let rejectUrl: string;
-
-        if (useV3TradeLinks && v3BaseDomain && trade.id) {
-            const userId = trade.ownerByEmail(recipient)?.id;
-
-            if (userId) {
-                const [acceptToken, declineToken] = await Promise.all([
-                    createTradeActionToken({ userId, tradeId: trade.id, action: "accept" }),
-                    createTradeActionToken({ userId, tradeId: trade.id, action: "decline" }),
-                ]);
-                acceptUrl = `${v3BaseDomain}/trades/${trade.id}?action=accept&token=${acceptToken}`;
-                rejectUrl = `${v3BaseDomain}/trades/${trade.id}?action=decline&token=${declineToken}`;
-                logger.debug(`[sendTradeRequestEmail] Using V3 magic-link URLs for userId=${userId}`);
-            } else {
-                logger.warn(
-                    `[sendTradeRequestEmail] Could not find owner for recipient=${recipient} in trade ${trade.id}, falling back to V2 URLs`
-                );
-                acceptUrl = `${baseDomain}/trade/${trade.id}/accept`;
-                rejectUrl = `${baseDomain}/trade/${trade.id}/reject`;
-            }
-        } else {
-            acceptUrl = `${baseDomain}/trade/${trade.id}/accept`;
-            rejectUrl = `${baseDomain}/trade/${trade.id}/reject`;
-        }
+        // V2 fallback path — trade request emails are now enqueued via Oban in MessengerController.
+        // This Bull-based path is retained for backwards compatibility only and can be removed
+        // once all environments are confirmed to be routing through Oban.
+        const acceptUrl = `${baseDomain}/trade/${trade.id}/accept`;
+        const rejectUrl = `${baseDomain}/trade/${trade.id}/reject`;
 
         const acceptText = "Accept Trade";
         logger.debug(`sending trade request email to=${recipient}, acceptUrl=${acceptUrl}, rejectUrl=${rejectUrl}`);
