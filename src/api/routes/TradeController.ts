@@ -172,7 +172,20 @@ export default class TradeController {
     ): Promise<Trade> {
         logger.debug(`get one trade endpoint. hydrated? ${hydrated}`);
         rollbar.info("getOneTrade", { tradeId: id, hydrated }, request);
-        let trade = await this.dao.getTradeById(id);
+        // Explicitly load participant team owners to avoid TypeORM circular
+        // eager-loading cutoff (Trade → TradeParticipant → Team → User → Team…).
+        // Passing explicit relations uses JOINs instead of the eager chain,
+        // which sidesteps the circular reference detection entirely.
+        let trade = await this.dao.getTradeById(id, [
+            "tradeParticipants",
+            "tradeParticipants.team",
+            "tradeParticipants.team.owners",
+            "tradeItems",
+            "tradeItems.sender",
+            "tradeItems.sender.owners",
+            "tradeItems.recipient",
+            "tradeItems.recipient.owners",
+        ]);
         if (hydrated) {
             trade = await this.dao.hydrateTrade(trade);
         }
