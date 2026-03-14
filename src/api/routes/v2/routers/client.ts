@@ -229,23 +229,33 @@ export const clientRouter = router({
                 });
                 addSpanEvent("exchange_trade_action_token.token_valid");
 
-                // Regenerate the session to prevent session fixation attacks — if an attacker
-                // knew the session ID before the magic link was used, this invalidates it and
-                // issues a fresh session ID before we associate any user identity with it.
-                await new Promise<void>((resolve, reject) => {
-                    ctx.req.session.regenerate(err => {
-                        if (err) return reject(err);
-                        return resolve();
-                    });
-                });
+                // Session fixation protection: regenerate the session ID so that an attacker
+                // who knew the pre-auth session ID cannot hijack the authenticated session.
+                // IMPORTANT: only do this when the request arrives WITHOUT an existing
+                // authenticated session. If the user is already logged in, calling
+                // session.regenerate() deletes their current Redis session entry. If the
+                // new Set-Cookie header doesn't reach the browser (common with cross-origin
+                // SameSite restrictions), the browser keeps sending the now-deleted old
+                // session ID and the user appears logged out on all subsequent requests.
+                const alreadyAuthenticated = !!ctx.req.session.user;
 
-                activeSessionsMetric.inc();
+                if (!alreadyAuthenticated) {
+                    await new Promise<void>((resolve, reject) => {
+                        ctx.req.session.regenerate(err => {
+                            if (err) return reject(err);
+                            return resolve();
+                        });
+                    });
+                    activeSessionsMetric.inc();
+                }
+
                 ctx.req.session.user = serializeUser(user);
                 await registerUserSession(user.id!, ctx.req.sessionID);
 
                 addSpanAttributes({
                     "exchange_trade_action_token.new_session_id": ctx.req.sessionID,
                     "exchange_trade_action_token.token_consumed": true,
+                    "exchange_trade_action_token.session_regenerated": !alreadyAuthenticated,
                 });
                 addSpanEvent("exchange_trade_action_token.session_created");
                 tradeActionTokenExchangedMetric.inc({ action: payload.action });
