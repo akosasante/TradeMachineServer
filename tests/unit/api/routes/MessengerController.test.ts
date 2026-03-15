@@ -32,6 +32,8 @@ describe("MessengerController", () => {
     };
     const mockObanDao: MockObj = {
         enqueueTradeRequestEmail: jest.fn().mockResolvedValue({ id: BigInt(1) }),
+        enqueueTradeDeclinedEmail: jest.fn().mockResolvedValue({ id: BigInt(2) }),
+        enqueueTradeSubmitEmail: jest.fn().mockResolvedValue({ id: BigInt(3) }),
     };
     const mockRes = {
         status: jest.fn().mockReturnThis(),
@@ -100,8 +102,10 @@ describe("MessengerController", () => {
             Object.values(mockedThing).forEach(mockFn => mockFn.mockReset())
         );
         Object.values(mockRes).forEach(mockFn => mockFn.mockClear());
-        // Reset mocked enqueueTradeRequestEmail to its default resolved value after each test
+        // Reset mocked Oban enqueue methods to their default resolved values after each test
         mockObanDao.enqueueTradeRequestEmail.mockResolvedValue({ id: BigInt(1) });
+        mockObanDao.enqueueTradeDeclinedEmail.mockResolvedValue({ id: BigInt(2) });
+        mockObanDao.enqueueTradeSubmitEmail.mockResolvedValue({ id: BigInt(3) });
     });
 
     describe("sendRequestTradeMessage/2", () => {
@@ -151,7 +155,7 @@ describe("MessengerController", () => {
     });
 
     describe("sendTradeDeclineMessage/2", () => {
-        it("should get a trade, hydrate it, and queue emails for each non-declining user", async () => {
+        it("should get a trade, hydrate it, and enqueue Oban jobs for each non-declining user", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(declinedTrade);
             mockTradeDao.hydrateTrade.mockResolvedValueOnce(declinedTrade);
             await messengerController.sendTradeDeclineMessage(declinedTrade.id!, mockRes as unknown as Response);
@@ -162,13 +166,25 @@ describe("MessengerController", () => {
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledWith(declinedTrade);
 
             // Trade has a creator and 2 recipients. Each with two owners.
-            // We're going to email everyone except the decliner
-            expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledTimes(5);
-            expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledWith(
-                declinedTrade,
-                expect.stringMatching(/owner\d_tp\d@example.com/)
+            // We enqueue one Oban job per non-declining owner (6 owners - 1 decliner = 5)
+            expect(mockObanDao.enqueueTradeDeclinedEmail).toHaveBeenCalledTimes(5);
+            expect(mockObanDao.enqueueTradeDeclinedEmail).toHaveBeenCalledWith(
+                declinedTrade.id,
+                expect.any(String), // userId
+                expect.any(Boolean), // isCreator
+                undefined, // declineUrl — V2 mode (USE_V3_TRADE_LINKS not set in test env)
+                expect.anything() // traceContext
             );
-            expect(mockEmailPublisher.queueTradeDeclinedMail).not.toHaveBeenCalledWith(declinedTrade, decliningEmail);
+            // The decliner's owner ID should never appear
+            const decliningOwnerId = declinedTrade.tradeParticipants?.[1].team?.owners?.[0].id;
+            expect(mockObanDao.enqueueTradeDeclinedEmail).not.toHaveBeenCalledWith(
+                declinedTrade.id,
+                decliningOwnerId,
+                expect.anything(),
+                expect.anything(),
+                expect.anything()
+            );
+            expect(mockEmailPublisher.queueTradeDeclinedMail).not.toHaveBeenCalled();
 
             expect(mockRes.status).toHaveBeenCalledTimes(1);
             expect(mockRes.status).toHaveBeenCalledWith(202);
@@ -184,7 +200,7 @@ describe("MessengerController", () => {
             expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(draftTrade.id);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(0);
-            expect(mockEmailPublisher.queueTradeDeclinedMail).toHaveBeenCalledTimes(0);
+            expect(mockObanDao.enqueueTradeDeclinedEmail).toHaveBeenCalledTimes(0);
         });
     });
 
@@ -221,7 +237,7 @@ describe("MessengerController", () => {
     });
 
     describe("sendTradeAcceptanceMessage/2", () => {
-        it("should get a trade, hydrate it and queue emails for each creator owner", async () => {
+        it("should get a trade, hydrate it and enqueue Oban submit jobs for each creator owner", async () => {
             mockTradeDao.getTradeById.mockResolvedValueOnce(acceptedTrade);
             mockTradeDao.hydrateTrade.mockResolvedValueOnce(acceptedTrade);
             await messengerController.sendTradeAcceptanceMessage(acceptedTrade.id!, mockRes as unknown as Response);
@@ -231,16 +247,32 @@ describe("MessengerController", () => {
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledWith(acceptedTrade);
 
-            // Trade creator has two owners; each should get an email. We added the `_1` only to the creator emails for this test.
-            expect(mockEmailPublisher.queueTradeAcceptedMail).toHaveBeenCalledTimes(2);
-            expect(mockEmailPublisher.queueTradeAcceptedMail).toHaveBeenCalledWith(
-                acceptedTrade,
-                expect.stringMatching(/owner\d_1@example.com/)
+            // Trade creator has two owners; each should get an Oban job with a V2 submit URL
+            // (USE_V3_TRADE_LINKS is not set in test env)
+            expect(mockObanDao.enqueueTradeSubmitEmail).toHaveBeenCalledTimes(2);
+            expect(mockObanDao.enqueueTradeSubmitEmail).toHaveBeenCalledWith(
+                acceptedTrade.id,
+                expect.any(String), // creator owner userId
+                expect.stringContaining("/trade/"), // V2 submit URL
+                expect.anything() // traceContext
             );
-            expect(mockEmailPublisher.queueTradeAcceptedMail).not.toHaveBeenCalledWith(
-                acceptedTrade,
-                expect.stringMatching(/owner\d_2@example.com/)
+            // Recipient owners (participantType 2) must not receive submit emails
+            const recipientOwnerIds = new Set(
+                acceptedTrade.tradeParticipants
+                    ?.filter(tp => tp.participantType !== 1)
+                    .flatMap(tp => tp.team.owners ?? [])
+                    .map(o => o.id)
             );
+            for (const ownerId of recipientOwnerIds) {
+                expect(mockObanDao.enqueueTradeSubmitEmail).not.toHaveBeenCalledWith(
+                    acceptedTrade.id,
+                    ownerId,
+                    expect.anything(),
+                    expect.anything()
+                );
+            }
+            expect(mockEmailPublisher.queueTradeAcceptedMail).not.toHaveBeenCalled();
+
             expect(mockRes.status).toHaveBeenCalledTimes(1);
             expect(mockRes.status).toHaveBeenCalledWith(202);
             expect(mockRes.json).toHaveBeenCalledTimes(1);
@@ -255,7 +287,7 @@ describe("MessengerController", () => {
             expect(mockTradeDao.getTradeById).toHaveBeenCalledTimes(1);
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(draftTrade.id);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(0);
-            expect(mockEmailPublisher.queueTradeAcceptedMail).toHaveBeenCalledTimes(0);
+            expect(mockObanDao.enqueueTradeSubmitEmail).toHaveBeenCalledTimes(0);
         });
     });
 });

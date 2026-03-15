@@ -104,15 +104,40 @@ export default class MessengerController {
         let trade = await this.tradeDao.getTradeById(id);
         if (trade.status === TradeStatus.REJECTED && trade.declinedById) {
             trade = await this.tradeDao.hydrateTrade(trade);
-            const emails = trade.tradeParticipants
-                ?.flatMap(tp => tp.team.owners)
-                .filter(owner => owner && owner.id !== trade.declinedById)
-                .map(owner => owner?.email);
-            for (const email of emails || []) {
-                if (email) {
-                    await this.emailPublisher.queueTradeDeclinedMail(trade, email);
-                }
+
+            const obanDao =
+                this.obanDao ??
+                (() => {
+                    const prisma = getPrismaClientFromRequest(request);
+                    return prisma ? new ObanDAO(prisma.obanJob) : null;
+                })();
+
+            if (!obanDao) {
+                logger.warn(`Prisma client not available, cannot enqueue trade declined emails for tradeId: ${id}`);
+                rollbar.error("Prisma client unavailable for trade declined email enqueue", { tradeId: id }, request);
+                return response.status(202).json({ status: "trade decline email queued" });
             }
+
+            const traceContext = extractTraceContext() || undefined;
+            const v3BaseDomain = process.env.V3_BASE_URL;
+            const useV3TradeLinks = process.env.USE_V3_TRADE_LINKS === "true";
+            const declineUrl = useV3TradeLinks && v3BaseDomain ? `${v3BaseDomain}/trades/${trade.id}` : undefined;
+
+            const creatorOwnerIds = new Set(trade.creator?.owners?.map(o => o.id).filter(Boolean));
+            const eligibleOwners =
+                trade.tradeParticipants
+                    ?.flatMap(tp => tp.team.owners)
+                    .filter(owner => owner && owner.id !== trade.declinedById) ?? [];
+
+            for (const owner of eligibleOwners) {
+                if (!owner?.id) continue;
+                const isCreator = creatorOwnerIds.has(owner.id);
+                await obanDao.enqueueTradeDeclinedEmail(trade.id!, owner.id, isCreator, declineUrl, traceContext);
+                logger.debug(
+                    `[sendTradeDeclineMessage] Enqueued trade declined email for userId=${owner.id}, isCreator=${isCreator}`
+                );
+            }
+
             return response.status(202).json({ status: "trade decline email queued" });
         } else {
             throw new BadRequestError("Cannot send trade decline email for this trade based on its status");
@@ -130,12 +155,47 @@ export default class MessengerController {
         let trade = await this.tradeDao.getTradeById(id);
         if (trade.status === TradeStatus.ACCEPTED) {
             trade = await this.tradeDao.hydrateTrade(trade);
-            const creatorEmails = trade.creator?.owners?.map(o => o.email);
-            if (creatorEmails) {
-                for (const email of creatorEmails) {
-                    await this.emailPublisher.queueTradeAcceptedMail(trade, email);
-                }
+
+            const obanDao =
+                this.obanDao ??
+                (() => {
+                    const prisma = getPrismaClientFromRequest(request);
+                    return prisma ? new ObanDAO(prisma.obanJob) : null;
+                })();
+
+            if (!obanDao) {
+                logger.warn(`Prisma client not available, cannot enqueue trade submit emails for tradeId: ${id}`);
+                rollbar.error("Prisma client unavailable for trade submit email enqueue", { tradeId: id }, request);
+                return response.status(202).json({ status: "trade acceptance email queued" });
             }
+
+            const traceContext = extractTraceContext() || undefined;
+            const baseDomain = process.env.BASE_URL;
+            const v3BaseDomain = process.env.V3_BASE_URL;
+            const useV3TradeLinks = process.env.USE_V3_TRADE_LINKS === "true";
+
+            const creatorOwners = trade.creator?.owners ?? [];
+            for (const owner of creatorOwners) {
+                if (!owner?.id) continue;
+
+                let submitUrl: string;
+                if (useV3TradeLinks && v3BaseDomain && trade.id) {
+                    const submitToken = await createTradeActionToken({
+                        userId: owner.id,
+                        tradeId: trade.id,
+                        action: "submit",
+                    });
+                    tradeActionTokenGeneratedMetric.inc({ action: "submit" });
+                    submitUrl = `${v3BaseDomain}/trades/${trade.id}?action=submit&token=${submitToken}`;
+                    logger.debug(`[sendTradeAcceptanceMessage] Using V3 magic-link URL for userId=${owner.id}`);
+                } else {
+                    submitUrl = `${baseDomain}/trade/${trade.id}/submit`;
+                }
+
+                await obanDao.enqueueTradeSubmitEmail(trade.id!, owner.id, submitUrl, traceContext);
+                logger.debug(`[sendTradeAcceptanceMessage] Enqueued trade submit email for userId=${owner.id}`);
+            }
+
             return response.status(202).json({ status: "trade acceptance email queued" });
         } else {
             throw new BadRequestError("Cannot send trade acceptance email for this trade based on its status");

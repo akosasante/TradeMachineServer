@@ -39,6 +39,31 @@ export interface DiscordJobData {
     };
 }
 
+export interface TradeDeclinedJobData {
+    env: ObanEnv;
+    email_type: "trade_declined";
+    trade_id: string;
+    recipient_user_id: string;
+    is_creator: boolean;
+    decline_url?: string; // V3 only: /trades/:id summary page (no token); omitted for V2
+    trace_context?: {
+        traceparent: string;
+        tracestate?: string;
+    };
+}
+
+export interface TradeSubmitJobData {
+    env: ObanEnv;
+    email_type: "trade_submit";
+    trade_id: string;
+    recipient_user_id: string;
+    submit_url: string; // V3: /trades/:id?action=submit&token=… or V2: /trade/:id/submit
+    trace_context?: {
+        traceparent: string;
+        tracestate?: string;
+    };
+}
+
 export interface WebhookStatusJobData {
     env: ObanEnv;
     message_id: string;
@@ -54,7 +79,13 @@ export interface WebhookStatusJobData {
 export interface CreateObanJobInput {
     queue: string;
     worker: string;
-    args: EmailJobData | TradeRequestJobData | DiscordJobData | WebhookStatusJobData;
+    args:
+        | EmailJobData
+        | TradeRequestJobData
+        | TradeDeclinedJobData
+        | TradeSubmitJobData
+        | DiscordJobData
+        | WebhookStatusJobData;
     scheduled_at?: Date;
     priority?: number;
     max_attempts?: number;
@@ -154,6 +185,57 @@ export default class ObanDAO {
                 decline_url: declineUrl,
                 trace_context: traceContext,
             } as TradeRequestJobData,
+        });
+    }
+
+    /**
+     * Enqueue a trade declined email for Elixir to process.
+     * TypeScript pre-computes decline_url (V3 summary page) so Elixir stays feature-flag agnostic.
+     * decline_url is omitted for V2 environments where no link is shown in the email.
+     */
+    public async enqueueTradeDeclinedEmail(
+        tradeId: string,
+        recipientUserId: string,
+        isCreator: boolean,
+        declineUrl: string | undefined,
+        traceContext?: { traceparent: string; tracestate?: string }
+    ): Promise<ObanJob> {
+        return this.enqueueJob({
+            queue: "emails",
+            worker: "TradeMachine.Jobs.EmailWorker",
+            args: {
+                env: (process.env.APP_ENV as ObanEnv) || "staging",
+                email_type: "trade_declined",
+                trade_id: tradeId,
+                recipient_user_id: recipientUserId,
+                is_creator: isCreator,
+                decline_url: declineUrl,
+                trace_context: traceContext,
+            } as TradeDeclinedJobData,
+        });
+    }
+
+    /**
+     * Enqueue a trade submit email for Elixir to process.
+     * TypeScript pre-computes submit_url (V3 magic-link or V2 plain) so Elixir stays feature-flag agnostic.
+     */
+    public async enqueueTradeSubmitEmail(
+        tradeId: string,
+        recipientUserId: string,
+        submitUrl: string,
+        traceContext?: { traceparent: string; tracestate?: string }
+    ): Promise<ObanJob> {
+        return this.enqueueJob({
+            queue: "emails",
+            worker: "TradeMachine.Jobs.EmailWorker",
+            args: {
+                env: (process.env.APP_ENV as ObanEnv) || "staging",
+                email_type: "trade_submit",
+                trade_id: tradeId,
+                recipient_user_id: recipientUserId,
+                submit_url: submitUrl,
+                trace_context: traceContext,
+            } as TradeSubmitJobData,
         });
     }
 
