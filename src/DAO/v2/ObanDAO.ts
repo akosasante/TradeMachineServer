@@ -5,15 +5,19 @@ import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
 type ObanEnv = "production" | "staging" | "development";
 
+// Shared trace context shape
+interface TraceContext {
+    traceparent: string;
+    tracestate?: string;
+}
+
 // Job type interfaces
-export interface EmailJobData {
+
+export interface UserEmailJobData {
     env: ObanEnv;
     email_type: "reset_password" | "registration_email";
-    data: string; // user ID for reset_password and registration_email
-    trace_context?: {
-        traceparent: string;
-        tracestate?: string;
-    };
+    data: string; // user ID
+    trace_context?: TraceContext;
 }
 
 export interface TradeRequestJobData {
@@ -23,20 +27,7 @@ export interface TradeRequestJobData {
     recipient_user_id: string;
     accept_url: string;
     decline_url: string;
-    trace_context?: {
-        traceparent: string;
-        tracestate?: string;
-    };
-}
-
-export interface DiscordJobData {
-    env: ObanEnv;
-    job_type: "trade_announcement";
-    data: string; // trade ID
-    trace_context?: {
-        traceparent: string;
-        tracestate?: string;
-    };
+    trace_context?: TraceContext;
 }
 
 export interface TradeDeclinedJobData {
@@ -46,10 +37,7 @@ export interface TradeDeclinedJobData {
     recipient_user_id: string;
     is_creator: boolean;
     decline_url?: string; // V3 only: /trades/:id summary page (no token); omitted for V2
-    trace_context?: {
-        traceparent: string;
-        tracestate?: string;
-    };
+    trace_context?: TraceContext;
 }
 
 export interface TradeSubmitJobData {
@@ -58,10 +46,17 @@ export interface TradeSubmitJobData {
     trade_id: string;
     recipient_user_id: string;
     submit_url: string; // V3: /trades/:id?action=submit&token=… or V2: /trade/:id/submit
-    trace_context?: {
-        traceparent: string;
-        tracestate?: string;
-    };
+    trace_context?: TraceContext;
+}
+
+// Union of all jobs handled by TradeMachine.Jobs.EmailWorker
+export type EmailJobData = UserEmailJobData | TradeRequestJobData | TradeDeclinedJobData | TradeSubmitJobData;
+
+export interface DiscordJobData {
+    env: ObanEnv;
+    job_type: "trade_announcement";
+    data: string; // trade ID
+    trace_context?: TraceContext;
 }
 
 export interface WebhookStatusJobData {
@@ -70,22 +65,13 @@ export interface WebhookStatusJobData {
     event: string; // e.g. "delivered", "opened", "bounced"
     email?: string;
     reason?: string;
-    trace_context?: {
-        traceparent: string;
-        tracestate?: string;
-    };
+    trace_context?: TraceContext;
 }
 
 export interface CreateObanJobInput {
     queue: string;
     worker: string;
-    args:
-        | EmailJobData
-        | TradeRequestJobData
-        | TradeDeclinedJobData
-        | TradeSubmitJobData
-        | DiscordJobData
-        | WebhookStatusJobData;
+    args: EmailJobData | DiscordJobData | WebhookStatusJobData;
     scheduled_at?: Date;
     priority?: number;
     max_attempts?: number;
@@ -121,7 +107,8 @@ export default class ObanDAO {
     }
 
     /**
-     * Enqueue an email job (convenience method)
+     * Enqueue an email job via TradeMachine.Jobs.EmailWorker.
+     * Single place that owns the queue name and worker for all email jobs.
      */
     public async enqueueEmailJob(emailJobData: EmailJobData): Promise<ObanJob> {
         return this.enqueueJob({
@@ -134,12 +121,9 @@ export default class ObanDAO {
     /**
      * Enqueue a password reset email job (convenience method)
      */
-    public async enqueuePasswordResetEmail(
-        userId: string,
-        traceContext?: { traceparent: string; tracestate?: string }
-    ): Promise<ObanJob> {
+    public async enqueuePasswordResetEmail(userId: string, traceContext?: TraceContext): Promise<ObanJob> {
         return this.enqueueEmailJob({
-            env: (process.env.APP_ENV as EmailJobData["env"]) || "staging",
+            env: (process.env.APP_ENV as ObanEnv) || "staging",
             email_type: "reset_password",
             data: userId,
             trace_context: traceContext,
@@ -149,12 +133,9 @@ export default class ObanDAO {
     /**
      * Enqueue a registration email job (convenience method)
      */
-    public async enqueueRegistrationEmail(
-        userId: string,
-        traceContext?: { traceparent: string; tracestate?: string }
-    ): Promise<ObanJob> {
+    public async enqueueRegistrationEmail(userId: string, traceContext?: TraceContext): Promise<ObanJob> {
         return this.enqueueEmailJob({
-            env: (process.env.APP_ENV as EmailJobData["env"]) || "staging",
+            env: (process.env.APP_ENV as ObanEnv) || "staging",
             email_type: "registration_email",
             data: userId,
             trace_context: traceContext,
@@ -171,20 +152,16 @@ export default class ObanDAO {
         recipientUserId: string,
         acceptUrl: string,
         declineUrl: string,
-        traceContext?: { traceparent: string; tracestate?: string }
+        traceContext?: TraceContext
     ): Promise<ObanJob> {
-        return this.enqueueJob({
-            queue: "emails",
-            worker: "TradeMachine.Jobs.EmailWorker",
-            args: {
-                env: (process.env.APP_ENV as ObanEnv) || "staging",
-                email_type: "trade_request",
-                trade_id: tradeId,
-                recipient_user_id: recipientUserId,
-                accept_url: acceptUrl,
-                decline_url: declineUrl,
-                trace_context: traceContext,
-            } as TradeRequestJobData,
+        return this.enqueueEmailJob({
+            env: (process.env.APP_ENV as ObanEnv) || "staging",
+            email_type: "trade_request",
+            trade_id: tradeId,
+            recipient_user_id: recipientUserId,
+            accept_url: acceptUrl,
+            decline_url: declineUrl,
+            trace_context: traceContext,
         });
     }
 
@@ -198,20 +175,16 @@ export default class ObanDAO {
         recipientUserId: string,
         isCreator: boolean,
         declineUrl: string | undefined,
-        traceContext?: { traceparent: string; tracestate?: string }
+        traceContext?: TraceContext
     ): Promise<ObanJob> {
-        return this.enqueueJob({
-            queue: "emails",
-            worker: "TradeMachine.Jobs.EmailWorker",
-            args: {
-                env: (process.env.APP_ENV as ObanEnv) || "staging",
-                email_type: "trade_declined",
-                trade_id: tradeId,
-                recipient_user_id: recipientUserId,
-                is_creator: isCreator,
-                decline_url: declineUrl,
-                trace_context: traceContext,
-            } as TradeDeclinedJobData,
+        return this.enqueueEmailJob({
+            env: (process.env.APP_ENV as ObanEnv) || "staging",
+            email_type: "trade_declined",
+            trade_id: tradeId,
+            recipient_user_id: recipientUserId,
+            is_creator: isCreator,
+            decline_url: declineUrl,
+            trace_context: traceContext,
         });
     }
 
@@ -223,19 +196,15 @@ export default class ObanDAO {
         tradeId: string,
         recipientUserId: string,
         submitUrl: string,
-        traceContext?: { traceparent: string; tracestate?: string }
+        traceContext?: TraceContext
     ): Promise<ObanJob> {
-        return this.enqueueJob({
-            queue: "emails",
-            worker: "TradeMachine.Jobs.EmailWorker",
-            args: {
-                env: (process.env.APP_ENV as ObanEnv) || "staging",
-                email_type: "trade_submit",
-                trade_id: tradeId,
-                recipient_user_id: recipientUserId,
-                submit_url: submitUrl,
-                trace_context: traceContext,
-            } as TradeSubmitJobData,
+        return this.enqueueEmailJob({
+            env: (process.env.APP_ENV as ObanEnv) || "staging",
+            email_type: "trade_submit",
+            trade_id: tradeId,
+            recipient_user_id: recipientUserId,
+            submit_url: submitUrl,
+            trace_context: traceContext,
         });
     }
 
