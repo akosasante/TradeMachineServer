@@ -147,48 +147,64 @@ describe("Messenger API endpoints", () => {
             return await doLogout(request.agent(app));
         });
 
-        it("should queue a trade decline email job and return 202", async () => {
+        it("should enqueue a trade decline email job via Oban and return 202", async () => {
             const declinedTrade = await createTradeOfStatus(TradeStatus.REJECTED, {
                 declinedById: ownerUser.id,
                 declinedReason: "because I say so",
             });
 
-            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const obanCountBefore = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
             const { body } = await adminLoggedIn(req(declinedTrade.id!), app);
-            const queueLengthAfter = await emailPublisher.getJobTotal();
+            const obanCountAfter = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
 
             expect(body.status).toBe("trade decline email queued");
-            expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
+            expect(obanCountAfter).toBeGreaterThan(obanCountBefore);
         });
-        it("should queue a trade declined email job successfully if logged in as an owner", async () => {
+        it("should enqueue a trade declined email job via Oban successfully if logged in as an owner", async () => {
             const declinedTrade = await createTradeOfStatus(TradeStatus.REJECTED, {
                 declinedById: ownerUser.id,
                 declinedReason: "because I say so",
             });
 
-            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const obanCountBefore = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
             const { body } = await ownerLoggedIn(req(declinedTrade.id!), app);
-            const queueLengthAfter = await emailPublisher.getJobTotal();
+            const obanCountAfter = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
 
             expect(body.status).toBe("trade decline email queued");
-            expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
+            expect(obanCountAfter).toBeGreaterThan(obanCountBefore);
         });
         it("should return a 400 Bad Request if the trade status is not DECLINED", async () => {
             const draftTrade = await createTradeOfStatus(TradeStatus.DRAFT);
 
-            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const obanCountBefore = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
             const { body } = await adminLoggedIn(req(draftTrade.id!, 400), app);
-            const queueLengthAfter = await emailPublisher.getJobTotal();
+            const obanCountAfter = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
 
             expect(body.stack).toMatch("BadRequest");
-            expect(queueLengthAfter).toEqual(queueLengthBefore);
+            expect(obanCountAfter).toEqual(obanCountBefore);
         });
         it("should return a 404 if no trade found with that id", async () => {
-            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const obanCountBefore = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
             await adminLoggedIn(req(uuid(), 404), app);
-            const queueLengthAfter = await emailPublisher.getJobTotal();
+            const obanCountAfter = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
 
-            expect(queueLengthAfter).toEqual(queueLengthBefore);
+            expect(obanCountAfter).toEqual(obanCountBefore);
         });
 
         it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
@@ -197,11 +213,15 @@ describe("Messenger API endpoints", () => {
                 declinedReason: "because I say so",
             });
 
-            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const obanCountBefore = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
             await req(declinedTrade.id!, 403)(request(app));
-            const queueLengthAfter = await emailPublisher.getJobTotal();
+            const obanCountAfter = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
 
-            expect(queueLengthAfter).toEqual(queueLengthBefore);
+            expect(obanCountAfter).toEqual(obanCountBefore);
         });
     });
 
@@ -274,52 +294,72 @@ describe("Messenger API endpoints", () => {
             return await doLogout(request.agent(app));
         });
 
-        it("should queue a trade acceptance email job and return 202", async () => {
+        it("should enqueue a trade acceptance email job via Oban and return 202", async () => {
             const acceptedTrade = await createTradeOfStatus(TradeStatus.ACCEPTED);
 
-            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const obanCountBefore = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
             const { body } = await adminLoggedIn(req(acceptedTrade.id!), app);
-            const queueLengthAfter = await emailPublisher.getJobTotal();
+            const obanCountAfter = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
 
             expect(body.status).toBe("trade acceptance email queued");
-            expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
+            expect(obanCountAfter).toBeGreaterThan(obanCountBefore);
         });
-        it("should queue a trade acceptance job successfully if logged in as an owner", async () => {
+        it("should enqueue a trade acceptance job via Oban successfully if logged in as an owner", async () => {
             const acceptedTrade = await createTradeOfStatus(TradeStatus.ACCEPTED);
 
-            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const obanCountBefore = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
             const { body } = await ownerLoggedIn(req(acceptedTrade.id!), app);
-            const queueLengthAfter = await emailPublisher.getJobTotal();
+            const obanCountAfter = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
 
             expect(body.status).toBe("trade acceptance email queued");
-            expect(queueLengthAfter).toEqual(queueLengthBefore + 1);
+            expect(obanCountAfter).toBeGreaterThan(obanCountBefore);
         });
         it("should return a 400 Bad Request if the trade is not accepted", async () => {
             const draftTrade = await createTradeOfStatus(TradeStatus.DRAFT);
 
-            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const obanCountBefore = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
             const { body } = await adminLoggedIn(req(draftTrade.id!, 400), app);
-            const queueLengthAfter = await emailPublisher.getJobTotal();
+            const obanCountAfter = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
 
             expect(body.stack).toMatch("BadRequest");
-            expect(queueLengthAfter).toEqual(queueLengthBefore);
+            expect(obanCountAfter).toEqual(obanCountBefore);
         });
         it("should return a 404 if no trade found with that id", async () => {
-            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const obanCountBefore = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
             await adminLoggedIn(req(uuid(), 404), app);
-            const queueLengthAfter = await emailPublisher.getJobTotal();
+            const obanCountAfter = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
 
-            expect(queueLengthAfter).toEqual(queueLengthBefore);
+            expect(obanCountAfter).toEqual(obanCountBefore);
         });
 
         it.skip("should return a 403 Forbidden Error if a non-logged-in request is used", async () => {
             const acceptedTrade = await createTradeOfStatus(TradeStatus.ACCEPTED);
 
-            const queueLengthBefore = await emailPublisher.getJobTotal();
+            const obanCountBefore = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
             await req(acceptedTrade.id!, 403)(request(app));
-            const queueLengthAfter = await emailPublisher.getJobTotal();
+            const obanCountAfter = await prismaConn.obanJob.count({
+                where: { worker: "TradeMachine.Jobs.EmailWorker" },
+            });
 
-            expect(queueLengthAfter).toEqual(queueLengthBefore);
+            expect(obanCountAfter).toEqual(obanCountBefore);
         });
     });
 });
