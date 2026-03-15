@@ -11,9 +11,6 @@ import { TeamFactory } from "../../../factories/TeamFactory";
 import { TradeItemType } from "../../../../src/models/tradeItem";
 import { HydratedTrade } from "../../../../src/models/views/hydratedTrades";
 import { mockClear, mockDeep } from "jest-mock-extended";
-import * as TradeTracker from "../../../../src/csv/TradeTracker";
-
-jest.mock("../../../../src/csv/TradeTracker");
 
 describe("TradeController", () => {
     const mockTradeDAO = mockDeep<TradeDAO>();
@@ -86,12 +83,23 @@ describe("TradeController", () => {
     });
 
     describe("getOneTrade method", () => {
+        const EXPECTED_RELATIONS = [
+            "tradeParticipants",
+            "tradeParticipants.team",
+            "tradeParticipants.team.owners",
+            "tradeItems",
+            "tradeItems.sender",
+            "tradeItems.sender.owners",
+            "tradeItems.recipient",
+            "tradeItems.recipient.owners",
+        ];
+
         it("should return a trade by id", async () => {
             mockTradeDAO.getTradeById.mockResolvedValueOnce(testTrade);
             const res = await tradeController.getOneTrade(testTrade.id!);
 
             expect(mockTradeDAO.getTradeById).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id);
+            expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id, EXPECTED_RELATIONS);
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(0);
 
             expect(res).toEqual(testTrade);
@@ -102,7 +110,7 @@ describe("TradeController", () => {
             const res = await tradeController.getOneTrade(testTrade.id!, true);
 
             expect(mockTradeDAO.getTradeById).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id);
+            expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id, EXPECTED_RELATIONS);
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledWith(testTrade);
             expect(res).toEqual(testTrade);
@@ -479,7 +487,6 @@ describe("TradeController", () => {
             mockTradeDAO.getTradeById.mockReset();
             mockTradeDAO.getTradeById.mockResolvedValueOnce(acceptedTrade);
             mockTradeDAO.hydrateTrade.mockResolvedValueOnce(acceptedTrade);
-            jest.spyOn(TradeTracker, "appendNewTrade").mockResolvedValue(undefined);
         });
 
         it("should throw an error if a non-admin, non-trade participator tries to update it", async () => {
@@ -522,7 +529,7 @@ describe("TradeController", () => {
             }
         });
 
-        it("should hydrate the trade, append it to the trade tracker, and update the status to SUBMITTED", async () => {
+        it("should hydrate the trade and update the status to SUBMITTED", async () => {
             await tradeController.submitTrade(tradeOwner, acceptedTrade.id!);
 
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(1);

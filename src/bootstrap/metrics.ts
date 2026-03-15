@@ -162,3 +162,30 @@ export const transferTokenFailedMetric = new promClient.Counter({
     labelNames: ["reason", "value"], // expired, invalid, user_not_found
     registers: [metricsRegistry],
 });
+
+export const tradeActionTokenGeneratedMetric = new promClient.Counter({
+    name: "trade_action_token_generated_total",
+    help: "Total number of trade action magic-link tokens generated",
+    labelNames: ["action"],
+    registers: [metricsRegistry],
+});
+
+export const tradeActionTokenExchangedMetric = new promClient.Counter({
+    name: "trade_action_token_exchanged_total",
+    help: "Total number of trade action magic-link tokens successfully exchanged",
+    labelNames: ["action"],
+    registers: [metricsRegistry],
+});
+
+export const tradeActionTokenFailedMetric = new promClient.Counter({
+    name: "trade_action_token_failed_total",
+    help: "Total number of failed trade action magic-link token exchanges",
+    labelNames: ["reason"],
+    registers: [metricsRegistry],
+});
+
+export const tradeRequestEmailEnqueuedMetric = new promClient.Counter({
+    name: "trade_request_email_enqueued_total",
+    help: "Total number of trade request emails enqueued to Oban",
+    registers: [metricsRegistry],
+});

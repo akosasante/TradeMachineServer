@@ -80,8 +80,8 @@ export default class TradeDAO {
             : this.hydratedTradeDb.findAndCount({ order: { dateCreated: "DESC" }, ...pagingOptions }));
     }
 
-    public async getTradeById(id: string): Promise<Trade> {
-        return await this.tradeDb.findOneOrFail({ where: { id } } as FindOneOptions<Trade>);
+    public async getTradeById(id: string, relations?: string[]): Promise<Trade> {
+        return await this.tradeDb.findOneOrFail({ where: { id }, relations } as FindOneOptions<Trade>);
     }
 
     public async hydrateTrade(trade: Trade): Promise<Trade> {

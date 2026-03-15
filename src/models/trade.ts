@@ -5,6 +5,7 @@ import Player, { PlayerLeagueType } from "./player";
 import Team from "./team";
 import TradeItem from "./tradeItem";
 import TradeParticipant, { TradeParticipantType } from "./tradeParticipant";
+import User from "./user";
 import logger from "../bootstrap/logger";
 import Email from "./email";
 import { inspect } from "util";
@@ -90,6 +91,25 @@ export default class Trade extends BaseModel {
 
     public get lowMinorPicks(): DraftPick[] {
         return this.picks.filter(pick => pick.type === LeagueLevel.LOW);
+    }
+
+    /** All User records across every participant team, flattened into a single array. */
+    public get allOwners(): User[] {
+        return (this.tradeParticipants || []).flatMap(tp => tp.team.owners ?? []);
+    }
+
+    /** Returns true if a given user ID belongs to any participant team's owners. */
+    public includesUser(userId: string): boolean {
+        return this.allOwners.some(owner => owner.id === userId);
+    }
+
+    /**
+     * Finds the first owner record whose email matches across all participant teams.
+     * Useful for mapping a notification recipient email back to a userId (e.g. for
+     * generating magic-link tokens in emails).
+     */
+    public ownerByEmail(email: string): User | undefined {
+        return this.allOwners.find(owner => owner.email === email);
     }
 
     public static isValid(trade: Partial<Trade>): boolean {

@@ -24,7 +24,6 @@ import {
     setupOwnerAndAdminUsers,
 } from "./helpers";
 import { v4 as uuid } from "uuid";
-import * as TradeTracker from "../../src/csv/TradeTracker";
 import TradeDAO from "../../src/DAO/TradeDAO";
 import TradeItem from "../../src/models/tradeItem";
 import { HydratedTrade } from "../../src/models/views/hydratedTrades";
@@ -40,7 +39,6 @@ let pickDAO: DraftPickDAO;
 let teamDAO: TeamDAO;
 let tradeDAO: TradeDAO;
 
-jest.spyOn(TradeTracker, "appendNewTrade").mockImplementation(() => Promise.resolve());
 let prismaConn: ExtendedPrismaClient;
 beforeAll(async () => {
     logger.debug("~~~~~~TRADE ROUTES BEFORE ALL~~~~~~");

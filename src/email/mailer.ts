@@ -14,6 +14,7 @@ import ordinal from "ordinal";
 import { rollbar } from "../bootstrap/rollbar";
 import EmailDAO from "../DAO/EmailDAO";
 import DbEmail from "../models/email";
+import { createTradeActionToken } from "../api/routes/v2/utils/tradeActionTokens";
 
 export interface SendInBlueSendResponse {
     envelope: {
@@ -48,6 +49,8 @@ const sendInBlueTransport = nodemailer.createTransport({
 });
 
 const baseDomain = process.env.BASE_URL;
+const v3BaseDomain = process.env.V3_BASE_URL;
+const useV3TradeLinks = process.env.USE_V3_TRADE_LINKS === "true";
 
 function getTitleText(trade: Trade) {
     if (trade.tradeParticipants?.length === 2) {
@@ -264,13 +267,20 @@ export const EMAILER = {
             });
     },
 
-    sendTradeRequestEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse | undefined> {
+    async sendTradeRequestEmail(
+        this: void,
+        recipient: string,
+        trade: Trade
+    ): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`preparing trade req email for tradeId: ${trade.id}.`);
 
+        // V2 fallback path — trade request emails are now enqueued via Oban in MessengerController.
+        // This Bull-based path is retained for backwards compatibility only and can be removed
+        // once all environments are confirmed to be routing through Oban.
         const acceptUrl = `${baseDomain}/trade/${trade.id}/accept`;
-        const acceptText = "Accept Trade";
         const rejectUrl = `${baseDomain}/trade/${trade.id}/reject`;
 
+        const acceptText = "Accept Trade";
         logger.debug(`sending trade request email to=${recipient}, acceptUrl=${acceptUrl}, rejectUrl=${rejectUrl}`);
         rollbar.info("sendTradeRequestEmail", { recipient, id: trade.id });
 
@@ -348,9 +358,32 @@ export const EMAILER = {
             });
     },
 
-    sendTradeSubmissionEmail(this: void, recipient: string, trade: Trade): Promise<SendInBlueSendResponse | undefined> {
+    async sendTradeSubmissionEmail(
+        this: void,
+        recipient: string,
+        trade: Trade
+    ): Promise<SendInBlueSendResponse | undefined> {
         logger.debug(`got a trade submission email request for tradeId: ${trade.id}.`);
-        const acceptUrl = `${baseDomain}/trade/${trade.id}/submit`;
+
+        let acceptUrl: string;
+
+        if (useV3TradeLinks && v3BaseDomain && trade.id) {
+            const userId = trade.ownerByEmail(recipient)?.id;
+
+            if (userId) {
+                const submitToken = await createTradeActionToken({ userId, tradeId: trade.id, action: "submit" });
+                acceptUrl = `${v3BaseDomain}/trades/${trade.id}?action=submit&token=${submitToken}`;
+                logger.debug(`[sendTradeSubmissionEmail] Using V3 magic-link URL for userId=${userId}`);
+            } else {
+                logger.warn(
+                    `[sendTradeSubmissionEmail] Could not find creator owner for recipient=${recipient} in trade ${trade.id}, falling back to V2 URL`
+                );
+                acceptUrl = `${baseDomain}/trade/${trade.id}/submit`;
+            }
+        } else {
+            acceptUrl = `${baseDomain}/trade/${trade.id}/submit`;
+        }
+
         // const discardUrl = `${baseDomain}/trade/${trade!.id}/discard`
         logger.debug(`sending trade submission email to=${recipient}, acceptUrl=${acceptUrl}, discardUrl=""`);
         rollbar.info("sendTradeSubmissionEmail", { recipient, id: trade.id });

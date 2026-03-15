@@ -15,6 +15,5 @@ module.exports = {
     forceExit: true,
     detectOpenHandles: true,
     testTimeout: 10000,
-    // Skip setup files to isolate the issue
-    setupFilesAfterEnv: [],
+    setupFilesAfterEnv: ["jest-extended/all", "jest-date-mock", "./jestSetupFile.docker.mjs"],
 };

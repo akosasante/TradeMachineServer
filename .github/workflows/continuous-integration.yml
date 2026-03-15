@@ -82,11 +82,11 @@ jobs:
           BASE_DIR: ${{ github.workspace }}
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
-          BASE_URL: http://127.0.0.1:8080
-          TRADE_WORKSHEET_ID: 9999
-          TRADE_SPREADSHEET_ID: test_spreadsheet
+          BASE_URL: http://localhost:3030
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
+          USE_V3_TRADE_LINKS: "false"
+          V3_BASE_URL: http://localhost:3031
           DATABASE_URL: postgresql://test_user:test_password@127.0.0.1:5432/test_trade_machine?application_name=tm_ci_test
 
       - name: Run unit tests
@@ -98,13 +98,12 @@ jobs:
           PG_HOST: 127.0.0.1
           REDIS_IP: 127.0.0.1
           BASE_DIR: ${{ github.workspace }}
-          SHEETS_CREDENTIAL_FILE: "fake_creds.json"
           ESPN_COOKIE: ${{ secrets.ESPN_COOKIE }}
           ESPN_SWID: ${{ secrets.ESPN_SWID }}
-          BASE_URL: http://127.0.0.1:8080
-          TRADE_WORKSHEET_ID: 9999
-          TRADE_SPREADSHEET_ID: test_spreadsheet
+          BASE_URL: http://localhost:3030
           V2_EMAILS: test@example.com
           ROLLBAR_TOKEN: test
+          USE_V3_TRADE_LINKS: "false"
+          V3_BASE_URL: http://localhost:3031
           DATABASE_URL: postgresql://test_user:test_password@127.0.0.1:5432/test_trade_machine?application_name=tm_ci_test
 

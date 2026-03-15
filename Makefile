@@ -124,7 +124,7 @@ docker-test-unit: ## run unit tests in Docker container (requires docker-dev-up)
 	docker-compose exec app sh -c "NODE_ENV=test npx jest --config ./jest.minimal.config.js --testPathPattern=unit/ --runInBand"
 
 docker-test-integration: ## run integration tests in Docker container (requires docker-dev-up)
-	docker-compose exec app sh -c "NODE_ENV=test npx jest --config ./jest.minimal.config.js --testPathPattern=integration/ --runInBand"
+	docker-compose exec app sh -c "NODE_ENV=test PORT=3099 npx jest --config ./jest.minimal.config.js --testPathPattern=integration/ --runInBand"
 
 docker-test-all: ## run all tests in Docker container (requires docker-dev-up)
 	$(MAKE) docker-test-unit && $(MAKE) docker-test-integration

@@ -103,13 +103,42 @@ No manual type updates needed!
 
 ## Publishing
 
+### Step 1 — Determine the next version
+
+Always check what is already published before bumping, since the version in `package.json`
+in the repo may lag behind what is on the registry:
+
 ```bash
-# Patch version (bug fixes)
-npm run version:patch && npm run publish:manual
-
-# Minor version (new features)
-npm run version:minor && npm run publish:manual
-
-# Major version (breaking changes)
-npm run version:major && npm run publish:manual
+npm view @akosasante/trpc-types version
+# or to see all published versions:
+npm view @akosasante/trpc-types versions --json
 ```
+
+### Step 2 — Bump the version
+
+**Always use `npm version` (never edit `package.json` directly).** This keeps
+`package.json` and `package-lock.json` in sync automatically.
+
+```bash
+# Specific version (safest — use when you know the exact target)
+npm version <new-version> --no-git-tag-version   # e.g. npm version 1.10.0 --no-git-tag-version
+
+# Or use the shorthand scripts:
+npm run version:patch   # x.y.Z  — bug fixes / internal changes
+npm run version:minor   # x.Y.0  — new tRPC procedures added
+npm run version:major   # X.0.0  — breaking type changes
+```
+
+> ⚠️ **Never** edit `package.json`'s `version` field with a text editor or `node -e`.
+> Doing so leaves `package-lock.json` stale (it retains the old version), causing a
+> visible discrepancy. If this happens by accident, re-run
+> `npm version <correct-version> --no-git-tag-version` to resync both files.
+
+### Step 3 — Build and publish
+
+```bash
+npm run publish:manual
+```
+
+This runs `clean → build → npm publish` in one step. The build includes compiling
+server type declarations, copying them into `dist/server/`, and fixing path aliases.

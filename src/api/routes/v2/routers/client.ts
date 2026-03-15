@@ -4,6 +4,8 @@ import logger from "../../../../bootstrap/logger";
 import { z } from "zod";
 import {
     activeSessionsMetric,
+    tradeActionTokenExchangedMetric,
+    tradeActionTokenFailedMetric,
     transferTokenExchangedMetric,
     transferTokenFailedMetric,
     transferTokenGeneratedMetric,
@@ -17,6 +19,7 @@ import {
     registerUserSession,
     SSO_CONFIG,
 } from "../utils/ssoTokens";
+import { consumeTradeActionToken } from "../utils/tradeActionTokens";
 import { TRPCError } from "@trpc/server";
 
 // Declare the additional fields that we add to express session
@@ -155,6 +158,9 @@ export const clientRouter = router({
 
                 addSpanEvent("exchange_redirect_token.original_session_loaded");
 
+                // Regenerate the session to prevent session fixation attacks — if an attacker
+                // knew the session ID before the SSO token was redeemed, this invalidates it and
+                // issues a fresh session ID before we associate any user identity with it.
                 await new Promise<void>((resolve, reject) => {
                     ctx.req.session.regenerate(err => {
                         if (err) return reject(err);
@@ -181,6 +187,84 @@ export const clientRouter = router({
                 transferTokenExchangedMetric.inc();
 
                 return { success: true, user };
+            })
+        ),
+    /*
+     * Trade action magic-link token exchange.
+     * Public endpoint — the token itself is the proof of identity.
+     * Validates the token, creates a new server session for the associated user,
+     * and returns the user + the intended trade action so the client can proceed.
+     */
+    exchangeTradeActionToken: publicProcedure
+        .input(
+            z.object({
+                token: z
+                    .string()
+                    .length(64)
+                    .regex(/^[0-9a-f]{64}$/, "Invalid token format"),
+            })
+        )
+        .mutation(
+            withTracing("trpc.client.exchangeTradeActionToken", async (input, ctx, _span) => {
+                addSpanEvent("exchange_trade_action_token.start", { tokenFragment: input.token.slice(0, 8) });
+
+                const payload = await consumeTradeActionToken(input.token);
+                if (!payload) {
+                    tradeActionTokenFailedMetric.inc({ reason: "invalid_or_expired_token" });
+                    throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid or expired token" });
+                }
+
+                let user: PublicUser;
+                try {
+                    user = await ctx.userDao.getUserById(payload.userId);
+                } catch (e) {
+                    tradeActionTokenFailedMetric.inc({ reason: "user_not_found" });
+                    throw new TRPCError({ code: "BAD_REQUEST", message: "User not found" });
+                }
+
+                addSpanAttributes({
+                    "exchange_trade_action_token.user_id": user.id,
+                    "exchange_trade_action_token.trade_id": payload.tradeId,
+                    "exchange_trade_action_token.action": payload.action,
+                });
+                addSpanEvent("exchange_trade_action_token.token_valid");
+
+                // Session fixation protection: regenerate the session ID so that an attacker
+                // who knew the pre-auth session ID cannot hijack the authenticated session.
+                // IMPORTANT: only do this when the request arrives WITHOUT an existing
+                // authenticated session. If the user is already logged in, calling
+                // session.regenerate() deletes their current Redis session entry. If the
+                // new Set-Cookie header doesn't reach the browser (common with cross-origin
+                // SameSite restrictions), the browser keeps sending the now-deleted old
+                // session ID and the user appears logged out on all subsequent requests.
+                const alreadyAuthenticated = !!ctx.req.session.user;
+
+                if (!alreadyAuthenticated) {
+                    await new Promise<void>((resolve, reject) => {
+                        ctx.req.session.regenerate(err => {
+                            if (err) return reject(err);
+                            return resolve();
+                        });
+                    });
+                    activeSessionsMetric.inc();
+                }
+
+                ctx.req.session.user = serializeUser(user);
+                await registerUserSession(user.id!, ctx.req.sessionID);
+
+                addSpanAttributes({
+                    "exchange_trade_action_token.new_session_id": ctx.req.sessionID,
+                    "exchange_trade_action_token.token_consumed": true,
+                    "exchange_trade_action_token.session_regenerated": !alreadyAuthenticated,
+                });
+                addSpanEvent("exchange_trade_action_token.session_created");
+                tradeActionTokenExchangedMetric.inc({ action: payload.action });
+
+                logger.info(
+                    `[exchangeTradeActionToken] Session created for userId=${user.id} tradeId=${payload.tradeId} action=${payload.action}`
+                );
+
+                return { success: true, user, tradeId: payload.tradeId, action: payload.action };
             })
         ),
 });

@@ -23,7 +23,6 @@ import User, { Role } from "../../models/user";
 import { UUID_PATTERN } from "../helpers/ApiHelpers";
 import TradeParticipant from "../../models/tradeParticipant";
 import { HydratedTrade } from "../../models/views/hydratedTrades";
-import { appendNewTrade } from "../../csv/TradeTracker";
 import { rollbar } from "../../bootstrap/rollbar";
 import { Request } from "express";
 import { PublicUser } from "../../DAO/v2/UserDAO";
@@ -53,11 +52,9 @@ function validateParticipantInTrade(user: User | PublicUser, trade: Trade): bool
     if (user?.isAdmin() || user?.role === Role.ADMIN) {
         return true;
     } else {
-        const belongsToUser = (trade.tradeParticipants?.flatMap(tp => tp.team.owners?.map(u => u.id)) || []).includes(
-            user.id
-        );
+        const belongsToUser = trade.includesUser(user.id!);
         logger.debug(`Trade (${trade} belongs to ${user.id}? = ${belongsToUser}`);
-        return belongsToUser || false;
+        return belongsToUser;
     }
 }
 
@@ -93,7 +90,7 @@ function validateStatusChange(user: User, trade: Trade, newStatus: TradeStatus):
 }
 
 function validateTradeDecliner(trade: Trade, declinedById: string) {
-    return trade.tradeParticipants?.flatMap(tp => tp.team.owners?.map(u => u.id) || []).includes(declinedById);
+    return trade.includesUser(declinedById);
 }
 
 function allRecipientTeamsAccepted(acceptedBy: string[], trade: Trade): boolean {
@@ -175,7 +172,20 @@ export default class TradeController {
     ): Promise<Trade> {
         logger.debug(`get one trade endpoint. hydrated? ${hydrated}`);
         rollbar.info("getOneTrade", { tradeId: id, hydrated }, request);
-        let trade = await this.dao.getTradeById(id);
+        // Explicitly load participant team owners to avoid TypeORM circular
+        // eager-loading cutoff (Trade → TradeParticipant → Team → User → Team…).
+        // Passing explicit relations uses JOINs instead of the eager chain,
+        // which sidesteps the circular reference detection entirely.
+        let trade = await this.dao.getTradeById(id, [
+            "tradeParticipants",
+            "tradeParticipants.team",
+            "tradeParticipants.team.owners",
+            "tradeItems",
+            "tradeItems.sender",
+            "tradeItems.sender.owners",
+            "tradeItems.recipient",
+            "tradeItems.recipient.owners",
+        ]);
         if (hydrated) {
             trade = await this.dao.hydrateTrade(trade);
         }
@@ -348,7 +358,6 @@ export default class TradeController {
         }
 
         const hydratedTrade = await this.dao.hydrateTrade(trade);
-        await appendNewTrade(hydratedTrade);
         return await this.dao.updateStatus(id, TradeStatus.SUBMITTED);
     }
 
