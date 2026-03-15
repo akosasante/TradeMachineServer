@@ -83,12 +83,23 @@ describe("TradeController", () => {
     });
 
     describe("getOneTrade method", () => {
+        const EXPECTED_RELATIONS = [
+            "tradeParticipants",
+            "tradeParticipants.team",
+            "tradeParticipants.team.owners",
+            "tradeItems",
+            "tradeItems.sender",
+            "tradeItems.sender.owners",
+            "tradeItems.recipient",
+            "tradeItems.recipient.owners",
+        ];
+
         it("should return a trade by id", async () => {
             mockTradeDAO.getTradeById.mockResolvedValueOnce(testTrade);
             const res = await tradeController.getOneTrade(testTrade.id!);
 
             expect(mockTradeDAO.getTradeById).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id);
+            expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id, EXPECTED_RELATIONS);
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(0);
 
             expect(res).toEqual(testTrade);
@@ -99,7 +110,7 @@ describe("TradeController", () => {
             const res = await tradeController.getOneTrade(testTrade.id!, true);
 
             expect(mockTradeDAO.getTradeById).toHaveBeenCalledTimes(1);
-            expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id);
+            expect(mockTradeDAO.getTradeById).toHaveBeenCalledWith(testTrade.id, EXPECTED_RELATIONS);
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledTimes(1);
             expect(mockTradeDAO.hydrateTrade).toHaveBeenCalledWith(testTrade);
             expect(res).toEqual(testTrade);
