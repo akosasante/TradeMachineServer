@@ -178,8 +178,14 @@ model Trade {
   declinedById      String?            @db.Uuid
   // JSON array of alal the users that have agreed to a trade (useful in case of multi-team trades); _could_ be a separate table, but I think this is fine enough for postgres
   acceptedBy        Json?
+  // Richer parallel to acceptedBy: [{by: userId, at: isoTimestamp}] — written by the tRPC layer, used by V3 for per-user acceptance timestamps (e.g. tooltips)
+  acceptedByDetails Json?
   // Timestamp for when it was accepted (idk why we don't keep a timestamp of when it was declined; but I guess the former is more important)
   acceptedOnDate    DateTime?          @db.Timestamp(6)
+  // Timestamp for when the trade was submitted to the league
+  submittedAt       DateTime?          @db.Timestamp(6)
+  // Which user submitted the trade (UUID of user row)
+  submittedById     String?            @db.Uuid
   // [1-n] List of emails associated with this trade
   emails            Email[]
   // [1-n] List of trade items (players/picks) that are part of this trade
@@ -480,18 +486,20 @@ view HydratedPick {
 }
 
 view HydratedTrade {
-  tradeId         String      @id @db.Uuid
-  dateCreated     DateTime    @db.Timestamp(6)
-  tradeStatus     TradeStatus
-  tradeCreator    String      @db.VarChar()
-  tradeRecipients String[]
-  decliningUser   String?     @db.VarChar()
-  declinedReason  String?     @db.VarChar()
-  acceptingUsers  String[]
-  acceptedOnDate  DateTime?   @db.Timestamp(6)
-  tradedMajors    Json?       @db.Json
-  tradedMinors    Json?       @db.JsonB
-  tradedPicks     Json?       @db.Json
+  tradeId           String      @id @db.Uuid
+  dateCreated       DateTime    @db.Timestamp(6)
+  tradeStatus       TradeStatus
+  tradeCreator      String      @db.VarChar()
+  tradeRecipients   String[]
+  decliningUser     String?     @db.VarChar()
+  declinedReason    String?     @db.VarChar()
+  acceptingUsers    String[]
+  acceptedOnDate    DateTime?   @db.Timestamp(6)
+  tradedMajors      Json?       @db.Json
+  tradedMinors      Json?       @db.JsonB
+  tradedPicks       Json?       @db.Json
+  // New column exposing per-user acceptance timestamps for admin tooling
+  acceptedByDetails Json?
 
   @@map("hydrated_trades")
 }
