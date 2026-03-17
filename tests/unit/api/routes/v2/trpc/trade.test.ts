@@ -262,13 +262,7 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             mockUserDao.getUserById.mockResolvedValueOnce(user);
             // getTradeById (initial fetch)
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
-            // updateAcceptedBy: update + re-fetch
-            mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
-            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce({
-                ...trade,
-                acceptedBy: [RECIPIENT_USER_ID],
-            } as any);
-            // updateStatus (PENDING): update + re-fetch
+            // updateAcceptedBy (PENDING): single update + re-fetch
             mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce({
                 ...trade,
@@ -280,9 +274,13 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             const result = await caller.accept({ tradeId: TRADE_ID, skipNotifications: true });
 
             expect(result.allAccepted).toBe(false);
+            expect(mockPrisma.trade.update).toHaveBeenCalledTimes(1);
             expect(mockPrisma.trade.update).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    data: expect.objectContaining({ acceptedBy: [RECIPIENT_USER_ID] }),
+                    data: expect.objectContaining({
+                        acceptedBy: [RECIPIENT_USER_ID],
+                        status: TradeStatus.PENDING,
+                    }),
                 })
             );
         });
@@ -294,16 +292,11 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             mockUserDao.getUserById.mockResolvedValueOnce(user);
             // initial getTradeById
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
-            // updateAcceptedBy: update + re-fetch
+            // updateAcceptedBy (ACCEPTED): single update + re-fetch
             mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce({
                 ...trade,
                 acceptedBy: [RECIPIENT_USER_ID],
-            } as any);
-            // updateStatus (ACCEPTED): update + re-fetch
-            mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
-            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce({
-                ...trade,
                 status: TradeStatus.ACCEPTED,
             } as any);
 
@@ -312,6 +305,12 @@ describe("[TRPC] Trades Router Unit Tests", () => {
 
             expect(result.allAccepted).toBe(true);
             expect(result.trade.status).toBe(TradeStatus.ACCEPTED);
+            expect(mockPrisma.trade.update).toHaveBeenCalledTimes(1);
+            expect(mockPrisma.trade.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({ status: TradeStatus.ACCEPTED }),
+                })
+            );
         });
 
         it("should throw FORBIDDEN if user is not a recipient", async () => {
@@ -351,16 +350,11 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             mockUserDao.getUserById.mockResolvedValueOnce(admin);
             // initial getTradeById
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
-            // updateAcceptedBy: update + re-fetch
+            // updateAcceptedBy (ACCEPTED): single update + re-fetch
             mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce({
                 ...trade,
                 acceptedBy: [RECIPIENT_USER_ID],
-            } as any);
-            // updateStatus (ACCEPTED): update + re-fetch
-            mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
-            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce({
-                ...trade,
                 status: TradeStatus.ACCEPTED,
             } as any);
 
@@ -372,6 +366,7 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             });
 
             expect(result.allAccepted).toBe(true);
+            expect(mockPrisma.trade.update).toHaveBeenCalledTimes(1);
         });
 
         it("should throw FORBIDDEN if non-admin tries to use actingAsUserId", async () => {
@@ -397,10 +392,7 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             mockUserDao.getUserById.mockResolvedValueOnce(user);
             // initial getTradeById
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
-            // updateDeclinedBy: update + re-fetch
-            mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
-            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
-            // updateStatus (REJECTED): update + re-fetch
+            // updateDeclinedBy: single update (declinedById + status REJECTED) + re-fetch
             mockPrisma.trade.update.mockResolvedValueOnce(declinedTrade as any);
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(declinedTrade as any);
 
@@ -408,9 +400,13 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             const result = await caller.decline({ tradeId: TRADE_ID, skipNotifications: true });
 
             expect(result.status).toBe(TradeStatus.REJECTED);
+            expect(mockPrisma.trade.update).toHaveBeenCalledTimes(1);
             expect(mockPrisma.trade.update).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    data: expect.objectContaining({ declinedById: RECIPIENT_USER_ID }),
+                    data: expect.objectContaining({
+                        declinedById: RECIPIENT_USER_ID,
+                        status: TradeStatus.REJECTED,
+                    }),
                 })
             );
         });
@@ -434,8 +430,6 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
             mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
-            mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
-            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
 
             const caller = createCallerFactory(tradeRouter)(createMockContext(user));
             await caller.decline({
@@ -444,9 +438,13 @@ describe("[TRPC] Trades Router Unit Tests", () => {
                 skipNotifications: true,
             });
 
+            expect(mockPrisma.trade.update).toHaveBeenCalledTimes(1);
             expect(mockPrisma.trade.update).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    data: expect.objectContaining({ declinedReason: "Not a fair trade" }),
+                    data: expect.objectContaining({
+                        declinedReason: "Not a fair trade",
+                        status: TradeStatus.REJECTED,
+                    }),
                 })
             );
         });
@@ -474,10 +472,7 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             mockUserDao.getUserById.mockResolvedValueOnce(user);
             // initial getTradeById
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
-            // updateSubmitted: update + re-fetch
-            mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
-            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
-            // updateStatus (SUBMITTED): update + re-fetch
+            // updateSubmitted: single update (submittedAt, submittedById, status SUBMITTED) + re-fetch
             mockPrisma.trade.update.mockResolvedValueOnce(submittedTrade as any);
             mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(submittedTrade as any);
 
@@ -485,9 +480,14 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             const result = await caller.submit({ tradeId: TRADE_ID, skipNotifications: true });
 
             expect(result.status).toBe(TradeStatus.SUBMITTED);
+            expect(mockPrisma.trade.update).toHaveBeenCalledTimes(1);
             expect(mockPrisma.trade.update).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    data: expect.objectContaining({ submittedAt: expect.any(Date), submittedById: CREATOR_USER_ID }),
+                    data: expect.objectContaining({
+                        submittedAt: expect.any(Date),
+                        submittedById: CREATOR_USER_ID,
+                        status: TradeStatus.SUBMITTED,
+                    }),
                 })
             );
         });

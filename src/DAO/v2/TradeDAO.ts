@@ -35,6 +35,9 @@ const tradeWithRelations = {
 
 export type PrismaTrade = Prisma.TradeGetPayload<{ include: typeof tradeWithRelations }>;
 
+/** Status values allowed when recording an acceptance (all or partial). */
+export type AcceptStatus = "PENDING" | "ACCEPTED";
+
 export default class TradeDAO {
     private readonly tradeDb: ExtendedPrismaClient["trade"];
 
@@ -52,22 +55,15 @@ export default class TradeDAO {
         });
     }
 
-    public async updateStatus(id: string, status: TradeStatus): Promise<PrismaTrade> {
-        await this.tradeDb.update({
-            where: { id },
-            data: { status },
-        });
-        return this.getTradeById(id);
-    }
-
     /**
-     * Updates both the legacy acceptedBy (string[]) column and the new acceptedByDetails
-     * ([{by, at}]) column. Also sets acceptedOnDate to the current timestamp.
+     * Records acceptance (acceptedBy, acceptedByDetails, acceptedOnDate) and sets status in one update.
+     * Use PENDING when not all recipients have accepted; use ACCEPTED when all have accepted.
      */
     public async updateAcceptedBy(
         id: string,
         acceptedBy: string[],
-        acceptedByDetails: AcceptedByEntry[]
+        acceptedByDetails: AcceptedByEntry[],
+        status: AcceptStatus
     ): Promise<PrismaTrade> {
         await this.tradeDb.update({
             where: { id },
@@ -75,11 +71,15 @@ export default class TradeDAO {
                 acceptedBy,
                 acceptedByDetails: acceptedByDetails as unknown as Prisma.InputJsonValue,
                 acceptedOnDate: new Date(),
+                status,
             },
         });
         return this.getTradeById(id);
     }
 
+    /**
+     * Records who declined and when, and sets status to REJECTED in one update.
+     */
     public async updateDeclinedBy(id: string, declinedById: string, declinedReason?: string): Promise<PrismaTrade> {
         await this.tradeDb.update({
             where: { id },
@@ -87,13 +87,14 @@ export default class TradeDAO {
                 declinedById,
                 declinedAt: new Date(),
                 declinedReason: declinedReason ?? null,
+                status: TradeStatus.REJECTED,
             },
         });
         return this.getTradeById(id);
     }
 
     /**
-     * Records who submitted the trade and when. Call before updateStatus(SUBMITTED).
+     * Records who submitted and when, and sets status to SUBMITTED in one update.
      */
     public async updateSubmitted(id: string, submittedById: string): Promise<PrismaTrade> {
         await this.tradeDb.update({
@@ -101,6 +102,7 @@ export default class TradeDAO {
             data: {
                 submittedAt: new Date(),
                 submittedById,
+                status: TradeStatus.SUBMITTED,
             },
         });
         return this.getTradeById(id);

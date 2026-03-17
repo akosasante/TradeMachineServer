@@ -68,30 +68,14 @@ describe("[PRISMA] TradeDAO", () => {
         });
     });
 
-    describe("updateStatus", () => {
-        it("should update status then re-fetch the trade", async () => {
-            prisma.update.mockResolvedValueOnce(testTrade as any);
-            prisma.findUniqueOrThrow.mockResolvedValueOnce({ ...testTrade, status: TradeStatus.SUBMITTED } as any);
-
-            const result = await dao.updateStatus(tradeId, TradeStatus.SUBMITTED);
-
-            expect(prisma.update).toHaveBeenCalledTimes(1);
-            expect(prisma.update).toHaveBeenCalledWith({
-                where: { id: tradeId },
-                data: { status: TradeStatus.SUBMITTED },
-            });
-            expect(result.status).toBe(TradeStatus.SUBMITTED);
-        });
-    });
-
     describe("updateAcceptedBy", () => {
-        it("should write both acceptedBy and acceptedByDetails with a timestamp", async () => {
+        it("should write acceptedBy, acceptedByDetails, acceptedOnDate and status in one update", async () => {
             const acceptedBy = [uuid()];
             const acceptedByDetails: AcceptedByEntry[] = [{ by: acceptedBy[0], at: new Date().toISOString() }];
             prisma.update.mockResolvedValueOnce(testTrade as any);
             prisma.findUniqueOrThrow.mockResolvedValueOnce(testTrade as any);
 
-            await dao.updateAcceptedBy(tradeId, acceptedBy, acceptedByDetails);
+            await dao.updateAcceptedBy(tradeId, acceptedBy, acceptedByDetails, TradeStatus.ACCEPTED);
 
             expect(prisma.update).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -100,14 +84,31 @@ describe("[PRISMA] TradeDAO", () => {
                         acceptedBy,
                         acceptedByDetails,
                         acceptedOnDate: expect.any(Date),
+                        status: TradeStatus.ACCEPTED,
                     }),
                 })
             );
         });
+
+        it("should allow PENDING status when not all recipients have accepted", async () => {
+            const acceptedBy = [uuid()];
+            const acceptedByDetails: AcceptedByEntry[] = [{ by: acceptedBy[0], at: new Date().toISOString() }];
+            prisma.update.mockResolvedValueOnce(testTrade as any);
+            prisma.findUniqueOrThrow.mockResolvedValueOnce({ ...testTrade, status: TradeStatus.PENDING } as any);
+
+            const result = await dao.updateAcceptedBy(tradeId, acceptedBy, acceptedByDetails, TradeStatus.PENDING);
+
+            expect(prisma.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({ status: TradeStatus.PENDING }),
+                })
+            );
+            expect(result.status).toBe(TradeStatus.PENDING);
+        });
     });
 
     describe("updateDeclinedBy", () => {
-        it("should update declinedById and declinedReason", async () => {
+        it("should update declinedById, declinedReason and set status to REJECTED in one update", async () => {
             const declinedById = uuid();
             prisma.update.mockResolvedValueOnce(testTrade as any);
             prisma.findUniqueOrThrow.mockResolvedValueOnce(testTrade as any);
@@ -120,6 +121,7 @@ describe("[PRISMA] TradeDAO", () => {
                     declinedById,
                     declinedAt: expect.any(Date),
                     declinedReason: "Not fair",
+                    status: TradeStatus.REJECTED,
                 },
             });
         });
@@ -137,13 +139,14 @@ describe("[PRISMA] TradeDAO", () => {
                     declinedById,
                     declinedAt: expect.any(Date),
                     declinedReason: null,
+                    status: TradeStatus.REJECTED,
                 },
             });
         });
     });
 
     describe("updateSubmitted", () => {
-        it("should set submittedAt and submittedById", async () => {
+        it("should set submittedAt, submittedById and status to SUBMITTED in one update", async () => {
             const submittedById = uuid();
             prisma.update.mockResolvedValueOnce(testTrade as any);
             prisma.findUniqueOrThrow.mockResolvedValueOnce(testTrade as any);
@@ -156,6 +159,7 @@ describe("[PRISMA] TradeDAO", () => {
                     data: expect.objectContaining({
                         submittedAt: expect.any(Date),
                         submittedById,
+                        status: TradeStatus.SUBMITTED,
                     }),
                 })
             );

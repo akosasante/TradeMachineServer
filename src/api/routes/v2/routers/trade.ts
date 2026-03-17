@@ -297,22 +297,18 @@ export const tradeRouter = router({
                 { by: effectiveUserId, at: new Date().toISOString() },
             ];
 
-            await dao.updateAcceptedBy(input.tradeId, newAcceptedBy, newAcceptedByDetails);
-
             const allAccepted = allRecipientTeamsAccepted(newAcceptedBy, trade);
+            const status = allAccepted ? TradeStatus.ACCEPTED : TradeStatus.PENDING;
+            const updatedTrade = await dao.updateAcceptedBy(
+                input.tradeId,
+                newAcceptedBy,
+                newAcceptedByDetails,
+                status
+            );
 
-            let updatedTrade: PrismaTrade;
-            if (allAccepted) {
-                updatedTrade = await dao.updateStatus(input.tradeId, TradeStatus.ACCEPTED);
+            if (allAccepted && !input.skipNotifications) {
                 addSpanEvent("trades.accept.all_accepted");
-
-                if (!input.skipNotifications) {
-                    await enqueueAcceptanceNotifications(input.tradeId, trade, ctx.prisma.obanJob);
-                }
-            } else if (trade.status !== TradeStatus.PENDING) {
-                updatedTrade = await dao.updateStatus(input.tradeId, TradeStatus.PENDING);
-            } else {
-                updatedTrade = await dao.getTradeById(input.tradeId);
+                await enqueueAcceptanceNotifications(input.tradeId, trade, ctx.prisma.obanJob);
             }
 
             addSpanEvent("trades.accept.success");
@@ -360,8 +356,11 @@ export const tradeRouter = router({
                     });
                 }
 
-                await dao.updateDeclinedBy(input.tradeId, effectiveUserId, input.declinedReason);
-                const updatedTrade = await dao.updateStatus(input.tradeId, TradeStatus.REJECTED);
+                const updatedTrade = await dao.updateDeclinedBy(
+                    input.tradeId,
+                    effectiveUserId,
+                    input.declinedReason
+                );
 
                 if (!input.skipNotifications) {
                     await enqueueDeclineNotifications(input.tradeId, effectiveUserId, trade, ctx.prisma.obanJob);
@@ -403,8 +402,7 @@ export const tradeRouter = router({
                 });
             }
 
-            await dao.updateSubmitted(input.tradeId, effectiveUserId);
-            const updatedTrade = await dao.updateStatus(input.tradeId, TradeStatus.SUBMITTED);
+            const updatedTrade = await dao.updateSubmitted(input.tradeId, effectiveUserId);
 
             if (!input.skipNotifications) {
                 const obanDao = new ObanDAO(ctx.prisma.obanJob);
