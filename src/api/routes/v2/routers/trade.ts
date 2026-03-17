@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { TradeParticipantType, TradeStatus, UserRole } from "@prisma/client";
-import { protectedProcedure, router, withTracing } from "../utils/trpcHelpers";
+import { TradeItemType, TradeParticipantType, TradeStatus, UserRole } from "@prisma/client";
+import { protectedProcedure, publicProcedure, router, withTracing } from "../utils/trpcHelpers";
 import { addSpanAttributes, addSpanEvent } from "../../../../utils/tracing";
 import logger from "../../../../bootstrap/logger";
 import { tradeActionTokenGeneratedMetric } from "../../../../bootstrap/metrics";
@@ -194,21 +194,54 @@ const tradeActionBaseInput = {
 
 // ─── Router ──────────────────────────────────────────────────────────────────
 
+/**
+ * Loads player or pick entity for each trade item and attaches as `entity`.
+ * V3 client expects this shape for TradeSummary (player names, pick labels).
+ */
+async function hydrateTradeItems(prisma: ExtendedPrismaClient, trade: PrismaTrade): Promise<PrismaTrade> {
+    const items = await Promise.all(
+        trade.tradeItems.map(async item => {
+            let entity: unknown = null;
+            if (item.tradeItemType === TradeItemType.PLAYER) {
+                entity = await prisma.player.findUnique({ where: { id: item.tradeItemId } });
+            } else {
+                entity = await prisma.draftPick.findUnique({
+                    where: { id: item.tradeItemId },
+                    include: { originalOwner: { include: { owners: true } } },
+                });
+            }
+            return { ...item, entity: entity ?? undefined };
+        })
+    );
+    return { ...trade, tradeItems: items } as PrismaTrade;
+}
+
 export const tradeRouter = router({
     /**
      * Fetch a trade with all participant/team/owner and item relations.
-     * Does not hydrate player/pick entity details (use REST GET /trades/:id?hydrated=true for that).
+     * Hydrates each trade item with its player or draft-pick entity for V3 UI.
+     * Public so unauthenticated users can load submitted trades (client gates access).
      */
-    get: protectedProcedure.input(z.object({ tradeId: z.string().uuid() })).query(
+    get: publicProcedure.input(z.object({ tradeId: z.string().uuid() })).query(
         withTracing("trpc.trades.get", async (input, ctx, _span) => {
             addSpanAttributes({ "trades.get.tradeId": input.tradeId });
             addSpanEvent("trades.get.start");
 
             const dao = new TradeDAO(ctx.prisma.trade);
-            const trade = await dao.getTradeById(input.tradeId);
+            let trade: PrismaTrade;
+            try {
+                trade = await dao.getTradeById(input.tradeId);
+            } catch (err: unknown) {
+                const e = err as { code?: string; cause?: { code?: string } };
+                if (e?.code === "P2025" || e?.cause?.code === "P2025") {
+                    throw new TRPCError({ code: "NOT_FOUND", message: "Trade not found" });
+                }
+                throw err;
+            }
+            const hydrated = await hydrateTradeItems(ctx.prisma, trade);
 
             addSpanEvent("trades.get.success");
-            return trade;
+            return hydrated;
         })
     ),
 

@@ -19,8 +19,16 @@ const tradeWithRelations = {
     },
     tradeItems: {
         include: {
-            sender: true,
-            recipient: true,
+            sender: {
+                include: {
+                    owners: true,
+                },
+            },
+            recipient: {
+                include: {
+                    owners: true,
+                },
+            },
         },
     },
 } as const;
@@ -77,6 +85,7 @@ export default class TradeDAO {
             where: { id },
             data: {
                 declinedById,
+                declinedAt: new Date(),
                 declinedReason: declinedReason ?? null,
             },
         });

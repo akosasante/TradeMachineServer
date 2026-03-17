@@ -116,7 +116,11 @@ describe("[PRISMA] TradeDAO", () => {
 
             expect(prisma.update).toHaveBeenCalledWith({
                 where: { id: tradeId },
-                data: { declinedById, declinedReason: "Not fair" },
+                data: {
+                    declinedById,
+                    declinedAt: expect.any(Date),
+                    declinedReason: "Not fair",
+                },
             });
         });
 
@@ -129,7 +133,11 @@ describe("[PRISMA] TradeDAO", () => {
 
             expect(prisma.update).toHaveBeenCalledWith({
                 where: { id: tradeId },
-                data: { declinedById, declinedReason: null },
+                data: {
+                    declinedById,
+                    declinedAt: expect.any(Date),
+                    declinedReason: null,
+                },
             });
         });
     });
