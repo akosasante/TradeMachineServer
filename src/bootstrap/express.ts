@@ -10,6 +10,7 @@ import { rollbar } from "./rollbar";
 import { metricsMiddleware } from "./metrics";
 import { registerCleanupCallback } from "./shutdownHandler";
 import { ExtendedPrismaClient } from "./prisma-db";
+import { userContextMiddleware } from "../api/middlewares/UserContextMiddleware";
 
 const app = express();
 
@@ -113,5 +114,6 @@ app.use(
 );
 
 app.use(metricsMiddleware as any);
+app.use(userContextMiddleware);
 
 export default app;

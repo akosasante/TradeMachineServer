@@ -2,7 +2,7 @@
 import { NextFunction, Request, Response } from "express";
 import { ExpressMiddlewareInterface, UnauthorizedError } from "routing-controllers";
 import { inspect } from "util";
-import { serializeUser, signInAuthentication, signUpAuthentication } from "../../authentication/auth";
+import { serializeUser, setSessionUserContext, signInAuthentication, signUpAuthentication } from "../../authentication/auth";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import UserDO from "../../models/user";
@@ -13,6 +13,8 @@ import { registerUserSession } from "../routes/v2/utils/ssoTokens";
 declare module "express-session" {
     interface SessionData {
         user: string | undefined;
+        userEmail: string | undefined;
+        userName: string | undefined;
     }
 }
 
@@ -41,6 +43,7 @@ export class LoginHandler implements ExpressMiddlewareInterface {
                 response.clearCookie(cookieName, { path: "/" });
 
                 request.session.user = serializeUser(user);
+                setSessionUserContext(request.session, user);
                 request.session.save((sessionErr: any) => {
                     logger.debug(inspect(request.session));
                     if (sessionErr) {
@@ -83,6 +86,7 @@ export class RegisterHandler implements ExpressMiddlewareInterface {
             } else {
                 logger.debug(`registered user: ${user}`);
                 request.session.user = serializeUser(user);
+                setSessionUserContext(request.session, user);
                 const userId = serializeUser(user);
                 if (userId) {
                     registerUserSession(userId, request.sessionID).catch(registerErr =>

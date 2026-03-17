@@ -14,6 +14,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../api/routes/v2/router";
 import { createContext } from "../api/routes/v2/utils/context";
 import cors from "cors";
+import { trace, SpanStatusCode } from "@opentelemetry/api";
 
 export interface ExpressAppOptions {
     startTypeORM: boolean;
@@ -100,6 +101,18 @@ export async function setupExpressApp(
                     onError: ({ error, req: failedReq }) => {
                         logger.error(`tRPC Error: ${error.message}`, error);
                         rollbar.error(error, failedReq);
+                        // Set user context on active span using req directly (no ALS dependency)
+                        const activeSpan = trace.getActiveSpan();
+                        if (activeSpan) {
+                            const userId = failedReq.session?.user;
+                            const userEmail = failedReq.session?.userEmail;
+                            const ip = failedReq.ip;
+                            if (userId) activeSpan.setAttribute("user.id", userId);
+                            if (userEmail) activeSpan.setAttribute("user.email", userEmail);
+                            if (ip) activeSpan.setAttribute("client.address", ip);
+                            activeSpan.recordException(error);
+                            activeSpan.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+                        }
                     },
                 })(req, res, next);
             });
