@@ -1,6 +1,6 @@
 {
   "name": "@akosasante/trpc-types",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "description": "Shared tRPC types for TradeMachine client and server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
