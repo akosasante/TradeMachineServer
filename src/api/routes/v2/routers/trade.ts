@@ -299,12 +299,7 @@ export const tradeRouter = router({
 
             const allAccepted = allRecipientTeamsAccepted(newAcceptedBy, trade);
             const status = allAccepted ? TradeStatus.ACCEPTED : TradeStatus.PENDING;
-            const updatedTrade = await dao.updateAcceptedBy(
-                input.tradeId,
-                newAcceptedBy,
-                newAcceptedByDetails,
-                status
-            );
+            const updatedTrade = await dao.updateAcceptedBy(input.tradeId, newAcceptedBy, newAcceptedByDetails, status);
 
             if (allAccepted && !input.skipNotifications) {
                 addSpanEvent("trades.accept.all_accepted");
@@ -356,11 +351,7 @@ export const tradeRouter = router({
                     });
                 }
 
-                const updatedTrade = await dao.updateDeclinedBy(
-                    input.tradeId,
-                    effectiveUserId,
-                    input.declinedReason
-                );
+                const updatedTrade = await dao.updateDeclinedBy(input.tradeId, effectiveUserId, input.declinedReason);
 
                 if (!input.skipNotifications) {
                     await enqueueDeclineNotifications(input.tradeId, effectiveUserId, trade, ctx.prisma.obanJob);
