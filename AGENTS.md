@@ -173,6 +173,15 @@ OTEL_TRACES_SAMPLER_ARG=1.0
 OTEL_LOG_LEVEL=INFO
 ```
 
+### Server Environment Variables (TradeMachineServer)
+
+- **ADMIN_OVERRIDE**:
+  - When set to `"true"`, allows any authenticated user to bypass trade status validation
+    in the legacy REST API and perform arbitrary trade status transitions.
+  - Intended only for local recovery or emergency maintenance scenarios.
+  - MUST remain unset or `"false"` in staging and production.
+  - Documented in `.env.prod.template` and `.env.staging.template` under “Safety / Admin Overrides”.
+
 ### Monitoring Integration
 - **Grafana**: View traces in the Grafana dashboard via Tempo data source
 - **Alloy**: Collects and forwards traces to Tempo for storage and querying

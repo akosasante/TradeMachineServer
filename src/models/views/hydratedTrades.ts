@@ -155,6 +155,9 @@ export class HydratedTrade {
     @ViewColumn()
     public tradedPicks?: HydratedPick[];
 
+    @ViewColumn()
+    public acceptedByDetails?: { by: string; at: string }[];
+
     constructor(props: Partial<HydratedTrade>) {
         return Object.assign({}, props);
     }

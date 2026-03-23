@@ -64,7 +64,7 @@ function validateStatusChange(user: User, trade: Trade, newStatus: TradeStatus):
     };
 
     if (trade.status === newStatus) return false;
-    // TODO: Consider whether we want a separate role for LeagueAdmin and/or whether this check should only be allowed for env var admin override
+    // Admin or ADMIN_OVERRIDE=true: allow any status change (see AGENTS.md and .env.*.template docs)
     if (user.isAdmin() || process.env.ADMIN_OVERRIDE === "true") return true;
 
     const validChangesForParticipants = {
