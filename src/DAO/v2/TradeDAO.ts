@@ -56,6 +56,38 @@ export default class TradeDAO {
     }
 
     /**
+     * Trades where the given team is a participant, newest first.
+     * Does not hydrate player/pick entities on trade items (list UI only).
+     */
+    public async getTradesByTeam(
+        teamId: string,
+        opts: { statuses?: TradeStatus[]; page: number; pageSize: number }
+    ): Promise<{ trades: PrismaTrade[]; total: number }> {
+        const { statuses, page, pageSize } = opts;
+        const skip = page * pageSize;
+
+        const where: Prisma.TradeWhereInput = {
+            tradeParticipants: {
+                some: { teamId },
+            },
+            ...(statuses && statuses.length > 0 ? { status: { in: statuses } } : {}),
+        };
+
+        const [trades, total] = await Promise.all([
+            this.tradeDb.findMany({
+                where,
+                include: tradeWithRelations,
+                orderBy: { dateCreated: "desc" },
+                skip,
+                take: pageSize,
+            }),
+            this.tradeDb.count({ where }),
+        ]);
+
+        return { trades, total };
+    }
+
+    /**
      * Records acceptance (acceptedBy, acceptedByDetails, acceptedOnDate) and sets status in one update.
      * Use PENDING when not all recipients have accepted; use ACCEPTED when all have accepted.
      */
