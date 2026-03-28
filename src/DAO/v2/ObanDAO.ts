@@ -17,6 +17,7 @@ export interface UserEmailJobData {
     env: ObanEnv;
     email_type: "reset_password" | "registration_email";
     data: string; // user ID
+    user_id?: string; // explicit user_id for OTel span attribute on the Elixir side
     trace_context?: TraceContext;
 }
 
@@ -25,6 +26,7 @@ export interface TradeRequestJobData {
     email_type: "trade_request";
     trade_id: string;
     recipient_user_id: string;
+    user_id?: string; // explicit user_id for OTel span attribute on the Elixir side
     accept_url: string;
     decline_url: string;
     trace_context?: TraceContext;
@@ -35,6 +37,7 @@ export interface TradeDeclinedJobData {
     email_type: "trade_declined";
     trade_id: string;
     recipient_user_id: string;
+    user_id?: string; // explicit user_id for OTel span attribute on the Elixir side
     is_creator: boolean;
     decline_url?: string; // V3 only: /trades/:id summary page (no token); omitted for V2
     trace_context?: TraceContext;
@@ -45,6 +48,7 @@ export interface TradeSubmitJobData {
     email_type: "trade_submit";
     trade_id: string;
     recipient_user_id: string;
+    user_id?: string; // explicit user_id for OTel span attribute on the Elixir side
     submit_url: string; // V3: /trades/:id?action=submit&token=… or V2: /trade/:id/submit
     trace_context?: TraceContext;
 }
@@ -126,6 +130,7 @@ export default class ObanDAO {
             env: (process.env.APP_ENV as ObanEnv) || "staging",
             email_type: "reset_password",
             data: userId,
+            user_id: userId,
             trace_context: traceContext,
         });
     }
@@ -138,6 +143,7 @@ export default class ObanDAO {
             env: (process.env.APP_ENV as ObanEnv) || "staging",
             email_type: "registration_email",
             data: userId,
+            user_id: userId,
             trace_context: traceContext,
         });
     }
@@ -159,6 +165,7 @@ export default class ObanDAO {
             email_type: "trade_request",
             trade_id: tradeId,
             recipient_user_id: recipientUserId,
+            user_id: recipientUserId,
             accept_url: acceptUrl,
             decline_url: declineUrl,
             trace_context: traceContext,
@@ -182,6 +189,7 @@ export default class ObanDAO {
             email_type: "trade_declined",
             trade_id: tradeId,
             recipient_user_id: recipientUserId,
+            user_id: recipientUserId,
             is_creator: isCreator,
             decline_url: declineUrl,
             trace_context: traceContext,
@@ -203,6 +211,7 @@ export default class ObanDAO {
             email_type: "trade_submit",
             trade_id: tradeId,
             recipient_user_id: recipientUserId,
+            user_id: recipientUserId,
             submit_url: submitUrl,
             trace_context: traceContext,
         });

@@ -1,9 +1,26 @@
 import winston from "winston";
+import { requestContext } from "../utils/requestContext";
 
 const { combine, timestamp, json, colorize, printf, errors } = winston.format;
 
+/**
+ * Winston format that merges user identity fields from AsyncLocalStorage into every
+ * log entry when a request context is active. When no context is set (e.g. unit
+ * tests or startup logs) it is a no-op so the log shape stays the same.
+ */
+const requestContextFormat = winston.format(info => {
+    const store = requestContext.getStore();
+    if (store) {
+        if (store.userId) info.userId = store.userId;
+        if (store.userEmail) info.userEmail = store.userEmail;
+        if (store.userName) info.userName = store.userName;
+        if (store.ip) info.ip = store.ip;
+    }
+    return info;
+})();
+
 // Structured JSON format for production and development
-const jsonFormat = combine(timestamp(), errors({ stack: true }), json());
+const jsonFormat = combine(requestContextFormat, timestamp(), errors({ stack: true }), json());
 
 // Human-readable format for development (optional, can be switched to JSON)
 const devFormat = combine(
