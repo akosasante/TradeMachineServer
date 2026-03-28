@@ -21,15 +21,7 @@ import {
 } from "../utils/ssoTokens";
 import { consumeTradeActionToken } from "../utils/tradeActionTokens";
 import { TRPCError } from "@trpc/server";
-
-// Declare the additional fields that we add to express session
-declare module "express-session" {
-    interface SessionData {
-        user: string | undefined;
-        userEmail: string | undefined;
-        userName: string | undefined;
-    }
-}
+import "../../../../types/session.types";
 
 export const clientRouter = router({
     getIP: publicProcedure.query(

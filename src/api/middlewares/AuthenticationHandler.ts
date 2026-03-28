@@ -14,14 +14,7 @@ import UserDO from "../../models/user";
 import { PublicUser } from "../../DAO/v2/UserDAO";
 import { registerUserSession } from "../routes/v2/utils/ssoTokens";
 
-// declare the additional fields that we add to express session (via routing-controllers)
-declare module "express-session" {
-    interface SessionData {
-        user: string | undefined;
-        userEmail: string | undefined;
-        userName: string | undefined;
-    }
-}
+import "../../types/session.types";
 
 export class LoginHandler implements ExpressMiddlewareInterface {
     constructor(public userDAO: UserDAO = new UserDAO()) {
