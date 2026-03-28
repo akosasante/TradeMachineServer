@@ -2,7 +2,12 @@
 import { NextFunction, Request, Response } from "express";
 import { ExpressMiddlewareInterface, UnauthorizedError } from "routing-controllers";
 import { inspect } from "util";
-import { serializeUser, setSessionUserContext, signInAuthentication, signUpAuthentication } from "../../authentication/auth";
+import {
+    serializeUser,
+    setSessionUserContext,
+    signInAuthentication,
+    signUpAuthentication,
+} from "../../authentication/auth";
 import logger from "../../bootstrap/logger";
 import UserDAO from "../../DAO/UserDAO";
 import UserDO from "../../models/user";

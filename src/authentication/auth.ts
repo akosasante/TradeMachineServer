@@ -11,8 +11,6 @@ import { EntityNotFoundError } from "typeorm/error/EntityNotFoundError";
 import { rollbar } from "../bootstrap/rollbar";
 import { getPrismaClientFromRequest } from "../bootstrap/prisma-db";
 import { Request } from "express";
-import { SessionData } from "express-session";
-
 export function serializeUser(user: User | PublicUser): string | undefined {
     logger.debug("serializing user");
     return user?.id;
@@ -23,7 +21,10 @@ export function serializeUser(user: User | PublicUser): string | undefined {
  * the existing userId so they are available on every request without a DB lookup.
  * Call this immediately after serializeUser at every login/register site.
  */
-export function setSessionUserContext(session: SessionData, user: User | PublicUser): void {
+export function setSessionUserContext(
+    session: { userEmail?: string | undefined; userName?: string | undefined },
+    user: User | PublicUser
+): void {
     session.userEmail = user.email ?? undefined;
     session.userName = (user as PublicUser).displayName ?? undefined;
 }
