@@ -221,6 +221,71 @@ describe("[TRPC] Trades Router Unit Tests", () => {
         });
     });
 
+    // ─── trades.list ─────────────────────────────────────────────────────────────
+
+    describe("trades.list", () => {
+        it("should return empty list when user has no teamId without calling prisma", async () => {
+            const user = makeUser({ teamId: null });
+            mockUserDao.getUserById.mockResolvedValueOnce(user);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(user));
+            const result = await caller.list({ page: 0, pageSize: 20 });
+
+            expect(result).toEqual({ trades: [], total: 0, page: 0, pageSize: 20 });
+            expect(mockPrisma.trade.findMany).not.toHaveBeenCalled();
+            expect(mockPrisma.trade.count).not.toHaveBeenCalled();
+        });
+
+        it("should return trades and total from TradeDAO for user with teamId", async () => {
+            const user = makeUser({ id: RECIPIENT_USER_ID, teamId: RECIPIENT_TEAM_ID });
+            const trade = makeTrade();
+            mockUserDao.getUserById.mockResolvedValueOnce(user);
+            mockPrisma.trade.findMany.mockResolvedValueOnce([trade] as any);
+            mockPrisma.trade.count.mockResolvedValueOnce(7);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(user));
+            const result = await caller.list({ page: 2, pageSize: 15 });
+
+            expect(result).toEqual({
+                trades: [trade],
+                total: 7,
+                page: 2,
+                pageSize: 15,
+            });
+            expect(mockPrisma.trade.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: expect.objectContaining({
+                        tradeParticipants: { some: { teamId: RECIPIENT_TEAM_ID } },
+                    }),
+                    skip: 30,
+                    take: 15,
+                })
+            );
+        });
+
+        it("should forward statuses filter to prisma", async () => {
+            const user = makeUser({ teamId: RECIPIENT_TEAM_ID });
+            mockUserDao.getUserById.mockResolvedValueOnce(user);
+            mockPrisma.trade.findMany.mockResolvedValueOnce([] as any);
+            mockPrisma.trade.count.mockResolvedValueOnce(0);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(user));
+            await caller.list({
+                page: 0,
+                pageSize: 20,
+                statuses: [TradeStatus.REQUESTED, TradeStatus.ACCEPTED],
+            });
+
+            expect(mockPrisma.trade.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: expect.objectContaining({
+                        status: { in: [TradeStatus.REQUESTED, TradeStatus.ACCEPTED] },
+                    }),
+                })
+            );
+        });
+    });
+
     // ─── trades.accept ─────────────────────────────────────────────────────────
 
     describe("trades.accept", () => {
