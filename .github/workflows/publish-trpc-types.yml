@@ -1,12 +1,14 @@
 name: Publish tRPC Types Package
 
 on:
+  workflow_dispatch: # Manual run after fixing the workflow itself
   push:
     branches: [main]
     paths:
       - 'packages/trpc-types/**'
       - 'src/trpc/**'
       - 'package.json' # In case dependencies change
+      - '.github/workflows/publish-trpc-types.yml'
 
 jobs:
   publish:
