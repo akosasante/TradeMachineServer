@@ -9,6 +9,7 @@ import {
     generateHashedPassword,
     passwordResetDateIsValid,
     serializeUser,
+    setSessionUserContext,
     signInAuthentication,
     signUpAuthentication,
 } from "../../../../authentication/auth";
@@ -107,6 +108,7 @@ export const authRouter = router({
 
                 // Set session like the original LoginHandler does
                 ctx.session.user = serializeUser(authenticatedUser);
+                setSessionUserContext(ctx.session, authenticatedUser);
 
                 // If request is from a Netlify origin, intercept and modify the Set-Cookie header
                 // that express-session will set after session.save()
@@ -569,6 +571,7 @@ export const authRouter = router({
 
                     // Set session like RegisterHandler does
                     ctx.session.user = serializeUser(registeredUser);
+                    setSessionUserContext(ctx.session, registeredUser);
 
                     await registerUserSession(serializeUser(registeredUser)!, ctx.req.sessionID);
 

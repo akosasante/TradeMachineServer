@@ -304,6 +304,9 @@ export const tradeRouter = router({
                 "trades.accept.effectiveUserId": effectiveUserId,
                 "trades.accept.actingAsAdmin": !!input.actingAsUserId,
             });
+            if (input.actingAsUserId) {
+                addSpanAttributes({ "user.acting_as_id": input.actingAsUserId });
+            }
 
             const dao = new TradeDAO(ctx.prisma.trade);
             const trade = await dao.getTradeById(input.tradeId);
@@ -374,6 +377,9 @@ export const tradeRouter = router({
                 const effectiveUserId = resolveEffectiveUserId(user, input.actingAsUserId);
 
                 addSpanAttributes({ "trades.decline.effectiveUserId": effectiveUserId });
+                if (input.actingAsUserId) {
+                    addSpanAttributes({ "user.acting_as_id": input.actingAsUserId });
+                }
 
                 const dao = new TradeDAO(ctx.prisma.trade);
                 const trade = await dao.getTradeById(input.tradeId);
@@ -416,6 +422,9 @@ export const tradeRouter = router({
             const effectiveUserId = resolveEffectiveUserId(user, input.actingAsUserId);
 
             addSpanAttributes({ "trades.submit.effectiveUserId": effectiveUserId });
+            if (input.actingAsUserId) {
+                addSpanAttributes({ "user.acting_as_id": input.actingAsUserId });
+            }
 
             const dao = new TradeDAO(ctx.prisma.trade);
             const trade = await dao.getTradeById(input.tradeId);

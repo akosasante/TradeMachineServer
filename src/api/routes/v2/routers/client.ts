@@ -11,7 +11,7 @@ import {
     transferTokenGeneratedMetric,
 } from "../../../../bootstrap/metrics";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
-import { serializeUser } from "../../../../authentication/auth";
+import { serializeUser, setSessionUserContext } from "../../../../authentication/auth";
 import {
     consumeTransferToken,
     createTransferToken,
@@ -21,13 +21,7 @@ import {
 } from "../utils/ssoTokens";
 import { consumeTradeActionToken } from "../utils/tradeActionTokens";
 import { TRPCError } from "@trpc/server";
-
-// Declare the additional fields that we add to express session
-declare module "express-session" {
-    interface SessionData {
-        user: string | undefined;
-    }
-}
+import "../../../../types/session.types";
 
 export const clientRouter = router({
     getIP: publicProcedure.query(
@@ -173,6 +167,7 @@ export const clientRouter = router({
 
                 // Copy over the user identity, to ensure express-session knows to resave the session
                 ctx.req.session.user = serializeUser(user);
+                setSessionUserContext(ctx.req.session, user);
 
                 await registerUserSession(user.id!, ctx.req.sessionID);
 
@@ -250,6 +245,7 @@ export const clientRouter = router({
                 }
 
                 ctx.req.session.user = serializeUser(user);
+                setSessionUserContext(ctx.req.session, user);
                 await registerUserSession(user.id!, ctx.req.sessionID);
 
                 addSpanAttributes({

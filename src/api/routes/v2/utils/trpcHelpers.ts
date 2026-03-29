@@ -25,6 +25,8 @@ export interface Context {
     res: Response;
     session?: Session & {
         user?: string;
+        userEmail?: string;
+        userName?: string;
     };
     prisma: ExtendedPrismaClient;
     userDao: Users;

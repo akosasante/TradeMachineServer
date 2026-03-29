@@ -19,9 +19,15 @@ export default class CustomErrorHandler implements ExpressErrorMiddlewareInterfa
         logger.error(`Handling error: ${error.stack}`);
         rollbar.error(error, request);
 
-        // Record error in active span if one exists
+        // Record error in active span with user context read directly from req
         const activeSpan = trace.getActiveSpan();
         if (activeSpan) {
+            const userId = request.session?.user;
+            const userEmail = request.session?.userEmail;
+            const ip = request.ip;
+            if (userId) activeSpan.setAttribute("user.id", userId);
+            if (userEmail) activeSpan.setAttribute("user.email", userEmail);
+            if (ip) activeSpan.setAttribute("client.address", ip);
             activeSpan.recordException(error);
             activeSpan.addEvent("error.handled_by_global_handler", {
                 "error.type": error.constructor.name,
