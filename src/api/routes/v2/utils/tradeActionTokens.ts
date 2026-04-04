@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { redisClient } from "../../../../bootstrap/express";
 import logger from "../../../../bootstrap/logger";
 
-export type TradeAction = "accept" | "decline" | "submit";
+export type TradeAction = "accept" | "decline" | "submit" | "view";
 
 export interface TradeActionTokenPayload {
     userId: string;
@@ -25,7 +25,8 @@ export const TRADE_ACTION_TOKEN_CONFIG = {
 } as const;
 
 /**
- * Creates a short-lived, single-use token for a trade action (accept/decline/submit).
+ * Creates a short-lived, single-use token for a trade action (accept/decline/submit/view).
+ * `view` establishes a session only; the client does not auto-run accept/decline/submit.
  * Used to generate magic link URLs embedded in trade notification emails.
  * The token is stored in Redis and associates a user+trade+action with a 48h TTL.
  */

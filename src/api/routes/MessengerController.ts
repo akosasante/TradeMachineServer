@@ -12,6 +12,7 @@ import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
 import { extractTraceContext } from "../../utils/tracing";
 import { createTradeActionToken } from "./v2/utils/tradeActionTokens";
 import { tradeActionTokenGeneratedMetric, tradeRequestEmailEnqueuedMetric } from "../../bootstrap/metrics";
+import { shouldUseV3TradeLinkForEmail } from "../../utils/v3TradeLinkEmailAllowlist";
 
 const TRADE_REQUEST_OWNER_RELATIONS = ["tradeParticipants", "tradeParticipants.team", "tradeParticipants.team.owners"];
 
@@ -60,7 +61,6 @@ export default class MessengerController {
         const traceContext = extractTraceContext() || undefined;
         const baseDomain = process.env.BASE_URL;
         const v3BaseDomain = process.env.V3_BASE_URL;
-        const useV3TradeLinks = process.env.USE_V3_TRADE_LINKS === "true";
 
         const recipientOwners = trade.recipients.flatMap(recipTeam => recipTeam.owners ?? []);
 
@@ -70,7 +70,7 @@ export default class MessengerController {
             let acceptUrl: string;
             let declineUrl: string;
 
-            if (useV3TradeLinks && v3BaseDomain && trade.id && owner.id) {
+            if (shouldUseV3TradeLinkForEmail(owner.email) && v3BaseDomain && trade.id && owner.id) {
                 const [acceptToken, declineToken] = await Promise.all([
                     createTradeActionToken({ userId: owner.id, tradeId: trade.id, action: "accept" }),
                     createTradeActionToken({ userId: owner.id, tradeId: trade.id, action: "decline" }),
@@ -120,8 +120,6 @@ export default class MessengerController {
 
             const traceContext = extractTraceContext() || undefined;
             const v3BaseDomain = process.env.V3_BASE_URL;
-            const useV3TradeLinks = process.env.USE_V3_TRADE_LINKS === "true";
-            const declineUrl = useV3TradeLinks && v3BaseDomain ? `${v3BaseDomain}/trades/${trade.id}` : undefined;
 
             const creatorOwnerIds = new Set(trade.creator?.owners?.map(o => o.id).filter(Boolean));
             const eligibleOwners =
@@ -132,6 +130,19 @@ export default class MessengerController {
             for (const owner of eligibleOwners) {
                 if (!owner?.id) continue;
                 const isCreator = creatorOwnerIds.has(owner.id);
+
+                let declineUrl: string | undefined;
+                if (shouldUseV3TradeLinkForEmail(owner.email) && v3BaseDomain && trade.id) {
+                    const viewToken = await createTradeActionToken({
+                        userId: owner.id,
+                        tradeId: trade.id,
+                        action: "view",
+                    });
+                    tradeActionTokenGeneratedMetric.inc({ action: "view" });
+                    declineUrl = `${v3BaseDomain}/trades/${trade.id}?token=${viewToken}`;
+                    logger.debug(`[sendTradeDeclineMessage] Using V3 view-token URL for userId=${owner.id}`);
+                }
+
                 await obanDao.enqueueTradeDeclinedEmail(trade.id!, owner.id, isCreator, declineUrl, traceContext);
                 logger.debug(
                     `[sendTradeDeclineMessage] Enqueued trade declined email for userId=${owner.id}, isCreator=${isCreator}`
@@ -172,14 +183,13 @@ export default class MessengerController {
             const traceContext = extractTraceContext() || undefined;
             const baseDomain = process.env.BASE_URL;
             const v3BaseDomain = process.env.V3_BASE_URL;
-            const useV3TradeLinks = process.env.USE_V3_TRADE_LINKS === "true";
 
             const creatorOwners = trade.creator?.owners ?? [];
             for (const owner of creatorOwners) {
                 if (!owner?.id) continue;
 
                 let submitUrl: string;
-                if (useV3TradeLinks && v3BaseDomain && trade.id) {
+                if (shouldUseV3TradeLinkForEmail(owner.email) && v3BaseDomain && trade.id) {
                     const submitToken = await createTradeActionToken({
                         userId: owner.id,
                         tradeId: trade.id,
