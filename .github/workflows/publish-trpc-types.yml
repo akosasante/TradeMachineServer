@@ -1,12 +1,14 @@
 name: Publish tRPC Types Package
 
 on:
+  workflow_dispatch: # Manual run after fixing the workflow itself
   push:
     branches: [main]
     paths:
       - 'packages/trpc-types/**'
       - 'src/trpc/**'
       - 'package.json' # In case dependencies change
+      - '.github/workflows/publish-trpc-types.yml'
 
 jobs:
   publish:
@@ -22,12 +24,21 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          # Must satisfy root package.json engines.node (>=20); was 18.x and broke npm ci with EBADENGINE
+          node-version: '20.x'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@akosasante'
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
+        env:
+          # Root .npmrc uses GITHUB_PUBLISH_TOKEN for @akosasante; fall back to GITHUB_TOKEN in Actions
+          GITHUB_PUBLISH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
       - name: Build main server (to generate types)
         run: make build
@@ -37,6 +48,8 @@ jobs:
         run: |
           npm install
           npm run build
+        env:
+          GITHUB_PUBLISH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if version changed
         id: version-check

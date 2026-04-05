@@ -8,6 +8,7 @@ import { tradeActionTokenGeneratedMetric } from "../../../../bootstrap/metrics";
 import TradeDAO, { AcceptedByEntry, PrismaTrade } from "../../../../DAO/v2/TradeDAO";
 import ObanDAO from "../../../../DAO/v2/ObanDAO";
 import { createTradeActionToken } from "../utils/tradeActionTokens";
+import { shouldUseV3TradeLinkForEmail } from "../../../../utils/v3TradeLinkEmailAllowlist";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import type { ExtendedPrismaClient } from "../../../../bootstrap/prisma-db";
 
@@ -127,7 +128,6 @@ async function enqueueAcceptanceNotifications(
 ): Promise<void> {
     const obanDao = new ObanDAO(obanDb);
     const v3BaseDomain = process.env.V3_BASE_URL;
-    const useV3TradeLinks = process.env.USE_V3_TRADE_LINKS === "true";
 
     const creatorOwners = trade.tradeParticipants
         .filter(p => p.participantType === TradeParticipantType.CREATOR)
@@ -136,7 +136,7 @@ async function enqueueAcceptanceNotifications(
 
     for (const owner of creatorOwners) {
         let submitUrl: string;
-        if (useV3TradeLinks && v3BaseDomain) {
+        if (shouldUseV3TradeLinkForEmail(owner.email) && v3BaseDomain) {
             const submitToken = await createTradeActionToken({
                 userId: owner.id,
                 tradeId,
@@ -161,8 +161,6 @@ async function enqueueDeclineNotifications(
 ): Promise<void> {
     const obanDao = new ObanDAO(obanDb);
     const v3BaseDomain = process.env.V3_BASE_URL;
-    const useV3TradeLinks = process.env.USE_V3_TRADE_LINKS === "true";
-    const declineUrl = useV3TradeLinks && v3BaseDomain ? `${v3BaseDomain}/trades/${tradeId}` : undefined;
 
     const creatorOwnerIdSet = new Set(
         trade.tradeParticipants
@@ -177,6 +175,18 @@ async function enqueueDeclineNotifications(
 
     for (const owner of eligibleOwners) {
         const isCreator = creatorOwnerIdSet.has(owner.id);
+
+        let declineUrl: string | undefined;
+        if (shouldUseV3TradeLinkForEmail(owner.email) && v3BaseDomain) {
+            const viewToken = await createTradeActionToken({
+                userId: owner.id,
+                tradeId,
+                action: "view",
+            });
+            tradeActionTokenGeneratedMetric.inc({ action: "view" });
+            declineUrl = `${v3BaseDomain}/trades/${tradeId}?token=${viewToken}`;
+        }
+
         await obanDao.enqueueTradeDeclinedEmail(tradeId, owner.id, isCreator, declineUrl);
         logger.info(
             `[trades.decline] Enqueued decline email userId=${owner.id} tradeId=${tradeId} isCreator=${isCreator}`
@@ -244,6 +254,47 @@ export const tradeRouter = router({
             return hydrated;
         })
     ),
+
+    /**
+     * Paginated list of trades for the authenticated user's team.
+     * Trade items include sender/recipient teams but are not hydrated with player/pick entities.
+     */
+    list: protectedProcedure
+        .input(
+            z.object({
+                statuses: z.array(z.nativeEnum(TradeStatus)).optional(),
+                page: z.number().int().min(0).default(0),
+                pageSize: z.number().int().min(1).max(50).default(20),
+            })
+        )
+        .query(
+            withTracing("trpc.trades.list", async (input, ctx, _span) => {
+                const user = (ctx as typeof ctx & { user: PublicUser }).user;
+                const teamId = user.teamId;
+                if (!teamId) {
+                    addSpanEvent("trades.list.no_team");
+                    return { trades: [] as PrismaTrade[], total: 0, page: input.page, pageSize: input.pageSize };
+                }
+
+                addSpanAttributes({ "trades.list.teamId": teamId });
+                addSpanEvent("trades.list.start");
+
+                const dao = new TradeDAO(ctx.prisma.trade);
+                const { trades, total } = await dao.getTradesByTeam(teamId, {
+                    statuses: input.statuses,
+                    page: input.page,
+                    pageSize: input.pageSize,
+                });
+
+                addSpanEvent("trades.list.success");
+                return {
+                    trades,
+                    total,
+                    page: input.page,
+                    pageSize: input.pageSize,
+                };
+            })
+        ),
 
     /**
      * Accept a trade on behalf of the current user (or actingAsUserId if admin).

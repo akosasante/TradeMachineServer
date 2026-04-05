@@ -20,6 +20,48 @@ export async function makeLoggedInRequest(
     return req(agent);
 }
 
+/**
+ * tRPC v2 session: POST /v2/auth.login.authenticate (same cookie session as the Vue client).
+ */
+export async function loginTrpcV2Session(
+    agent: request.SuperTest<request.Test>,
+    email: string,
+    password: string,
+    expectedStatus = 200
+): Promise<request.Response> {
+    return agent.post("/v2/auth.login.authenticate").send({ email, password }).expect(expectedStatus);
+}
+
+/**
+ * Like {@link makeLoggedInRequest} but uses tRPC v2 login. Reuse the same `agent` for follow-up GET/POST /v2/* calls.
+ */
+export async function makeTrpcV2LoggedInRequest(
+    agent: request.SuperTest<request.Test>,
+    email: string,
+    password: string,
+    req: (ag: request.SuperTest<request.Test>) => any
+): Promise<any> {
+    await loginTrpcV2Session(agent, email, password);
+    return req(agent);
+}
+
+export function trpcV2LoggedIn(
+    app: Server,
+    email: string,
+    password: string,
+    req: (ag: request.SuperTest<request.Test>) => any
+): Promise<any> {
+    return makeTrpcV2LoggedInRequest(request.agent(app), email, password, req);
+}
+
+/**
+ * Value for the `input` query param on tRPC HTTP GET when the router uses the default data transformer (identity).
+ * Usage: `/v2/proc.name?input=${encodeTrpcHttpGetInput({ ... })}`
+ */
+export function encodeTrpcHttpGetInput(input: Record<string, unknown>): string {
+    return encodeURIComponent(JSON.stringify(input));
+}
+
 export async function doLogout(agent: request.SuperTest<request.Test>): Promise<void> {
     await agent.post("/auth/logout").send({}).expect(200);
 }

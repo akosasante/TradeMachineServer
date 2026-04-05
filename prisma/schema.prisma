@@ -196,6 +196,7 @@ model Trade {
   tradeParticipants TradeParticipant[]
 
   @@index([declinedById], map: "IDX_33ece5157bae9642f83f4e69e6")
+  @@index([status, dateCreated(sort: Desc)])
   @@map("trade")
 }
 

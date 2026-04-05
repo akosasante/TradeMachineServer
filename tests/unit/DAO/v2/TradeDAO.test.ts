@@ -145,6 +145,73 @@ describe("[PRISMA] TradeDAO", () => {
         });
     });
 
+    describe("getTradesByTeam", () => {
+        const teamId = uuid();
+        const tradeA = makeMinimalTrade({ id: uuid() });
+        const tradeB = makeMinimalTrade({ id: uuid() });
+
+        it("should query by team participant, order newest first, and paginate", async () => {
+            prisma.findMany.mockResolvedValueOnce([tradeA, tradeB] as any);
+            prisma.count.mockResolvedValueOnce(42);
+
+            const result = await dao.getTradesByTeam(teamId, { page: 1, pageSize: 10 });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: {
+                        tradeParticipants: { some: { teamId } },
+                    },
+                    orderBy: { dateCreated: "desc" },
+                    skip: 10,
+                    take: 10,
+                })
+            );
+            expect(prisma.count).toHaveBeenCalledWith({
+                where: {
+                    tradeParticipants: { some: { teamId } },
+                },
+            });
+            expect(result).toEqual({ trades: [tradeA, tradeB], total: 42 });
+        });
+
+        it("should filter by statuses when provided", async () => {
+            prisma.findMany.mockResolvedValueOnce([tradeA] as any);
+            prisma.count.mockResolvedValueOnce(1);
+
+            await dao.getTradesByTeam(teamId, {
+                statuses: [TradeStatus.REQUESTED, TradeStatus.PENDING],
+                page: 0,
+                pageSize: 20,
+            });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: {
+                        tradeParticipants: { some: { teamId } },
+                        status: { in: [TradeStatus.REQUESTED, TradeStatus.PENDING] },
+                    },
+                })
+            );
+        });
+
+        it("should omit status filter when statuses is empty", async () => {
+            prisma.findMany.mockResolvedValueOnce([] as any);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.getTradesByTeam(teamId, { statuses: [], page: 0, pageSize: 20 });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: {
+                        tradeParticipants: { some: { teamId } },
+                    },
+                })
+            );
+            const call = prisma.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
+            expect(call.where).not.toHaveProperty("status");
+        });
+    });
+
     describe("updateSubmitted", () => {
         it("should set submittedAt, submittedById and status to SUBMITTED in one update", async () => {
             const submittedById = uuid();
