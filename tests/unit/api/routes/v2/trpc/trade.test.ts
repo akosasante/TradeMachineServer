@@ -41,6 +41,11 @@ jest.mock("../../../../../../src/api/routes/v2/utils/tradeActionTokens", () => (
     createTradeActionToken: jest.fn(() => Promise.resolve("mock-token-abc")),
 }));
 
+import { createTradeActionToken } from "../../../../../../src/api/routes/v2/utils/tradeActionTokens";
+import { resetV3TradeLinkEmailAllowlistCacheForTests } from "../../../../../../src/utils/v3TradeLinkEmailAllowlist";
+
+const mockCreateTradeActionToken = createTradeActionToken as jest.MockedFunction<typeof createTradeActionToken>;
+
 // ─── Factories ────────────────────────────────────────────────────────────────
 
 const CREATOR_USER_ID = uuid();
@@ -591,6 +596,155 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             await expect(
                 caller.submit({ tradeId: TRADE_ID, actingAsUserId: uuid(), skipNotifications: true })
             ).rejects.toMatchObject({ code: "FORBIDDEN" });
+        });
+    });
+
+    /**
+     * accept/decline normally use skipNotifications: true; these cases exercise
+     * enqueueAcceptanceNotifications / enqueueDeclineNotifications with V3 URLs.
+     */
+    describe("V3 magic-link notification URLs", () => {
+        let savedUseV3: string | undefined;
+        let savedV3Base: string | undefined;
+        let savedAllowlist: string | undefined;
+
+        beforeEach(() => {
+            savedUseV3 = process.env.USE_V3_TRADE_LINKS;
+            savedV3Base = process.env.V3_BASE_URL;
+            savedAllowlist = process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST;
+            process.env.USE_V3_TRADE_LINKS = "true";
+            process.env.V3_BASE_URL = "https://v3.example";
+            process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST = "*";
+            resetV3TradeLinkEmailAllowlistCacheForTests();
+            mockPrisma.obanJob.create.mockResolvedValue({ id: BigInt(1) } as any);
+            mockCreateTradeActionToken.mockReset();
+            mockCreateTradeActionToken.mockResolvedValue("mock-token-abc");
+        });
+
+        afterEach(() => {
+            if (savedUseV3 === undefined) delete process.env.USE_V3_TRADE_LINKS;
+            else process.env.USE_V3_TRADE_LINKS = savedUseV3;
+            if (savedV3Base === undefined) delete process.env.V3_BASE_URL;
+            else process.env.V3_BASE_URL = savedV3Base;
+            if (savedAllowlist === undefined) delete process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST;
+            else process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST = savedAllowlist;
+            resetV3TradeLinkEmailAllowlistCacheForTests();
+        });
+
+        it("accept (all teams accepted): enqueues submit_url with V3 token for creator owners", async () => {
+            const user = makeUser({ id: RECIPIENT_USER_ID });
+            const trade = makeTrade({
+                status: TradeStatus.PENDING,
+                tradeParticipants: [
+                    {
+                        id: uuid(),
+                        dateCreated: new Date(),
+                        dateModified: new Date(),
+                        participantType: TradeParticipantType.CREATOR,
+                        tradeId: TRADE_ID,
+                        teamId: CREATOR_TEAM_ID,
+                        team: {
+                            id: CREATOR_TEAM_ID,
+                            owners: [{ id: CREATOR_USER_ID, email: "creator-owner@example.com" }],
+                        } as any,
+                    },
+                    {
+                        id: uuid(),
+                        dateCreated: new Date(),
+                        dateModified: new Date(),
+                        participantType: TradeParticipantType.RECIPIENT,
+                        tradeId: TRADE_ID,
+                        teamId: RECIPIENT_TEAM_ID,
+                        team: { id: RECIPIENT_TEAM_ID, owners: [{ id: RECIPIENT_USER_ID }] } as any,
+                    },
+                ],
+            } as any);
+            mockUserDao.getUserById.mockResolvedValueOnce(user);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
+            mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce({
+                ...trade,
+                acceptedBy: [RECIPIENT_USER_ID],
+                status: TradeStatus.ACCEPTED,
+            } as any);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(user));
+            await caller.accept({ tradeId: TRADE_ID, skipNotifications: false });
+
+            expect(mockCreateTradeActionToken).toHaveBeenCalledWith({
+                userId: CREATOR_USER_ID,
+                tradeId: TRADE_ID,
+                action: "submit",
+            });
+            expect(mockPrisma.obanJob.create).toHaveBeenCalledTimes(1);
+            expect(mockPrisma.obanJob.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        args: expect.objectContaining({
+                            email_type: "trade_submit",
+                            submit_url: `https://v3.example/trades/${TRADE_ID}?action=submit&token=mock-token-abc`,
+                            recipient_user_id: CREATOR_USER_ID,
+                        }),
+                    }),
+                })
+            );
+        });
+
+        it("decline: enqueues decline_url with V3 view token for eligible owners", async () => {
+            const user = makeUser({ id: RECIPIENT_USER_ID });
+            const trade = makeTrade({
+                status: TradeStatus.REQUESTED,
+                tradeParticipants: [
+                    {
+                        id: uuid(),
+                        dateCreated: new Date(),
+                        dateModified: new Date(),
+                        participantType: TradeParticipantType.CREATOR,
+                        tradeId: TRADE_ID,
+                        teamId: CREATOR_TEAM_ID,
+                        team: {
+                            id: CREATOR_TEAM_ID,
+                            owners: [{ id: CREATOR_USER_ID, email: "creator-owner@example.com" }],
+                        } as any,
+                    },
+                    {
+                        id: uuid(),
+                        dateCreated: new Date(),
+                        dateModified: new Date(),
+                        participantType: TradeParticipantType.RECIPIENT,
+                        tradeId: TRADE_ID,
+                        teamId: RECIPIENT_TEAM_ID,
+                        team: { id: RECIPIENT_TEAM_ID, owners: [{ id: RECIPIENT_USER_ID }] } as any,
+                    },
+                ],
+            } as any);
+            const declinedTrade = { ...trade, status: TradeStatus.REJECTED, declinedById: RECIPIENT_USER_ID };
+            mockUserDao.getUserById.mockResolvedValueOnce(user);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
+            mockPrisma.trade.update.mockResolvedValueOnce(declinedTrade as any);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(declinedTrade as any);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(user));
+            await caller.decline({ tradeId: TRADE_ID, skipNotifications: false });
+
+            expect(mockCreateTradeActionToken).toHaveBeenCalledWith({
+                userId: CREATOR_USER_ID,
+                tradeId: TRADE_ID,
+                action: "view",
+            });
+            expect(mockPrisma.obanJob.create).toHaveBeenCalledTimes(1);
+            expect(mockPrisma.obanJob.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        args: expect.objectContaining({
+                            email_type: "trade_declined",
+                            decline_url: `https://v3.example/trades/${TRADE_ID}?token=mock-token-abc`,
+                            recipient_user_id: CREATOR_USER_ID,
+                            is_creator: true,
+                        }),
+                    }),
+                })
+            );
         });
     });
 });

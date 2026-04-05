@@ -11,6 +11,7 @@
 help: ## show make commands
 	@echo "\n"
 	@echo "Welcome to the Trade Machine server repo. The following are the available Make commands:"
+	@echo "Env vars: see .env.example (copy to .env); Docker host deploy: .env.staging.template, .env.prod.template"
 	@echo "==========================================================="
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 

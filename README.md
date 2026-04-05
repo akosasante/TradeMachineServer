@@ -27,9 +27,14 @@ This provides shared PostgreSQL and Redis services that match production version
 
 ### 2. **Environment Setup**
 
+All supported server environment variables (with placeholders and short descriptions) live in **`.env.example`** in this directory. Copy it to **`.env`** here when you want a self-contained server env file, and update **`.env.example`** in the same PR whenever you add or rename a `process.env` key so staging/prod and other developers stay in sync. For Docker deploys on hosts, see also **`.env.staging.template`** and **`.env.prod.template`**.
+
 ```bash
 # Copy environment template (if not already done in parent directory)
 cp ../.env.shared ../.env
+
+# Optional: server-local env from the documented placeholder file
+# cp .env.example .env
 
 # Install dependencies
 npm install
