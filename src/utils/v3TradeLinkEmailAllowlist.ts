@@ -1,9 +1,9 @@
 /**
- * When USE_V3_TRADE_LINKS and V3_BASE_URL are enabled, optionally restrict which recipient
- * emails receive V3 magic-link URLs (vs classic /trade/... links).
+ * When USE_V3_TRADE_LINKS and V3_BASE_URL are enabled, recipients get V3 magic-link URLs only
+ * if they appear on V3_TRADE_LINK_EMAIL_ALLOWLIST (case-insensitive comma-separated emails).
  *
- * V3_TRADE_LINK_EMAIL_ALLOWLIST — comma-separated addresses, case-insensitive.
- * If unset or empty after parsing, all recipients with V3 enabled globally get V3 links.
+ * If the allowlist env is unset, empty, or parses only whitespace, no recipient gets V3 links (safe default).
+ * Use a single "*" entry on the allowlist to treat all non-empty recipient emails as allowed.
  */
 
 let cachedAllowlist: Set<string> | null | undefined;
@@ -37,7 +37,8 @@ export function resetV3TradeLinkEmailAllowlistCacheForTests(): void {
 
 /**
  * True when this recipient should get V3 URLs in trade emails (tokens, /trades/...).
- * False when USE_V3_TRADE_LINKS or V3_BASE_URL is off, email missing, or allowlist excludes them.
+ * False when USE_V3_TRADE_LINKS or V3_BASE_URL is off, email missing, allowlist is unset/empty,
+ * or the address is not allowlisted. Allowlist entry "*" alone matches any non-empty email.
  */
 export function shouldUseV3TradeLinkForEmail(email: string | null | undefined): boolean {
     if (process.env.USE_V3_TRADE_LINKS !== "true" || !process.env.V3_BASE_URL?.trim()) {
@@ -49,6 +50,9 @@ export function shouldUseV3TradeLinkForEmail(email: string | null | undefined): 
     }
     const allowlist = getAllowlist();
     if (allowlist === null) {
+        return false;
+    }
+    if (allowlist.has("*")) {
         return true;
     }
     return allowlist.has(normalized);

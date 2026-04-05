@@ -30,10 +30,18 @@ describe("v3TradeLinkEmailAllowlist", () => {
         expect(shouldUseV3TradeLinkForEmail(null)).toBe(false);
     });
 
-    it("returns true for any email when allowlist env is unset", () => {
+    it("returns false when allowlist env is unset (safe default)", () => {
         process.env.USE_V3_TRADE_LINKS = "true";
         process.env.V3_BASE_URL = "https://v3.example";
         delete process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST;
+        expect(shouldUseV3TradeLinkForEmail("Anyone@Example.COM")).toBe(false);
+    });
+
+    it("returns true for any email when allowlist is a single asterisk", () => {
+        process.env.USE_V3_TRADE_LINKS = "true";
+        process.env.V3_BASE_URL = "https://v3.example";
+        process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST = "*";
+        resetV3TradeLinkEmailAllowlistCacheForTests();
         expect(shouldUseV3TradeLinkForEmail("Anyone@Example.COM")).toBe(true);
     });
 
