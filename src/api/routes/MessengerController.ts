@@ -13,6 +13,8 @@ import { extractTraceContext } from "../../utils/tracing";
 import { createTradeActionToken } from "./v2/utils/tradeActionTokens";
 import { tradeActionTokenGeneratedMetric, tradeRequestEmailEnqueuedMetric } from "../../bootstrap/metrics";
 import { shouldUseV3TradeLinkForEmail } from "../../utils/v3TradeLinkEmailAllowlist";
+import { mapOwnerIdsToDiscordUserIds } from "../../utils/discordTradeDmPrisma";
+import type { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
 const TRADE_REQUEST_OWNER_RELATIONS = ["tradeParticipants", "tradeParticipants.team", "tradeParticipants.team.owners"];
 
@@ -45,10 +47,10 @@ export default class MessengerController {
             throw new BadRequestError("Cannot send trade request for this trade based on its status");
         }
 
+        const prisma = getPrismaClientFromRequest(request);
         const obanDao =
             this.obanDao ??
             (() => {
-                const prisma = getPrismaClientFromRequest(request);
                 return prisma ? new ObanDAO(prisma.obanJob) : null;
             })();
 
@@ -63,14 +65,17 @@ export default class MessengerController {
         const v3BaseDomain = process.env.V3_BASE_URL;
 
         const recipientOwners = trade.recipients.flatMap(recipTeam => recipTeam.owners ?? []);
+        const discordByOwner = prisma
+            ? await mapOwnerIdsToDiscordUserIds(prisma as ExtendedPrismaClient, recipientOwners.map(o => o.id))
+            : new Map<string, string>();
 
         for (const owner of recipientOwners) {
-            if (!owner.email) continue;
+            if (!owner?.id) continue;
 
             let acceptUrl: string;
             let declineUrl: string;
 
-            if (shouldUseV3TradeLinkForEmail(owner.email) && v3BaseDomain && trade.id && owner.id) {
+            if (shouldUseV3TradeLinkForEmail(owner.email) && v3BaseDomain && trade.id) {
                 const [acceptToken, declineToken] = await Promise.all([
                     createTradeActionToken({ userId: owner.id, tradeId: trade.id, action: "accept" }),
                     createTradeActionToken({ userId: owner.id, tradeId: trade.id, action: "decline" }),
@@ -85,9 +90,16 @@ export default class MessengerController {
                 declineUrl = `${baseDomain}/trade/${trade.id}/reject`;
             }
 
-            await obanDao.enqueueTradeRequestEmail(trade.id!, owner.id!, acceptUrl, declineUrl, traceContext);
-            tradeRequestEmailEnqueuedMetric.inc();
-            logger.debug(`[sendRequestTradeMessage] Enqueued trade request email for userId=${owner.id}`);
+            if (owner.email) {
+                await obanDao.enqueueTradeRequestEmail(trade.id!, owner.id!, acceptUrl, declineUrl, traceContext);
+                tradeRequestEmailEnqueuedMetric.inc();
+                logger.debug(`[sendRequestTradeMessage] Enqueued trade request email for userId=${owner.id}`);
+            }
+
+            if (discordByOwner.has(owner.id)) {
+                await obanDao.enqueueTradeRequestDm(trade.id!, owner.id, acceptUrl, declineUrl, traceContext);
+                logger.debug(`[sendRequestTradeMessage] Enqueued trade request Discord DM job for userId=${owner.id}`);
+            }
         }
 
         return response.status(202).json({ status: "trade request queued" });
@@ -105,10 +117,10 @@ export default class MessengerController {
         if (trade.status === TradeStatus.REJECTED && trade.declinedById) {
             trade = await this.tradeDao.hydrateTrade(trade);
 
+            const prisma = getPrismaClientFromRequest(request);
             const obanDao =
                 this.obanDao ??
                 (() => {
-                    const prisma = getPrismaClientFromRequest(request);
                     return prisma ? new ObanDAO(prisma.obanJob) : null;
                 })();
 
@@ -127,6 +139,10 @@ export default class MessengerController {
                     ?.flatMap(tp => tp.team.owners)
                     .filter(owner => owner && owner.id !== trade.declinedById) ?? [];
 
+            const discordByOwner = prisma
+                ? await mapOwnerIdsToDiscordUserIds(prisma as ExtendedPrismaClient, eligibleOwners.map(o => o?.id))
+                : new Map<string, string>();
+
             for (const owner of eligibleOwners) {
                 if (!owner?.id) continue;
                 const isCreator = creatorOwnerIds.has(owner.id);
@@ -143,10 +159,19 @@ export default class MessengerController {
                     logger.debug(`[sendTradeDeclineMessage] Using V3 view-token URL for userId=${owner.id}`);
                 }
 
-                await obanDao.enqueueTradeDeclinedEmail(trade.id!, owner.id, isCreator, declineUrl, traceContext);
-                logger.debug(
-                    `[sendTradeDeclineMessage] Enqueued trade declined email for userId=${owner.id}, isCreator=${isCreator}`
-                );
+                if (owner.email) {
+                    await obanDao.enqueueTradeDeclinedEmail(trade.id!, owner.id, isCreator, declineUrl, traceContext);
+                    logger.debug(
+                        `[sendTradeDeclineMessage] Enqueued trade declined email for userId=${owner.id}, isCreator=${isCreator}`
+                    );
+                }
+
+                if (discordByOwner.has(owner.id)) {
+                    await obanDao.enqueueTradeDeclinedDm(trade.id!, owner.id, isCreator, declineUrl, traceContext);
+                    logger.debug(
+                        `[sendTradeDeclineMessage] Enqueued trade declined Discord DM job for userId=${owner.id}, isCreator=${isCreator}`
+                    );
+                }
             }
 
             return response.status(202).json({ status: "trade decline email queued" });
@@ -167,10 +192,10 @@ export default class MessengerController {
         if (trade.status === TradeStatus.ACCEPTED) {
             trade = await this.tradeDao.hydrateTrade(trade);
 
+            const prisma = getPrismaClientFromRequest(request);
             const obanDao =
                 this.obanDao ??
                 (() => {
-                    const prisma = getPrismaClientFromRequest(request);
                     return prisma ? new ObanDAO(prisma.obanJob) : null;
                 })();
 
@@ -185,6 +210,10 @@ export default class MessengerController {
             const v3BaseDomain = process.env.V3_BASE_URL;
 
             const creatorOwners = trade.creator?.owners ?? [];
+            const discordByOwner = prisma
+                ? await mapOwnerIdsToDiscordUserIds(prisma as ExtendedPrismaClient, creatorOwners.map(o => o?.id))
+                : new Map<string, string>();
+
             for (const owner of creatorOwners) {
                 if (!owner?.id) continue;
 
@@ -202,8 +231,15 @@ export default class MessengerController {
                     submitUrl = `${baseDomain}/trade/${trade.id}/submit`;
                 }
 
-                await obanDao.enqueueTradeSubmitEmail(trade.id!, owner.id, submitUrl, traceContext);
-                logger.debug(`[sendTradeAcceptanceMessage] Enqueued trade submit email for userId=${owner.id}`);
+                if (owner.email) {
+                    await obanDao.enqueueTradeSubmitEmail(trade.id!, owner.id, submitUrl, traceContext);
+                    logger.debug(`[sendTradeAcceptanceMessage] Enqueued trade submit email for userId=${owner.id}`);
+                }
+
+                if (discordByOwner.has(owner.id)) {
+                    await obanDao.enqueueTradeSubmitDm(trade.id!, owner.id, submitUrl, traceContext);
+                    logger.debug(`[sendTradeAcceptanceMessage] Enqueued trade submit Discord DM job for userId=${owner.id}`);
+                }
             }
 
             return response.status(202).json({ status: "trade acceptance email queued" });

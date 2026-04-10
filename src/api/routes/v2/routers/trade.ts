@@ -9,6 +9,7 @@ import TradeDAO, { AcceptedByEntry, PrismaTrade } from "../../../../DAO/v2/Trade
 import ObanDAO from "../../../../DAO/v2/ObanDAO";
 import { createTradeActionToken } from "../utils/tradeActionTokens";
 import { shouldUseV3TradeLinkForEmail } from "../../../../utils/v3TradeLinkEmailAllowlist";
+import { mapOwnerIdsToDiscordUserIds } from "../../../../utils/discordTradeDmPrisma";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import type { ExtendedPrismaClient } from "../../../../bootstrap/prisma-db";
 
@@ -121,18 +122,19 @@ function allRecipientTeamsAccepted(acceptedBy: string[], trade: PrismaTrade): bo
 
 // ─── Notification helpers ─────────────────────────────────────────────────────
 
-async function enqueueAcceptanceNotifications(
-    tradeId: string,
-    trade: PrismaTrade,
-    obanDb: ExtendedPrismaClient["obanJob"]
-): Promise<void> {
-    const obanDao = new ObanDAO(obanDb);
+async function enqueueAcceptanceNotifications(tradeId: string, trade: PrismaTrade, prisma: ExtendedPrismaClient): Promise<void> {
+    const obanDao = new ObanDAO(prisma.obanJob);
     const v3BaseDomain = process.env.V3_BASE_URL;
 
     const creatorOwners = trade.tradeParticipants
         .filter(p => p.participantType === TradeParticipantType.CREATOR)
         .flatMap(p => p.team?.owners ?? [])
         .filter((o): o is NonNullable<typeof o> => !!o?.id);
+
+    const discordByOwner = await mapOwnerIdsToDiscordUserIds(
+        prisma,
+        creatorOwners.map(o => o.id)
+    );
 
     for (const owner of creatorOwners) {
         let submitUrl: string;
@@ -148,8 +150,15 @@ async function enqueueAcceptanceNotifications(
             submitUrl = `${process.env.BASE_URL ?? ""}/trade/${tradeId}/submit`;
         }
 
-        await obanDao.enqueueTradeSubmitEmail(tradeId, owner.id, submitUrl);
-        logger.info(`[trades.accept] Enqueued submit-prompt email userId=${owner.id} tradeId=${tradeId}`);
+        if (owner.email) {
+            await obanDao.enqueueTradeSubmitEmail(tradeId, owner.id, submitUrl);
+            logger.info(`[trades.accept] Enqueued submit-prompt email userId=${owner.id} tradeId=${tradeId}`);
+        }
+
+        if (discordByOwner.has(owner.id)) {
+            await obanDao.enqueueTradeSubmitDm(tradeId, owner.id, submitUrl);
+            logger.info(`[trades.accept] Enqueued submit-prompt Discord DM userId=${owner.id} tradeId=${tradeId}`);
+        }
     }
 }
 
@@ -157,9 +166,9 @@ async function enqueueDeclineNotifications(
     tradeId: string,
     decliningUserId: string,
     trade: PrismaTrade,
-    obanDb: ExtendedPrismaClient["obanJob"]
+    prisma: ExtendedPrismaClient
 ): Promise<void> {
-    const obanDao = new ObanDAO(obanDb);
+    const obanDao = new ObanDAO(prisma.obanJob);
     const v3BaseDomain = process.env.V3_BASE_URL;
 
     const creatorOwnerIdSet = new Set(
@@ -172,6 +181,11 @@ async function enqueueDeclineNotifications(
     const eligibleOwners = trade.tradeParticipants
         .flatMap(p => p.team?.owners ?? [])
         .filter((o): o is NonNullable<typeof o> => !!o?.id && o.id !== decliningUserId);
+
+    const discordByOwner = await mapOwnerIdsToDiscordUserIds(
+        prisma,
+        eligibleOwners.map(o => o.id)
+    );
 
     for (const owner of eligibleOwners) {
         const isCreator = creatorOwnerIdSet.has(owner.id);
@@ -187,10 +201,19 @@ async function enqueueDeclineNotifications(
             declineUrl = `${v3BaseDomain}/trades/${tradeId}?token=${viewToken}`;
         }
 
-        await obanDao.enqueueTradeDeclinedEmail(tradeId, owner.id, isCreator, declineUrl);
-        logger.info(
-            `[trades.decline] Enqueued decline email userId=${owner.id} tradeId=${tradeId} isCreator=${isCreator}`
-        );
+        if (owner.email) {
+            await obanDao.enqueueTradeDeclinedEmail(tradeId, owner.id, isCreator, declineUrl);
+            logger.info(
+                `[trades.decline] Enqueued decline email userId=${owner.id} tradeId=${tradeId} isCreator=${isCreator}`
+            );
+        }
+
+        if (discordByOwner.has(owner.id)) {
+            await obanDao.enqueueTradeDeclinedDm(tradeId, owner.id, isCreator, declineUrl);
+            logger.info(
+                `[trades.decline] Enqueued decline Discord DM userId=${owner.id} tradeId=${tradeId} isCreator=${isCreator}`
+            );
+        }
     }
 }
 
@@ -357,7 +380,7 @@ export const tradeRouter = router({
 
             if (allAccepted && !input.skipNotifications) {
                 addSpanEvent("trades.accept.all_accepted");
-                await enqueueAcceptanceNotifications(input.tradeId, trade, ctx.prisma.obanJob);
+                await enqueueAcceptanceNotifications(input.tradeId, trade, ctx.prisma);
             }
 
             addSpanEvent("trades.accept.success");
@@ -411,7 +434,7 @@ export const tradeRouter = router({
                 const updatedTrade = await dao.updateDeclinedBy(input.tradeId, effectiveUserId, input.declinedReason);
 
                 if (!input.skipNotifications) {
-                    await enqueueDeclineNotifications(input.tradeId, effectiveUserId, trade, ctx.prisma.obanJob);
+                    await enqueueDeclineNotifications(input.tradeId, effectiveUserId, trade, ctx.prisma);
                 }
 
                 addSpanEvent("trades.decline.success");
