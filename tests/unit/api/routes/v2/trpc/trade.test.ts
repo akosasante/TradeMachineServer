@@ -617,6 +617,7 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST = "*";
             resetV3TradeLinkEmailAllowlistCacheForTests();
             mockPrisma.obanJob.create.mockResolvedValue({ id: BigInt(1) } as any);
+            mockPrisma.user.findMany.mockResolvedValue([] as any);
             mockCreateTradeActionToken.mockReset();
             mockCreateTradeActionToken.mockResolvedValue("mock-token-abc");
         });

@@ -11,10 +11,11 @@ export async function mapOwnerIdsToDiscordUserIds(
     if (unique.length === 0) {
         return new Map();
     }
-    const rows = await prisma.user.findMany({
+    const rowsRaw = await prisma.user.findMany({
         where: { id: { in: unique } },
         select: { id: true, discordUserId: true },
     });
+    const rows = Array.isArray(rowsRaw) ? rowsRaw : [];
     const m = new Map<string, string>();
     for (const r of rows) {
         const d = r.discordUserId?.trim();

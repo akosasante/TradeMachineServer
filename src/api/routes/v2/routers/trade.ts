@@ -122,7 +122,11 @@ function allRecipientTeamsAccepted(acceptedBy: string[], trade: PrismaTrade): bo
 
 // ─── Notification helpers ─────────────────────────────────────────────────────
 
-async function enqueueAcceptanceNotifications(tradeId: string, trade: PrismaTrade, prisma: ExtendedPrismaClient): Promise<void> {
+async function enqueueAcceptanceNotifications(
+    tradeId: string,
+    trade: PrismaTrade,
+    prisma: ExtendedPrismaClient
+): Promise<void> {
     const obanDao = new ObanDAO(prisma.obanJob);
     const v3BaseDomain = process.env.V3_BASE_URL;
 
