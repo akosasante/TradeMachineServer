@@ -110,6 +110,29 @@ describe("Messenger API endpoints", () => {
 
             expect(body.status).toBe("trade request queued");
         }, 2000);
+
+        it("should enqueue trade_request_dm Oban job when a recipient owner has discordUserId", async () => {
+            await prismaConn.user.update({
+                where: { id: ownerUser.id! },
+                data: { discordUserId: "123456789012345678" },
+            });
+            const requestedTrade = await createTradeOfStatus(TradeStatus.REQUESTED);
+
+            const { body } = await adminLoggedIn(req(requestedTrade.id!), app);
+            expect(body.status).toBe("trade request queued");
+
+            const dmJobs = await prismaConn.obanJob.findMany({
+                where: { worker: "TradeMachine.Jobs.DiscordWorker", queue: "discord" },
+                orderBy: { id: "desc" },
+                take: 30,
+            });
+            const match = dmJobs.filter(j => {
+                const args = j.args as { job_type?: string; trade_id?: string };
+                return args.job_type === "trade_request_dm" && args.trade_id === requestedTrade.id;
+            });
+            expect(match.length).toBeGreaterThanOrEqual(1);
+        });
+
         it("should return a 400 Bad Request if the trade status is not REQUESTED", async () => {
             const draftTrade = await createTradeOfStatus(TradeStatus.DRAFT);
 
@@ -164,6 +187,32 @@ describe("Messenger API endpoints", () => {
             expect(body.status).toBe("trade decline email queued");
             expect(obanCountAfter).toBeGreaterThan(obanCountBefore);
         });
+
+        it("should enqueue trade_declined_dm Oban job for an eligible owner with discordUserId", async () => {
+            await prismaConn.user.update({
+                where: { id: adminUser.id! },
+                data: { discordUserId: "111222333444555666" },
+            });
+            const declinedTrade = await createTradeOfStatus(TradeStatus.REJECTED, {
+                declinedById: ownerUser.id,
+                declinedReason: "integration test",
+            });
+
+            const { body } = await adminLoggedIn(req(declinedTrade.id!), app);
+            expect(body.status).toBe("trade decline email queued");
+
+            const dmJobs = await prismaConn.obanJob.findMany({
+                where: { worker: "TradeMachine.Jobs.DiscordWorker", queue: "discord" },
+                orderBy: { id: "desc" },
+                take: 30,
+            });
+            const match = dmJobs.filter(j => {
+                const args = j.args as { job_type?: string; trade_id?: string };
+                return args.job_type === "trade_declined_dm" && args.trade_id === declinedTrade.id;
+            });
+            expect(match.length).toBeGreaterThanOrEqual(1);
+        });
+
         it("should enqueue a trade declined email job via Oban successfully if logged in as an owner", async () => {
             const declinedTrade = await createTradeOfStatus(TradeStatus.REJECTED, {
                 declinedById: ownerUser.id,
@@ -308,6 +357,29 @@ describe("Messenger API endpoints", () => {
             expect(body.status).toBe("trade acceptance email queued");
             expect(obanCountAfter).toBeGreaterThan(obanCountBefore);
         });
+
+        it("should enqueue trade_submit_dm Oban job when a creator owner has discordUserId", async () => {
+            await prismaConn.user.update({
+                where: { id: adminUser.id! },
+                data: { discordUserId: "987654321098765432" },
+            });
+            const acceptedTrade = await createTradeOfStatus(TradeStatus.ACCEPTED);
+
+            const { body } = await adminLoggedIn(req(acceptedTrade.id!), app);
+            expect(body.status).toBe("trade acceptance email queued");
+
+            const dmJobs = await prismaConn.obanJob.findMany({
+                where: { worker: "TradeMachine.Jobs.DiscordWorker", queue: "discord" },
+                orderBy: { id: "desc" },
+                take: 30,
+            });
+            const match = dmJobs.filter(j => {
+                const args = j.args as { job_type?: string; trade_id?: string };
+                return args.job_type === "trade_submit_dm" && args.trade_id === acceptedTrade.id;
+            });
+            expect(match.length).toBeGreaterThanOrEqual(1);
+        });
+
         it("should enqueue a trade acceptance job via Oban successfully if logged in as an owner", async () => {
             const acceptedTrade = await createTradeOfStatus(TradeStatus.ACCEPTED);
 

@@ -56,12 +56,50 @@ export interface TradeSubmitJobData {
 // Union of all jobs handled by TradeMachine.Jobs.EmailWorker
 export type EmailJobData = UserEmailJobData | TradeRequestJobData | TradeDeclinedJobData | TradeSubmitJobData;
 
-export interface DiscordJobData {
+export interface DiscordTradeAnnouncementJobData {
     env: ObanEnv;
     job_type: "trade_announcement";
     data: string; // trade ID
     trace_context?: TraceContext;
 }
+
+export interface DiscordTradeRequestDmJobData {
+    env: ObanEnv;
+    job_type: "trade_request_dm";
+    trade_id: string;
+    recipient_user_id: string;
+    user_id?: string;
+    accept_url: string;
+    decline_url: string;
+    trace_context?: TraceContext;
+}
+
+export interface DiscordTradeSubmitDmJobData {
+    env: ObanEnv;
+    job_type: "trade_submit_dm";
+    trade_id: string;
+    recipient_user_id: string;
+    user_id?: string;
+    submit_url: string;
+    trace_context?: TraceContext;
+}
+
+export interface DiscordTradeDeclinedDmJobData {
+    env: ObanEnv;
+    job_type: "trade_declined_dm";
+    trade_id: string;
+    recipient_user_id: string;
+    user_id?: string;
+    is_creator: boolean;
+    decline_url?: string;
+    trace_context?: TraceContext;
+}
+
+export type DiscordJobData =
+    | DiscordTradeAnnouncementJobData
+    | DiscordTradeRequestDmJobData
+    | DiscordTradeSubmitDmJobData
+    | DiscordTradeDeclinedDmJobData;
 
 export interface WebhookStatusJobData {
     env: ObanEnv;
@@ -252,6 +290,70 @@ export default class ObanDAO {
             env: (process.env.APP_ENV as ObanEnv) || "staging",
             job_type: "trade_announcement",
             data: tradeId,
+            trace_context: traceContext,
+        });
+    }
+
+    /**
+     * Enqueue a Discord DM for a trade request (accept/decline links).
+     */
+    public async enqueueTradeRequestDm(
+        tradeId: string,
+        recipientUserId: string,
+        acceptUrl: string,
+        declineUrl: string,
+        traceContext?: TraceContext
+    ): Promise<ObanJob> {
+        return this.enqueueDiscordJob({
+            env: (process.env.APP_ENV as ObanEnv) || "staging",
+            job_type: "trade_request_dm",
+            trade_id: tradeId,
+            recipient_user_id: recipientUserId,
+            user_id: recipientUserId,
+            accept_url: acceptUrl,
+            decline_url: declineUrl,
+            trace_context: traceContext,
+        });
+    }
+
+    /**
+     * Enqueue a Discord DM prompting the creator to submit an accepted trade.
+     */
+    public async enqueueTradeSubmitDm(
+        tradeId: string,
+        recipientUserId: string,
+        submitUrl: string,
+        traceContext?: TraceContext
+    ): Promise<ObanJob> {
+        return this.enqueueDiscordJob({
+            env: (process.env.APP_ENV as ObanEnv) || "staging",
+            job_type: "trade_submit_dm",
+            trade_id: tradeId,
+            recipient_user_id: recipientUserId,
+            user_id: recipientUserId,
+            submit_url: submitUrl,
+            trace_context: traceContext,
+        });
+    }
+
+    /**
+     * Enqueue a Discord DM when a trade was declined (FYI to other participants).
+     */
+    public async enqueueTradeDeclinedDm(
+        tradeId: string,
+        recipientUserId: string,
+        isCreator: boolean,
+        declineUrl: string | undefined,
+        traceContext?: TraceContext
+    ): Promise<ObanJob> {
+        return this.enqueueDiscordJob({
+            env: (process.env.APP_ENV as ObanEnv) || "staging",
+            job_type: "trade_declined_dm",
+            trade_id: tradeId,
+            recipient_user_id: recipientUserId,
+            user_id: recipientUserId,
+            is_creator: isCreator,
+            decline_url: declineUrl,
             trace_context: traceContext,
         });
     }

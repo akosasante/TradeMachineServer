@@ -35,11 +35,11 @@ describe("tradeActionTokens utils", () => {
             expect(token).toMatch(/^[0-9a-f]{64}$/);
             expect(mockRedis.setNX).toHaveBeenCalledWith(
                 `trade-action:${token}`,
-                JSON.stringify({ userId: "u1", tradeId: "t1-action", action: "accept" }),
+                JSON.stringify({ userId: "u1", tradeId: "t1-action", action: "accept" })
             );
             expect(mockRedis.expire).toHaveBeenCalledWith(
                 `trade-action:${token}`,
-                TRADE_ACTION_TOKEN_CONFIG.TTL_SECONDS,
+                TRADE_ACTION_TOKEN_CONFIG.TTL_SECONDS
             );
         });
 

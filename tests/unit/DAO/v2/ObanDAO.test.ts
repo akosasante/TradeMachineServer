@@ -343,4 +343,84 @@ describe("ObanDAO Unit Tests", () => {
             });
         });
     });
+
+    describe("enqueueTradeRequestDm", () => {
+        it("should enqueue trade_request_dm on discord queue", async () => {
+            process.env.APP_ENV = "staging";
+            const mockJob = { id: BigInt(30), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeRequestDm(
+                "t1",
+                "u1",
+                "https://app/trades/t1?action=accept&token=a",
+                "https://app/trades/t1?action=decline&token=b"
+            );
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    queue: "discord",
+                    worker: "TradeMachine.Jobs.DiscordWorker",
+                    args: expect.objectContaining({
+                        env: "staging",
+                        job_type: "trade_request_dm",
+                        trade_id: "t1",
+                        recipient_user_id: "u1",
+                        user_id: "u1",
+                        accept_url: "https://app/trades/t1?action=accept&token=a",
+                        decline_url: "https://app/trades/t1?action=decline&token=b",
+                    }),
+                }),
+            });
+        });
+    });
+
+    describe("enqueueTradeSubmitDm", () => {
+        it("should enqueue trade_submit_dm on discord queue", async () => {
+            process.env.APP_ENV = "production";
+            const mockJob = { id: BigInt(31), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeSubmitDm("t2", "u2", "https://app/trades/t2?action=submit&token=c");
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    queue: "discord",
+                    worker: "TradeMachine.Jobs.DiscordWorker",
+                    args: expect.objectContaining({
+                        env: "production",
+                        job_type: "trade_submit_dm",
+                        trade_id: "t2",
+                        recipient_user_id: "u2",
+                        submit_url: "https://app/trades/t2?action=submit&token=c",
+                    }),
+                }),
+            });
+        });
+    });
+
+    describe("enqueueTradeDeclinedDm", () => {
+        it("should enqueue trade_declined_dm with optional decline_url", async () => {
+            process.env.APP_ENV = "development";
+            const mockJob = { id: BigInt(32), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeDeclinedDm("t3", "u3", true, "https://app/trades/t3?token=v");
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    queue: "discord",
+                    worker: "TradeMachine.Jobs.DiscordWorker",
+                    args: expect.objectContaining({
+                        env: "development",
+                        job_type: "trade_declined_dm",
+                        trade_id: "t3",
+                        recipient_user_id: "u3",
+                        is_creator: true,
+                        decline_url: "https://app/trades/t3?token=v",
+                    }),
+                }),
+            });
+        });
+    });
 });
