@@ -131,10 +131,7 @@ describe("[TRPC] Trades Router Unit Tests", () => {
     const mockReq = mockDeep<Request>();
     const mockRes = mockDeep<Response>();
 
-    function createMockContext(
-        user: PublicUser,
-        sessionData?: Partial<Session & { user?: string }>
-    ): Context {
+    function createMockContext(user: PublicUser, sessionData?: Partial<Session & { user?: string }>): Context {
         const session: Session & { user?: string } = {
             id: "test-session-id",
             cookie: {
