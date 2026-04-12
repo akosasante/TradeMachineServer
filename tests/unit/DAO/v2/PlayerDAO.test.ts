@@ -123,9 +123,7 @@ describe("[PRISMA] PlayerDAO", () => {
 
             const result = await dao.searchPlayers({ skip: 20, take: 10 });
 
-            expect(prisma.findMany).toHaveBeenCalledWith(
-                expect.objectContaining({ skip: 20, take: 10 })
-            );
+            expect(prisma.findMany).toHaveBeenCalledWith(expect.objectContaining({ skip: 20, take: 10 }));
             expect(result).toEqual({ players, total: 100 });
         });
     });

@@ -57,12 +57,7 @@ afterAll(async () => {
     return shutdownResult;
 });
 
-async function createUser(overrides: {
-    email: string;
-    role: UserRole;
-    displayName?: string;
-    teamId?: string;
-}) {
+async function createUser(overrides: { email: string; role: UserRole; displayName?: string; teamId?: string }) {
     return prisma.user.create({
         data: {
             email: overrides.email,
@@ -85,8 +80,8 @@ describe("admin.users", () => {
 
     describe("RBAC", () => {
         it("should return 401 when not authenticated", async () => {
-            const input = encodeTrpcHttpGetInput({});
-            const { body } = await request(app).get(`/v2/admin.users.list`).expect(401);
+            const _input = encodeTrpcHttpGetInput({});
+            const { body } = await request(app).get("/v2/admin.users.list").expect(401);
 
             expect(body.error).toMatchObject({
                 code: -32001,
@@ -97,8 +92,8 @@ describe("admin.users", () => {
         it("should reject OWNER from listing users", async () => {
             await createUser({ email: "owner@test.com", role: UserRole.OWNER });
 
-            const { body } = await trpcV2LoggedIn(app, "owner@test.com", password, (agent) =>
-                agent.get(`/v2/admin.users.list`).expect(403)
+            const { body } = await trpcV2LoggedIn(app, "owner@test.com", password, agent =>
+                agent.get("/v2/admin.users.list").expect(403)
             );
 
             expect(body.error.data.code).toBe("FORBIDDEN");
@@ -107,22 +102,19 @@ describe("admin.users", () => {
         it("should allow COMMISSIONER to list users", async () => {
             await createUser({ email: "commish@test.com", role: UserRole.COMMISSIONER });
 
-            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, (agent) =>
-                agent.get(`/v2/admin.users.list`).expect(200)
+            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, agent =>
+                agent.get("/v2/admin.users.list").expect(200)
             );
 
             expect(Array.isArray(body.result.data)).toBe(true);
         });
 
         it("should reject COMMISSIONER from deleting a user", async () => {
-            const commish = await createUser({ email: "commish@test.com", role: UserRole.COMMISSIONER });
+            const _commish = await createUser({ email: "commish@test.com", role: UserRole.COMMISSIONER });
             const target = await createUser({ email: "target@test.com", role: UserRole.OWNER });
 
-            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, (agent) =>
-                agent
-                    .post(`/v2/admin.users.delete`)
-                    .send({ id: target.id })
-                    .expect(403)
+            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, agent =>
+                agent.post("/v2/admin.users.delete").send({ id: target.id }).expect(403)
             );
 
             expect(body.error.data.code).toBe("FORBIDDEN");
@@ -137,8 +129,8 @@ describe("admin.users", () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN, teamId: team.id });
             await createUser({ email: "user2@test.com", role: UserRole.OWNER, teamId: team.id });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent.get(`/v2/admin.users.list`).expect(200)
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.get("/v2/admin.users.list").expect(200)
             );
 
             expect(body.result.data).toHaveLength(2);
@@ -150,9 +142,9 @@ describe("admin.users", () => {
         it("should create a new user", async () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
                 agent
-                    .post(`/v2/admin.users.create`)
+                    .post("/v2/admin.users.create")
                     .send({ email: "newuser@test.com", displayName: "New User" })
                     .expect(200)
             );
@@ -169,9 +161,9 @@ describe("admin.users", () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN });
             const target = await createUser({ email: "target@test.com", role: UserRole.OWNER });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
                 agent
-                    .post(`/v2/admin.users.update`)
+                    .post("/v2/admin.users.update")
                     .send({ id: target.id, displayName: "Updated Name", role: UserRole.COMMISSIONER })
                     .expect(200)
             );
@@ -184,11 +176,8 @@ describe("admin.users", () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN });
             const target = await createUser({ email: "delete-me@test.com", role: UserRole.OWNER });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent
-                    .post(`/v2/admin.users.delete`)
-                    .send({ id: target.id })
-                    .expect(200)
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.post("/v2/admin.users.delete").send({ id: target.id }).expect(200)
             );
 
             expect(body.result.data.id).toBe(target.id);
@@ -211,8 +200,8 @@ describe("admin.teams", () => {
         it("should reject OWNER from listing teams", async () => {
             await createUser({ email: "owner@test.com", role: UserRole.OWNER });
 
-            const { body } = await trpcV2LoggedIn(app, "owner@test.com", password, (agent) =>
-                agent.get(`/v2/admin.teams.list`).expect(403)
+            const { body } = await trpcV2LoggedIn(app, "owner@test.com", password, agent =>
+                agent.get("/v2/admin.teams.list").expect(403)
             );
 
             expect(body.error.data.code).toBe("FORBIDDEN");
@@ -222,8 +211,8 @@ describe("admin.teams", () => {
             await createUser({ email: "commish@test.com", role: UserRole.COMMISSIONER });
             const team = await prisma.team.create({ data: { name: "Team X", status: TeamStatus.ACTIVE } });
 
-            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, (agent) =>
-                agent.post(`/v2/admin.teams.delete`).send({ id: team.id }).expect(403)
+            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, agent =>
+                agent.post("/v2/admin.teams.delete").send({ id: team.id }).expect(403)
             );
 
             expect(body.error.data.code).toBe("FORBIDDEN");
@@ -235,8 +224,8 @@ describe("admin.teams", () => {
             const team = await prisma.team.create({ data: { name: "List Team", status: TeamStatus.ACTIVE } });
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN, teamId: team.id });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent.get(`/v2/admin.teams.list`).expect(200)
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.get("/v2/admin.teams.list").expect(200)
             );
 
             expect(Array.isArray(body.result.data)).toBe(true);
@@ -248,8 +237,8 @@ describe("admin.teams", () => {
         it("should create a team", async () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent.post(`/v2/admin.teams.create`).send({ name: "New Team", espnId: 7 }).expect(200)
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.post("/v2/admin.teams.create").send({ name: "New Team", espnId: 7 }).expect(200)
             );
 
             expect(body.result.data).toMatchObject({
@@ -263,8 +252,8 @@ describe("admin.teams", () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN });
             const team = await prisma.team.create({ data: { name: "Old Name", status: TeamStatus.ACTIVE } });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent.post(`/v2/admin.teams.update`).send({ id: team.id, name: "New Name" }).expect(200)
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.post("/v2/admin.teams.update").send({ id: team.id, name: "New Name" }).expect(200)
             );
 
             expect(body.result.data.name).toBe("New Name");
@@ -274,8 +263,8 @@ describe("admin.teams", () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN });
             const team = await prisma.team.create({ data: { name: "Delete Me", status: TeamStatus.ACTIVE } });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent.post(`/v2/admin.teams.delete`).send({ id: team.id }).expect(200)
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.post("/v2/admin.teams.delete").send({ id: team.id }).expect(200)
             );
 
             expect(body.result.data.id).toBe(team.id);
@@ -298,7 +287,7 @@ describe("admin.players", () => {
             await createUser({ email: "commish@test.com", role: UserRole.COMMISSIONER });
 
             const input = encodeTrpcHttpGetInput({});
-            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, agent =>
                 agent.get(`/v2/admin.players.search?input=${input}`).expect(200)
             );
 
@@ -309,8 +298,8 @@ describe("admin.players", () => {
         it("should reject COMMISSIONER from creating a player", async () => {
             await createUser({ email: "commish@test.com", role: UserRole.COMMISSIONER });
 
-            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, (agent) =>
-                agent.post(`/v2/admin.players.create`).send({ name: "Blocked" }).expect(403)
+            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, agent =>
+                agent.post("/v2/admin.players.create").send({ name: "Blocked" }).expect(403)
             );
 
             expect(body.error.data.code).toBe("FORBIDDEN");
@@ -330,7 +319,7 @@ describe("admin.players", () => {
             });
 
             const input = encodeTrpcHttpGetInput({ search: "Aaron", take: 10 });
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
                 agent.get(`/v2/admin.players.search?input=${input}`).expect(200)
             );
 
@@ -349,7 +338,7 @@ describe("admin.players", () => {
             });
 
             const input = encodeTrpcHttpGetInput({ league: PlayerLeagueLevel.MINORS });
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
                 agent.get(`/v2/admin.players.search?input=${input}`).expect(200)
             );
 
@@ -360,9 +349,9 @@ describe("admin.players", () => {
         it("should create a player", async () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
                 agent
-                    .post(`/v2/admin.players.create`)
+                    .post("/v2/admin.players.create")
                     .send({ name: "New Player", league: PlayerLeagueLevel.MAJORS, mlbTeam: "BOS" })
                     .expect(200)
             );
@@ -380,8 +369,8 @@ describe("admin.players", () => {
                 data: { name: "Old Name", league: PlayerLeagueLevel.MAJORS },
             });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent.post(`/v2/admin.players.update`).send({ id: player.id, name: "New Name" }).expect(200)
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.post("/v2/admin.players.update").send({ id: player.id, name: "New Name" }).expect(200)
             );
 
             expect(body.result.data.name).toBe("New Name");
@@ -393,8 +382,8 @@ describe("admin.players", () => {
                 data: { name: "Delete Me", league: PlayerLeagueLevel.MINORS },
             });
 
-            await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent.post(`/v2/admin.players.delete`).send({ id: player.id }).expect(200)
+            await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.post("/v2/admin.players.delete").send({ id: player.id }).expect(200)
             );
 
             const remaining = await prisma.player.findMany({ where: { id: player.id } });
@@ -416,7 +405,7 @@ describe("admin.picks", () => {
             await createUser({ email: "commish@test.com", role: UserRole.COMMISSIONER });
 
             const input = encodeTrpcHttpGetInput({});
-            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, agent =>
                 agent.get(`/v2/admin.picks.list?input=${input}`).expect(200)
             );
 
@@ -426,9 +415,9 @@ describe("admin.picks", () => {
         it("should reject COMMISSIONER from creating picks", async () => {
             await createUser({ email: "commish@test.com", role: UserRole.COMMISSIONER });
 
-            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, agent =>
                 agent
-                    .post(`/v2/admin.picks.create`)
+                    .post("/v2/admin.picks.create")
                     .send({ round: 1, season: 2026, type: PickLeagueLevel.MAJORS })
                     .expect(403)
             );
@@ -460,7 +449,7 @@ describe("admin.picks", () => {
             });
 
             const input = encodeTrpcHttpGetInput({ season: 2026 });
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
                 agent.get(`/v2/admin.picks.list?input=${input}`).expect(200)
             );
 
@@ -473,9 +462,9 @@ describe("admin.picks", () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN });
             const team = await prisma.team.create({ data: { name: "Owner Team", status: TeamStatus.ACTIVE } });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
                 agent
-                    .post(`/v2/admin.picks.create`)
+                    .post("/v2/admin.picks.create")
                     .send({
                         round: 2,
                         season: 2026,
@@ -508,11 +497,8 @@ describe("admin.picks", () => {
                 },
             });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent
-                    .post(`/v2/admin.picks.update`)
-                    .send({ id: pick.id, currentOwnerId: teamB.id })
-                    .expect(200)
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.post("/v2/admin.picks.update").send({ id: pick.id, currentOwnerId: teamB.id }).expect(200)
             );
 
             expect(body.result.data.currentOwner).toMatchObject({ id: teamB.id, name: "Team B" });
@@ -529,8 +515,8 @@ describe("admin.picks", () => {
                 },
             });
 
-            await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent.post(`/v2/admin.picks.delete`).send({ id: pick.id }).expect(200)
+            await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.post("/v2/admin.picks.delete").send({ id: pick.id }).expect(200)
             );
 
             const remaining = await prisma.draftPick.findMany({ where: { id: pick.id } });
@@ -551,8 +537,8 @@ describe("admin.sync", () => {
         it("should reject COMMISSIONER from enqueueing sync jobs", async () => {
             await createUser({ email: "commish@test.com", role: UserRole.COMMISSIONER });
 
-            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, (agent) =>
-                agent.post(`/v2/admin.sync.enqueue`).send({ jobType: SyncJobType.espn_team_sync }).expect(403)
+            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, agent =>
+                agent.post("/v2/admin.sync.enqueue").send({ jobType: SyncJobType.espn_team_sync }).expect(403)
             );
 
             expect(body.error.data.code).toBe("FORBIDDEN");
@@ -575,7 +561,7 @@ describe("admin.sync", () => {
             await createUser({ email: "commish@test.com", role: UserRole.COMMISSIONER });
 
             const input = encodeTrpcHttpGetInput({ obanJobId: obanJob.id.toString() });
-            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "commish@test.com", password, agent =>
                 agent.get(`/v2/admin.sync.status?input=${input}`).expect(200)
             );
 
@@ -588,8 +574,8 @@ describe("admin.sync", () => {
         it("should enqueue an espn_team_sync job and return job id", async () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent.post(`/v2/admin.sync.enqueue`).send({ jobType: SyncJobType.espn_team_sync }).expect(200)
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.post("/v2/admin.sync.enqueue").send({ jobType: SyncJobType.espn_team_sync }).expect(200)
             );
 
             expect(body.result.data.obanJobId).toBeDefined();
@@ -607,8 +593,8 @@ describe("admin.sync", () => {
         it("should enqueue both team and player sync jobs", async () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN });
 
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
-                agent.post(`/v2/admin.sync.enqueueFullEspn`).expect(200)
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
+                agent.post("/v2/admin.sync.enqueueFullEspn").expect(200)
             );
 
             expect(body.result.data.teamSync.obanJobId).toBeDefined();
@@ -621,7 +607,7 @@ describe("admin.sync", () => {
             await createUser({ email: "admin@test.com", role: UserRole.ADMIN });
 
             const input = encodeTrpcHttpGetInput({ obanJobId: "999999" });
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
                 agent.get(`/v2/admin.sync.status?input=${input}`).expect(404)
             );
 
@@ -658,7 +644,7 @@ describe("admin.sync", () => {
             });
 
             const input = encodeTrpcHttpGetInput({ obanJobId: obanJob.id.toString() });
-            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, (agent) =>
+            const { body } = await trpcV2LoggedIn(app, "admin@test.com", password, agent =>
                 agent.get(`/v2/admin.sync.status?input=${input}`).expect(200)
             );
 

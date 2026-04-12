@@ -98,9 +98,7 @@ describe("[PRISMA] UserDAO", () => {
 
             const result = await dao.findUserWithPasswordByEmail(user.email);
 
-            expect(prisma.findUnique).toHaveBeenCalledWith(
-                expect.objectContaining({ where: { email: user.email } })
-            );
+            expect(prisma.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { email: user.email } }));
             expect(result).toEqual(user);
         });
 
@@ -143,9 +141,7 @@ describe("[PRISMA] UserDAO", () => {
 
             const result = await dao.createUsers(input as any);
 
-            expect(prisma.createMany).toHaveBeenCalledWith(
-                expect.objectContaining({ skipDuplicates: true })
-            );
+            expect(prisma.createMany).toHaveBeenCalledWith(expect.objectContaining({ skipDuplicates: true }));
             expect(prisma.findMany).toHaveBeenCalledWith({
                 where: { email: { in: ["new@example.com", "new2@example.com"] } },
             });

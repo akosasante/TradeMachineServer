@@ -17,6 +17,24 @@ jest.mock("../../../../src/api/routes/v2/utils/tradeActionTokens", () => ({
     createTradeActionToken: jest.fn().mockResolvedValue("mock-token-abc123"),
 }));
 
+jest.mock("../../../../src/utils/userNotificationPrefs", () => ({
+    getOwnerNotificationPrefs: jest.fn().mockResolvedValue(new Map()),
+}));
+
+jest.mock("../../../../src/bootstrap/prisma-db", () => ({
+    getPrismaClientFromRequest: jest.fn().mockReturnValue(undefined),
+}));
+
+import { getOwnerNotificationPrefs, OwnerNotificationPrefs } from "../../../../src/utils/userNotificationPrefs";
+import { getPrismaClientFromRequest } from "../../../../src/bootstrap/prisma-db";
+
+const mockGetOwnerNotificationPrefs = getOwnerNotificationPrefs as jest.MockedFunction<
+    typeof getOwnerNotificationPrefs
+>;
+const mockGetPrismaClientFromRequest = getPrismaClientFromRequest as jest.MockedFunction<
+    typeof getPrismaClientFromRequest
+>;
+
 describe("MessengerController", () => {
     const mockEmailPublisher: MockObj = {
         queueTradeRequestMail: jest.fn(),
@@ -297,6 +315,166 @@ describe("MessengerController", () => {
             expect(mockTradeDao.getTradeById).toHaveBeenCalledWith(draftTrade.id);
             expect(mockTradeDao.hydrateTrade).toHaveBeenCalledTimes(0);
             expect(mockObanDao.enqueueTradeSubmitEmail).toHaveBeenCalledTimes(0);
+        });
+    });
+
+    describe("notification preference gating", () => {
+        const mockRequest = { app: { get: jest.fn() } } as any;
+        const fakePrisma = { obanJob: {} } as any;
+
+        function prefsMap(
+            ...entries: [string, Partial<OwnerNotificationPrefs>][]
+        ): Map<string, OwnerNotificationPrefs> {
+            const m = new Map<string, OwnerNotificationPrefs>();
+            for (const [id, p] of entries) {
+                m.set(id, {
+                    discordUserId: p.discordUserId ?? null,
+                    discordDmEnabled: p.discordDmEnabled ?? false,
+                    emailEnabled: p.emailEnabled ?? true,
+                });
+            }
+            return m;
+        }
+
+        beforeEach(() => {
+            mockGetPrismaClientFromRequest.mockReturnValue(fakePrisma);
+        });
+
+        afterEach(() => {
+            mockGetOwnerNotificationPrefs.mockReset();
+            mockGetPrismaClientFromRequest.mockReset();
+        });
+
+        it("sendRequestTradeMessage: should skip email when emailEnabled=false", async () => {
+            const ownerId = requestedTrade.recipients[0]?.owners?.[0]?.id;
+            mockGetOwnerNotificationPrefs.mockResolvedValueOnce(
+                prefsMap([ownerId!, { emailEnabled: false, discordDmEnabled: false }])
+            );
+            mockTradeDao.getTradeById.mockResolvedValueOnce(requestedTrade);
+
+            await messengerController.sendRequestTradeMessage(
+                requestedTrade.id!,
+                mockRes as unknown as Response,
+                mockRequest
+            );
+
+            const emailCalls = mockObanDao.enqueueTradeRequestEmail.mock.calls.filter((c: any[]) => c[1] === ownerId);
+            expect(emailCalls).toHaveLength(0);
+        });
+
+        it("sendRequestTradeMessage: should enqueue DM when discordDmEnabled=true", async () => {
+            const ownerId = requestedTrade.recipients[0]?.owners?.[0]?.id;
+            mockGetOwnerNotificationPrefs.mockResolvedValueOnce(
+                prefsMap([ownerId!, { discordDmEnabled: true, discordUserId: "123", emailEnabled: true }])
+            );
+            mockTradeDao.getTradeById.mockResolvedValueOnce(requestedTrade);
+
+            await messengerController.sendRequestTradeMessage(
+                requestedTrade.id!,
+                mockRes as unknown as Response,
+                mockRequest
+            );
+
+            const dmCalls = mockObanDao.enqueueTradeRequestDm.mock.calls.filter((c: any[]) => c[1] === ownerId);
+            expect(dmCalls.length).toBeGreaterThanOrEqual(1);
+        });
+
+        it("sendRequestTradeMessage: should not enqueue DM when discordDmEnabled=false", async () => {
+            const ownerId = requestedTrade.recipients[0]?.owners?.[0]?.id;
+            mockGetOwnerNotificationPrefs.mockResolvedValueOnce(
+                prefsMap([ownerId!, { discordDmEnabled: false, emailEnabled: true }])
+            );
+            mockTradeDao.getTradeById.mockResolvedValueOnce(requestedTrade);
+
+            await messengerController.sendRequestTradeMessage(
+                requestedTrade.id!,
+                mockRes as unknown as Response,
+                mockRequest
+            );
+
+            expect(mockObanDao.enqueueTradeRequestDm).not.toHaveBeenCalled();
+        });
+
+        it("sendTradeDeclineMessage: should skip email when emailEnabled=false", async () => {
+            const eligibleOwners =
+                declinedTrade.tradeParticipants
+                    ?.flatMap(tp => tp.team.owners)
+                    .filter(o => o && o.id !== declinedTrade.declinedById) ?? [];
+            const entries: [string, Partial<OwnerNotificationPrefs>][] = eligibleOwners.map(o => [
+                o!.id!,
+                { emailEnabled: false, discordDmEnabled: false },
+            ]);
+            mockGetOwnerNotificationPrefs.mockResolvedValueOnce(prefsMap(...entries));
+            mockTradeDao.getTradeById.mockResolvedValueOnce(declinedTrade);
+            mockTradeDao.hydrateTrade.mockResolvedValueOnce(declinedTrade);
+
+            await messengerController.sendTradeDeclineMessage(
+                declinedTrade.id!,
+                mockRes as unknown as Response,
+                mockRequest
+            );
+
+            expect(mockObanDao.enqueueTradeDeclinedEmail).not.toHaveBeenCalled();
+        });
+
+        it("sendTradeDeclineMessage: should enqueue DM when discordDmEnabled=true", async () => {
+            const eligibleOwners =
+                declinedTrade.tradeParticipants
+                    ?.flatMap(tp => tp.team.owners)
+                    .filter(o => o && o.id !== declinedTrade.declinedById) ?? [];
+            const entries: [string, Partial<OwnerNotificationPrefs>][] = eligibleOwners.map(o => [
+                o!.id!,
+                { emailEnabled: true, discordDmEnabled: true, discordUserId: "999" },
+            ]);
+            mockGetOwnerNotificationPrefs.mockResolvedValueOnce(prefsMap(...entries));
+            mockTradeDao.getTradeById.mockResolvedValueOnce(declinedTrade);
+            mockTradeDao.hydrateTrade.mockResolvedValueOnce(declinedTrade);
+
+            await messengerController.sendTradeDeclineMessage(
+                declinedTrade.id!,
+                mockRes as unknown as Response,
+                mockRequest
+            );
+
+            expect(mockObanDao.enqueueTradeDeclinedDm).toHaveBeenCalledTimes(eligibleOwners.length);
+        });
+
+        it("sendTradeAcceptanceMessage: should skip email when emailEnabled=false for creator", async () => {
+            const creatorOwners = acceptedTrade.creator?.owners ?? [];
+            const entries: [string, Partial<OwnerNotificationPrefs>][] = creatorOwners.map(o => [
+                o.id!,
+                { emailEnabled: false, discordDmEnabled: false },
+            ]);
+            mockGetOwnerNotificationPrefs.mockResolvedValueOnce(prefsMap(...entries));
+            mockTradeDao.getTradeById.mockResolvedValueOnce(acceptedTrade);
+            mockTradeDao.hydrateTrade.mockResolvedValueOnce(acceptedTrade);
+
+            await messengerController.sendTradeAcceptanceMessage(
+                acceptedTrade.id!,
+                mockRes as unknown as Response,
+                mockRequest
+            );
+
+            expect(mockObanDao.enqueueTradeSubmitEmail).not.toHaveBeenCalled();
+        });
+
+        it("sendTradeAcceptanceMessage: should enqueue DM when discordDmEnabled=true for creator", async () => {
+            const creatorOwners = acceptedTrade.creator?.owners ?? [];
+            const entries: [string, Partial<OwnerNotificationPrefs>][] = creatorOwners.map(o => [
+                o.id!,
+                { emailEnabled: true, discordDmEnabled: true, discordUserId: "456" },
+            ]);
+            mockGetOwnerNotificationPrefs.mockResolvedValueOnce(prefsMap(...entries));
+            mockTradeDao.getTradeById.mockResolvedValueOnce(acceptedTrade);
+            mockTradeDao.hydrateTrade.mockResolvedValueOnce(acceptedTrade);
+
+            await messengerController.sendTradeAcceptanceMessage(
+                acceptedTrade.id!,
+                mockRes as unknown as Response,
+                mockRequest
+            );
+
+            expect(mockObanDao.enqueueTradeSubmitDm).toHaveBeenCalledTimes(creatorOwners.length);
         });
     });
 });
