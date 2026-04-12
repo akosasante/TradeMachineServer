@@ -848,4 +848,233 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             );
         });
     });
+
+    describe("notification preference gating via getOwnerNotificationPrefs", () => {
+        let savedV3Base: string | undefined;
+        let savedAllowlist: string | undefined;
+
+        beforeEach(() => {
+            savedV3Base = process.env.V3_BASE_URL;
+            savedAllowlist = process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST;
+            process.env.V3_BASE_URL = "https://v3.example";
+            process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST = "*";
+            resetV3TradeLinkEmailAllowlistCacheForTests();
+            mockPrisma.obanJob.create.mockResolvedValue({ id: BigInt(1) } as any);
+            mockCreateTradeActionToken.mockReset();
+            mockCreateTradeActionToken.mockResolvedValue("mock-token-abc");
+        });
+
+        afterEach(() => {
+            if (savedV3Base === undefined) delete process.env.V3_BASE_URL;
+            else process.env.V3_BASE_URL = savedV3Base;
+            if (savedAllowlist === undefined) delete process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST;
+            else process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST = savedAllowlist;
+            resetV3TradeLinkEmailAllowlistCacheForTests();
+        });
+
+        function acceptTrade(tradeOverrides: any = {}) {
+            return makeTrade({
+                status: TradeStatus.PENDING,
+                tradeParticipants: [
+                    {
+                        id: uuid(),
+                        dateCreated: new Date(),
+                        dateModified: new Date(),
+                        participantType: TradeParticipantType.CREATOR,
+                        tradeId: TRADE_ID,
+                        teamId: CREATOR_TEAM_ID,
+                        team: {
+                            id: CREATOR_TEAM_ID,
+                            owners: [{ id: CREATOR_USER_ID, email: "creator@example.com" }],
+                        } as any,
+                    },
+                    {
+                        id: uuid(),
+                        dateCreated: new Date(),
+                        dateModified: new Date(),
+                        participantType: TradeParticipantType.RECIPIENT,
+                        tradeId: TRADE_ID,
+                        teamId: RECIPIENT_TEAM_ID,
+                        team: { id: RECIPIENT_TEAM_ID, owners: [{ id: RECIPIENT_USER_ID }] } as any,
+                    },
+                ],
+                ...tradeOverrides,
+            });
+        }
+
+        it("accept: should skip email when emailEnabled=false for creator owner", async () => {
+            const user = makeUser({ id: RECIPIENT_USER_ID });
+            const trade = acceptTrade();
+            mockUserDao.getUserById.mockResolvedValueOnce(user);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
+            mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce({
+                ...trade,
+                acceptedBy: [RECIPIENT_USER_ID],
+                status: TradeStatus.ACCEPTED,
+            } as any);
+            mockPrisma.user.findMany.mockResolvedValueOnce([
+                {
+                    id: CREATOR_USER_ID,
+                    discordUserId: "discord-123",
+                    userSettings: { notifications: { tradeActionEmail: false, tradeActionDiscordDm: true } },
+                },
+            ] as any);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(user));
+            await caller.accept({ tradeId: TRADE_ID, skipNotifications: false });
+
+            const emailJobs = mockPrisma.obanJob.create.mock.calls.filter(
+                (c: any) => c[0]?.data?.args?.email_type === "trade_submit"
+            );
+            expect(emailJobs).toHaveLength(0);
+
+            const dmJobs = mockPrisma.obanJob.create.mock.calls.filter(
+                (c: any) => c[0]?.data?.args?.job_type === "trade_submit_dm"
+            );
+            expect(dmJobs).toHaveLength(1);
+        });
+
+        it("accept: should skip DM when discordDmEnabled=false (no discordUserId)", async () => {
+            const user = makeUser({ id: RECIPIENT_USER_ID });
+            const trade = acceptTrade();
+            mockUserDao.getUserById.mockResolvedValueOnce(user);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
+            mockPrisma.trade.update.mockResolvedValueOnce(trade as any);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce({
+                ...trade,
+                acceptedBy: [RECIPIENT_USER_ID],
+                status: TradeStatus.ACCEPTED,
+            } as any);
+            mockPrisma.user.findMany.mockResolvedValueOnce([
+                {
+                    id: CREATOR_USER_ID,
+                    discordUserId: null,
+                    userSettings: { notifications: { tradeActionEmail: true, tradeActionDiscordDm: true } },
+                },
+            ] as any);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(user));
+            await caller.accept({ tradeId: TRADE_ID, skipNotifications: false });
+
+            const dmJobs = mockPrisma.obanJob.create.mock.calls.filter(
+                (c: any) => c[0]?.data?.args?.job_type === "trade_submit_dm"
+            );
+            expect(dmJobs).toHaveLength(0);
+
+            const emailJobs = mockPrisma.obanJob.create.mock.calls.filter(
+                (c: any) => c[0]?.data?.args?.email_type === "trade_submit"
+            );
+            expect(emailJobs).toHaveLength(1);
+        });
+
+        it("decline: should skip email when emailEnabled=false for creator owner", async () => {
+            const user = makeUser({ id: RECIPIENT_USER_ID });
+            const trade = makeTrade({
+                status: TradeStatus.REQUESTED,
+                tradeParticipants: [
+                    {
+                        id: uuid(),
+                        dateCreated: new Date(),
+                        dateModified: new Date(),
+                        participantType: TradeParticipantType.CREATOR,
+                        tradeId: TRADE_ID,
+                        teamId: CREATOR_TEAM_ID,
+                        team: {
+                            id: CREATOR_TEAM_ID,
+                            owners: [{ id: CREATOR_USER_ID, email: "creator@example.com" }],
+                        } as any,
+                    },
+                    {
+                        id: uuid(),
+                        dateCreated: new Date(),
+                        dateModified: new Date(),
+                        participantType: TradeParticipantType.RECIPIENT,
+                        tradeId: TRADE_ID,
+                        teamId: RECIPIENT_TEAM_ID,
+                        team: { id: RECIPIENT_TEAM_ID, owners: [{ id: RECIPIENT_USER_ID }] } as any,
+                    },
+                ],
+            } as any);
+            const declinedTrade = { ...trade, status: TradeStatus.REJECTED, declinedById: RECIPIENT_USER_ID };
+            mockUserDao.getUserById.mockResolvedValueOnce(user);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
+            mockPrisma.trade.update.mockResolvedValueOnce(declinedTrade as any);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(declinedTrade as any);
+            mockPrisma.user.findMany.mockResolvedValueOnce([
+                {
+                    id: CREATOR_USER_ID,
+                    discordUserId: "discord-456",
+                    userSettings: { notifications: { tradeActionEmail: false, tradeActionDiscordDm: true } },
+                },
+            ] as any);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(user));
+            await caller.decline({ tradeId: TRADE_ID, skipNotifications: false });
+
+            const emailJobs = mockPrisma.obanJob.create.mock.calls.filter(
+                (c: any) => c[0]?.data?.args?.email_type === "trade_declined"
+            );
+            expect(emailJobs).toHaveLength(0);
+
+            const dmJobs = mockPrisma.obanJob.create.mock.calls.filter(
+                (c: any) => c[0]?.data?.args?.job_type === "trade_declined_dm"
+            );
+            expect(dmJobs).toHaveLength(1);
+        });
+
+        it("decline: notification_settings_url should be included in DM job args", async () => {
+            const user = makeUser({ id: RECIPIENT_USER_ID });
+            const trade = makeTrade({
+                status: TradeStatus.REQUESTED,
+                tradeParticipants: [
+                    {
+                        id: uuid(),
+                        dateCreated: new Date(),
+                        dateModified: new Date(),
+                        participantType: TradeParticipantType.CREATOR,
+                        tradeId: TRADE_ID,
+                        teamId: CREATOR_TEAM_ID,
+                        team: {
+                            id: CREATOR_TEAM_ID,
+                            owners: [{ id: CREATOR_USER_ID, email: "creator@example.com" }],
+                        } as any,
+                    },
+                    {
+                        id: uuid(),
+                        dateCreated: new Date(),
+                        dateModified: new Date(),
+                        participantType: TradeParticipantType.RECIPIENT,
+                        tradeId: TRADE_ID,
+                        teamId: RECIPIENT_TEAM_ID,
+                        team: { id: RECIPIENT_TEAM_ID, owners: [{ id: RECIPIENT_USER_ID }] } as any,
+                    },
+                ],
+            } as any);
+            const declinedTrade = { ...trade, status: TradeStatus.REJECTED, declinedById: RECIPIENT_USER_ID };
+            mockUserDao.getUserById.mockResolvedValueOnce(user);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(trade as any);
+            mockPrisma.trade.update.mockResolvedValueOnce(declinedTrade as any);
+            mockPrisma.trade.findUniqueOrThrow.mockResolvedValueOnce(declinedTrade as any);
+            mockPrisma.user.findMany.mockResolvedValueOnce([
+                {
+                    id: CREATOR_USER_ID,
+                    discordUserId: "discord-789",
+                    userSettings: { notifications: { tradeActionEmail: true, tradeActionDiscordDm: true } },
+                },
+            ] as any);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(user));
+            await caller.decline({ tradeId: TRADE_ID, skipNotifications: false });
+
+            const dmJobs = mockPrisma.obanJob.create.mock.calls.filter(
+                (c: any) => c[0]?.data?.args?.job_type === "trade_declined_dm"
+            );
+            expect(dmJobs).toHaveLength(1);
+            expect((dmJobs[0] as any)[0].data.args).toHaveProperty(
+                "notification_settings_url",
+                "https://v3.example/settings/notifications"
+            );
+        });
+    });
 });
