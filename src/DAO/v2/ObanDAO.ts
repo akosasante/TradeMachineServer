@@ -71,6 +71,7 @@ export interface DiscordTradeRequestDmJobData {
     user_id?: string;
     accept_url: string;
     decline_url: string;
+    notification_settings_url?: string;
     trace_context?: TraceContext;
 }
 
@@ -81,6 +82,7 @@ export interface DiscordTradeSubmitDmJobData {
     recipient_user_id: string;
     user_id?: string;
     submit_url: string;
+    notification_settings_url?: string;
     trace_context?: TraceContext;
 }
 
@@ -92,6 +94,7 @@ export interface DiscordTradeDeclinedDmJobData {
     user_id?: string;
     is_creator: boolean;
     decline_url?: string;
+    notification_settings_url?: string;
     trace_context?: TraceContext;
 }
 
@@ -306,7 +309,8 @@ export default class ObanDAO {
         recipientUserId: string,
         acceptUrl: string,
         declineUrl: string,
-        traceContext?: TraceContext
+        traceContext?: TraceContext,
+        notificationSettingsUrl?: string
     ): Promise<ObanJob> {
         return this.enqueueDiscordJob({
             env: (process.env.APP_ENV as ObanEnv) || "staging",
@@ -316,6 +320,7 @@ export default class ObanDAO {
             user_id: recipientUserId,
             accept_url: acceptUrl,
             decline_url: declineUrl,
+            notification_settings_url: notificationSettingsUrl,
             trace_context: traceContext,
         });
     }
@@ -327,7 +332,8 @@ export default class ObanDAO {
         tradeId: string,
         recipientUserId: string,
         submitUrl: string,
-        traceContext?: TraceContext
+        traceContext?: TraceContext,
+        notificationSettingsUrl?: string
     ): Promise<ObanJob> {
         return this.enqueueDiscordJob({
             env: (process.env.APP_ENV as ObanEnv) || "staging",
@@ -336,6 +342,7 @@ export default class ObanDAO {
             recipient_user_id: recipientUserId,
             user_id: recipientUserId,
             submit_url: submitUrl,
+            notification_settings_url: notificationSettingsUrl,
             trace_context: traceContext,
         });
     }
@@ -348,7 +355,8 @@ export default class ObanDAO {
         recipientUserId: string,
         isCreator: boolean,
         declineUrl: string | undefined,
-        traceContext?: TraceContext
+        traceContext?: TraceContext,
+        notificationSettingsUrl?: string
     ): Promise<ObanJob> {
         return this.enqueueDiscordJob({
             env: (process.env.APP_ENV as ObanEnv) || "staging",
@@ -358,6 +366,7 @@ export default class ObanDAO {
             user_id: recipientUserId,
             is_creator: isCreator,
             decline_url: declineUrl,
+            notification_settings_url: notificationSettingsUrl,
             trace_context: traceContext,
         });
     }

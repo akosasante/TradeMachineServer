@@ -114,7 +114,10 @@ describe("Messenger API endpoints", () => {
         it("should enqueue trade_request_dm Oban job when a recipient owner has discordUserId", async () => {
             await prismaConn.user.update({
                 where: { id: ownerUser.id! },
-                data: { discordUserId: "123456789012345678" },
+                data: {
+                    discordUserId: "123456789012345678",
+                    userSettings: { notifications: { tradeActionDiscordDm: true, tradeActionEmail: true } },
+                },
             });
             const requestedTrade = await createTradeOfStatus(TradeStatus.REQUESTED);
 
@@ -191,7 +194,10 @@ describe("Messenger API endpoints", () => {
         it("should enqueue trade_declined_dm Oban job for an eligible owner with discordUserId", async () => {
             await prismaConn.user.update({
                 where: { id: adminUser.id! },
-                data: { discordUserId: "111222333444555666" },
+                data: {
+                    discordUserId: "111222333444555666",
+                    userSettings: { notifications: { tradeActionDiscordDm: true, tradeActionEmail: true } },
+                },
             });
             const declinedTrade = await createTradeOfStatus(TradeStatus.REJECTED, {
                 declinedById: ownerUser.id,
@@ -361,7 +367,10 @@ describe("Messenger API endpoints", () => {
         it("should enqueue trade_submit_dm Oban job when a creator owner has discordUserId", async () => {
             await prismaConn.user.update({
                 where: { id: adminUser.id! },
-                data: { discordUserId: "987654321098765432" },
+                data: {
+                    discordUserId: "987654321098765432",
+                    userSettings: { notifications: { tradeActionDiscordDm: true, tradeActionEmail: true } },
+                },
             });
             const acceptedTrade = await createTradeOfStatus(TradeStatus.ACCEPTED);
 

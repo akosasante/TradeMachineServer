@@ -13,7 +13,7 @@ import { extractTraceContext } from "../../utils/tracing";
 import { createTradeActionToken } from "./v2/utils/tradeActionTokens";
 import { tradeActionTokenGeneratedMetric, tradeRequestEmailEnqueuedMetric } from "../../bootstrap/metrics";
 import { shouldUseV3TradeLinkForEmail } from "../../utils/v3TradeLinkEmailAllowlist";
-import { mapOwnerIdsToDiscordUserIds } from "../../utils/discordTradeDmPrisma";
+import { getOwnerNotificationPrefs } from "../../utils/userNotificationPrefs";
 
 const TRADE_REQUEST_OWNER_RELATIONS = ["tradeParticipants", "tradeParticipants.team", "tradeParticipants.team.owners"];
 
@@ -62,17 +62,19 @@ export default class MessengerController {
         const traceContext = extractTraceContext() || undefined;
         const baseDomain = process.env.BASE_URL;
         const v3BaseDomain = process.env.V3_BASE_URL;
+        const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/settings/notifications` : undefined;
 
         const recipientOwners = trade.recipients.flatMap(recipTeam => recipTeam.owners ?? []);
-        const discordByOwner = prisma
-            ? await mapOwnerIdsToDiscordUserIds(
+        const ownerPrefs = prisma
+            ? await getOwnerNotificationPrefs(
                   prisma,
                   recipientOwners.map(o => o.id)
               )
-            : new Map<string, string>();
+            : new Map<string, never>();
 
         for (const owner of recipientOwners) {
             if (!owner?.id) continue;
+            const prefs = ownerPrefs.get(owner.id);
 
             let acceptUrl: string;
             let declineUrl: string;
@@ -92,14 +94,21 @@ export default class MessengerController {
                 declineUrl = `${baseDomain}/trade/${trade.id}/reject`;
             }
 
-            if (owner.email) {
+            if (owner.email && prefs?.emailEnabled !== false) {
                 await obanDao.enqueueTradeRequestEmail(trade.id!, owner.id, acceptUrl, declineUrl, traceContext);
                 tradeRequestEmailEnqueuedMetric.inc();
                 logger.debug(`[sendRequestTradeMessage] Enqueued trade request email for userId=${owner.id}`);
             }
 
-            if (discordByOwner.has(owner.id)) {
-                await obanDao.enqueueTradeRequestDm(trade.id!, owner.id, acceptUrl, declineUrl, traceContext);
+            if (prefs?.discordDmEnabled) {
+                await obanDao.enqueueTradeRequestDm(
+                    trade.id!,
+                    owner.id,
+                    acceptUrl,
+                    declineUrl,
+                    traceContext,
+                    notificationSettingsUrl
+                );
                 logger.debug(`[sendRequestTradeMessage] Enqueued trade request Discord DM job for userId=${owner.id}`);
             }
         }
@@ -134,6 +143,7 @@ export default class MessengerController {
 
             const traceContext = extractTraceContext() || undefined;
             const v3BaseDomain = process.env.V3_BASE_URL;
+            const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/settings/notifications` : undefined;
 
             const creatorOwnerIds = new Set(trade.creator?.owners?.map(o => o.id).filter(Boolean));
             const eligibleOwners =
@@ -141,16 +151,17 @@ export default class MessengerController {
                     ?.flatMap(tp => tp.team.owners)
                     .filter(owner => owner && owner.id !== trade.declinedById) ?? [];
 
-            const discordByOwner = prisma
-                ? await mapOwnerIdsToDiscordUserIds(
+            const ownerPrefs = prisma
+                ? await getOwnerNotificationPrefs(
                       prisma,
                       eligibleOwners.map(o => o?.id)
                   )
-                : new Map<string, string>();
+                : new Map<string, never>();
 
             for (const owner of eligibleOwners) {
                 if (!owner?.id) continue;
                 const isCreator = creatorOwnerIds.has(owner.id);
+                const prefs = ownerPrefs.get(owner.id);
 
                 let declineUrl: string | undefined;
                 if (shouldUseV3TradeLinkForEmail(owner.email) && v3BaseDomain && trade.id) {
@@ -164,15 +175,22 @@ export default class MessengerController {
                     logger.debug(`[sendTradeDeclineMessage] Using V3 view-token URL for userId=${owner.id}`);
                 }
 
-                if (owner.email) {
+                if (owner.email && prefs?.emailEnabled !== false) {
                     await obanDao.enqueueTradeDeclinedEmail(trade.id!, owner.id, isCreator, declineUrl, traceContext);
                     logger.debug(
                         `[sendTradeDeclineMessage] Enqueued trade declined email for userId=${owner.id}, isCreator=${isCreator}`
                     );
                 }
 
-                if (discordByOwner.has(owner.id)) {
-                    await obanDao.enqueueTradeDeclinedDm(trade.id!, owner.id, isCreator, declineUrl, traceContext);
+                if (prefs?.discordDmEnabled) {
+                    await obanDao.enqueueTradeDeclinedDm(
+                        trade.id!,
+                        owner.id,
+                        isCreator,
+                        declineUrl,
+                        traceContext,
+                        notificationSettingsUrl
+                    );
                     logger.debug(
                         `[sendTradeDeclineMessage] Enqueued trade declined Discord DM job for userId=${owner.id}, isCreator=${isCreator}`
                     );
@@ -213,17 +231,19 @@ export default class MessengerController {
             const traceContext = extractTraceContext() || undefined;
             const baseDomain = process.env.BASE_URL;
             const v3BaseDomain = process.env.V3_BASE_URL;
+            const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/settings/notifications` : undefined;
 
             const creatorOwners = trade.creator?.owners ?? [];
-            const discordByOwner = prisma
-                ? await mapOwnerIdsToDiscordUserIds(
+            const ownerPrefs = prisma
+                ? await getOwnerNotificationPrefs(
                       prisma,
                       creatorOwners.map(o => o?.id)
                   )
-                : new Map<string, string>();
+                : new Map<string, never>();
 
             for (const owner of creatorOwners) {
                 if (!owner?.id) continue;
+                const prefs = ownerPrefs.get(owner.id);
 
                 let submitUrl: string;
                 if (shouldUseV3TradeLinkForEmail(owner.email) && v3BaseDomain && trade.id) {
@@ -239,13 +259,19 @@ export default class MessengerController {
                     submitUrl = `${baseDomain}/trade/${trade.id}/submit`;
                 }
 
-                if (owner.email) {
+                if (owner.email && prefs?.emailEnabled !== false) {
                     await obanDao.enqueueTradeSubmitEmail(trade.id!, owner.id, submitUrl, traceContext);
                     logger.debug(`[sendTradeAcceptanceMessage] Enqueued trade submit email for userId=${owner.id}`);
                 }
 
-                if (discordByOwner.has(owner.id)) {
-                    await obanDao.enqueueTradeSubmitDm(trade.id!, owner.id, submitUrl, traceContext);
+                if (prefs?.discordDmEnabled) {
+                    await obanDao.enqueueTradeSubmitDm(
+                        trade.id!,
+                        owner.id,
+                        submitUrl,
+                        traceContext,
+                        notificationSettingsUrl
+                    );
                     logger.debug(
                         `[sendTradeAcceptanceMessage] Enqueued trade submit Discord DM job for userId=${owner.id}`
                     );
