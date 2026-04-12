@@ -173,7 +173,7 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             prisma: mockPrisma as unknown as ExtendedPrismaClient,
             userDao: mockUserDao as unknown as UserDAO,
             user,
-        } as unknown as Context & { user: PublicUser };
+        } as Context & { user: PublicUser };
     }
 
     beforeAll(() => {

@@ -6,11 +6,6 @@ import type { Span } from "@opentelemetry/api";
 import { Prisma } from "@prisma/client";
 import { ExtendedPrismaClient } from "../../../../bootstrap/prisma-db";
 import Users from "../../../../DAO/v2/UserDAO";
-import Teams from "../../../../DAO/v2/TeamDAO";
-import Players from "../../../../DAO/v2/PlayerDAO";
-import DraftPicks from "../../../../DAO/v2/DraftPickDAO";
-import ObanDAO from "../../../../DAO/v2/ObanDAO";
-import SyncJobExecutionDAO from "../../../../DAO/v2/SyncJobExecutionDAO";
 import {
     createSpanFromRequest,
     finishSpanWithStatusCode,
@@ -35,11 +30,6 @@ export interface Context {
     };
     prisma: ExtendedPrismaClient;
     userDao: Users;
-    teamDao: Teams;
-    playerDao: Players;
-    draftPickDao: DraftPicks;
-    obanDao: ObanDAO;
-    syncJobExecutionDao: SyncJobExecutionDAO;
 }
 
 const t = initTRPC.context<Context>().create({

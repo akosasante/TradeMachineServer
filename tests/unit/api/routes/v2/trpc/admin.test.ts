@@ -34,6 +34,14 @@ jest.mock("../../../../../../src/bootstrap/metrics", () => ({
     metricsRegistry: mockDeep(),
 }));
 
+// Mock DAO constructors so inline `new DAO(ctx.prisma.xxx)` returns our mock instances
+jest.mock("../../../../../../src/DAO/v2/UserDAO");
+jest.mock("../../../../../../src/DAO/v2/TeamDAO");
+jest.mock("../../../../../../src/DAO/v2/PlayerDAO");
+jest.mock("../../../../../../src/DAO/v2/DraftPickDAO");
+jest.mock("../../../../../../src/DAO/v2/ObanDAO");
+jest.mock("../../../../../../src/DAO/v2/SyncJobExecutionDAO");
+
 describe("[TRPC] Admin Router Unit Tests", () => {
     const mockPrisma = mockDeep<ExtendedPrismaClient>();
     const mockUserDao = mockDeep<UserDAO>();
@@ -95,11 +103,6 @@ describe("[TRPC] Admin Router Unit Tests", () => {
             session,
             prisma: mockPrisma as unknown as ExtendedPrismaClient,
             userDao: mockUserDao as unknown as UserDAO,
-            teamDao: mockTeamDao as unknown as TeamDAO,
-            playerDao: mockPlayerDao as unknown as PlayerDAO,
-            draftPickDao: mockDraftPickDao as unknown as DraftPickDAO,
-            obanDao: mockObanDao as unknown as ObanDAO,
-            syncJobExecutionDao: mockSyncJobExecutionDao as unknown as SyncJobExecutionDAO,
         };
     }
 
@@ -113,6 +116,16 @@ describe("[TRPC] Admin Router Unit Tests", () => {
         mockClear(mockSyncJobExecutionDao);
         mockClear(mockReq);
         mockClear(mockRes);
+
+        // Wire up DAO constructor mocks to return our mock instances
+        (UserDAO as jest.MockedClass<typeof UserDAO>).mockImplementation(() => mockUserDao);
+        (TeamDAO as jest.MockedClass<typeof TeamDAO>).mockImplementation(() => mockTeamDao);
+        (PlayerDAO as jest.MockedClass<typeof PlayerDAO>).mockImplementation(() => mockPlayerDao);
+        (DraftPickDAO as jest.MockedClass<typeof DraftPickDAO>).mockImplementation(() => mockDraftPickDao);
+        (ObanDAO as jest.MockedClass<typeof ObanDAO>).mockImplementation(() => mockObanDao);
+        (SyncJobExecutionDAO as jest.MockedClass<typeof SyncJobExecutionDAO>).mockImplementation(
+            () => mockSyncJobExecutionDao
+        );
     });
 
     // ─── RBAC ─────────────────────────────────────────────────────

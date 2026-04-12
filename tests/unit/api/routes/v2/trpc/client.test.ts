@@ -108,7 +108,7 @@ describe("[TRPC] Client Router Unit Tests", () => {
             session: sessionData ? session : undefined,
             prisma: mockPrisma as unknown as ExtendedPrismaClient,
             userDao: mockUserDao as unknown as UserDAO,
-        } as unknown as Context;
+        };
     };
 
     const mockUser: PublicUser = {
