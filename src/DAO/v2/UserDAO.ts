@@ -82,6 +82,19 @@ export default class UserDAO {
         return UserDAO.publicUsers(users);
     }
 
+    public async getAllUsersWithTeams(): Promise<PublicUser[]> {
+        const users = await this.userDb.findMany({
+            orderBy: { id: "asc" },
+            include: { team: { select: { id: true, name: true } } },
+        });
+        return UserDAO.publicUsers(users);
+    }
+
+    public async deleteUser(id: string): Promise<PublicUser> {
+        const user = await this.userDb.delete({ where: { id } });
+        return UserDAO.publicUser(user);
+    }
+
     public async updateUser(id: string, userObj: Partial<User>): Promise<PublicUser> {
         const updatedUser = await this.userDb.update({
             where: { id },
