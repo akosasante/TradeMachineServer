@@ -94,9 +94,9 @@ describe("validateNotificationInvariant", () => {
     });
 
     it("throws when both are off", () => {
-        expect(() =>
-            validateNotificationInvariant({ tradeActionDiscordDm: false, tradeActionEmail: false })
-        ).toThrow(NotificationSettingsValidationError);
+        expect(() => validateNotificationInvariant({ tradeActionDiscordDm: false, tradeActionEmail: false })).toThrow(
+            NotificationSettingsValidationError
+        );
     });
 });
 
@@ -129,9 +129,9 @@ describe("mergeAndValidateNotificationUpdate", () => {
         const existing = {
             notifications: { tradeActionDiscordDm: false, tradeActionEmail: true },
         };
-        expect(() =>
-            mergeAndValidateNotificationUpdate(existing, { tradeActionEmail: false })
-        ).toThrow(NotificationSettingsValidationError);
+        expect(() => mergeAndValidateNotificationUpdate(existing, { tradeActionEmail: false })).toThrow(
+            NotificationSettingsValidationError
+        );
     });
 
     it("preserves extra keys in the blob", () => {

@@ -8,16 +8,22 @@ import { z } from "zod";
 
 const CURRENT_SCHEMA_VERSION = 1;
 
-const notificationsSchema = z.object({
-    tradeActionDiscordDm: z.boolean().nullable().optional(),
-    tradeActionEmail: z.boolean().nullable().optional(),
-}).optional().nullable();
+const notificationsSchema = z
+    .object({
+        tradeActionDiscordDm: z.boolean().nullable().optional(),
+        tradeActionEmail: z.boolean().nullable().optional(),
+    })
+    .optional()
+    .nullable();
 
-export const userSettingsSchema = z.object({
-    schemaVersion: z.number().int().nullable().optional(),
-    settingsUpdatedAt: z.string().nullable().optional(),
-    notifications: notificationsSchema,
-}).nullable().optional();
+export const userSettingsSchema = z
+    .object({
+        schemaVersion: z.number().int().nullable().optional(),
+        settingsUpdatedAt: z.string().nullable().optional(),
+        notifications: notificationsSchema,
+    })
+    .nullable()
+    .optional();
 
 export type UserSettingsRaw = z.infer<typeof userSettingsSchema>;
 
@@ -40,7 +46,7 @@ const DEFAULT_TRADE_ACTION_DISCORD_DM = false;
  * Handles null, undefined, empty `{}`, missing keys, and JSON null values.
  */
 export function normalizeUserSettings(raw: unknown): NormalizedUserSettings {
-    if (raw == null || (typeof raw === "object" && Object.keys(raw as object).length === 0)) {
+    if (raw == null || (typeof raw === "object" && Object.keys(raw).length === 0)) {
         return {
             schemaVersion: CURRENT_SCHEMA_VERSION,
             settingsUpdatedAt: null,
@@ -114,14 +120,15 @@ export function mergeAndValidateNotificationUpdate(
 
     validateNotificationInvariant(merged);
 
-    const raw = (existingRaw != null && typeof existingRaw === "object") ? { ...(existingRaw as Record<string, unknown>) } : {};
+    const raw =
+        existingRaw != null && typeof existingRaw === "object" ? { ...(existingRaw as Record<string, unknown>) } : {};
 
     return {
         ...raw,
         schemaVersion: CURRENT_SCHEMA_VERSION,
         settingsUpdatedAt: new Date().toISOString(),
         notifications: {
-            ...((raw.notifications && typeof raw.notifications === "object") ? raw.notifications : {}),
+            ...(raw.notifications && typeof raw.notifications === "object" ? raw.notifications : {}),
             tradeActionDiscordDm: merged.tradeActionDiscordDm,
             tradeActionEmail: merged.tradeActionEmail,
         },
