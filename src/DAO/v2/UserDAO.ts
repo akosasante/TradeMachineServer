@@ -69,7 +69,7 @@ export default class UserDAO {
 
     public async createUsers(userObjs: Partial<User>[]): Promise<PublicUser[]> {
         await this.userDb.createMany({
-            data: userObjs.map(user => ({
+            data: userObjs.map(({ userSettings: _userSettings, ...user }) => ({
                 ...user,
                 email: user.email || "",
                 espnMember: user.espnMember ?? undefined,
