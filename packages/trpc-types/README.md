@@ -142,3 +142,58 @@ npm run publish:manual
 
 This runs `clean → build → npm publish` in one step. The build includes compiling
 server type declarations, copying them into `dist/server/`, and fixing path aliases.
+
+### Step 4 — Update the changelog below
+
+After publishing, add an entry to the Changelog section at the bottom of this README.
+This is rendered on the [GitHub Packages version page](https://github.com/akosasante/TradeMachineServer/pkgs/npm/trpc-types/versions)
+under "About this version", so it serves as the only version-level documentation.
+
+### Step 5 — Commit the version bump and changelog
+
+Commit `package.json`, `package-lock.json`, and this `README.md` to `main` so the
+repo reflects the published state.
+
+## Changelog
+
+### 1.11.0
+
+- Add `trades.listStaff` procedure types (paginated list of all trades, admin/commissioner only)
+- Includes all types from 1.10.3
+
+### 1.10.3
+
+- Add `trades.list` procedure types (team-scoped paginated trade list)
+- Add `email.sendMagicLink`, `email.sendViewToken` procedure types
+
+### 1.10.2
+
+- Add magic-link token flow types for trade review
+
+### 1.10.1
+
+- Bump after trade review page server changes (get/accept/decline/submit)
+
+### 1.10.0
+
+- Add `trades` router types: `get`, `accept`, `decline`, `submit` procedures
+
+### 1.9.0
+
+- Add `auth.logoutAllSessions` procedure type
+
+### 1.8.0
+
+- Refactor auth trpc route types after tracing extraction
+
+### 1.7.0
+
+- Full auth controller tRPC conversion types
+
+### 1.5.0
+
+- Package build and publish fixes, path resolution improvements
+
+### 1.0.1 – 1.4.0
+
+- Initial package setup, GitHub Package Registry configuration, scope changes
