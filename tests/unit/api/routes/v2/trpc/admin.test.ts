@@ -135,7 +135,9 @@ describe("[TRPC] Admin Router Unit Tests", () => {
             const ctx = createMockContext(UserRole.COMMISSIONER);
             const caller = createCaller(ctx);
 
-            await expect(caller.users.delete({ id: "00000000-0000-0000-0000-000000000002" })).rejects.toThrow(TRPCError);
+            await expect(caller.users.delete({ id: "00000000-0000-0000-0000-000000000002" })).rejects.toThrow(
+                TRPCError
+            );
         });
     });
 
@@ -267,9 +269,7 @@ describe("[TRPC] Admin Router Unit Tests", () => {
             const ctx = createMockContext(UserRole.COMMISSIONER);
             const caller = createCaller(ctx);
 
-            await expect(
-                caller.sync.enqueue({ jobType: SyncJobType.espn_team_sync })
-            ).rejects.toThrow(TRPCError);
+            await expect(caller.sync.enqueue({ jobType: SyncJobType.espn_team_sync })).rejects.toThrow(TRPCError);
         });
     });
 
@@ -300,7 +300,10 @@ describe("[TRPC] Admin Router Unit Tests", () => {
 
             const result = await caller.email.sendRegistration({ userId: "00000000-0000-0000-0000-000000000002" });
             expect(result.obanJobId).toBe("70");
-            expect(mockObanDao.enqueueRegistrationEmail).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000002", expect.anything());
+            expect(mockObanDao.enqueueRegistrationEmail).toHaveBeenCalledWith(
+                "00000000-0000-0000-0000-000000000002",
+                expect.anything()
+            );
         });
     });
 });
