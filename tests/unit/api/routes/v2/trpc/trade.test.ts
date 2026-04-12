@@ -291,6 +291,110 @@ describe("[TRPC] Trades Router Unit Tests", () => {
         });
     });
 
+    // ─── trades.listStaff ──────────────────────────────────────────────────────
+
+    describe("trades.listStaff", () => {
+        it("should return paginated trades for an ADMIN user", async () => {
+            const admin = makeUser({ id: uuid(), role: UserRole.ADMIN, isAdmin: () => true });
+            const trade = makeTrade();
+            mockUserDao.getUserById.mockResolvedValueOnce(admin);
+            mockPrisma.trade.findMany.mockResolvedValueOnce([trade] as any);
+            mockPrisma.trade.count.mockResolvedValueOnce(1);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(admin));
+            const result = await caller.listStaff({ page: 0, pageSize: 20 });
+
+            expect(result).toEqual({
+                trades: [trade],
+                total: 1,
+                page: 0,
+                pageSize: 20,
+            });
+        });
+
+        it("should return paginated trades for a COMMISSIONER user", async () => {
+            const commissioner = makeUser({ id: uuid(), role: UserRole.COMMISSIONER });
+            const trade = makeTrade();
+            mockUserDao.getUserById.mockResolvedValueOnce(commissioner);
+            mockPrisma.trade.findMany.mockResolvedValueOnce([trade] as any);
+            mockPrisma.trade.count.mockResolvedValueOnce(5);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(commissioner));
+            const result = await caller.listStaff({ page: 0, pageSize: 20 });
+
+            expect(result).toEqual({
+                trades: [trade],
+                total: 5,
+                page: 0,
+                pageSize: 20,
+            });
+        });
+
+        it("should throw FORBIDDEN for an OWNER user", async () => {
+            const owner = makeUser({ id: uuid(), role: UserRole.OWNER });
+            mockUserDao.getUserById.mockResolvedValueOnce(owner);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(owner));
+            await expect(caller.listStaff({ page: 0, pageSize: 20 })).rejects.toMatchObject({
+                code: "FORBIDDEN",
+            });
+        });
+
+        it("should not scope query to a team (league-wide)", async () => {
+            const admin = makeUser({ id: uuid(), role: UserRole.ADMIN, isAdmin: () => true, teamId: CREATOR_TEAM_ID });
+            mockUserDao.getUserById.mockResolvedValueOnce(admin);
+            mockPrisma.trade.findMany.mockResolvedValueOnce([] as any);
+            mockPrisma.trade.count.mockResolvedValueOnce(0);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(admin));
+            await caller.listStaff({ page: 0, pageSize: 10 });
+
+            const findManyCall = mockPrisma.trade.findMany.mock.calls[0][0] as unknown as {
+                where: Record<string, unknown>;
+            };
+            expect(findManyCall.where).not.toHaveProperty("tradeParticipants");
+        });
+
+        it("should forward statuses filter", async () => {
+            const admin = makeUser({ id: uuid(), role: UserRole.ADMIN, isAdmin: () => true });
+            mockUserDao.getUserById.mockResolvedValueOnce(admin);
+            mockPrisma.trade.findMany.mockResolvedValueOnce([] as any);
+            mockPrisma.trade.count.mockResolvedValueOnce(0);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(admin));
+            await caller.listStaff({
+                page: 0,
+                pageSize: 20,
+                statuses: [TradeStatus.REQUESTED, TradeStatus.ACCEPTED],
+            });
+
+            expect(mockPrisma.trade.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: expect.objectContaining({
+                        status: { in: [TradeStatus.REQUESTED, TradeStatus.ACCEPTED] },
+                    }),
+                })
+            );
+        });
+
+        it("should paginate correctly with page and pageSize", async () => {
+            const admin = makeUser({ id: uuid(), role: UserRole.ADMIN, isAdmin: () => true });
+            mockUserDao.getUserById.mockResolvedValueOnce(admin);
+            mockPrisma.trade.findMany.mockResolvedValueOnce([] as any);
+            mockPrisma.trade.count.mockResolvedValueOnce(0);
+
+            const caller = createCallerFactory(tradeRouter)(createMockContext(admin));
+            await caller.listStaff({ page: 3, pageSize: 15 });
+
+            expect(mockPrisma.trade.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    skip: 45,
+                    take: 15,
+                })
+            );
+        });
+    });
+
     // ─── trades.accept ─────────────────────────────────────────────────────────
 
     describe("trades.accept", () => {
