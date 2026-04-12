@@ -212,6 +212,84 @@ describe("[PRISMA] TradeDAO", () => {
         });
     });
 
+    describe("getTradesPaginated", () => {
+        const tradeA = makeMinimalTrade({ id: uuid() });
+        const tradeB = makeMinimalTrade({ id: uuid() });
+
+        it("should query without team constraint, order newest first, and paginate", async () => {
+            prisma.findMany.mockResolvedValueOnce([tradeA, tradeB] as any);
+            prisma.count.mockResolvedValueOnce(55);
+
+            const result = await dao.getTradesPaginated({ page: 2, pageSize: 10 });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: {},
+                    orderBy: { dateCreated: "desc" },
+                    skip: 20,
+                    take: 10,
+                })
+            );
+            expect(prisma.count).toHaveBeenCalledWith({ where: {} });
+            expect(result).toEqual({ trades: [tradeA, tradeB], total: 55 });
+        });
+
+        it("should not include tradeParticipants constraint in the where clause", async () => {
+            prisma.findMany.mockResolvedValueOnce([] as any);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.getTradesPaginated({ page: 0, pageSize: 20 });
+
+            const call = prisma.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
+            expect(call.where).not.toHaveProperty("tradeParticipants");
+        });
+
+        it("should filter by statuses when provided", async () => {
+            prisma.findMany.mockResolvedValueOnce([tradeA] as any);
+            prisma.count.mockResolvedValueOnce(1);
+
+            await dao.getTradesPaginated({
+                statuses: [TradeStatus.REQUESTED, TradeStatus.PENDING],
+                page: 0,
+                pageSize: 20,
+            });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: {
+                        status: { in: [TradeStatus.REQUESTED, TradeStatus.PENDING] },
+                    },
+                })
+            );
+        });
+
+        it("should omit status filter when statuses is empty", async () => {
+            prisma.findMany.mockResolvedValueOnce([] as any);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.getTradesPaginated({ statuses: [], page: 0, pageSize: 20 });
+
+            const call = prisma.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
+            expect(call.where).not.toHaveProperty("status");
+        });
+
+        it("should include tradeWithRelations in findMany", async () => {
+            prisma.findMany.mockResolvedValueOnce([] as any);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.getTradesPaginated({ page: 0, pageSize: 5 });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    include: expect.objectContaining({
+                        tradeParticipants: expect.any(Object),
+                        tradeItems: expect.any(Object),
+                    }),
+                })
+            );
+        });
+    });
+
     describe("updateSubmitted", () => {
         it("should set submittedAt, submittedById and status to SUBMITTED in one update", async () => {
             const submittedById = uuid();

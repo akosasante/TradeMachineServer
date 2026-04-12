@@ -91,14 +91,15 @@ export default class TradeDAO {
      * All trades across the league, newest first. Intended for staff (admin/commissioner) views.
      * Does not hydrate player/pick entities on trade items (list UI only).
      */
-    public async getTradesPaginated(
-        opts: { statuses?: TradeStatus[]; page: number; pageSize: number }
-    ): Promise<{ trades: PrismaTrade[]; total: number }> {
+    public async getTradesPaginated(opts: {
+        statuses?: TradeStatus[];
+        page: number;
+        pageSize: number;
+    }): Promise<{ trades: PrismaTrade[]; total: number }> {
         const { statuses, page, pageSize } = opts;
         const skip = page * pageSize;
 
-        const where: Prisma.TradeWhereInput =
-            statuses && statuses.length > 0 ? { status: { in: statuses } } : {};
+        const where: Prisma.TradeWhereInput = statuses && statuses.length > 0 ? { status: { in: statuses } } : {};
 
         const [trades, total] = await Promise.all([
             this.tradeDb.findMany({
