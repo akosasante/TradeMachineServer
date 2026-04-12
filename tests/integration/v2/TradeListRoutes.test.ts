@@ -143,7 +143,7 @@ describe("tRPC trades.listStaff", () => {
 
         const input = encodeTrpcHttpGetInput({ page: 0, pageSize: 20 });
         const { body } = await trpcV2LoggedIn(app, "staffowner@example.com", password, agent =>
-            agent.get(`/v2/trades.listStaff?input=${input}`).expect(200)
+            agent.get(`/v2/trades.listStaff?input=${input}`).expect(403)
         );
 
         expect(body.error).toMatchObject({
