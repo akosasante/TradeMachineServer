@@ -34,6 +34,9 @@ describe("MessengerController", () => {
         enqueueTradeRequestEmail: jest.fn().mockResolvedValue({ id: BigInt(1) }),
         enqueueTradeDeclinedEmail: jest.fn().mockResolvedValue({ id: BigInt(2) }),
         enqueueTradeSubmitEmail: jest.fn().mockResolvedValue({ id: BigInt(3) }),
+        enqueueTradeRequestDm: jest.fn().mockResolvedValue({ id: BigInt(4) }),
+        enqueueTradeDeclinedDm: jest.fn().mockResolvedValue({ id: BigInt(5) }),
+        enqueueTradeSubmitDm: jest.fn().mockResolvedValue({ id: BigInt(6) }),
     };
     const mockRes = {
         status: jest.fn().mockReturnThis(),
@@ -106,6 +109,9 @@ describe("MessengerController", () => {
         mockObanDao.enqueueTradeRequestEmail.mockResolvedValue({ id: BigInt(1) });
         mockObanDao.enqueueTradeDeclinedEmail.mockResolvedValue({ id: BigInt(2) });
         mockObanDao.enqueueTradeSubmitEmail.mockResolvedValue({ id: BigInt(3) });
+        mockObanDao.enqueueTradeRequestDm.mockResolvedValue({ id: BigInt(4) });
+        mockObanDao.enqueueTradeDeclinedDm.mockResolvedValue({ id: BigInt(5) });
+        mockObanDao.enqueueTradeSubmitDm.mockResolvedValue({ id: BigInt(6) });
     });
 
     describe("sendRequestTradeMessage/2", () => {
@@ -131,6 +137,7 @@ describe("MessengerController", () => {
                 expect.stringContaining("/trade/"), // V2 decline URL
                 expect.anything() // trace context (may be undefined or an object in test env)
             );
+            expect(mockObanDao.enqueueTradeRequestDm).not.toHaveBeenCalled();
             expect(mockEmailPublisher.queueTradeRequestMail).not.toHaveBeenCalled();
 
             expect(mockRes.status).toHaveBeenCalledWith(202);
@@ -184,6 +191,7 @@ describe("MessengerController", () => {
                 expect.anything(),
                 expect.anything()
             );
+            expect(mockObanDao.enqueueTradeDeclinedDm).not.toHaveBeenCalled();
             expect(mockEmailPublisher.queueTradeDeclinedMail).not.toHaveBeenCalled();
 
             expect(mockRes.status).toHaveBeenCalledTimes(1);
@@ -271,6 +279,7 @@ describe("MessengerController", () => {
                     expect.anything()
                 );
             }
+            expect(mockObanDao.enqueueTradeSubmitDm).not.toHaveBeenCalled();
             expect(mockEmailPublisher.queueTradeAcceptedMail).not.toHaveBeenCalled();
 
             expect(mockRes.status).toHaveBeenCalledTimes(1);
