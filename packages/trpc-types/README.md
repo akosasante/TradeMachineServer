@@ -156,6 +156,10 @@ repo reflects the published state.
 
 ## Changelog
 
+### 1.14.1
+
+- Refactor: admin router DAOs constructed inline (simpler Context interface)
+
 ### 1.14.0
 
 - Add `admin` router with full CRUD procedure types for users, teams, players, and draft picks

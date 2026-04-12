@@ -13,6 +13,12 @@ import {
 } from "@prisma/client";
 import { router, protectedProcedure, withTracing, Context } from "../utils/trpcHelpers";
 import { extractTraceContext } from "../../../../utils/tracing";
+import Users from "../../../../DAO/v2/UserDAO";
+import Teams from "../../../../DAO/v2/TeamDAO";
+import Players from "../../../../DAO/v2/PlayerDAO";
+import DraftPicks from "../../../../DAO/v2/DraftPickDAO";
+import ObanDAO from "../../../../DAO/v2/ObanDAO";
+import SyncJobExecutionDAO from "../../../../DAO/v2/SyncJobExecutionDAO";
 
 // ─── RBAC helpers ───────────────────────────────────────────────────────────
 
@@ -47,12 +53,12 @@ const syncJobTypeSchema = z.nativeEnum(SyncJobType);
 const usersRouter = router({
     list: adminProcedure.query(
         withTracing("trpc.admin.users.list", async (_input: undefined, ctx: Context) => {
-            return ctx.userDao.getAllUsersWithTeams();
+            return new Users(ctx.prisma.user).getAllUsersWithTeams();
         })
     ),
     getById: adminProcedure.input(z.object({ id: z.string().uuid() })).query(
         withTracing("trpc.admin.users.getById", async (input: { id: string }, ctx: Context) => {
-            return ctx.userDao.getUserById(input.id);
+            return new Users(ctx.prisma.user).getUserById(input.id);
         })
     ),
     create: adminProcedure
@@ -80,7 +86,8 @@ const usersRouter = router({
                     },
                     ctx: Context
                 ) => {
-                    const users = await ctx.userDao.createUsers([
+                    const userDao = new Users(ctx.prisma.user);
+                    const users = await userDao.createUsers([
                         {
                             email: input.email,
                             displayName: input.displayName,
@@ -125,13 +132,13 @@ const usersRouter = router({
                     ctx: Context
                 ) => {
                     const { id, ...data } = input;
-                    return ctx.userDao.updateUser(id, data);
+                    return new Users(ctx.prisma.user).updateUser(id, data);
                 }
             )
         ),
     delete: adminOnlyProcedure.input(z.object({ id: z.string().uuid() })).mutation(
         withTracing("trpc.admin.users.delete", async (input: { id: string }, ctx: Context) => {
-            return ctx.userDao.deleteUser(input.id);
+            return new Users(ctx.prisma.user).deleteUser(input.id);
         })
     ),
 });
@@ -141,12 +148,12 @@ const usersRouter = router({
 const teamsRouter = router({
     list: adminProcedure.query(
         withTracing("trpc.admin.teams.list", async (_input: undefined, ctx: Context) => {
-            return ctx.teamDao.getAllTeams();
+            return new Teams(ctx.prisma.team).getAllTeams();
         })
     ),
     getById: adminProcedure.input(z.object({ id: z.string().uuid() })).query(
         withTracing("trpc.admin.teams.getById", async (input: { id: string }, ctx: Context) => {
-            return ctx.teamDao.getTeamById(input.id);
+            return new Teams(ctx.prisma.team).getTeamById(input.id);
         })
     ),
     create: adminProcedure
@@ -161,7 +168,7 @@ const teamsRouter = router({
             withTracing(
                 "trpc.admin.teams.create",
                 async (input: { name: string; espnId?: number | null; status?: TeamStatus }, ctx: Context) => {
-                    return ctx.teamDao.createTeam(input);
+                    return new Teams(ctx.prisma.team).createTeam(input);
                 }
             )
         ),
@@ -182,13 +189,13 @@ const teamsRouter = router({
                     ctx: Context
                 ) => {
                     const { id, ...data } = input;
-                    return ctx.teamDao.updateTeam(id, data);
+                    return new Teams(ctx.prisma.team).updateTeam(id, data);
                 }
             )
         ),
     delete: adminOnlyProcedure.input(z.object({ id: z.string().uuid() })).mutation(
         withTracing("trpc.admin.teams.delete", async (input: { id: string }, ctx: Context) => {
-            return ctx.teamDao.deleteTeam(input.id);
+            return new Teams(ctx.prisma.team).deleteTeam(input.id);
         })
     ),
 });
@@ -217,13 +224,13 @@ const playersRouter = router({
                     },
                     ctx: Context
                 ) => {
-                    return ctx.playerDao.searchPlayers(input);
+                    return new Players(ctx.prisma.player).searchPlayers(input);
                 }
             )
         ),
     getById: adminProcedure.input(z.object({ id: z.string().uuid() })).query(
         withTracing("trpc.admin.players.getById", async (input: { id: string }, ctx: Context) => {
-            return ctx.playerDao.getPlayerById(input.id);
+            return new Players(ctx.prisma.player).getPlayerById(input.id);
         })
     ),
     create: adminOnlyProcedure
@@ -249,7 +256,7 @@ const playersRouter = router({
                     },
                     ctx: Context
                 ) => {
-                    return ctx.playerDao.createPlayer(input);
+                    return new Players(ctx.prisma.player).createPlayer(input);
                 }
             )
         ),
@@ -279,13 +286,13 @@ const playersRouter = router({
                     ctx: Context
                 ) => {
                     const { id, ...data } = input;
-                    return ctx.playerDao.updatePlayer(id, data);
+                    return new Players(ctx.prisma.player).updatePlayer(id, data);
                 }
             )
         ),
     delete: adminOnlyProcedure.input(z.object({ id: z.string().uuid() })).mutation(
         withTracing("trpc.admin.players.delete", async (input: { id: string }, ctx: Context) => {
-            return ctx.playerDao.deletePlayer(input.id);
+            return new Players(ctx.prisma.player).deletePlayer(input.id);
         })
     ),
 });
@@ -306,13 +313,13 @@ const picksRouter = router({
             withTracing(
                 "trpc.admin.picks.list",
                 async (input: { season?: number; type?: PickLeagueLevel } | undefined, ctx: Context) => {
-                    return ctx.draftPickDao.getAllPicks(input ?? undefined);
+                    return new DraftPicks(ctx.prisma.draftPick).getAllPicks(input ?? undefined);
                 }
             )
         ),
     getById: adminProcedure.input(z.object({ id: z.string().uuid() })).query(
         withTracing("trpc.admin.picks.getById", async (input: { id: string }, ctx: Context) => {
-            return ctx.draftPickDao.getPickById(input.id);
+            return new DraftPicks(ctx.prisma.draftPick).getPickById(input.id);
         })
     ),
     create: adminOnlyProcedure
@@ -340,7 +347,7 @@ const picksRouter = router({
                     },
                     ctx: Context
                 ) => {
-                    return ctx.draftPickDao.createPick(input);
+                    return new DraftPicks(ctx.prisma.draftPick).createPick(input);
                 }
             )
         ),
@@ -372,13 +379,13 @@ const picksRouter = router({
                     ctx: Context
                 ) => {
                     const { id, ...data } = input;
-                    return ctx.draftPickDao.updatePick(id, data);
+                    return new DraftPicks(ctx.prisma.draftPick).updatePick(id, data);
                 }
             )
         ),
     delete: adminOnlyProcedure.input(z.object({ id: z.string().uuid() })).mutation(
         withTracing("trpc.admin.picks.delete", async (input: { id: string }, ctx: Context) => {
-            return ctx.draftPickDao.deletePick(input.id);
+            return new DraftPicks(ctx.prisma.draftPick).deletePick(input.id);
         })
     ),
 });
@@ -388,20 +395,21 @@ const picksRouter = router({
 const syncRouter = router({
     enqueue: adminOnlyProcedure.input(z.object({ jobType: syncJobTypeSchema })).mutation(
         withTracing("trpc.admin.sync.enqueue", async (input: { jobType: SyncJobType }, ctx: Context) => {
+            const obanDao = new ObanDAO(ctx.prisma.obanJob);
             const traceCtx = extractTraceContext() ?? undefined;
             let job;
             switch (input.jobType) {
                 case SyncJobType.espn_team_sync:
-                    job = await ctx.obanDao.enqueueEspnTeamSync(traceCtx);
+                    job = await obanDao.enqueueEspnTeamSync(traceCtx);
                     break;
                 case SyncJobType.mlb_players_sync:
-                    job = await ctx.obanDao.enqueueEspnMlbPlayersSync(traceCtx);
+                    job = await obanDao.enqueueEspnMlbPlayersSync(traceCtx);
                     break;
                 case SyncJobType.minors_sync:
-                    job = await ctx.obanDao.enqueueMinorsSync(traceCtx);
+                    job = await obanDao.enqueueMinorsSync(traceCtx);
                     break;
                 case SyncJobType.draft_picks_sync:
-                    job = await ctx.obanDao.enqueueDraftPicksSync(traceCtx);
+                    job = await obanDao.enqueueDraftPicksSync(traceCtx);
                     break;
                 default: {
                     const _exhaustive: never = input.jobType;
@@ -416,9 +424,10 @@ const syncRouter = router({
     ),
     enqueueFullEspn: adminOnlyProcedure.mutation(
         withTracing("trpc.admin.sync.enqueueFullEspn", async (_input: undefined, ctx: Context) => {
+            const obanDao = new ObanDAO(ctx.prisma.obanJob);
             const traceCtx = extractTraceContext() ?? undefined;
-            const teamJob = await ctx.obanDao.enqueueEspnTeamSync(traceCtx);
-            const playerJob = await ctx.obanDao.enqueueEspnMlbPlayersSync(traceCtx);
+            const teamJob = await obanDao.enqueueEspnTeamSync(traceCtx);
+            const playerJob = await obanDao.enqueueEspnMlbPlayersSync(traceCtx);
             return {
                 teamSync: { obanJobId: teamJob.id.toString(), state: teamJob.state },
                 playerSync: { obanJobId: playerJob.id.toString(), state: playerJob.state },
@@ -427,13 +436,15 @@ const syncRouter = router({
     ),
     status: adminProcedure.input(z.object({ obanJobId: z.string() })).query(
         withTracing("trpc.admin.sync.status", async (input: { obanJobId: string }, ctx: Context) => {
+            const obanDao = new ObanDAO(ctx.prisma.obanJob);
+            const syncDao = new SyncJobExecutionDAO(ctx.prisma.syncJobExecution);
             const jobId = BigInt(input.obanJobId);
-            const obanJob = await ctx.obanDao.getJobById(jobId);
+            const obanJob = await obanDao.getJobById(jobId);
             if (!obanJob) {
                 throw new TRPCError({ code: "NOT_FOUND", message: "Oban job not found" });
             }
 
-            const execution = await ctx.syncJobExecutionDao.getByObanJobId(jobId);
+            const execution = await syncDao.getByObanJobId(jobId);
 
             const terminalStates: oban_job_state[] = [
                 oban_job_state.completed,
@@ -466,7 +477,9 @@ const syncRouter = router({
     ),
     latestStatus: adminProcedure.input(z.object({ jobType: z.nativeEnum(SyncJobType) })).query(
         withTracing("trpc.admin.sync.latestStatus", async (input: { jobType: SyncJobType }, ctx: Context) => {
-            const execution = await ctx.syncJobExecutionDao.getLatestByJobType(input.jobType);
+            const execution = await new SyncJobExecutionDAO(ctx.prisma.syncJobExecution).getLatestByJobType(
+                input.jobType
+            );
             return execution
                 ? {
                       id: execution.id,
@@ -488,16 +501,19 @@ const syncRouter = router({
 const emailRouter = router({
     sendRegistration: adminProcedure.input(z.object({ userId: z.string().uuid() })).mutation(
         withTracing("trpc.admin.email.sendRegistration", async (input: { userId: string }, ctx: Context) => {
+            const obanDao = new ObanDAO(ctx.prisma.obanJob);
             const traceCtx = extractTraceContext() ?? undefined;
-            const job = await ctx.obanDao.enqueueRegistrationEmail(input.userId, traceCtx);
+            const job = await obanDao.enqueueRegistrationEmail(input.userId, traceCtx);
             return { obanJobId: job.id.toString() };
         })
     ),
     sendPasswordReset: adminProcedure.input(z.object({ userId: z.string().uuid() })).mutation(
         withTracing("trpc.admin.email.sendPasswordReset", async (input: { userId: string }, ctx: Context) => {
+            const userDao = new Users(ctx.prisma.user);
+            const obanDao = new ObanDAO(ctx.prisma.obanJob);
             const traceCtx = extractTraceContext() ?? undefined;
-            await ctx.userDao.setPasswordExpires(input.userId);
-            const job = await ctx.obanDao.enqueuePasswordResetEmail(input.userId, traceCtx);
+            await userDao.setPasswordExpires(input.userId);
+            const job = await obanDao.enqueuePasswordResetEmail(input.userId, traceCtx);
             return { obanJobId: job.id.toString() };
         })
     ),

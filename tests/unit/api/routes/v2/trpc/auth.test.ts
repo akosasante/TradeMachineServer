@@ -82,14 +82,13 @@ describe("[TRPC] Auth Router Unit Tests", () => {
     const mockReq = mockDeep<Request>();
     const mockRes = mockDeep<Response>();
 
-    const createMockContext = (session?: any): Context =>
-        ({
-            req: mockReq as unknown as Request,
-            res: mockRes as unknown as Response,
-            session,
-            prisma: mockPrisma as unknown as ExtendedPrismaClient,
-            userDao: mockUserDao as unknown as UserDAO,
-        } as unknown as Context);
+    const createMockContext = (session?: any): Context => ({
+        req: mockReq as unknown as Request,
+        res: mockRes as unknown as Response,
+        session,
+        prisma: mockPrisma as unknown as ExtendedPrismaClient,
+        userDao: mockUserDao as unknown as UserDAO,
+    });
 
     beforeAll(() => {
         logger.debug("~~~~~~TRPC AUTH ROUTER UNIT TESTS BEGIN~~~~~~");
@@ -816,13 +815,13 @@ describe("[TRPC] Auth Router Unit Tests", () => {
     });
 
     describe("signup.sendEmail", () => {
-        const mockContext = {
+        const mockContext: Context = {
             req: mockReq as unknown as Request,
             res: mockRes as unknown as Response,
             session: undefined,
             prisma: mockPrisma as unknown as ExtendedPrismaClient,
             userDao: mockUserDao as unknown as UserDAO,
-        } as unknown as Context;
+        };
 
         const caller = createCallerFactory(authRouter)(mockContext);
 
