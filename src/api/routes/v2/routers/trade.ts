@@ -324,6 +324,49 @@ export const tradeRouter = router({
         ),
 
     /**
+     * Paginated list of ALL trades (not team-scoped). Restricted to admin and commissioner roles.
+     * Trade items include sender/recipient teams but are not hydrated with player/pick entities.
+     */
+    listStaff: protectedProcedure
+        .input(
+            z.object({
+                statuses: z.array(z.nativeEnum(TradeStatus)).optional(),
+                page: z.number().int().min(0).default(0),
+                pageSize: z.number().int().min(1).max(50).default(20),
+            })
+        )
+        .query(
+            withTracing("trpc.trades.listStaff", async (input, ctx, _span) => {
+                const user = (ctx as typeof ctx & { user: PublicUser }).user;
+
+                if (user.role !== UserRole.ADMIN && user.role !== UserRole.COMMISSIONER) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "Only admins and commissioners can list all trades",
+                    });
+                }
+
+                addSpanAttributes({ "trades.listStaff.userId": user.id ?? "unknown" });
+                addSpanEvent("trades.listStaff.start");
+
+                const dao = new TradeDAO(ctx.prisma.trade);
+                const { trades, total } = await dao.getTradesPaginated({
+                    statuses: input.statuses,
+                    page: input.page,
+                    pageSize: input.pageSize,
+                });
+
+                addSpanEvent("trades.listStaff.success");
+                return {
+                    trades,
+                    total,
+                    page: input.page,
+                    pageSize: input.pageSize,
+                };
+            })
+        ),
+
+    /**
      * Accept a trade on behalf of the current user (or actingAsUserId if admin).
      * Stamps {by, at} into acceptedByDetails and appends the user ID to acceptedBy.
      * If all recipient teams have now accepted, transitions status to ACCEPTED.
