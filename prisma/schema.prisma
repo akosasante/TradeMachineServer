@@ -296,6 +296,8 @@ model User {
   team                   Team?      @relation(fields: [teamId], references: [id], onUpdate: NoAction, map: "FK_77f62757967de516e50ff134e35")
   // [1-n] settings modified by this user
   modifiedSettings       Settings[]
+  // JSONB blob for per-user preferences (notification toggles, future settings). See docs/adr/0001.
+  userSettings           Json?     @default("{}") @db.JsonB
 
   @@map("user")
 }

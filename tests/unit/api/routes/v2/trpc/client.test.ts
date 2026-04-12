@@ -127,7 +127,8 @@ describe("[TRPC] Client Router Unit Tests", () => {
         csvName: null,
         espnMember: null,
         teamId: null,
-        isAdmin: () => true, // Computed property that returns a function
+        userSettings: {},
+        isAdmin: () => true,
     };
 
     beforeAll(() => {
