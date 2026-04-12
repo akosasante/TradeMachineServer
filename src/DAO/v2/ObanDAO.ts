@@ -110,10 +110,14 @@ export interface WebhookStatusJobData {
     trace_context?: TraceContext;
 }
 
+export interface SyncJobData {
+    trace_context?: TraceContext;
+}
+
 export interface CreateObanJobInput {
     queue: string;
     worker: string;
-    args: EmailJobData | DiscordJobData | WebhookStatusJobData;
+    args: EmailJobData | DiscordJobData | WebhookStatusJobData | SyncJobData;
     scheduled_at?: Date;
     priority?: number;
     max_attempts?: number;
@@ -380,6 +384,44 @@ export default class ObanDAO {
                 scheduled_at: "asc",
             },
             take: limit,
+        });
+    }
+
+    // --- Sync job enqueue helpers (matching Elixir worker module + queue names) ---
+
+    public async enqueueEspnTeamSync(traceContext?: TraceContext): Promise<ObanJob> {
+        return this.enqueueJob({
+            queue: "espn_sync",
+            worker: "TradeMachine.Jobs.EspnTeamSync",
+            args: { trace_context: traceContext } as SyncJobData,
+            max_attempts: 3,
+        });
+    }
+
+    public async enqueueEspnMlbPlayersSync(traceContext?: TraceContext): Promise<ObanJob> {
+        return this.enqueueJob({
+            queue: "espn_sync",
+            worker: "TradeMachine.Jobs.EspnMlbPlayersSync",
+            args: { trace_context: traceContext } as SyncJobData,
+            max_attempts: 3,
+        });
+    }
+
+    public async enqueueMinorsSync(traceContext?: TraceContext): Promise<ObanJob> {
+        return this.enqueueJob({
+            queue: "minors_sync",
+            worker: "TradeMachine.Jobs.MinorsSync",
+            args: { trace_context: traceContext } as SyncJobData,
+            max_attempts: 3,
+        });
+    }
+
+    public async enqueueDraftPicksSync(traceContext?: TraceContext): Promise<ObanJob> {
+        return this.enqueueJob({
+            queue: "draft_sync",
+            worker: "TradeMachine.Jobs.DraftPicksSync",
+            args: { trace_context: traceContext } as SyncJobData,
+            max_attempts: 3,
         });
     }
 }
