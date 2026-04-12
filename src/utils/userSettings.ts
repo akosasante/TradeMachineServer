@@ -90,6 +90,12 @@ export interface NotificationPatchInput {
     tradeActionEmail?: boolean;
 }
 
+export interface UserSettingsBlob extends Record<string, unknown> {
+    schemaVersion: number;
+    settingsUpdatedAt: string;
+    notifications: Record<string, unknown> & ResolvedNotifications;
+}
+
 /**
  * Merge a partial notification update into the existing raw settings blob,
  * normalize, validate, stamp `settingsUpdatedAt`, and return the full blob
@@ -98,7 +104,7 @@ export interface NotificationPatchInput {
 export function mergeAndValidateNotificationUpdate(
     existingRaw: unknown,
     patch: NotificationPatchInput
-): Record<string, unknown> {
+): UserSettingsBlob {
     const existing = normalizeUserSettings(existingRaw);
 
     const merged: ResolvedNotifications = {
