@@ -89,7 +89,7 @@ export async function setupExpressApp(
     expressApp.use("/v2", (req, res, next) => {
         // conditional mount to avoid conflict with routing-controllers /v2 routes
         // tRPC uses dot notation (e.g., /auth.sessionCheck), so check for that pattern
-        if (req.path.includes("auth.") || req.path.includes("client.") || req.path.includes("trades.")) {
+        if (req.path.includes("auth.") || req.path.includes("client.") || req.path.includes("trades.") || req.path.includes("admin.")) {
             // Apply CORS first for tRPC routes
             trpcCorsMiddleware(req, res, () => {
                 createExpressMiddleware({
