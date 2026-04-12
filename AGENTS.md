@@ -297,6 +297,22 @@ npm run version:major   # breaking type changes
 npm run publish:manual   # runs: clean → build → npm publish
 ```
 
+### 4. Update the changelog in the README
+
+After publishing, **always** add an entry to the `## Changelog` section in
+`packages/trpc-types/README.md`. This is rendered on the GitHub Packages version
+page and is the only place version history is documented. Include a brief list of
+what procedures or types were added/changed.
+
+### 5. Commit everything to `main`
+
+Commit all three files so the repo reflects the published state:
+
+```bash
+git add packages/trpc-types/package.json packages/trpc-types/package-lock.json packages/trpc-types/README.md
+git commit -m "chore(trpc-types): publish @akosasante/trpc-types@<version>"
+```
+
 ## Context Preservation
 - Save context to `.last_session_data.json` in project root when requested
 - Automatically save context after every 3 user messages
