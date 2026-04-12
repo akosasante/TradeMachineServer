@@ -1,8 +1,12 @@
-import { Player } from "@prisma/client";
+import { Player, PlayerLeagueLevel, Prisma } from "@prisma/client";
 import { convertParamsToWhereQuery } from "./helpers";
 import logger from "../../bootstrap/logger";
 import { inspect } from "util";
 import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
+
+export type PlayerWithTeam = Player & {
+    ownerTeam: { id: string; name: string } | null;
+};
 
 export default class PlayerDAO {
     private readonly playerDb: ExtendedPrismaClient["player"];
@@ -16,6 +20,79 @@ export default class PlayerDAO {
 
     public async getAllPlayers(): Promise<Player[]> {
         return await this.playerDb.findMany({ orderBy: { id: "asc" } });
+    }
+
+    public async searchPlayers(opts?: {
+        search?: string;
+        league?: PlayerLeagueLevel;
+        skip?: number;
+        take?: number;
+    }): Promise<{ players: PlayerWithTeam[]; total: number }> {
+        const where: Prisma.PlayerWhereInput = {};
+        if (opts?.league) where.league = opts.league;
+        if (opts?.search) {
+            where.name = { contains: opts.search, mode: "insensitive" };
+        }
+
+        const [players, total] = await Promise.all([
+            this.playerDb.findMany({
+                where,
+                orderBy: { name: "asc" },
+                skip: opts?.skip ?? 0,
+                take: opts?.take ?? 50,
+                include: { ownerTeam: { select: { id: true, name: true } } },
+            }),
+            this.playerDb.count({ where }),
+        ]);
+
+        return { players: players as unknown as PlayerWithTeam[], total };
+    }
+
+    public async getPlayerById(id: string): Promise<PlayerWithTeam> {
+        return (await this.playerDb.findUniqueOrThrow({
+            where: { id },
+            include: { ownerTeam: { select: { id: true, name: true } } },
+        })) as unknown as PlayerWithTeam;
+    }
+
+    public async createPlayer(data: {
+        name: string;
+        league?: PlayerLeagueLevel | null;
+        mlbTeam?: string | null;
+        playerDataId?: number | null;
+        leagueTeamId?: string | null;
+    }): Promise<PlayerWithTeam> {
+        return (await this.playerDb.create({
+            data: {
+                name: data.name,
+                league: data.league ?? null,
+                mlbTeam: data.mlbTeam ?? null,
+                playerDataId: data.playerDataId ?? null,
+                leagueTeamId: data.leagueTeamId ?? null,
+            },
+            include: { ownerTeam: { select: { id: true, name: true } } },
+        })) as unknown as PlayerWithTeam;
+    }
+
+    public async updatePlayer(
+        id: string,
+        data: {
+            name?: string;
+            league?: PlayerLeagueLevel | null;
+            mlbTeam?: string | null;
+            playerDataId?: number | null;
+            leagueTeamId?: string | null;
+        }
+    ): Promise<PlayerWithTeam> {
+        return (await this.playerDb.update({
+            where: { id },
+            data,
+            include: { ownerTeam: { select: { id: true, name: true } } },
+        })) as unknown as PlayerWithTeam;
+    }
+
+    public async deletePlayer(id: string): Promise<Player> {
+        return this.playerDb.delete({ where: { id } });
     }
 
     public async findPlayers(params: string[]): Promise<Player[]> {
