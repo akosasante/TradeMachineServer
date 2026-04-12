@@ -134,7 +134,7 @@ describe("[TRPC] Trades Router Unit Tests", () => {
     function createMockContext(
         user: PublicUser,
         sessionData?: Partial<Session & { user?: string }>
-    ): Context & { user: PublicUser } {
+    ): Context {
         const session: Session & { user?: string } = {
             id: "test-session-id",
             cookie: {
@@ -172,8 +172,7 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             session,
             prisma: mockPrisma as unknown as ExtendedPrismaClient,
             userDao: mockUserDao as unknown as UserDAO,
-            user,
-        } as Context & { user: PublicUser };
+        } as Context;
     }
 
     beforeAll(() => {

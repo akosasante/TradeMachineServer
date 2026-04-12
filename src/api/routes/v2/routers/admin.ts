@@ -69,6 +69,7 @@ const usersRouter = router({
                 role: z.nativeEnum(UserRole).optional(),
                 status: z.nativeEnum(UserStatus).optional(),
                 csvName: z.string().optional(),
+                discordUserId: z.string().optional(),
                 teamId: z.string().uuid().optional(),
             })
         )
@@ -82,6 +83,7 @@ const usersRouter = router({
                         role?: UserRole;
                         status?: UserStatus;
                         csvName?: string;
+                        discordUserId?: string;
                         teamId?: string;
                     },
                     ctx: Context
@@ -94,6 +96,7 @@ const usersRouter = router({
                             role: input.role ?? UserRole.OWNER,
                             status: input.status ?? UserStatus.ACTIVE,
                             csvName: input.csvName,
+                            discordUserId: input.discordUserId,
                             teamId: input.teamId,
                         },
                     ]);
@@ -113,6 +116,7 @@ const usersRouter = router({
                 role: z.nativeEnum(UserRole).optional(),
                 status: z.nativeEnum(UserStatus).optional(),
                 csvName: z.string().optional(),
+                discordUserId: z.string().nullable().optional(),
                 teamId: z.string().uuid().nullable().optional(),
             })
         )
@@ -127,6 +131,7 @@ const usersRouter = router({
                         role?: UserRole;
                         status?: UserStatus;
                         csvName?: string;
+                        discordUserId?: string | null;
                         teamId?: string | null;
                     },
                     ctx: Context

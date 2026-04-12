@@ -105,7 +105,7 @@ describe("[TRPC] Client Router Unit Tests", () => {
         return {
             req,
             res: mockRes as unknown as Response,
-            session: sessionData ? session : undefined,
+            session: sessionData ? session : undefined, // Only set ctx.session if user provided session data (for auth)
             prisma: mockPrisma as unknown as ExtendedPrismaClient,
             userDao: mockUserDao as unknown as UserDAO,
         };
