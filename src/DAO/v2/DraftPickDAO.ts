@@ -21,10 +21,7 @@ export default class DraftPickDAO {
         this.pickDb = pickDb;
     }
 
-    public async getAllPicks(filters?: {
-        season?: number;
-        type?: PickLeagueLevel;
-    }): Promise<DraftPickWithTeams[]> {
+    public async getAllPicks(filters?: { season?: number; type?: PickLeagueLevel }): Promise<DraftPickWithTeams[]> {
         const where: Prisma.DraftPickWhereInput = {};
         if (filters?.season !== undefined) where.season = filters.season;
         if (filters?.type !== undefined) where.type = filters.type;
