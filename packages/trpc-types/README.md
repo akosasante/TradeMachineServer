@@ -156,6 +156,11 @@ repo reflects the published state.
 
 ## Changelog
 
+### 1.15.0
+
+- Add `notifications` router with `get` query and `update` mutation procedure types
+- Used by the V3 client notification settings page to read/write user notification preferences
+
 ### 1.14.1
 
 - Refactor: admin router DAOs constructed inline (simpler Context interface)

@@ -315,7 +315,7 @@ describe("tRPC trades.accept / trades.decline notification gating", () => {
 
                 expect(match.length).toBeGreaterThanOrEqual(1);
                 const dmArgs = match[0].args as Record<string, unknown>;
-                expect(dmArgs.notification_settings_url).toBe("https://v3-test.example.com/settings/notifications");
+                expect(dmArgs.notification_settings_url).toBe("https://v3-test.example.com/dashboard");
             } finally {
                 if (savedV3Base === undefined) delete process.env.V3_BASE_URL;
                 else process.env.V3_BASE_URL = savedV3Base;

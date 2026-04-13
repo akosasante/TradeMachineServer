@@ -93,7 +93,8 @@ export async function setupExpressApp(
             req.path.includes("auth.") ||
             req.path.includes("client.") ||
             req.path.includes("trades.") ||
-            req.path.includes("admin.")
+            req.path.includes("admin.") ||
+            req.path.includes("notifications.")
         ) {
             // Apply CORS first for tRPC routes
             trpcCorsMiddleware(req, res, () => {
