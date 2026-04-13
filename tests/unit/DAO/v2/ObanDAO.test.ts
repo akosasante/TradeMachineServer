@@ -385,13 +385,13 @@ describe("ObanDAO Unit Tests", () => {
                 "https://app/trades/t1?action=accept&token=a",
                 "https://app/trades/t1?action=decline&token=b",
                 undefined,
-                "https://v3.example/settings/notifications"
+                "https://v3.example/dashboard"
             );
 
             expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
                 data: expect.objectContaining({
                     args: expect.objectContaining({
-                        notification_settings_url: "https://v3.example/settings/notifications",
+                        notification_settings_url: "https://v3.example/dashboard",
                     }),
                 }),
             });
@@ -431,13 +431,13 @@ describe("ObanDAO Unit Tests", () => {
                 "u2",
                 "https://app/trades/t2?action=submit&token=c",
                 undefined,
-                "https://v3.example/settings/notifications"
+                "https://v3.example/dashboard"
             );
 
             expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
                 data: expect.objectContaining({
                     args: expect.objectContaining({
-                        notification_settings_url: "https://v3.example/settings/notifications",
+                        notification_settings_url: "https://v3.example/dashboard",
                     }),
                 }),
             });
@@ -479,13 +479,13 @@ describe("ObanDAO Unit Tests", () => {
                 true,
                 "https://app/trades/t3?token=v",
                 undefined,
-                "https://v3.example/settings/notifications"
+                "https://v3.example/dashboard"
             );
 
             expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
                 data: expect.objectContaining({
                     args: expect.objectContaining({
-                        notification_settings_url: "https://v3.example/settings/notifications",
+                        notification_settings_url: "https://v3.example/dashboard",
                     }),
                 }),
             });

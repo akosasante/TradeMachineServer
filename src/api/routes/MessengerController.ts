@@ -62,7 +62,7 @@ export default class MessengerController {
         const traceContext = extractTraceContext() || undefined;
         const baseDomain = process.env.BASE_URL;
         const v3BaseDomain = process.env.V3_BASE_URL;
-        const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/settings/notifications` : undefined;
+        const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/dashboard` : undefined;
 
         const recipientOwners = trade.recipients.flatMap(recipTeam => recipTeam.owners ?? []);
         const ownerPrefs = prisma
@@ -143,7 +143,7 @@ export default class MessengerController {
 
             const traceContext = extractTraceContext() || undefined;
             const v3BaseDomain = process.env.V3_BASE_URL;
-            const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/settings/notifications` : undefined;
+            const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/dashboard` : undefined;
 
             const creatorOwnerIds = new Set(trade.creator?.owners?.map(o => o.id).filter(Boolean));
             const eligibleOwners =
@@ -231,7 +231,7 @@ export default class MessengerController {
             const traceContext = extractTraceContext() || undefined;
             const baseDomain = process.env.BASE_URL;
             const v3BaseDomain = process.env.V3_BASE_URL;
-            const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/settings/notifications` : undefined;
+            const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/dashboard` : undefined;
 
             const creatorOwners = trade.creator?.owners ?? [];
             const ownerPrefs = prisma
