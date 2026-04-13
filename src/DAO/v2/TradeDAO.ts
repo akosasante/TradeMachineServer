@@ -1,9 +1,29 @@
-import { Prisma, TradeStatus } from "@prisma/client";
+import { Prisma, TradeItemType, TradeStatus } from "@prisma/client";
 import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
 export interface AcceptedByEntry {
     by: string;
     at: string;
+}
+
+export type DateField = "CREATED" | "SUBMITTED" | "ACCEPTED" | "DECLINED";
+
+export interface PickFilter {
+    pickType: string;
+    season: number;
+    round: number;
+    originalOwnerId: string;
+}
+
+export interface StaffTradeFilters {
+    statuses?: TradeStatus[];
+    page: number;
+    pageSize: number;
+    dateFrom?: string;
+    dateTo?: string;
+    dateField?: DateField;
+    playerId?: string;
+    pick?: PickFilter;
 }
 
 /** The Prisma include shape used consistently across all DAO methods */
@@ -89,17 +109,30 @@ export default class TradeDAO {
 
     /**
      * All trades across the league, newest first. Intended for staff (admin/commissioner) views.
+     * Supports filtering by status, date range, player involvement, and draft pick involvement.
      * Does not hydrate player/pick entities on trade items (list UI only).
      */
-    public async getTradesPaginated(opts: {
-        statuses?: TradeStatus[];
-        page: number;
-        pageSize: number;
-    }): Promise<{ trades: PrismaTrade[]; total: number }> {
-        const { statuses, page, pageSize } = opts;
+    public async getTradesPaginated(
+        opts: StaffTradeFilters,
+        pickDb?: ExtendedPrismaClient["draftPick"]
+    ): Promise<{ trades: PrismaTrade[]; total: number }> {
+        const { statuses, page, pageSize, dateFrom, dateTo, dateField, playerId, pick } = opts;
         const skip = page * pageSize;
 
-        const where: Prisma.TradeWhereInput = statuses && statuses.length > 0 ? { status: { in: statuses } } : {};
+        const where = buildStaffTradeWhere({ statuses, dateFrom, dateTo, dateField, playerId });
+
+        if (pick && pickDb) {
+            const resolvedPickId = await resolvePickId(pickDb, pick);
+            if (!resolvedPickId) return { trades: [], total: 0 };
+            where.tradeItems = {
+                ...((where.tradeItems as Prisma.TradeItemListRelationFilter) ?? {}),
+                some: {
+                    ...((where.tradeItems as Prisma.TradeItemListRelationFilter)?.some ?? {}),
+                    tradeItemType: TradeItemType.PICK,
+                    tradeItemId: resolvedPickId,
+                },
+            };
+        }
 
         const [trades, total] = await Promise.all([
             this.tradeDb.findMany({
@@ -167,4 +200,59 @@ export default class TradeDAO {
         });
         return this.getTradeById(id);
     }
+}
+
+// ─── Extracted helpers (exported for unit testing) ────────────────────────────
+
+const DATE_FIELD_MAP: Record<DateField, keyof Prisma.TradeWhereInput> = {
+    CREATED: "dateCreated",
+    SUBMITTED: "submittedAt",
+    ACCEPTED: "acceptedOnDate",
+    DECLINED: "declinedAt",
+};
+
+export function buildStaffTradeWhere(opts: {
+    statuses?: TradeStatus[];
+    dateFrom?: string;
+    dateTo?: string;
+    dateField?: DateField;
+    playerId?: string;
+}): Prisma.TradeWhereInput {
+    const where: Prisma.TradeWhereInput = {};
+
+    if (opts.statuses && opts.statuses.length > 0) {
+        where.status = { in: opts.statuses };
+    }
+
+    if (opts.dateFrom || opts.dateTo) {
+        const column = DATE_FIELD_MAP[opts.dateField ?? "CREATED"];
+        const range: Prisma.DateTimeNullableFilter = {};
+        if (opts.dateFrom) range.gte = new Date(opts.dateFrom);
+        if (opts.dateTo) range.lte = new Date(opts.dateTo);
+        (where as Record<string, unknown>)[column as string] = range;
+    }
+
+    if (opts.playerId) {
+        where.tradeItems = {
+            some: { tradeItemType: TradeItemType.PLAYER, tradeItemId: opts.playerId },
+        };
+    }
+
+    return where;
+}
+
+export async function resolvePickId(
+    pickDb: ExtendedPrismaClient["draftPick"],
+    pick: PickFilter
+): Promise<string | null> {
+    const found = await pickDb.findFirst({
+        where: {
+            type: pick.pickType as Prisma.EnumPickLeagueLevelFilter["equals"],
+            season: pick.season,
+            round: new Prisma.Decimal(pick.round),
+            originalOwnerId: pick.originalOwnerId,
+        },
+        select: { id: true },
+    });
+    return found?.id ?? null;
 }
