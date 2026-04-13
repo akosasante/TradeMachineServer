@@ -3,6 +3,7 @@ import { authRouter } from "./routers/auth";
 import { clientRouter } from "./routers/client";
 import { tradeRouter } from "./routers/trade";
 import { adminRouter } from "./routers/admin";
+import { notificationsRouter } from "./routers/notifications";
 
 // Main tRPC router - this is what gets exported to the types package
 export const appRouter = router({
@@ -10,6 +11,7 @@ export const appRouter = router({
     client: clientRouter,
     trades: tradeRouter,
     admin: adminRouter,
+    notifications: notificationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

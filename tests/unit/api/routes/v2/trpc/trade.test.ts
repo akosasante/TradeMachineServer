@@ -1073,7 +1073,7 @@ describe("[TRPC] Trades Router Unit Tests", () => {
             expect(dmJobs).toHaveLength(1);
             expect((dmJobs[0] as any)[0].data.args).toHaveProperty(
                 "notification_settings_url",
-                "https://v3.example/settings/notifications"
+                "https://v3.example/dashboard"
             );
         });
     });

@@ -129,7 +129,7 @@ async function enqueueAcceptanceNotifications(
 ): Promise<void> {
     const obanDao = new ObanDAO(prisma.obanJob);
     const v3BaseDomain = process.env.V3_BASE_URL;
-    const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/settings/notifications` : undefined;
+    const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/dashboard` : undefined;
 
     const creatorOwners = trade.tradeParticipants
         .filter(p => p.participantType === TradeParticipantType.CREATOR)
@@ -177,7 +177,7 @@ async function enqueueDeclineNotifications(
 ): Promise<void> {
     const obanDao = new ObanDAO(prisma.obanJob);
     const v3BaseDomain = process.env.V3_BASE_URL;
-    const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/settings/notifications` : undefined;
+    const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/dashboard` : undefined;
 
     const creatorOwnerIdSet = new Set(
         trade.tradeParticipants
