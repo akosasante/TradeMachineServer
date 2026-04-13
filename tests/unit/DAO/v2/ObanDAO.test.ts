@@ -373,6 +373,29 @@ describe("ObanDAO Unit Tests", () => {
                 }),
             });
         });
+
+        it("should include notification_settings_url when provided", async () => {
+            process.env.APP_ENV = "staging";
+            const mockJob = { id: BigInt(33), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeRequestDm(
+                "t1",
+                "u1",
+                "https://app/trades/t1?action=accept&token=a",
+                "https://app/trades/t1?action=decline&token=b",
+                undefined,
+                "https://v3.example/settings/notifications"
+            );
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    args: expect.objectContaining({
+                        notification_settings_url: "https://v3.example/settings/notifications",
+                    }),
+                }),
+            });
+        });
     });
 
     describe("enqueueTradeSubmitDm", () => {
@@ -393,6 +416,28 @@ describe("ObanDAO Unit Tests", () => {
                         trade_id: "t2",
                         recipient_user_id: "u2",
                         submit_url: "https://app/trades/t2?action=submit&token=c",
+                    }),
+                }),
+            });
+        });
+
+        it("should include notification_settings_url when provided", async () => {
+            process.env.APP_ENV = "production";
+            const mockJob = { id: BigInt(34), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeSubmitDm(
+                "t2",
+                "u2",
+                "https://app/trades/t2?action=submit&token=c",
+                undefined,
+                "https://v3.example/settings/notifications"
+            );
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    args: expect.objectContaining({
+                        notification_settings_url: "https://v3.example/settings/notifications",
                     }),
                 }),
             });
@@ -418,6 +463,29 @@ describe("ObanDAO Unit Tests", () => {
                         recipient_user_id: "u3",
                         is_creator: true,
                         decline_url: "https://app/trades/t3?token=v",
+                    }),
+                }),
+            });
+        });
+
+        it("should include notification_settings_url when provided", async () => {
+            process.env.APP_ENV = "development";
+            const mockJob = { id: BigInt(35), state: oban_job_state.available };
+            mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
+
+            await obanDao.enqueueTradeDeclinedDm(
+                "t3",
+                "u3",
+                true,
+                "https://app/trades/t3?token=v",
+                undefined,
+                "https://v3.example/settings/notifications"
+            );
+
+            expect(mockPrismaObanJob.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    args: expect.objectContaining({
+                        notification_settings_url: "https://v3.example/settings/notifications",
                     }),
                 }),
             });
