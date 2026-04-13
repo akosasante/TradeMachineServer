@@ -209,6 +209,15 @@ OTEL_LOG_LEVEL=INFO
 - **Testing**: Jest for unit/integration tests, keep tests in corresponding folders
 - **Documentation**: JSDoc comments for functions and classes
 
+## Adding New tRPC Routers
+
+When adding a new tRPC sub-router (e.g. `notifications`, `settings`, etc.), there are **two** places you must register it:
+
+1. **`src/api/routes/v2/router.ts`** — import and add to the `appRouter` object.
+2. **`src/bootstrap/app.ts`** — add the new router's dot-prefix to the path allowlist in the `/v2` Express middleware. This is the conditional `if` block that checks `req.path.includes("routerName.")`. If you skip this step, the new tRPC route will 404 because the request falls through to `routing-controllers` instead of the tRPC middleware.
+
+Forgetting step 2 is a common mistake — the server starts fine and existing routes work, but the new router's endpoints all return 404.
+
 ## Code Architecture
 - **API Routes**: Use decorator-based routing with `routing-controllers` library
   - Controllers in `/src/api/routes/` with JSON response format
