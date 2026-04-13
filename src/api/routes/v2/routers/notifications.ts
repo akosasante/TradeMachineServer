@@ -57,14 +57,10 @@ export const notificationsRouter = router({
 
             let mergedBlob: Prisma.InputJsonValue;
             try {
-                mergedBlob = mergeAndValidateNotificationUpdate(
-                    dbUser.userSettings, input
-                ) as Prisma.InputJsonValue;
+                mergedBlob = mergeAndValidateNotificationUpdate(dbUser.userSettings, input) as Prisma.InputJsonValue;
             } catch (err) {
                 if (err instanceof NotificationSettingsValidationError) {
-                    logger.warn(
-                        `[notifications.update] Rejected: both channels off for userId=${userId}`
-                    );
+                    logger.warn(`[notifications.update] Rejected: both channels off for userId=${userId}`);
                     throw new TRPCError({
                         code: "BAD_REQUEST",
                         message: err.message,
