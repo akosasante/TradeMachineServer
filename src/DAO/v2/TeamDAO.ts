@@ -2,7 +2,7 @@ import { Prisma, TeamStatus } from "@prisma/client";
 import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
 const ownersSelect = {
-    select: { id: true, displayName: true, email: true, role: true, status: true },
+    select: { id: true, displayName: true, email: true, role: true, status: true, csvName: true },
 } as const;
 
 export type TeamWithOwners = Prisma.Result<

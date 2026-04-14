@@ -9,10 +9,10 @@ export interface AcceptedByEntry {
 export type DateField = "CREATED" | "SUBMITTED" | "ACCEPTED" | "DECLINED";
 
 export interface PickFilter {
-    pickType: string;
-    season: number;
-    round: number;
-    originalOwnerId: string;
+    pickType?: string;
+    season?: number;
+    round?: number;
+    originalOwnerId?: string;
 }
 
 export interface StaffTradeFilters {
@@ -22,7 +22,7 @@ export interface StaffTradeFilters {
     dateFrom?: string;
     dateTo?: string;
     dateField?: DateField;
-    playerId?: string;
+    playerIds?: string[];
     pick?: PickFilter;
 }
 
@@ -116,22 +116,21 @@ export default class TradeDAO {
         opts: StaffTradeFilters,
         pickDb?: ExtendedPrismaClient["draftPick"]
     ): Promise<{ trades: PrismaTrade[]; total: number }> {
-        const { statuses, page, pageSize, dateFrom, dateTo, dateField, playerId, pick } = opts;
+        const { statuses, page, pageSize, dateFrom, dateTo, dateField, playerIds, pick } = opts;
         const skip = page * pageSize;
 
-        const where = buildStaffTradeWhere({ statuses, dateFrom, dateTo, dateField, playerId });
+        const where = buildStaffTradeWhere({ statuses, dateFrom, dateTo, dateField, playerIds });
 
         if (pick && pickDb) {
-            const resolvedPickId = await resolvePickId(pickDb, pick);
-            if (!resolvedPickId) return { trades: [], total: 0 };
-            where.tradeItems = {
-                ...((where.tradeItems as Prisma.TradeItemListRelationFilter) ?? {}),
-                some: {
-                    ...((where.tradeItems as Prisma.TradeItemListRelationFilter)?.some ?? {}),
-                    tradeItemType: TradeItemType.PICK,
-                    tradeItemId: resolvedPickId,
+            const resolvedIds = await resolvePickIds(pickDb, pick);
+            if (resolvedIds.length === 0) return { trades: [], total: 0 };
+            const andClauses = (where.AND as Prisma.TradeWhereInput[]) ?? [];
+            andClauses.push({
+                tradeItems: {
+                    some: { tradeItemType: TradeItemType.PICK, tradeItemId: { in: resolvedIds } },
                 },
-            };
+            });
+            where.AND = andClauses;
         }
 
         const [trades, total] = await Promise.all([
@@ -216,7 +215,7 @@ export function buildStaffTradeWhere(opts: {
     dateFrom?: string;
     dateTo?: string;
     dateField?: DateField;
-    playerId?: string;
+    playerIds?: string[];
 }): Prisma.TradeWhereInput {
     const where: Prisma.TradeWhereInput = {};
 
@@ -232,27 +231,26 @@ export function buildStaffTradeWhere(opts: {
         (where as Record<string, unknown>)[column as string] = range;
     }
 
-    if (opts.playerId) {
-        where.tradeItems = {
-            some: { tradeItemType: TradeItemType.PLAYER, tradeItemId: opts.playerId },
-        };
+    if (opts.playerIds && opts.playerIds.length > 0) {
+        const andClauses: Prisma.TradeWhereInput[] = (where.AND as Prisma.TradeWhereInput[]) ?? [];
+        for (const pid of opts.playerIds) {
+            andClauses.push({
+                tradeItems: { some: { tradeItemType: TradeItemType.PLAYER, tradeItemId: pid } },
+            });
+        }
+        where.AND = andClauses;
     }
 
     return where;
 }
 
-export async function resolvePickId(
-    pickDb: ExtendedPrismaClient["draftPick"],
-    pick: PickFilter
-): Promise<string | null> {
-    const found = await pickDb.findFirst({
-        where: {
-            type: pick.pickType as Prisma.EnumPickLeagueLevelFilter["equals"],
-            season: pick.season,
-            round: new Prisma.Decimal(pick.round),
-            originalOwnerId: pick.originalOwnerId,
-        },
-        select: { id: true },
-    });
-    return found?.id ?? null;
+export async function resolvePickIds(pickDb: ExtendedPrismaClient["draftPick"], pick: PickFilter): Promise<string[]> {
+    const where: Prisma.DraftPickWhereInput = {};
+    if (pick.pickType) where.type = pick.pickType as Prisma.EnumPickLeagueLevelFilter["equals"];
+    if (pick.season !== undefined) where.season = pick.season;
+    if (pick.round !== undefined) where.round = new Prisma.Decimal(pick.round);
+    if (pick.originalOwnerId) where.originalOwnerId = pick.originalOwnerId;
+
+    const found = await pickDb.findMany({ where, select: { id: true } });
+    return found.map(p => p.id);
 }
