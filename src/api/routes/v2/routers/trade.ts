@@ -349,13 +349,16 @@ export const tradeRouter = router({
                 dateFrom: z.string().optional(),
                 dateTo: z.string().optional(),
                 dateField: z.enum(["CREATED", "SUBMITTED", "ACCEPTED", "DECLINED"]).optional(),
-                playerId: z.string().uuid().optional(),
+                playerIds: z.array(z.string().uuid()).max(10).optional(),
                 pick: z
                     .object({
-                        pickType: z.string(),
-                        season: z.number().int(),
-                        round: z.number(),
-                        originalOwnerId: z.string().uuid(),
+                        pickType: z.string().optional(),
+                        season: z.number().int().optional(),
+                        round: z.number().optional(),
+                        originalOwnerId: z.string().uuid().optional(),
+                    })
+                    .refine((p) => p.pickType || p.season !== undefined || p.round !== undefined || p.originalOwnerId, {
+                        message: "At least one pick filter field is required",
                     })
                     .optional(),
             })
@@ -383,7 +386,7 @@ export const tradeRouter = router({
                         dateFrom: input.dateFrom,
                         dateTo: input.dateTo,
                         dateField: input.dateField,
-                        playerId: input.playerId,
+                        playerIds: input.playerIds,
                         pick: input.pick,
                     },
                     ctx.prisma.draftPick

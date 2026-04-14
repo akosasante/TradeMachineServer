@@ -4,7 +4,7 @@ import TradeDAO, {
     AcceptedByEntry,
     PrismaTrade,
     buildStaffTradeWhere,
-    resolvePickId,
+    resolvePickIds,
 } from "../../../../src/DAO/v2/TradeDAO";
 import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
 import logger from "../../../../src/bootstrap/logger";
@@ -319,22 +319,42 @@ describe("[PRISMA] TradeDAO", () => {
     describe("getTradesPaginated (extended filters)", () => {
         const tradeA = makeMinimalTrade({ id: uuid() });
 
-        it("should pass playerId filter as tradeItems.some constraint", async () => {
+        it("should pass single playerIds filter as AND tradeItems.some constraint", async () => {
             const playerId = uuid();
             prisma.findMany.mockResolvedValueOnce([tradeA] as any);
             prisma.count.mockResolvedValueOnce(1);
 
-            await dao.getTradesPaginated({ playerId, page: 0, pageSize: 20 });
+            await dao.getTradesPaginated({ playerIds: [playerId], page: 0, pageSize: 20 });
 
             expect(prisma.findMany).toHaveBeenCalledWith(
                 expect.objectContaining({
                     where: expect.objectContaining({
-                        tradeItems: {
-                            some: { tradeItemType: TradeItemType.PLAYER, tradeItemId: playerId },
-                        },
+                        AND: [
+                            {
+                                tradeItems: {
+                                    some: { tradeItemType: TradeItemType.PLAYER, tradeItemId: playerId },
+                                },
+                            },
+                        ],
                     }),
                 })
             );
+        });
+
+        it("should use AND logic for multiple playerIds (trade must involve all)", async () => {
+            const playerA = uuid();
+            const playerB = uuid();
+            prisma.findMany.mockResolvedValueOnce([tradeA] as any);
+            prisma.count.mockResolvedValueOnce(1);
+
+            await dao.getTradesPaginated({ playerIds: [playerA, playerB], page: 0, pageSize: 20 });
+
+            const call = prisma.findMany.mock.calls[0][0] as { where: { AND: unknown[] } };
+            expect(call.where.AND).toHaveLength(2);
+            expect(call.where.AND).toEqual([
+                { tradeItems: { some: { tradeItemType: TradeItemType.PLAYER, tradeItemId: playerA } } },
+                { tradeItems: { some: { tradeItemType: TradeItemType.PLAYER, tradeItemId: playerB } } },
+            ]);
         });
 
         it("should pass date range filter on dateCreated by default", async () => {
@@ -372,10 +392,10 @@ describe("[PRISMA] TradeDAO", () => {
             expect(call.where).not.toHaveProperty("dateCreated");
         });
 
-        it("should resolve pick and filter when pick + pickDb provided", async () => {
+        it("should resolve pick and filter when pick + pickDb provided (full pick)", async () => {
             const pickDb = mockDeep<PrismaClient["draftPick"]>();
-            const resolvedPickId = uuid();
-            pickDb.findFirst.mockResolvedValueOnce({ id: resolvedPickId } as any);
+            const resolvedId = uuid();
+            pickDb.findMany.mockResolvedValueOnce([{ id: resolvedId }] as any);
             prisma.findMany.mockResolvedValueOnce([tradeA] as any);
             prisma.count.mockResolvedValueOnce(1);
 
@@ -388,28 +408,90 @@ describe("[PRISMA] TradeDAO", () => {
                 pickDb as unknown as ExtendedPrismaClient["draftPick"]
             );
 
-            expect(pickDb.findFirst).toHaveBeenCalledTimes(1);
+            expect(pickDb.findMany).toHaveBeenCalledTimes(1);
             expect(prisma.findMany).toHaveBeenCalledWith(
                 expect.objectContaining({
                     where: expect.objectContaining({
-                        tradeItems: expect.objectContaining({
-                            some: expect.objectContaining({
-                                tradeItemType: TradeItemType.PICK,
-                                tradeItemId: resolvedPickId,
-                            }),
-                        }),
+                        AND: [
+                            {
+                                tradeItems: {
+                                    some: { tradeItemType: TradeItemType.PICK, tradeItemId: { in: [resolvedId] } },
+                                },
+                            },
+                        ],
                     }),
                 })
             );
         });
 
-        it("should return empty when pick cannot be resolved", async () => {
+        it("should resolve partial pick (type-only) and use IN filter", async () => {
             const pickDb = mockDeep<PrismaClient["draftPick"]>();
-            pickDb.findFirst.mockResolvedValueOnce(null);
+            const idA = uuid();
+            const idB = uuid();
+            pickDb.findMany.mockResolvedValueOnce([{ id: idA }, { id: idB }] as any);
+            prisma.findMany.mockResolvedValueOnce([tradeA] as any);
+            prisma.count.mockResolvedValueOnce(1);
+
+            await dao.getTradesPaginated(
+                {
+                    pick: { pickType: "HIGHMINORS" },
+                    page: 0,
+                    pageSize: 20,
+                },
+                pickDb as unknown as ExtendedPrismaClient["draftPick"]
+            );
+
+            expect(pickDb.findMany).toHaveBeenCalledTimes(1);
+            const pickCall = pickDb.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
+            expect(pickCall.where).not.toHaveProperty("season");
+            expect(pickCall.where).not.toHaveProperty("round");
+            expect(pickCall.where).not.toHaveProperty("originalOwnerId");
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: expect.objectContaining({
+                        AND: [
+                            {
+                                tradeItems: {
+                                    some: { tradeItemType: TradeItemType.PICK, tradeItemId: { in: [idA, idB] } },
+                                },
+                            },
+                        ],
+                    }),
+                })
+            );
+        });
+
+        it("should resolve partial pick (type + season) and use IN filter", async () => {
+            const pickDb = mockDeep<PrismaClient["draftPick"]>();
+            const idA = uuid();
+            pickDb.findMany.mockResolvedValueOnce([{ id: idA }] as any);
+            prisma.findMany.mockResolvedValueOnce([tradeA] as any);
+            prisma.count.mockResolvedValueOnce(1);
+
+            await dao.getTradesPaginated(
+                {
+                    pick: { pickType: "MAJORS", season: 2026 },
+                    page: 0,
+                    pageSize: 20,
+                },
+                pickDb as unknown as ExtendedPrismaClient["draftPick"]
+            );
+
+            const pickCall = pickDb.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
+            expect(pickCall.where).toHaveProperty("type", "MAJORS");
+            expect(pickCall.where).toHaveProperty("season", 2026);
+            expect(pickCall.where).not.toHaveProperty("round");
+            expect(pickCall.where).not.toHaveProperty("originalOwnerId");
+        });
+
+        it("should return empty when no picks match partial filter", async () => {
+            const pickDb = mockDeep<PrismaClient["draftPick"]>();
+            pickDb.findMany.mockResolvedValueOnce([]);
 
             const result = await dao.getTradesPaginated(
                 {
-                    pick: { pickType: "MAJORS", season: 2026, round: 99, originalOwnerId: uuid() },
+                    pick: { pickType: "MAJORS", season: 2099 },
                     page: 0,
                     pageSize: 20,
                 },
@@ -429,7 +511,7 @@ describe("[PRISMA] TradeDAO", () => {
                 statuses: [TradeStatus.SUBMITTED],
                 dateFrom: "2026-01-01",
                 dateField: "ACCEPTED",
-                playerId,
+                playerIds: [playerId],
                 page: 0,
                 pageSize: 10,
             });
@@ -437,7 +519,7 @@ describe("[PRISMA] TradeDAO", () => {
             const call = prisma.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
             expect(call.where).toHaveProperty("status", { in: [TradeStatus.SUBMITTED] });
             expect(call.where).toHaveProperty("acceptedOnDate");
-            expect(call.where).toHaveProperty("tradeItems");
+            expect(call.where).toHaveProperty("AND");
         });
     });
 });
@@ -474,44 +556,82 @@ describe("buildStaffTradeWhere", () => {
         expect(where).not.toHaveProperty("dateCreated");
     });
 
-    it("should add playerId as tradeItems.some filter", () => {
+    it("should add single playerIds as AND tradeItems.some filter", () => {
         const pid = uuid();
-        const where = buildStaffTradeWhere({ playerId: pid });
-        expect(where.tradeItems).toEqual({
-            some: { tradeItemType: TradeItemType.PLAYER, tradeItemId: pid },
-        });
+        const where = buildStaffTradeWhere({ playerIds: [pid] });
+        expect(where.AND).toEqual([
+            { tradeItems: { some: { tradeItemType: TradeItemType.PLAYER, tradeItemId: pid } } },
+        ]);
+    });
+
+    it("should use AND logic for multiple playerIds", () => {
+        const pidA = uuid();
+        const pidB = uuid();
+        const where = buildStaffTradeWhere({ playerIds: [pidA, pidB] });
+        expect((where.AND as unknown[]).length).toBe(2);
+    });
+
+    it("should not add AND clause when playerIds is empty", () => {
+        const where = buildStaffTradeWhere({ playerIds: [] });
+        expect(where).not.toHaveProperty("AND");
     });
 });
 
-describe("resolvePickId", () => {
+describe("resolvePickIds", () => {
     const pickDb = mockDeep<PrismaClient["draftPick"]>();
 
     afterEach(() => mockClear(pickDb));
 
-    it("should return the id when a matching pick exists", async () => {
+    it("should return ids when matching picks exist (full filter)", async () => {
         const id = uuid();
-        pickDb.findFirst.mockResolvedValueOnce({ id } as any);
+        pickDb.findMany.mockResolvedValueOnce([{ id }] as any);
 
-        const result = await resolvePickId(pickDb as unknown as ExtendedPrismaClient["draftPick"], {
+        const result = await resolvePickIds(pickDb as unknown as ExtendedPrismaClient["draftPick"], {
             pickType: "MAJORS",
             season: 2026,
             round: 1,
             originalOwnerId: uuid(),
         });
 
-        expect(result).toBe(id);
+        expect(result).toEqual([id]);
     });
 
-    it("should return null when no matching pick exists", async () => {
-        pickDb.findFirst.mockResolvedValueOnce(null);
+    it("should return empty array when no matching picks exist", async () => {
+        pickDb.findMany.mockResolvedValueOnce([]);
 
-        const result = await resolvePickId(pickDb as unknown as ExtendedPrismaClient["draftPick"], {
+        const result = await resolvePickIds(pickDb as unknown as ExtendedPrismaClient["draftPick"], {
             pickType: "HIGHMINORS",
-            season: 2026,
-            round: 5,
-            originalOwnerId: uuid(),
+            season: 2099,
         });
 
-        expect(result).toBeNull();
+        expect(result).toEqual([]);
+    });
+
+    it("should query only provided fields (partial filter)", async () => {
+        pickDb.findMany.mockResolvedValueOnce([{ id: uuid() }, { id: uuid() }] as any);
+
+        await resolvePickIds(pickDb as unknown as ExtendedPrismaClient["draftPick"], {
+            pickType: "HIGHMINORS",
+        });
+
+        const call = pickDb.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
+        expect(call.where).toHaveProperty("type", "HIGHMINORS");
+        expect(call.where).not.toHaveProperty("season");
+        expect(call.where).not.toHaveProperty("round");
+        expect(call.where).not.toHaveProperty("originalOwnerId");
+    });
+
+    it("should return multiple ids for partial filter (type + season)", async () => {
+        const idA = uuid();
+        const idB = uuid();
+        const idC = uuid();
+        pickDb.findMany.mockResolvedValueOnce([{ id: idA }, { id: idB }, { id: idC }] as any);
+
+        const result = await resolvePickIds(pickDb as unknown as ExtendedPrismaClient["draftPick"], {
+            pickType: "MAJORS",
+            season: 2026,
+        });
+
+        expect(result).toEqual([idA, idB, idC]);
     });
 });
