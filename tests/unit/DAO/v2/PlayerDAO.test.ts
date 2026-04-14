@@ -67,7 +67,7 @@ describe("[PRISMA] PlayerDAO", () => {
                     orderBy: { name: "asc" },
                     skip: 0,
                     take: 50,
-                    include: { ownerTeam: { select: { id: true, name: true } } },
+                    include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
                 })
             );
             expect(prisma.count).toHaveBeenCalledWith({ where: {} });
@@ -137,7 +137,7 @@ describe("[PRISMA] PlayerDAO", () => {
 
             expect(prisma.findUniqueOrThrow).toHaveBeenCalledWith({
                 where: { id: player.id },
-                include: { ownerTeam: { select: { id: true, name: true } } },
+                include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
             });
             expect(result.id).toBe(player.id);
         });
@@ -165,7 +165,7 @@ describe("[PRISMA] PlayerDAO", () => {
                     playerDataId: 999,
                     leagueTeamId: teamId,
                 },
-                include: { ownerTeam: { select: { id: true, name: true } } },
+                include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
             });
         });
 
@@ -183,7 +183,7 @@ describe("[PRISMA] PlayerDAO", () => {
                     playerDataId: null,
                     leagueTeamId: null,
                 },
-                include: { ownerTeam: { select: { id: true, name: true } } },
+                include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
             });
         });
     });
@@ -198,7 +198,7 @@ describe("[PRISMA] PlayerDAO", () => {
             expect(prisma.update).toHaveBeenCalledWith({
                 where: { id: player.id },
                 data: { name: "Updated Name" },
-                include: { ownerTeam: { select: { id: true, name: true } } },
+                include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
             });
             expect(result.name).toBe("Updated Name");
         });

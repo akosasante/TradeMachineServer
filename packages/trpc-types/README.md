@@ -156,6 +156,16 @@ repo reflects the published state.
 
 ## Changelog
 
+### 1.16.1
+
+- `trades.listStaff`: rename `playerId` to `playerIds` (array, max 10) for multi-player AND filtering
+- `trades.listStaff`: make `pick` sub-fields (`pickType`, `season`, `round`, `originalOwnerId`) individually optional; at least one required (partial pick filter)
+
+### 1.16.0
+
+- Extend `trades.listStaff` input with structured search filters: `dateFrom`, `dateTo`, `dateField`, `playerId`, and `pick` (composite draft pick filter)
+- Used by V3 admin trade history page for server-side search/filtering
+
 ### 1.15.0
 
 - Add `notifications` router with `get` query and `update` mutation procedure types
