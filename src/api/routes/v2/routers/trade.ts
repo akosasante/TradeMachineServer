@@ -337,6 +337,7 @@ export const tradeRouter = router({
 
     /**
      * Paginated list of ALL trades (not team-scoped). Restricted to admin and commissioner roles.
+     * Supports structured filters: status, date range, player involvement, and draft pick.
      * Trade items include sender/recipient teams but are not hydrated with player/pick entities.
      */
     listStaff: protectedProcedure
@@ -345,6 +346,21 @@ export const tradeRouter = router({
                 statuses: z.array(z.nativeEnum(TradeStatus)).optional(),
                 page: z.number().int().min(0).default(0),
                 pageSize: z.number().int().min(1).max(50).default(20),
+                dateFrom: z.string().optional(),
+                dateTo: z.string().optional(),
+                dateField: z.enum(["CREATED", "SUBMITTED", "ACCEPTED", "DECLINED"]).optional(),
+                playerIds: z.array(z.string().uuid()).max(10).optional(),
+                pick: z
+                    .object({
+                        pickType: z.string().optional(),
+                        season: z.number().int().optional(),
+                        round: z.number().optional(),
+                        originalOwnerId: z.string().uuid().optional(),
+                    })
+                    .refine((p) => p.pickType || p.season !== undefined || p.round !== undefined || p.originalOwnerId, {
+                        message: "At least one pick filter field is required",
+                    })
+                    .optional(),
             })
         )
         .query(
@@ -362,11 +378,19 @@ export const tradeRouter = router({
                 addSpanEvent("trades.listStaff.start");
 
                 const dao = new TradeDAO(ctx.prisma.trade);
-                const { trades, total } = await dao.getTradesPaginated({
-                    statuses: input.statuses,
-                    page: input.page,
-                    pageSize: input.pageSize,
-                });
+                const { trades, total } = await dao.getTradesPaginated(
+                    {
+                        statuses: input.statuses,
+                        page: input.page,
+                        pageSize: input.pageSize,
+                        dateFrom: input.dateFrom,
+                        dateTo: input.dateTo,
+                        dateField: input.dateField,
+                        playerIds: input.playerIds,
+                        pick: input.pick,
+                    },
+                    ctx.prisma.draftPick
+                );
 
                 addSpanEvent("trades.listStaff.success");
                 return {

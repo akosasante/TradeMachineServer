@@ -322,6 +322,25 @@ git add packages/trpc-types/package.json packages/trpc-types/package-lock.json p
 git commit -m "chore(trpc-types): publish @akosasante/trpc-types@<version>"
 ```
 
+## Git Worktree Setup
+
+When creating git worktrees for this repository — whether native `git worktree add` in the parent folder or Cursor-managed worktrees — the following steps are **required** before the worktree is usable:
+
+1. **Copy `.env`** from the main repo root into the worktree root.
+2. **Copy `tests/.env`** from the main repo's `tests/` directory into the worktree's `tests/` directory.
+3. **Run `npm install`** inside the worktree so it gets its own `node_modules`.
+4. **Update `BASE_DIR`** in the worktree's `.env` to point to the worktree's absolute path (not the main repo). The `ormconfig.js` uses `$BASE_DIR` to resolve TypeORM entity/migration/subscriber globs; if it still points to the main repo, the dev server will crash with a TypeORM decorator error (`Cannot read properties of undefined (reading 'constructor')`) due to cross-repo module resolution.
+
+Example (adjust the worktree path accordingly):
+```bash
+# After creating the worktree:
+cp /path/to/main/TradeMachineServer/.env        /path/to/worktree/.env
+cp /path/to/main/TradeMachineServer/tests/.env   /path/to/worktree/tests/.env
+cd /path/to/worktree && npm install
+# Then edit .env and set BASE_DIR to the worktree's absolute path
+sed -i '' "s|^BASE_DIR=.*|BASE_DIR=$(pwd)|" .env
+```
+
 ## Context Preservation
 - Save context to `.last_session_data.json` in project root when requested
 - Automatically save context after every 3 user messages

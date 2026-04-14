@@ -5,7 +5,7 @@ import { inspect } from "util";
 import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
 export type PlayerWithTeam = Player & {
-    ownerTeam: { id: string; name: string } | null;
+    ownerTeam: { id: string; name: string; owners: { csvName: string | null }[] } | null;
 };
 
 export default class PlayerDAO {
@@ -40,7 +40,7 @@ export default class PlayerDAO {
                 orderBy: { name: "asc" },
                 skip: opts?.skip ?? 0,
                 take: opts?.take ?? 50,
-                include: { ownerTeam: { select: { id: true, name: true } } },
+                include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
             }),
             this.playerDb.count({ where }),
         ]);
@@ -51,7 +51,7 @@ export default class PlayerDAO {
     public async getPlayerById(id: string): Promise<PlayerWithTeam> {
         return (await this.playerDb.findUniqueOrThrow({
             where: { id },
-            include: { ownerTeam: { select: { id: true, name: true } } },
+            include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
         })) as unknown as PlayerWithTeam;
     }
 
@@ -70,7 +70,7 @@ export default class PlayerDAO {
                 playerDataId: data.playerDataId ?? null,
                 leagueTeamId: data.leagueTeamId ?? null,
             },
-            include: { ownerTeam: { select: { id: true, name: true } } },
+            include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
         })) as unknown as PlayerWithTeam;
     }
 
@@ -87,7 +87,7 @@ export default class PlayerDAO {
         return (await this.playerDb.update({
             where: { id },
             data,
-            include: { ownerTeam: { select: { id: true, name: true } } },
+            include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
         })) as unknown as PlayerWithTeam;
     }
 
