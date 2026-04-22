@@ -32,6 +32,7 @@ import {
     extractTraceContext,
 } from "../../utils/tracing";
 import { context } from "@opentelemetry/api";
+import { isV3UiBetaAllowlistedEmail } from "../../utils/v3TradeLinkEmailAllowlist";
 
 // declare the additional fields that we add to express session (via routing-controllers)
 declare module "express-session" {
@@ -297,9 +298,11 @@ export default class AuthController {
     }
 
     @Get("/session_check")
-    public sessionCheck(@CurrentUser({ required: true }) user: PublicUser): Promise<PublicUser> {
+    public sessionCheck(
+        @CurrentUser({ required: true }) user: PublicUser
+    ): Promise<PublicUser & { v3UiBeta: boolean }> {
         logger.debug(`session check worked ${user}`);
         // rollbar.info("sessionCheck", { user });
-        return Promise.resolve(user);
+        return Promise.resolve({ ...user, v3UiBeta: isV3UiBetaAllowlistedEmail(user.email) });
     }
 }

@@ -18,6 +18,7 @@ import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import { isNetlifyOrigin } from "../../../middlewares/CookieDomainHandler";
 import { getSessionCookieName } from "../../../../bootstrap/express";
 import { destroyAllUserSessions, registerUserSession } from "../utils/ssoTokens";
+import { isV3UiBetaAllowlistedEmail } from "../../../../utils/v3TradeLinkEmailAllowlist";
 
 // Input validation schemas
 const emailSchema = z.object({
@@ -308,7 +309,7 @@ export const authRouter = router({
 
             logger.debug(`tRPC session check worked for user ${user.id}`);
 
-            return user;
+            return { ...user, v3UiBeta: isV3UiBetaAllowlistedEmail(user.email) };
         })
     ),
     logout: publicProcedure.mutation(

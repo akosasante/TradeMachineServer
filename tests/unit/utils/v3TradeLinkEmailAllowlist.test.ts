@@ -1,4 +1,5 @@
 import {
+    isV3UiBetaAllowlistedEmail,
     normalizeV3BaseUrl,
     resetV3TradeLinkEmailAllowlistCacheForTests,
     shouldUseV3TradeLinkForEmail,
@@ -68,6 +69,37 @@ describe("v3TradeLinkEmailAllowlist", () => {
         expect(shouldUseV3TradeLinkForEmail("beta@example.com")).toBe(true);
         expect(shouldUseV3TradeLinkForEmail("other@x.test")).toBe(true);
         expect(shouldUseV3TradeLinkForEmail("nope@example.com")).toBe(false);
+    });
+});
+
+describe("isV3UiBetaAllowlistedEmail", () => {
+    const prev = { ...process.env };
+
+    afterEach(() => {
+        process.env = { ...prev };
+        resetV3TradeLinkEmailAllowlistCacheForTests();
+    });
+
+    it("returns false when allowlist env is unset", () => {
+        delete process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST;
+        resetV3TradeLinkEmailAllowlistCacheForTests();
+        expect(isV3UiBetaAllowlistedEmail("a@example.com")).toBe(false);
+    });
+
+    it("returns true for any non-empty email when allowlist is * (ignores USE_V3_TRADE_LINKS)", () => {
+        delete process.env.USE_V3_TRADE_LINKS;
+        delete process.env.V3_BASE_URL;
+        process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST = "*";
+        resetV3TradeLinkEmailAllowlistCacheForTests();
+        expect(isV3UiBetaAllowlistedEmail("Anyone@Example.COM")).toBe(true);
+    });
+
+    it("matches listed emails case-insensitively without USE_V3_TRADE_LINKS", () => {
+        delete process.env.USE_V3_TRADE_LINKS;
+        process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST = " Beta@Example.com ";
+        resetV3TradeLinkEmailAllowlistCacheForTests();
+        expect(isV3UiBetaAllowlistedEmail("beta@example.com")).toBe(true);
+        expect(isV3UiBetaAllowlistedEmail("nope@example.com")).toBe(false);
     });
 });
 
