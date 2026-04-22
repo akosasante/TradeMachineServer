@@ -15,7 +15,7 @@ import { rollbar } from "../bootstrap/rollbar";
 import EmailDAO from "../DAO/EmailDAO";
 import DbEmail from "../models/email";
 import { createTradeActionToken } from "../api/routes/v2/utils/tradeActionTokens";
-import { shouldUseV3TradeLinkForEmail } from "../utils/v3TradeLinkEmailAllowlist";
+import { normalizeV3BaseUrl, shouldUseV3TradeLinkForEmail } from "../utils/v3TradeLinkEmailAllowlist";
 
 export interface SendInBlueSendResponse {
     envelope: {
@@ -50,7 +50,7 @@ const sendInBlueTransport = nodemailer.createTransport({
 });
 
 const baseDomain = process.env.BASE_URL;
-const v3BaseDomain = process.env.V3_BASE_URL;
+const v3BaseDomain = normalizeV3BaseUrl(process.env.V3_BASE_URL);
 
 function getTitleText(trade: Trade) {
     if (trade.tradeParticipants?.length === 2) {

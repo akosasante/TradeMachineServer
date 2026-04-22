@@ -12,7 +12,7 @@ import { getPrismaClientFromRequest } from "../../bootstrap/prisma-db";
 import { extractTraceContext } from "../../utils/tracing";
 import { createTradeActionToken } from "./v2/utils/tradeActionTokens";
 import { tradeActionTokenGeneratedMetric, tradeRequestEmailEnqueuedMetric } from "../../bootstrap/metrics";
-import { shouldUseV3TradeLinkForEmail } from "../../utils/v3TradeLinkEmailAllowlist";
+import { normalizeV3BaseUrl, shouldUseV3TradeLinkForEmail } from "../../utils/v3TradeLinkEmailAllowlist";
 import { getOwnerNotificationPrefs } from "../../utils/userNotificationPrefs";
 
 const TRADE_REQUEST_OWNER_RELATIONS = ["tradeParticipants", "tradeParticipants.team", "tradeParticipants.team.owners"];
@@ -61,7 +61,7 @@ export default class MessengerController {
 
         const traceContext = extractTraceContext() || undefined;
         const baseDomain = process.env.BASE_URL;
-        const v3BaseDomain = process.env.V3_BASE_URL;
+        const v3BaseDomain = normalizeV3BaseUrl(process.env.V3_BASE_URL);
         const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/dashboard` : undefined;
 
         const recipientOwners = trade.recipients.flatMap(recipTeam => recipTeam.owners ?? []);
@@ -142,7 +142,7 @@ export default class MessengerController {
             }
 
             const traceContext = extractTraceContext() || undefined;
-            const v3BaseDomain = process.env.V3_BASE_URL;
+            const v3BaseDomain = normalizeV3BaseUrl(process.env.V3_BASE_URL);
             const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/dashboard` : undefined;
 
             const creatorOwnerIds = new Set(trade.creator?.owners?.map(o => o.id).filter(Boolean));
@@ -230,7 +230,7 @@ export default class MessengerController {
 
             const traceContext = extractTraceContext() || undefined;
             const baseDomain = process.env.BASE_URL;
-            const v3BaseDomain = process.env.V3_BASE_URL;
+            const v3BaseDomain = normalizeV3BaseUrl(process.env.V3_BASE_URL);
             const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/dashboard` : undefined;
 
             const creatorOwners = trade.creator?.owners ?? [];
