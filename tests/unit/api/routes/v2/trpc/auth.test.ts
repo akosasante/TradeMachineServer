@@ -8,6 +8,7 @@ import UserDAO, { PublicUser } from "../../../../../../src/DAO/v2/UserDAO";
 import ObanDAO from "../../../../../../src/DAO/v2/ObanDAO";
 import { Request, Response } from "express";
 import { hashSync } from "bcryptjs";
+import { resetV3TradeLinkEmailAllowlistCacheForTests } from "../../../../../../src/utils/v3TradeLinkEmailAllowlist";
 
 // Mock the tracing utilities
 jest.mock("../../../../../../src/utils/tracing", () => ({
@@ -478,6 +479,13 @@ describe("[TRPC] Auth Router Unit Tests", () => {
     });
 
     describe("sessionCheck", () => {
+        const prevEnv = { ...process.env };
+
+        afterEach(() => {
+            process.env = { ...prevEnv };
+            resetV3TradeLinkEmailAllowlistCacheForTests();
+        });
+
         it("should return user when session exists", async () => {
             const mockUser = {
                 id: "user-123",
@@ -490,11 +498,35 @@ describe("[TRPC] Auth Router Unit Tests", () => {
 
             mockUserDao.getUserById.mockResolvedValue(mockUser);
 
+            process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST = "test@example.com";
+            resetV3TradeLinkEmailAllowlistCacheForTests();
+
             const result = await caller.sessionCheck();
 
             expect(result).toBeDefined();
             expect(result.id).toBe("user-123");
+            expect((result as { v3UiBeta?: boolean }).v3UiBeta).toBe(true);
             expect(mockUserDao.getUserById).toHaveBeenCalledWith("user-123");
+        });
+
+        it("should set v3UiBeta false when email is not on V3_TRADE_LINK_EMAIL_ALLOWLIST", async () => {
+            const mockUser = {
+                id: "user-456",
+                email: "other@example.com",
+                isAdmin: () => false,
+            } as unknown as PublicUser;
+
+            const mockSession = { user: "user-456" };
+            const caller = createCallerFactory(authRouter)(createMockContext(mockSession));
+
+            mockUserDao.getUserById.mockResolvedValue(mockUser);
+
+            process.env.V3_TRADE_LINK_EMAIL_ALLOWLIST = "test@example.com";
+            resetV3TradeLinkEmailAllowlistCacheForTests();
+
+            const result = await caller.sessionCheck();
+
+            expect((result as { v3UiBeta?: boolean }).v3UiBeta).toBe(false);
         });
 
         it("should throw UNAUTHORIZED error when no session exists", async () => {

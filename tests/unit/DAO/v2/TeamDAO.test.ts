@@ -49,7 +49,9 @@ describe("[PRISMA] TeamDAO", () => {
             expect(prisma.findMany).toHaveBeenCalledWith({
                 orderBy: { name: "asc" },
                 include: {
-                    owners: { select: { id: true, displayName: true, email: true, role: true, status: true } },
+                    owners: {
+                        select: { id: true, displayName: true, email: true, role: true, status: true, csvName: true },
+                    },
                 },
             });
             expect(result).toHaveLength(2);
@@ -66,7 +68,9 @@ describe("[PRISMA] TeamDAO", () => {
             expect(prisma.findUniqueOrThrow).toHaveBeenCalledWith({
                 where: { id: team.id },
                 include: {
-                    owners: { select: { id: true, displayName: true, email: true, role: true, status: true } },
+                    owners: {
+                        select: { id: true, displayName: true, email: true, role: true, status: true, csvName: true },
+                    },
                 },
             });
             expect(result.id).toBe(team.id);
@@ -83,7 +87,9 @@ describe("[PRISMA] TeamDAO", () => {
             expect(prisma.create).toHaveBeenCalledWith({
                 data: { name: "New Team", espnId: 5, status: TeamStatus.ACTIVE },
                 include: {
-                    owners: { select: { id: true, displayName: true, email: true, role: true, status: true } },
+                    owners: {
+                        select: { id: true, displayName: true, email: true, role: true, status: true, csvName: true },
+                    },
                 },
             });
             expect(result.name).toBe("New Team");
@@ -114,7 +120,9 @@ describe("[PRISMA] TeamDAO", () => {
                 where: { id: team.id },
                 data: { name: "Updated" },
                 include: {
-                    owners: { select: { id: true, displayName: true, email: true, role: true, status: true } },
+                    owners: {
+                        select: { id: true, displayName: true, email: true, role: true, status: true, csvName: true },
+                    },
                 },
             });
             expect(result.name).toBe("Updated");
@@ -144,7 +152,9 @@ describe("[PRISMA] TeamDAO", () => {
             expect(prisma.delete).toHaveBeenCalledWith({
                 where: { id: team.id },
                 include: {
-                    owners: { select: { id: true, displayName: true, email: true, role: true, status: true } },
+                    owners: {
+                        select: { id: true, displayName: true, email: true, role: true, status: true, csvName: true },
+                    },
                 },
             });
             expect(result.id).toBe(team.id);

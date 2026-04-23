@@ -244,10 +244,7 @@ export function buildStaffTradeWhere(opts: {
     return where;
 }
 
-export async function resolvePickIds(
-    pickDb: ExtendedPrismaClient["draftPick"],
-    pick: PickFilter
-): Promise<string[]> {
+export async function resolvePickIds(pickDb: ExtendedPrismaClient["draftPick"], pick: PickFilter): Promise<string[]> {
     const where: Prisma.DraftPickWhereInput = {};
     if (pick.pickType) where.type = pick.pickType as Prisma.EnumPickLeagueLevelFilter["equals"];
     if (pick.season !== undefined) where.season = pick.season;
@@ -255,5 +252,5 @@ export async function resolvePickIds(
     if (pick.originalOwnerId) where.originalOwnerId = pick.originalOwnerId;
 
     const found = await pickDb.findMany({ where, select: { id: true } });
-    return found.map((p) => p.id);
+    return found.map(p => p.id);
 }

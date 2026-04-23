@@ -8,7 +8,7 @@ import { tradeActionTokenGeneratedMetric } from "../../../../bootstrap/metrics";
 import TradeDAO, { AcceptedByEntry, PrismaTrade } from "../../../../DAO/v2/TradeDAO";
 import ObanDAO from "../../../../DAO/v2/ObanDAO";
 import { createTradeActionToken } from "../utils/tradeActionTokens";
-import { shouldUseV3TradeLinkForEmail } from "../../../../utils/v3TradeLinkEmailAllowlist";
+import { normalizeV3BaseUrl, shouldUseV3TradeLinkForEmail } from "../../../../utils/v3TradeLinkEmailAllowlist";
 import { getOwnerNotificationPrefs } from "../../../../utils/userNotificationPrefs";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import type { ExtendedPrismaClient } from "../../../../bootstrap/prisma-db";
@@ -128,7 +128,7 @@ async function enqueueAcceptanceNotifications(
     prisma: ExtendedPrismaClient
 ): Promise<void> {
     const obanDao = new ObanDAO(prisma.obanJob);
-    const v3BaseDomain = process.env.V3_BASE_URL;
+    const v3BaseDomain = normalizeV3BaseUrl(process.env.V3_BASE_URL);
     const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/dashboard` : undefined;
 
     const creatorOwners = trade.tradeParticipants
@@ -176,7 +176,7 @@ async function enqueueDeclineNotifications(
     prisma: ExtendedPrismaClient
 ): Promise<void> {
     const obanDao = new ObanDAO(prisma.obanJob);
-    const v3BaseDomain = process.env.V3_BASE_URL;
+    const v3BaseDomain = normalizeV3BaseUrl(process.env.V3_BASE_URL);
     const notificationSettingsUrl = v3BaseDomain ? `${v3BaseDomain}/dashboard` : undefined;
 
     const creatorOwnerIdSet = new Set(
@@ -357,7 +357,7 @@ export const tradeRouter = router({
                         round: z.number().optional(),
                         originalOwnerId: z.string().uuid().optional(),
                     })
-                    .refine((p) => p.pickType || p.season !== undefined || p.round !== undefined || p.originalOwnerId, {
+                    .refine(p => p.pickType || p.season !== undefined || p.round !== undefined || p.originalOwnerId, {
                         message: "At least one pick filter field is required",
                     })
                     .optional(),

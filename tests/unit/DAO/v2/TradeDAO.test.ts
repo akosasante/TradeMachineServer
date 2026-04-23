@@ -568,7 +568,7 @@ describe("buildStaffTradeWhere", () => {
         const pidA = uuid();
         const pidB = uuid();
         const where = buildStaffTradeWhere({ playerIds: [pidA, pidB] });
-        expect((where.AND as unknown[]).length).toBe(2);
+        expect(where.AND as unknown[]).toHaveLength(2);
     });
 
     it("should not add AND clause when playerIds is empty", () => {
