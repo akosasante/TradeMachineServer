@@ -148,6 +148,49 @@ describe("[TRPC] Client Router Unit Tests", () => {
     });
 
     describe("getIP", () => {
+        it("should prefer cf-connecting-ip over x-forwarded-for (Cloudflare)", async () => {
+            const caller = createCallerFactory(clientRouter)(
+                createMockContext({
+                    "cf-connecting-ip": "203.0.113.9",
+                    "x-forwarded-for": "198.51.100.1",
+                })
+            );
+
+            const result = await caller.getIP();
+
+            expect(result).toEqual({
+                ip: "203.0.113.9",
+            });
+        });
+
+        it("should extract IP from cf-connecting-ip when present alone", async () => {
+            const caller = createCallerFactory(clientRouter)(
+                createMockContext({
+                    "cf-connecting-ip": " 203.0.113.2 ",
+                })
+            );
+
+            const result = await caller.getIP();
+
+            expect(result).toEqual({
+                ip: "203.0.113.2",
+            });
+        });
+
+        it("should handle cf-connecting-ip as array", async () => {
+            const caller = createCallerFactory(clientRouter)(
+                createMockContext({
+                    "cf-connecting-ip": ["203.0.113.3"],
+                })
+            );
+
+            const result = await caller.getIP();
+
+            expect(result).toEqual({
+                ip: "203.0.113.3",
+            });
+        });
+
         it("should extract IP from x-forwarded-for header (single IP)", async () => {
             const caller = createCallerFactory(clientRouter)(
                 createMockContext({
