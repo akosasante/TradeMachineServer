@@ -27,6 +27,7 @@ const ALLOWED_REDIRECT_HOSTS = new Set([
     "https://staging--ffftemp.netlify.app",
     "http://localhost:3030",
     "http://localhost:3031",
+    "http://localhost:5173",
 ]);
 
 export const SSO_CONFIG = {
