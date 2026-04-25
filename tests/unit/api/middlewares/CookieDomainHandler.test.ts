@@ -3,6 +3,19 @@ import { isNetlifyOrigin } from "../../../../src/api/middlewares/CookieDomainHan
 
 describe("CookieDomainHandler", () => {
     describe("isNetlifyOrigin", () => {
+        it("should return true for arbitrary https://*.netlify.app deploy preview from Origin header", () => {
+            const mockReq = {
+                get: jest.fn((header: string) => {
+                    if (header === "Origin") {
+                        return "https://naughty-wozniak-9fc262.netlify.app";
+                    }
+                    return undefined;
+                }),
+            } as unknown as Request;
+
+            expect(isNetlifyOrigin(mockReq)).toBe(true);
+        });
+
         it("should return true for https://staging--ffftemp.netlify.app from Origin header", () => {
             const mockReq = {
                 get: jest.fn((header: string) => {

@@ -22,6 +22,10 @@ import {
 import { consumeTradeActionToken } from "../utils/tradeActionTokens";
 import { TRPCError } from "@trpc/server";
 import "../../../../types/session.types";
+import {
+    applyNetlifySessionCookieHeaderPatch,
+    saveExpressSession,
+} from "../../../middlewares/CookieDomainHandler";
 
 export const clientRouter = router({
     getIP: publicProcedure.query(
@@ -179,6 +183,10 @@ export const clientRouter = router({
                 ctx.req.session.user = serializeUser(user);
                 setSessionUserContext(ctx.req.session, user);
 
+                // Match auth.login: persist session + Netlify-style Set-Cookie so the browser keeps the cookie
+                applyNetlifySessionCookieHeaderPatch(ctx.req, ctx.res);
+                await saveExpressSession(ctx.req.session);
+
                 await registerUserSession(user.id!, ctx.req.sessionID);
 
                 addSpanAttributes({
@@ -256,6 +264,10 @@ export const clientRouter = router({
 
                 ctx.req.session.user = serializeUser(user);
                 setSessionUserContext(ctx.req.session, user);
+
+                applyNetlifySessionCookieHeaderPatch(ctx.req, ctx.res);
+                await saveExpressSession(ctx.req.session);
+
                 await registerUserSession(user.id!, ctx.req.sessionID);
 
                 addSpanAttributes({
