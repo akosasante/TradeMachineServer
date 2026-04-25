@@ -22,10 +22,7 @@ import {
 import { consumeTradeActionToken } from "../utils/tradeActionTokens";
 import { TRPCError } from "@trpc/server";
 import "../../../../types/session.types";
-import {
-    applyNetlifySessionCookieHeaderPatch,
-    saveExpressSession,
-} from "../../../middlewares/CookieDomainHandler";
+import { applyNetlifySessionCookieHeaderPatch, saveExpressSession } from "../../../middlewares/CookieDomainHandler";
 
 export const clientRouter = router({
     getIP: publicProcedure.query(
