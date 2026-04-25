@@ -118,7 +118,7 @@ export const authRouter = router({
                 applyNetlifySessionCookieHeaderPatch(ctx.req, ctx.res);
 
                 // Save session and increment metrics
-                await saveExpressSession(ctx.session!);
+                await saveExpressSession(ctx.session);
 
                 await registerUserSession(serializeUser(authenticatedUser)!, ctx.req.sessionID);
 
