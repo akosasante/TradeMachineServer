@@ -15,9 +15,13 @@ import {
 } from "../../../../authentication/auth";
 import { activeUserMetric, activeSessionsMetric } from "../../../../bootstrap/metrics";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
-import { isNetlifyOrigin } from "../../../middlewares/CookieDomainHandler";
-import { getSessionCookieName } from "../../../../bootstrap/express";
+import {
+    applyNetlifySessionCookieHeaderPatch,
+    isNetlifyOrigin,
+    saveExpressSession,
+} from "../../../middlewares/CookieDomainHandler";
 import { destroyAllUserSessions, registerUserSession } from "../utils/ssoTokens";
+import { isV3UiBetaAllowlistedEmail } from "../../../../utils/v3TradeLinkEmailAllowlist";
 
 // Input validation schemas
 const emailSchema = z.object({
@@ -110,55 +114,15 @@ export const authRouter = router({
                 ctx.session.user = serializeUser(authenticatedUser);
                 setSessionUserContext(ctx.session, authenticatedUser);
 
-                // If request is from a Netlify origin, intercept and modify the Set-Cookie header
-                // that express-session will set after session.save()
-                const isNetlify = isNetlifyOrigin(ctx.req);
-                const cookieName = getSessionCookieName();
-
-                // Intercept Set-Cookie header if this is a Netlify origin
-                if (isNetlify) {
-                    const originalSetHeader = ctx.res.setHeader.bind(ctx.res);
-                    ctx.res.setHeader = function (name: string, value: string | string[]) {
-                        if (name.toLowerCase() === "set-cookie") {
-                            // Modify the Set-Cookie header to remove Domain attribute for Netlify origins
-                            // Browsers reject cookies with Domain=.netlify.app (public suffix)
-                            // By removing the Domain attribute, the cookie is scoped to the exact origin
-                            // (e.g., staging--ffftemp.netlify.app), which browsers will accept
-                            const cookies = Array.isArray(value) ? value : [value];
-                            const modifiedCookies = cookies.map(cookie => {
-                                if (cookie.includes(cookieName)) {
-                                    // Remove existing Domain attribute entirely
-                                    // This scopes the cookie to the exact origin (e.g., staging--ffftemp.netlify.app)
-                                    const modified = cookie.replace(/;\s*Domain=[^;]*/gi, "");
-                                    logger.debug(
-                                        `Removed Domain attribute from Set-Cookie header for Netlify origin: ${cookieName}`
-                                    );
-                                    return modified;
-                                }
-                                return cookie;
-                            });
-                            return originalSetHeader(name, modifiedCookies);
-                        }
-                        return originalSetHeader(name, value);
-                    };
-                }
+                // Netlify / cross-site UI: strip Domain on Set-Cookie so the browser keeps the session cookie.
+                applyNetlifySessionCookieHeaderPatch(ctx.req, ctx.res);
 
                 // Save session and increment metrics
-                await new Promise<void>((resolve, reject) => {
-                    ctx.session!.save((sessionErr: Error | null) => {
-                        if (sessionErr) {
-                            logger.error("Could not save session:", sessionErr);
-                            reject(new Error("Could not save session"));
-                        } else {
-                            resolve();
-                        }
-                    });
-                });
+                await saveExpressSession(ctx.session);
 
                 await registerUserSession(serializeUser(authenticatedUser)!, ctx.req.sessionID);
 
-                // Log that we modified the cookie for Netlify origins
-                if (isNetlify) {
+                if (isNetlifyOrigin(ctx.req)) {
                     addSpanAttributes({
                         "cookie.domain": "none (origin-scoped)",
                         "cookie.set_for_netlify": true,
@@ -308,7 +272,7 @@ export const authRouter = router({
 
             logger.debug(`tRPC session check worked for user ${user.id}`);
 
-            return user;
+            return { ...user, v3UiBeta: isV3UiBetaAllowlistedEmail(user.email) };
         })
     ),
     logout: publicProcedure.mutation(

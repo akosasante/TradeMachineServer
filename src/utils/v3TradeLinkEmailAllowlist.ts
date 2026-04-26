@@ -51,6 +51,25 @@ export function normalizeV3BaseUrl(raw: string | undefined): string | undefined 
  * False when USE_V3_TRADE_LINKS or V3_BASE_URL is off, email missing, allowlist is unset/empty,
  * or the address is not allowlisted. Allowlist entry "*" alone matches any non-empty email.
  */
+/**
+ * Whether this email appears on `V3_TRADE_LINK_EMAIL_ALLOWLIST` (same parsing as trade-email V3 links: `*`, comma-separated, case-insensitive).
+ * Does **not** require `USE_V3_TRADE_LINKS` or `V3_BASE_URL` — use for UI beta / redirect eligibility independent of email-sending flags.
+ */
+export function isV3UiBetaAllowlistedEmail(email: string | null | undefined): boolean {
+    const allowlist = getAllowlist();
+    if (allowlist === null) {
+        return false;
+    }
+    const normalized = email?.trim().toLowerCase();
+    if (!normalized) {
+        return false;
+    }
+    if (allowlist.has("*")) {
+        return true;
+    }
+    return allowlist.has(normalized);
+}
+
 export function shouldUseV3TradeLinkForEmail(email: string | null | undefined): boolean {
     if (process.env.USE_V3_TRADE_LINKS !== "true" || !normalizeV3BaseUrl(process.env.V3_BASE_URL)) {
         return false;

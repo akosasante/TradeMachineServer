@@ -22,27 +22,38 @@ import {
 import { consumeTradeActionToken } from "../utils/tradeActionTokens";
 import { TRPCError } from "@trpc/server";
 import "../../../../types/session.types";
+import { applyNetlifySessionCookieHeaderPatch, saveExpressSession } from "../../../middlewares/CookieDomainHandler";
 
 export const clientRouter = router({
     getIP: publicProcedure.query(
         withTracing("trpc.client.getIP", async (input, ctx, _span) => {
             addSpanEvent("get_ip.start");
 
-            // Extract IP from headers set by reverse proxies or direct connection
+            // Extract IP from headers set by reverse proxies or direct connection.
+            // Cloudflare (and some other CDNs) set CF-Connecting-IP to the end-user address; without it,
+            // the TCP peer is often a Cloudflare POP (e.g. 104.30.x.x), which breaks IP allowlists.
+            const cfConnectingIp = ctx.req.headers["cf-connecting-ip"];
             const xForwardedFor = ctx.req.headers["x-forwarded-for"];
             const xRealIp = ctx.req.headers["x-real-ip"];
             const remoteAddress = ctx.req.connection?.remoteAddress || ctx.req.socket?.remoteAddress;
 
-            // Determine the client IP following standard proxy header precedence
             let clientIP: string;
+            let ipSource: "cf-connecting-ip" | "x-forwarded-for" | "x-real-ip" | "direct";
 
-            if (xForwardedFor) {
+            if (cfConnectingIp) {
+                const raw = Array.isArray(cfConnectingIp) ? cfConnectingIp[0] : cfConnectingIp;
+                clientIP = raw.trim();
+                ipSource = "cf-connecting-ip";
+            } else if (xForwardedFor) {
                 // x-forwarded-for can contain multiple IPs, take the first one (original client)
                 clientIP = Array.isArray(xForwardedFor) ? xForwardedFor[0] : xForwardedFor.split(",")[0].trim();
+                ipSource = "x-forwarded-for";
             } else if (xRealIp) {
                 clientIP = Array.isArray(xRealIp) ? xRealIp[0] : xRealIp;
+                ipSource = "x-real-ip";
             } else {
                 clientIP = remoteAddress || "unknown";
+                ipSource = "direct";
             }
 
             // Normalize IPv6-mapped IPv4 addresses (e.g., ::ffff:192.168.1.1 -> 192.168.1.1)
@@ -52,13 +63,13 @@ export const clientRouter = router({
 
             addSpanAttributes({
                 "client.ip": clientIP,
-                "client.ip_source": xForwardedFor ? "x-forwarded-for" : xRealIp ? "x-real-ip" : "direct",
-                "client.has_proxy_headers": !!(xForwardedFor || xRealIp),
+                "client.ip_source": ipSource,
+                "client.has_proxy_headers": !!(cfConnectingIp || xForwardedFor || xRealIp),
             });
 
             addSpanEvent("get_ip.success", {
                 ip: clientIP,
-                source: xForwardedFor ? "x-forwarded-for" : xRealIp ? "x-real-ip" : "direct",
+                source: ipSource,
             });
 
             logger.debug(`Client IP detected: ${clientIP}`);
@@ -169,6 +180,10 @@ export const clientRouter = router({
                 ctx.req.session.user = serializeUser(user);
                 setSessionUserContext(ctx.req.session, user);
 
+                // Match auth.login: persist session + Netlify-style Set-Cookie so the browser keeps the cookie
+                applyNetlifySessionCookieHeaderPatch(ctx.req, ctx.res);
+                await saveExpressSession(ctx.req.session);
+
                 await registerUserSession(user.id!, ctx.req.sessionID);
 
                 addSpanAttributes({
@@ -246,6 +261,10 @@ export const clientRouter = router({
 
                 ctx.req.session.user = serializeUser(user);
                 setSessionUserContext(ctx.req.session, user);
+
+                applyNetlifySessionCookieHeaderPatch(ctx.req, ctx.res);
+                await saveExpressSession(ctx.req.session);
+
                 await registerUserSession(user.id!, ctx.req.sessionID);
 
                 addSpanAttributes({
