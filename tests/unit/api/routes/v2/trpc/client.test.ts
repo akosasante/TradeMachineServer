@@ -85,16 +85,20 @@ describe("[TRPC] Client Router Unit Tests", () => {
             origin: headers.origin || `https://${finalHostname}`,
         };
 
+        const header = (name: string) => {
+            const value = finalHeaders[name.toLowerCase()];
+            if (Array.isArray(value)) {
+                return value[0];
+            }
+            return value as string | undefined;
+        };
+
         const req = {
             ...mockReq,
             headers: finalHeaders,
-            header: (name: string) => {
-                const value = finalHeaders[name.toLowerCase()];
-                if (Array.isArray(value)) {
-                    return value[0];
-                }
-                return value as string | undefined;
-            },
+            header,
+            // Express aliases `get` to the same header lookup; CookieDomainHandler uses req.get().
+            get: (name: string) => header(name),
             connection: { remoteAddress: "192.168.1.100" },
             socket: { remoteAddress: "192.168.1.100" },
             sessionID: "test-session-id",
@@ -596,10 +600,11 @@ describe("[TRPC] Client Router Unit Tests", () => {
             mockSsoTokens.consumeTransferToken.mockResolvedValue(validTokenPayload);
 
             const mockContext = createMockContext({}, undefined, "ffftemp.akosua.xyz");
-            mockContext.req.session = {
-                regenerate: jest.fn(callback => callback()),
+            // Keep full session shape (save, cookie, etc.); only override fields under test.
+            Object.assign(mockContext.req.session, {
+                regenerate: jest.fn(callback => callback(null)),
                 user: undefined,
-            } as any;
+            });
 
             const caller = createCallerFactory(clientRouter)(mockContext);
 
