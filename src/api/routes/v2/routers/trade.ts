@@ -296,6 +296,7 @@ export const tradeRouter = router({
 
     /**
      * Paginated list of trades for the authenticated user's team.
+     * Supports optional filters: statuses, date range, player/pick involvement, and sort order.
      * Trade items include sender/recipient teams but are not hydrated with player/pick entities.
      */
     list: protectedProcedure
@@ -304,6 +305,22 @@ export const tradeRouter = router({
                 statuses: z.array(z.nativeEnum(TradeStatus)).optional(),
                 page: z.number().int().min(0).default(0),
                 pageSize: z.number().int().min(1).max(50).default(20),
+                dateFrom: z.string().optional(),
+                dateTo: z.string().optional(),
+                dateField: z.enum(["CREATED", "SUBMITTED", "ACCEPTED", "DECLINED"]).optional(),
+                playerIds: z.array(z.string().uuid()).max(10).optional(),
+                pick: z
+                    .object({
+                        pickType: z.string().optional(),
+                        season: z.number().int().optional(),
+                        round: z.number().optional(),
+                        originalOwnerId: z.string().uuid().optional(),
+                    })
+                    .refine(p => p.pickType || p.season !== undefined || p.round !== undefined || p.originalOwnerId, {
+                        message: "At least one pick filter field is required",
+                    })
+                    .optional(),
+                orderBy: z.enum(["CREATED", "SUBMITTED"]).optional(),
             })
         )
         .query(
@@ -323,7 +340,13 @@ export const tradeRouter = router({
                     statuses: input.statuses,
                     page: input.page,
                     pageSize: input.pageSize,
-                });
+                    dateFrom: input.dateFrom,
+                    dateTo: input.dateTo,
+                    dateField: input.dateField,
+                    playerIds: input.playerIds,
+                    pick: input.pick,
+                    orderBy: input.orderBy,
+                }, ctx.prisma.draftPick);
 
                 addSpanEvent("trades.list.success");
                 return {

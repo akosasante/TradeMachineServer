@@ -191,10 +191,10 @@ describe("[PRISMA] TradeDAO", () => {
 
             expect(prisma.findMany).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    where: {
+                    where: expect.objectContaining({
                         tradeParticipants: { some: { teamId } },
                         status: { in: [TradeStatus.REQUESTED, TradeStatus.PENDING] },
-                    },
+                    }),
                 })
             );
         });
@@ -205,15 +205,112 @@ describe("[PRISMA] TradeDAO", () => {
 
             await dao.getTradesByTeam(teamId, { statuses: [], page: 0, pageSize: 20 });
 
+            const call = prisma.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
+            expect(call.where).toHaveProperty("tradeParticipants");
+            expect(call.where).not.toHaveProperty("status");
+        });
+
+        it("should order by submittedAt desc when orderBy is SUBMITTED", async () => {
+            prisma.findMany.mockResolvedValueOnce([tradeA] as any);
+            prisma.count.mockResolvedValueOnce(1);
+
+            await dao.getTradesByTeam(teamId, {
+                statuses: [TradeStatus.SUBMITTED],
+                page: 0,
+                pageSize: 10,
+                orderBy: "SUBMITTED",
+            });
+
             expect(prisma.findMany).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    where: {
-                        tradeParticipants: { some: { teamId } },
-                    },
+                    orderBy: { submittedAt: "desc" },
                 })
             );
+        });
+
+        it("should order by dateCreated desc when orderBy is CREATED (explicit)", async () => {
+            prisma.findMany.mockResolvedValueOnce([tradeA] as any);
+            prisma.count.mockResolvedValueOnce(1);
+
+            await dao.getTradesByTeam(teamId, { page: 0, pageSize: 10, orderBy: "CREATED" });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    orderBy: { dateCreated: "desc" },
+                })
+            );
+        });
+
+        it("should filter by date range on submittedAt when dateField is SUBMITTED", async () => {
+            prisma.findMany.mockResolvedValueOnce([] as any);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.getTradesByTeam(teamId, {
+                dateFrom: "2026-01-01",
+                dateField: "SUBMITTED",
+                page: 0,
+                pageSize: 20,
+            });
+
             const call = prisma.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
-            expect(call.where).not.toHaveProperty("status");
+            expect(call.where).toHaveProperty("submittedAt");
+            expect(call.where).not.toHaveProperty("dateCreated");
+            expect(call.where).toHaveProperty("tradeParticipants");
+        });
+
+        it("should filter by playerIds using AND tradeItems.some constraint", async () => {
+            const playerId = uuid();
+            prisma.findMany.mockResolvedValueOnce([tradeA] as any);
+            prisma.count.mockResolvedValueOnce(1);
+
+            await dao.getTradesByTeam(teamId, {
+                playerIds: [playerId],
+                page: 0,
+                pageSize: 20,
+            });
+
+            const call = prisma.findMany.mock.calls[0][0] as { where: { AND: unknown[] } };
+            expect(call.where).toHaveProperty("tradeParticipants");
+            expect(call.where.AND).toContainEqual({
+                tradeItems: { some: { tradeItemType: TradeItemType.PLAYER, tradeItemId: playerId } },
+            });
+        });
+
+        it("should resolve pick filter and include tradeItems.some with PICK type", async () => {
+            const pickDb = mockDeep<PrismaClient["draftPick"]>();
+            const resolvedId = uuid();
+            pickDb.findMany.mockResolvedValueOnce([{ id: resolvedId }] as any);
+            prisma.findMany.mockResolvedValueOnce([tradeA] as any);
+            prisma.count.mockResolvedValueOnce(1);
+
+            await dao.getTradesByTeam(
+                teamId,
+                { pick: { pickType: "MAJORS", season: 2026 }, page: 0, pageSize: 20 },
+                pickDb as unknown as ExtendedPrismaClient["draftPick"]
+            );
+
+            expect(pickDb.findMany).toHaveBeenCalledTimes(1);
+            const call = prisma.findMany.mock.calls[0][0] as { where: { AND: unknown[] } };
+            expect(call.where).toHaveProperty("tradeParticipants");
+            expect(call.where.AND).toContainEqual({
+                tradeItems: {
+                    some: { tradeItemType: TradeItemType.PICK, tradeItemId: { in: [resolvedId] } },
+                },
+            });
+        });
+
+        it("should return empty when pick filter resolves to no picks", async () => {
+            const pickDb = mockDeep<PrismaClient["draftPick"]>();
+            pickDb.findMany.mockResolvedValueOnce([]);
+
+            const result = await dao.getTradesByTeam(
+                teamId,
+                { pick: { pickType: "MAJORS", season: 2099 }, page: 0, pageSize: 20 },
+                pickDb as unknown as ExtendedPrismaClient["draftPick"]
+            );
+
+            expect(result).toEqual({ trades: [], total: 0 });
+            expect(prisma.findMany).not.toHaveBeenCalled();
         });
     });
 

@@ -26,6 +26,21 @@ export interface StaffTradeFilters {
     pick?: PickFilter;
 }
 
+export type TeamTradeOrderBy = "CREATED" | "SUBMITTED";
+
+export interface TeamTradeFilters {
+    statuses?: TradeStatus[];
+    page: number;
+    pageSize: number;
+    dateFrom?: string;
+    dateTo?: string;
+    dateField?: DateField;
+    playerIds?: string[];
+    pick?: PickFilter;
+    /** Sort order. "CREATED" = dateCreated desc (default, backward-compat). "SUBMITTED" = submittedAt desc. */
+    orderBy?: TeamTradeOrderBy;
+}
+
 /** The Prisma include shape used consistently across all DAO methods */
 const tradeWithRelations = {
     tradeParticipants: {
@@ -77,27 +92,51 @@ export default class TradeDAO {
 
     /**
      * Trades where the given team is a participant, newest first.
+     * Supports optional filters: statuses, date range, player/pick involvement, and sort order.
      * Does not hydrate player/pick entities on trade items (list UI only).
      */
     public async getTradesByTeam(
         teamId: string,
-        opts: { statuses?: TradeStatus[]; page: number; pageSize: number }
+        opts: TeamTradeFilters,
+        pickDb?: ExtendedPrismaClient["draftPick"]
     ): Promise<{ trades: PrismaTrade[]; total: number }> {
-        const { statuses, page, pageSize } = opts;
+        const { statuses, page, pageSize, dateFrom, dateTo, dateField, playerIds, pick, orderBy } = opts;
         const skip = page * pageSize;
 
+        const baseWhere = buildStaffTradeWhere({ statuses, dateFrom, dateTo, dateField, playerIds });
+
         const where: Prisma.TradeWhereInput = {
+            ...baseWhere,
             tradeParticipants: {
                 some: { teamId },
             },
-            ...(statuses && statuses.length > 0 ? { status: { in: statuses } } : {}),
         };
+
+        // If both a player AND clause and a tradeParticipants filter exist, merge the AND arrays
+        if (baseWhere.AND) {
+            where.AND = baseWhere.AND;
+        }
+
+        if (pick && pickDb) {
+            const resolvedIds = await resolvePickIds(pickDb, pick);
+            if (resolvedIds.length === 0) return { trades: [], total: 0 };
+            const andClauses = (where.AND as Prisma.TradeWhereInput[]) ?? [];
+            andClauses.push({
+                tradeItems: {
+                    some: { tradeItemType: TradeItemType.PICK, tradeItemId: { in: resolvedIds } },
+                },
+            });
+            where.AND = andClauses;
+        }
+
+        const orderByClause: Prisma.TradeOrderByWithRelationInput =
+            orderBy === "SUBMITTED" ? { submittedAt: "desc" } : { dateCreated: "desc" };
 
         const [trades, total] = await Promise.all([
             this.tradeDb.findMany({
                 where,
                 include: tradeWithRelations,
-                orderBy: { dateCreated: "desc" },
+                orderBy: orderByClause,
                 skip,
                 take: pageSize,
             }),
