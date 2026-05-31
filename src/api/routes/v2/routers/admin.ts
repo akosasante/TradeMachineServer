@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
@@ -534,5 +532,3 @@ export const adminRouter = router({
     sync: syncRouter,
     email: emailRouter,
 });
-
-/* eslint-enable @typescript-eslint/naming-convention */

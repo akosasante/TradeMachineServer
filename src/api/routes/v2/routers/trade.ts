@@ -336,17 +336,21 @@ export const tradeRouter = router({
                 addSpanEvent("trades.list.start");
 
                 const dao = new TradeDAO(ctx.prisma.trade);
-                const { trades, total } = await dao.getTradesByTeam(teamId, {
-                    statuses: input.statuses,
-                    page: input.page,
-                    pageSize: input.pageSize,
-                    dateFrom: input.dateFrom,
-                    dateTo: input.dateTo,
-                    dateField: input.dateField,
-                    playerIds: input.playerIds,
-                    pick: input.pick,
-                    orderBy: input.orderBy,
-                }, ctx.prisma.draftPick);
+                const { trades, total } = await dao.getTradesByTeam(
+                    teamId,
+                    {
+                        statuses: input.statuses,
+                        page: input.page,
+                        pageSize: input.pageSize,
+                        dateFrom: input.dateFrom,
+                        dateTo: input.dateTo,
+                        dateField: input.dateField,
+                        playerIds: input.playerIds,
+                        pick: input.pick,
+                        orderBy: input.orderBy,
+                    },
+                    ctx.prisma.draftPick
+                );
 
                 addSpanEvent("trades.list.success");
                 return {
