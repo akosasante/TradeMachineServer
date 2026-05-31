@@ -31,7 +31,7 @@
     "typescript": "^4.9.0"
   },
   "peerDependencies": {
-    "@trpc/server": "^10.45.0"
+    "@trpc/server": "^10.45.3"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
