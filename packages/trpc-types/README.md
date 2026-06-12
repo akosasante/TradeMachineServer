@@ -156,6 +156,12 @@ repo reflects the published state.
 
 ## Changelog
 
+### 1.17.0
+
+- Extend `trades.list` input with team-scoped filters: `dateFrom`, `dateTo`, `dateField`, `playerIds`, `pick`, and `orderBy` (`CREATED` | `SUBMITTED`)
+- `orderBy: 'SUBMITTED'` sorts by `submittedAt` desc; default remains `CREATED` (backward-compatible)
+- Used by V3 completed-trades page for team-scoped, server-side filtered + sorted trade list
+
 ### 1.16.1
 
 - `trades.listStaff`: rename `playerId` to `playerIds` (array, max 10) for multi-player AND filtering
