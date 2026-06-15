@@ -70,4 +70,23 @@ export default class TeamDAO {
             include: teamInclude,
         })) as unknown as TeamWithOwners;
     }
+
+    public async searchTeams(opts: { q: string; excludeTeamIds?: string[] }): Promise<TeamWithOwners[]> {
+        const where: Prisma.TeamWhereInput = {
+            OR: [
+                { name: { contains: opts.q, mode: "insensitive" } },
+                { owners: { some: { csvName: { contains: opts.q, mode: "insensitive" } } } },
+            ],
+        };
+
+        if (opts.excludeTeamIds && opts.excludeTeamIds.length > 0) {
+            where.id = { notIn: opts.excludeTeamIds };
+        }
+
+        return (await this.teamDb.findMany({
+            where,
+            orderBy: { name: "asc" },
+            include: teamInclude,
+        })) as unknown as TeamWithOwners[];
+    }
 }

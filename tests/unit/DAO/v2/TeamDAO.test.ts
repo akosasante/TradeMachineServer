@@ -120,4 +120,67 @@ describe("[PRISMA] TeamDAO", () => {
             expect(result.id).toBe(team.id);
         });
     });
+
+    describe("searchTeams", () => {
+        it("should search by name and owner csvName with correct query structure", async () => {
+            const teams = [makeTeam({ name: "Alpha Team" }), makeTeam({ name: "Alpha Wolves" })];
+            prisma.findMany.mockResolvedValueOnce(teams as any);
+
+            const result = await dao.searchTeams({ q: "Alpha" });
+
+            expect(prisma.findMany).toHaveBeenCalledWith({
+                where: {
+                    OR: [
+                        { name: { contains: "Alpha", mode: "insensitive" } },
+                        { owners: { some: { csvName: { contains: "Alpha", mode: "insensitive" } } } },
+                    ],
+                },
+                orderBy: { name: "asc" },
+                include: teamInclude,
+            });
+            expect(result).toHaveLength(2);
+        });
+
+        it("should include id notIn filter when excludeTeamIds is non-empty", async () => {
+            const team = makeTeam();
+            prisma.findMany.mockResolvedValueOnce([team] as any);
+            const excludeIds = ["id-to-exclude-1", "id-to-exclude-2"];
+
+            await dao.searchTeams({ q: "Squad", excludeTeamIds: excludeIds });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: expect.objectContaining({
+                        id: { notIn: excludeIds },
+                    }),
+                })
+            );
+        });
+
+        it("should NOT include id filter when excludeTeamIds is empty", async () => {
+            prisma.findMany.mockResolvedValueOnce([]);
+
+            await dao.searchTeams({ q: "Squad", excludeTeamIds: [] });
+
+            const callArg = prisma.findMany.mock.calls[0][0] as unknown as { where: Record<string, unknown> };
+            expect(callArg.where).not.toHaveProperty("id");
+        });
+
+        it("should NOT include id filter when excludeTeamIds is omitted", async () => {
+            prisma.findMany.mockResolvedValueOnce([]);
+
+            await dao.searchTeams({ q: "Squad" });
+
+            const callArg = prisma.findMany.mock.calls[0][0] as unknown as { where: Record<string, unknown> };
+            expect(callArg.where).not.toHaveProperty("id");
+        });
+
+        it("should return an empty array when no teams match", async () => {
+            prisma.findMany.mockResolvedValueOnce([]);
+
+            const result = await dao.searchTeams({ q: "ZZZNoMatch" });
+
+            expect(result).toEqual([]);
+        });
+    });
 });

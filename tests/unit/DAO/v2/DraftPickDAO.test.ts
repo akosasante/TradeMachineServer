@@ -249,4 +249,139 @@ describe("[PRISMA] DraftPickDAO", () => {
             expect(result.id).toBe(pick.id);
         });
     });
+
+    describe("searchEligiblePicks", () => {
+        let savedEnvVar: string | undefined;
+
+        beforeEach(() => {
+            savedEnvVar = process.env.DRAFT_PICKS_TRADEABLE_FROM;
+        });
+
+        afterEach(() => {
+            if (savedEnvVar === undefined) {
+                delete process.env.DRAFT_PICKS_TRADEABLE_FROM;
+            } else {
+                process.env.DRAFT_PICKS_TRADEABLE_FROM = savedEnvVar;
+            }
+        });
+
+        it("happy path — all filters produce the correct where/orderBy/pagination/include", async () => {
+            const someId = uuid();
+            const otherId = uuid();
+            const pick = makePick({ currentOwnerId: otherId, originalOwnerId: someId });
+            delete process.env.DRAFT_PICKS_TRADEABLE_FROM;
+
+            prisma.findMany.mockResolvedValueOnce([pick] as any);
+            prisma.count.mockResolvedValueOnce(1);
+
+            const result = await dao.searchEligiblePicks({
+                year: 2026,
+                type: PickLeagueLevel.MAJORS,
+                round: 1,
+                originalOwnerId: someId,
+                currentOwnerId: otherId,
+                skip: 0,
+                take: 10,
+            });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: expect.objectContaining({
+                        season: 2026,
+                        type: PickLeagueLevel.MAJORS,
+                        round: expect.any(Object), // Prisma.Decimal
+                        originalOwnerId: someId,
+                        currentOwnerId: otherId,
+                    }),
+                    orderBy: [{ season: "desc" }, { round: "asc" }],
+                    skip: 0,
+                    take: 10,
+                    include: expectedInclude,
+                })
+            );
+            expect(result).toEqual({ picks: [pick], total: 1 });
+        });
+
+        it("partial filters — season and type only; round, ownerIds absent from where", async () => {
+            delete process.env.DRAFT_PICKS_TRADEABLE_FROM;
+
+            prisma.findMany.mockResolvedValueOnce([]);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.searchEligiblePicks({ year: 2026, type: PickLeagueLevel.MAJORS });
+
+            const callArg = prisma.findMany.mock.calls[0][0] as any;
+            expect(callArg.where).toEqual({ season: 2026, type: PickLeagueLevel.MAJORS });
+            expect(callArg.where).not.toHaveProperty("round");
+            expect(callArg.where).not.toHaveProperty("originalOwnerId");
+            expect(callArg.where).not.toHaveProperty("currentOwnerId");
+        });
+
+        it("no filters — where is empty object", async () => {
+            delete process.env.DRAFT_PICKS_TRADEABLE_FROM;
+
+            prisma.findMany.mockResolvedValueOnce([]);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.searchEligiblePicks({});
+
+            const callArg = prisma.findMany.mock.calls[0][0] as any;
+            expect(callArg.where).toEqual({});
+        });
+
+        it("default pagination — skip defaults to 0 and take defaults to 50 when omitted", async () => {
+            delete process.env.DRAFT_PICKS_TRADEABLE_FROM;
+
+            prisma.findMany.mockResolvedValueOnce([]);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.searchEligiblePicks({});
+
+            const callArg = prisma.findMany.mock.calls[0][0] as any;
+            expect(callArg.skip).toBe(0);
+            expect(callArg.take).toBe(50);
+        });
+
+        it("date gate — env var set to future date, returns early with empty result without calling findMany", async () => {
+            process.env.DRAFT_PICKS_TRADEABLE_FROM = "2099-01-01";
+
+            const result = await dao.searchEligiblePicks({});
+
+            expect(result).toEqual({ picks: [], total: 0 });
+            expect(prisma.findMany).not.toHaveBeenCalled();
+        });
+
+        it("date gate — env var set to past date, gate allows through and findMany is called", async () => {
+            process.env.DRAFT_PICKS_TRADEABLE_FROM = "2000-01-01";
+
+            prisma.findMany.mockResolvedValueOnce([]);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.searchEligiblePicks({});
+
+            expect(prisma.findMany).toHaveBeenCalled();
+        });
+
+        it("date gate — env var not set, gate is skipped and findMany is called", async () => {
+            delete process.env.DRAFT_PICKS_TRADEABLE_FROM;
+
+            prisma.findMany.mockResolvedValueOnce([]);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.searchEligiblePicks({});
+
+            expect(prisma.findMany).toHaveBeenCalled();
+        });
+
+        it("empty result — findMany returns [] and count returns 0", async () => {
+            delete process.env.DRAFT_PICKS_TRADEABLE_FROM;
+
+            prisma.findMany.mockResolvedValueOnce([]);
+            prisma.count.mockResolvedValueOnce(0);
+
+            const result = await dao.searchEligiblePicks({});
+
+            expect(result).toEqual({ picks: [], total: 0 });
+        });
+    });
 });
