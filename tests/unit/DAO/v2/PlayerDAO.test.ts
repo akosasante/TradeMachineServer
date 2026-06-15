@@ -194,6 +194,75 @@ describe("[PRISMA] PlayerDAO", () => {
         });
     });
 
+    describe("searchPlayers — ownerTeamIds filter", () => {
+        it("should filter by ownerTeamIds when provided", async () => {
+            const players = [makePlayer()];
+            prisma.findMany.mockResolvedValueOnce(players as any);
+            prisma.count.mockResolvedValueOnce(1);
+            const ownerTeamIds = [uuid(), uuid()];
+
+            const result = await dao.searchPlayers({ ownerTeamIds });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: expect.objectContaining({
+                        leagueTeamId: { in: ownerTeamIds },
+                    }),
+                })
+            );
+            expect(prisma.count).toHaveBeenCalledWith({
+                where: expect.objectContaining({
+                    leagueTeamId: { in: ownerTeamIds },
+                }),
+            });
+            expect(result.players).toHaveLength(1);
+            expect(result.total).toBe(1);
+        });
+
+        it("should NOT include leagueTeamId filter when ownerTeamIds is empty", async () => {
+            prisma.findMany.mockResolvedValueOnce([]);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.searchPlayers({ ownerTeamIds: [] });
+
+            const callArg = prisma.findMany.mock.calls[0][0] as unknown as { where: Record<string, unknown> };
+            expect(callArg.where).not.toHaveProperty("leagueTeamId");
+        });
+
+        it("should NOT include leagueTeamId filter when ownerTeamIds is undefined", async () => {
+            prisma.findMany.mockResolvedValueOnce([]);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.searchPlayers({ ownerTeamIds: undefined });
+
+            const callArg = prisma.findMany.mock.calls[0][0] as unknown as { where: Record<string, unknown> };
+            expect(callArg.where).not.toHaveProperty("leagueTeamId");
+        });
+
+        it("should combine search, league, and ownerTeamIds filters simultaneously", async () => {
+            const player = makePlayer({ name: "Shohei Ohtani", league: PlayerLeagueLevel.MAJORS });
+            prisma.findMany.mockResolvedValueOnce([player] as any);
+            prisma.count.mockResolvedValueOnce(1);
+            const ownerTeamIds = [uuid()];
+
+            await dao.searchPlayers({
+                search: "ohtani",
+                league: PlayerLeagueLevel.MAJORS,
+                ownerTeamIds,
+            });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: {
+                        league: PlayerLeagueLevel.MAJORS,
+                        name: { contains: "ohtani", mode: "insensitive" },
+                        leagueTeamId: { in: ownerTeamIds },
+                    },
+                })
+            );
+        });
+    });
+
     describe("findPlayers", () => {
         it("should query with AND conditions from parsed params", async () => {
             prisma.findMany.mockResolvedValueOnce([]);

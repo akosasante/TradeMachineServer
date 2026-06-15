@@ -1,4 +1,4 @@
-import { Prisma, TradeItemType, TradeStatus } from "@prisma/client";
+import { Prisma, TradeItemType, TradeParticipantType, TradeStatus } from "@prisma/client";
 import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
 export interface AcceptedByEntry {
@@ -42,7 +42,7 @@ export interface TeamTradeFilters {
 }
 
 /** The Prisma include shape used consistently across all DAO methods */
-const tradeWithRelations = {
+export const tradeWithRelations = {
     tradeParticipants: {
         include: {
             team: {
@@ -237,6 +237,214 @@ export default class TradeDAO {
             },
         });
         return this.getTradeById(id);
+    }
+
+    // ─── Write methods ──────────────────────────────────────────────────────────
+
+    /**
+     * Creates a new DRAFT trade with a CREATOR participant and one or more RECIPIENT participants.
+     * Returns the fully hydrated trade.
+     */
+    public async createDraft({
+        creatorTeamId,
+        participantTeamIds,
+    }: {
+        creatorTeamId: string;
+        participantTeamIds: string[];
+    }): Promise<PrismaTrade> {
+        const result = await this.tradeDb.create({
+            data: {
+                status: TradeStatus.DRAFT,
+                tradeParticipants: {
+                    create: [
+                        { participantType: TradeParticipantType.CREATOR, teamId: creatorTeamId },
+                        ...participantTeamIds.map(id => ({
+                            participantType: TradeParticipantType.RECIPIENT,
+                            teamId: id,
+                        })),
+                    ],
+                },
+            },
+        });
+        return this.getTradeById(result.id);
+    }
+
+    /**
+     * Replaces all RECIPIENT participants on a trade with the given teamIds.
+     * The CREATOR participant is left untouched.
+     * Returns the fully hydrated trade.
+     */
+    public async updateDraftParticipants(tradeId: string, participantTeamIds: string[]): Promise<PrismaTrade> {
+        await this.tradeDb.update({
+            where: { id: tradeId },
+            data: {
+                tradeParticipants: {
+                    deleteMany: { participantType: TradeParticipantType.RECIPIENT },
+                    create: participantTeamIds.map(id => ({
+                        participantType: TradeParticipantType.RECIPIENT,
+                        teamId: id,
+                    })),
+                },
+            },
+        });
+        return this.getTradeById(tradeId);
+    }
+
+    /**
+     * Adds a trade item (player or pick) to an existing trade.
+     * The @@unique constraint on TradeItem dedupes identical items.
+     * Returns the fully hydrated trade.
+     */
+    public async addTradeItem(
+        tradeId: string,
+        {
+            tradeItemType,
+            tradeItemId,
+            senderId,
+            recipientId,
+        }: {
+            tradeItemType: TradeItemType;
+            tradeItemId: string;
+            senderId: string;
+            recipientId: string;
+        }
+    ): Promise<PrismaTrade> {
+        await this.tradeDb.update({
+            where: { id: tradeId },
+            data: {
+                tradeItems: {
+                    create: { tradeItemType, tradeItemId, senderId, recipientId },
+                },
+            },
+        });
+        return this.getTradeById(tradeId);
+    }
+
+    /**
+     * Updates senderId and/or recipientId on a specific TradeItem (identified by lineId).
+     * Uses the provided tradeItemDb delegate to perform the update and resolve the parent tradeId.
+     * Returns the fully hydrated parent trade.
+     */
+    public async updateTradeItem(
+        lineId: string,
+        updates: { senderId?: string; recipientId?: string },
+        tradeItemDb: ExtendedPrismaClient["tradeItem"]
+    ): Promise<PrismaTrade> {
+        const updated = await tradeItemDb.update({
+            where: { id: lineId },
+            data: updates,
+            select: { tradeId: true },
+        });
+        if (!updated.tradeId) {
+            throw new Error(`updateTradeItem: TradeItem ${lineId} has no associated tradeId`);
+        }
+        return this.getTradeById(updated.tradeId);
+    }
+
+    /**
+     * Deletes a specific TradeItem (identified by lineId) from its parent trade.
+     * Uses the provided tradeItemDb delegate to find and delete the item.
+     * Returns the fully hydrated parent trade.
+     */
+    public async removeTradeItem(lineId: string, tradeItemDb: ExtendedPrismaClient["tradeItem"]): Promise<PrismaTrade> {
+        const item = await tradeItemDb.findUniqueOrThrow({
+            where: { id: lineId },
+            select: { tradeId: true },
+        });
+        if (!item.tradeId) {
+            throw new Error(`removeTradeItem: TradeItem ${lineId} has no associated tradeId`);
+        }
+        await tradeItemDb.delete({ where: { id: lineId } });
+        return this.getTradeById(item.tradeId);
+    }
+
+    /**
+     * Deletes a DRAFT trade, guarded by authz checks:
+     * - The trade must be in DRAFT status.
+     * - requestingUserId must be an owner of the CREATOR team.
+     * Throws descriptive errors if either check fails.
+     */
+    public async deleteDraft(tradeId: string, requestingUserId: string): Promise<void> {
+        const trade = await this.getTradeById(tradeId);
+
+        if (trade.status !== TradeStatus.DRAFT) {
+            throw new Error(`deleteDraft: trade ${tradeId} is not in DRAFT status (current: ${trade.status})`);
+        }
+
+        const creatorParticipant = trade.tradeParticipants.find(
+            p => p.participantType === TradeParticipantType.CREATOR
+        );
+        if (!creatorParticipant?.team) {
+            throw new Error(`deleteDraft: trade ${tradeId} has no CREATOR participant with a team`);
+        }
+
+        const isOwner = creatorParticipant.team.owners.some(owner => owner.id === requestingUserId);
+        if (!isOwner) {
+            throw new Error(
+                `Unauthorized: user ${requestingUserId} is not an owner of the CREATOR team for trade ${tradeId}`
+            );
+        }
+
+        await this.tradeDb.delete({ where: { id: tradeId } });
+    }
+
+    /**
+     * Lists DRAFT trades where any of the given teamIds is a participant.
+     * Supports pagination and sort order.
+     * Returns matching trades and total count.
+     */
+    public async listDraftsForUser({
+        teamIds,
+        skip,
+        take,
+        sort,
+    }: {
+        teamIds: string[];
+        skip: number;
+        take: number;
+        sort?: TeamTradeOrderBy;
+    }): Promise<{ trades: PrismaTrade[]; total: number }> {
+        const where: Prisma.TradeWhereInput = {
+            status: TradeStatus.DRAFT,
+            tradeParticipants: {
+                some: { teamId: { in: teamIds } },
+            },
+        };
+
+        const orderByClause: Prisma.TradeOrderByWithRelationInput =
+            sort === "SUBMITTED" ? { submittedAt: "desc" } : { dateCreated: "desc" };
+
+        const [trades, total] = await Promise.all([
+            this.tradeDb.findMany({
+                where,
+                include: tradeWithRelations,
+                orderBy: orderByClause,
+                skip,
+                take,
+            }),
+            this.tradeDb.count({ where }),
+        ]);
+
+        return { trades, total };
+    }
+
+    /**
+     * Transitions a trade from DRAFT to REQUESTED status.
+     * Throws if the trade is not currently in DRAFT status.
+     * Returns the fully hydrated trade. Notification enqueueing is the caller's responsibility.
+     */
+    public async requestTrade(tradeId: string): Promise<PrismaTrade> {
+        const trade = await this.getTradeById(tradeId);
+
+        if (trade.status !== TradeStatus.DRAFT) {
+            throw new Error(`requestTrade: trade ${tradeId} is not in DRAFT status (current: ${trade.status})`);
+        }
+
+        await this.tradeDb.update({
+            where: { id: tradeId },
+            data: { status: TradeStatus.REQUESTED },
+        });
+        return this.getTradeById(tradeId);
     }
 }
 

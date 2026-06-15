@@ -1,6 +1,11 @@
-import { PrismaClient, TradeItemType, TradeStatus } from "@prisma/client";
+import { PrismaClient, TradeItemType, TradeParticipantType, TradeStatus } from "@prisma/client";
 import { mockClear, mockDeep } from "jest-mock-extended";
-import TradeDAO, { AcceptedByEntry, buildStaffTradeWhere, resolvePickIds } from "../../../../src/DAO/v2/TradeDAO";
+import TradeDAO, {
+    AcceptedByEntry,
+    buildStaffTradeWhere,
+    resolvePickIds,
+    tradeWithRelations,
+} from "../../../../src/DAO/v2/TradeDAO";
 import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
 import { TradeFactory } from "../../../factories/TradeFactory";
 import { daoTestLifecycle, expectDaoRequiresPrismaClient } from "./daoTestHelpers";
@@ -11,6 +16,7 @@ const makeMinimalTrade = (...args: Parameters<typeof TradeFactory.getPrismaTrade
 
 describe("[PRISMA] TradeDAO", () => {
     const prisma = mockDeep<PrismaClient["trade"]>();
+    const tradeItemDb = mockDeep<ExtendedPrismaClient["tradeItem"]>();
     const dao = new TradeDAO(prisma as unknown as ExtendedPrismaClient["trade"]);
     const tradeId = uuid();
     const testTrade = makeMinimalTrade({ id: tradeId });
@@ -18,6 +24,7 @@ describe("[PRISMA] TradeDAO", () => {
     daoTestLifecycle("TRADE");
     afterEach(() => {
         mockClear(prisma);
+        mockClear(tradeItemDb);
     });
 
     expectDaoRequiresPrismaClient(TradeDAO, "TradeDAO");
@@ -586,6 +593,450 @@ describe("[PRISMA] TradeDAO", () => {
             expect(call.where).toHaveProperty("status", { in: [TradeStatus.SUBMITTED] });
             expect(call.where).toHaveProperty("acceptedOnDate");
             expect(call.where).toHaveProperty("AND");
+        });
+    });
+
+    // ─── New draft/trade-item methods ────────────────────────────────────────────
+
+    describe("createDraft", () => {
+        it("should call prisma.create with DRAFT status, CREATOR participant, and RECIPIENT participants", async () => {
+            const creatorTeamId = uuid();
+            const recipientTeamId1 = uuid();
+            const recipientTeamId2 = uuid();
+            const createdTrade = makeMinimalTrade({ id: tradeId });
+
+            prisma.create.mockResolvedValueOnce(createdTrade as any);
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(createdTrade as any);
+
+            await dao.createDraft({ creatorTeamId, participantTeamIds: [recipientTeamId1, recipientTeamId2] });
+
+            expect(prisma.create).toHaveBeenCalledTimes(1);
+            expect(prisma.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        status: TradeStatus.DRAFT,
+                        tradeParticipants: expect.objectContaining({
+                            create: expect.arrayContaining([
+                                expect.objectContaining({
+                                    participantType: TradeParticipantType.CREATOR,
+                                    teamId: creatorTeamId,
+                                }),
+                                expect.objectContaining({
+                                    participantType: TradeParticipantType.RECIPIENT,
+                                    teamId: recipientTeamId1,
+                                }),
+                                expect.objectContaining({
+                                    participantType: TradeParticipantType.RECIPIENT,
+                                    teamId: recipientTeamId2,
+                                }),
+                            ]),
+                        }),
+                    }),
+                })
+            );
+
+            expect(prisma.findUniqueOrThrow).toHaveBeenCalledWith(
+                expect.objectContaining({ where: { id: createdTrade.id } })
+            );
+        });
+
+        it("should create with only CREATOR participant when participantTeamIds is empty", async () => {
+            const creatorTeamId = uuid();
+            const createdTrade = makeMinimalTrade({ id: tradeId });
+
+            prisma.create.mockResolvedValueOnce(createdTrade as any);
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(createdTrade as any);
+
+            await dao.createDraft({ creatorTeamId, participantTeamIds: [] });
+
+            expect(prisma.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        status: TradeStatus.DRAFT,
+                        tradeParticipants: expect.objectContaining({
+                            create: [
+                                expect.objectContaining({
+                                    participantType: TradeParticipantType.CREATOR,
+                                    teamId: creatorTeamId,
+                                }),
+                            ],
+                        }),
+                    }),
+                })
+            );
+        });
+    });
+
+    describe("updateDraftParticipants", () => {
+        it("should deleteMany RECIPIENT participants and create new ones, then hydrate", async () => {
+            const newRecipientId1 = uuid();
+            const newRecipientId2 = uuid();
+
+            prisma.update.mockResolvedValueOnce(testTrade as any);
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(testTrade as any);
+
+            await dao.updateDraftParticipants(tradeId, [newRecipientId1, newRecipientId2]);
+
+            expect(prisma.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { id: tradeId },
+                    data: expect.objectContaining({
+                        tradeParticipants: expect.objectContaining({
+                            deleteMany: { participantType: TradeParticipantType.RECIPIENT },
+                            create: expect.arrayContaining([
+                                expect.objectContaining({
+                                    participantType: TradeParticipantType.RECIPIENT,
+                                    teamId: newRecipientId1,
+                                }),
+                                expect.objectContaining({
+                                    participantType: TradeParticipantType.RECIPIENT,
+                                    teamId: newRecipientId2,
+                                }),
+                            ]),
+                        }),
+                    }),
+                })
+            );
+
+            expect(prisma.findUniqueOrThrow).toHaveBeenCalledWith(expect.objectContaining({ where: { id: tradeId } }));
+        });
+
+        it("should call deleteMany with no create entries when recipientTeamIds is empty", async () => {
+            prisma.update.mockResolvedValueOnce(testTrade as any);
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(testTrade as any);
+
+            await dao.updateDraftParticipants(tradeId, []);
+
+            expect(prisma.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        tradeParticipants: expect.objectContaining({
+                            deleteMany: { participantType: TradeParticipantType.RECIPIENT },
+                            create: [],
+                        }),
+                    }),
+                })
+            );
+        });
+    });
+
+    describe("addTradeItem", () => {
+        it("should call prisma.update with tradeItems.create containing all fields, then hydrate", async () => {
+            const itemId = uuid();
+            const senderId = uuid();
+            const recipientId = uuid();
+
+            prisma.update.mockResolvedValueOnce(testTrade as any);
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(testTrade as any);
+
+            await dao.addTradeItem(tradeId, {
+                tradeItemType: TradeItemType.PLAYER,
+                tradeItemId: itemId,
+                senderId,
+                recipientId,
+            });
+
+            expect(prisma.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { id: tradeId },
+                    data: expect.objectContaining({
+                        tradeItems: expect.objectContaining({
+                            create: expect.objectContaining({
+                                tradeItemType: TradeItemType.PLAYER,
+                                tradeItemId: itemId,
+                                senderId,
+                                recipientId,
+                            }),
+                        }),
+                    }),
+                })
+            );
+
+            expect(prisma.findUniqueOrThrow).toHaveBeenCalledWith(expect.objectContaining({ where: { id: tradeId } }));
+        });
+
+        it("should pass the PICK tradeItemType to the create data", async () => {
+            const itemId = uuid();
+            const senderId = uuid();
+            const recipientId = uuid();
+
+            prisma.update.mockResolvedValueOnce(testTrade as any);
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(testTrade as any);
+
+            await dao.addTradeItem(tradeId, {
+                tradeItemType: TradeItemType.PICK,
+                tradeItemId: itemId,
+                senderId,
+                recipientId,
+            });
+
+            expect(prisma.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        tradeItems: expect.objectContaining({
+                            create: expect.objectContaining({
+                                tradeItemType: TradeItemType.PICK,
+                                tradeItemId: itemId,
+                            }),
+                        }),
+                    }),
+                })
+            );
+        });
+    });
+
+    describe("updateTradeItem", () => {
+        it("should update tradeItem by lineId and hydrate via tradeId", async () => {
+            const lineId = uuid();
+            const senderId = uuid();
+            const recipientId = uuid();
+            const updatedItem = { id: lineId, tradeId };
+
+            tradeItemDb.update.mockResolvedValueOnce(updatedItem as any);
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(testTrade as any);
+
+            await dao.updateTradeItem(
+                lineId,
+                { senderId, recipientId },
+                tradeItemDb as unknown as ExtendedPrismaClient["tradeItem"]
+            );
+
+            expect(tradeItemDb.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { id: lineId },
+                    data: expect.objectContaining({ senderId, recipientId }),
+                })
+            );
+
+            expect(prisma.findUniqueOrThrow).toHaveBeenCalledWith(expect.objectContaining({ where: { id: tradeId } }));
+        });
+
+        it("should work with a partial update (senderId only)", async () => {
+            const lineId = uuid();
+            const senderId = uuid();
+            const updatedItem = { id: lineId, tradeId };
+
+            tradeItemDb.update.mockResolvedValueOnce(updatedItem as any);
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(testTrade as any);
+
+            await dao.updateTradeItem(
+                lineId,
+                { senderId },
+                tradeItemDb as unknown as ExtendedPrismaClient["tradeItem"]
+            );
+
+            expect(tradeItemDb.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({ senderId }),
+                })
+            );
+        });
+
+        it("should throw when updated tradeItem has no tradeId", async () => {
+            const lineId = uuid();
+            const updatedItem = { id: lineId, tradeId: null };
+
+            tradeItemDb.update.mockResolvedValueOnce(updatedItem as any);
+
+            await expect(
+                dao.updateTradeItem(
+                    lineId,
+                    { senderId: uuid() },
+                    tradeItemDb as unknown as ExtendedPrismaClient["tradeItem"]
+                )
+            ).rejects.toThrow();
+
+            expect(prisma.findUniqueOrThrow).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("removeTradeItem", () => {
+        it("should find tradeItem, delete it, then hydrate via tradeId", async () => {
+            const lineId = uuid();
+
+            tradeItemDb.findUniqueOrThrow.mockResolvedValueOnce({ tradeId } as any);
+            tradeItemDb.delete.mockResolvedValueOnce({} as any);
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(testTrade as any);
+
+            await dao.removeTradeItem(lineId, tradeItemDb as unknown as ExtendedPrismaClient["tradeItem"]);
+
+            expect(tradeItemDb.findUniqueOrThrow).toHaveBeenCalledWith(
+                expect.objectContaining({ where: { id: lineId } })
+            );
+            expect(tradeItemDb.delete).toHaveBeenCalledWith(expect.objectContaining({ where: { id: lineId } }));
+            expect(prisma.findUniqueOrThrow).toHaveBeenCalledWith(expect.objectContaining({ where: { id: tradeId } }));
+        });
+
+        it("should propagate error when tradeItem is not found", async () => {
+            const lineId = uuid();
+
+            tradeItemDb.findUniqueOrThrow.mockRejectedValueOnce(new Error("Record not found"));
+
+            await expect(
+                dao.removeTradeItem(lineId, tradeItemDb as unknown as ExtendedPrismaClient["tradeItem"])
+            ).rejects.toThrow("Record not found");
+
+            expect(tradeItemDb.delete).not.toHaveBeenCalled();
+            expect(prisma.findUniqueOrThrow).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("deleteDraft", () => {
+        const ownerId = uuid();
+        const creatorTeamId = uuid();
+
+        const makeDraftTradeWithOwner = (
+            overrides: Partial<{ status: TradeStatus; participantType: TradeParticipantType; ownerId: string }> = {}
+        ) => {
+            const participantType = overrides.participantType ?? TradeParticipantType.CREATOR;
+            const ownerIdToUse = overrides.ownerId ?? ownerId;
+            const status = overrides.status ?? TradeStatus.DRAFT;
+            return {
+                id: tradeId,
+                status,
+                tradeParticipants: [
+                    {
+                        participantType,
+                        teamId: creatorTeamId,
+                        team: {
+                            id: creatorTeamId,
+                            owners: [{ id: ownerIdToUse }],
+                        },
+                    },
+                ],
+                tradeItems: [],
+                emails: [],
+            };
+        };
+
+        it("should delete the trade when status is DRAFT and user is an owner of the creator team", async () => {
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(makeDraftTradeWithOwner() as any);
+            prisma.delete.mockResolvedValueOnce(testTrade as any);
+
+            await dao.deleteDraft(tradeId, ownerId);
+
+            expect(prisma.delete).toHaveBeenCalledWith({ where: { id: tradeId } });
+        });
+
+        it("should throw when trade status is not DRAFT", async () => {
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(
+                makeDraftTradeWithOwner({ status: TradeStatus.REQUESTED }) as any
+            );
+
+            await expect(dao.deleteDraft(tradeId, ownerId)).rejects.toThrow();
+
+            expect(prisma.delete).not.toHaveBeenCalled();
+        });
+
+        it("should throw when user is not an owner of the creator team", async () => {
+            const differentOwnerId = uuid();
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(
+                makeDraftTradeWithOwner({ ownerId: differentOwnerId }) as any
+            );
+
+            await expect(dao.deleteDraft(tradeId, ownerId)).rejects.toThrow();
+
+            expect(prisma.delete).not.toHaveBeenCalled();
+        });
+
+        it("should throw when no CREATOR participant exists", async () => {
+            const tradeWithNoCreator = {
+                id: tradeId,
+                status: TradeStatus.DRAFT,
+                tradeParticipants: [
+                    {
+                        participantType: TradeParticipantType.RECIPIENT,
+                        teamId: uuid(),
+                        team: { id: uuid(), owners: [{ id: ownerId }] },
+                    },
+                ],
+                tradeItems: [],
+                emails: [],
+            };
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(tradeWithNoCreator as any);
+
+            await expect(dao.deleteDraft(tradeId, ownerId)).rejects.toThrow();
+
+            expect(prisma.delete).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("listDraftsForUser", () => {
+        it("should query by team ids with DRAFT status, paginate, and return count", async () => {
+            const teamIds = [uuid(), uuid()];
+            const tradeA = makeMinimalTrade({ id: uuid(), status: TradeStatus.DRAFT });
+            const tradeB = makeMinimalTrade({ id: uuid(), status: TradeStatus.DRAFT });
+
+            prisma.findMany.mockResolvedValueOnce([tradeA, tradeB] as any);
+            prisma.count.mockResolvedValueOnce(2);
+
+            const result = await dao.listDraftsForUser({ teamIds, skip: 0, take: 10 });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: expect.objectContaining({
+                        tradeParticipants: { some: { teamId: { in: teamIds } } },
+                        status: TradeStatus.DRAFT,
+                    }),
+                    skip: 0,
+                    take: 10,
+                })
+            );
+
+            expect(prisma.count).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: expect.objectContaining({
+                        status: TradeStatus.DRAFT,
+                    }),
+                })
+            );
+
+            expect(result).toEqual({ trades: [tradeA, tradeB], total: 2 });
+        });
+
+        it("should calculate skip based on page and pageSize", async () => {
+            const teamIds = [uuid()];
+
+            prisma.findMany.mockResolvedValueOnce([] as any);
+            prisma.count.mockResolvedValueOnce(0);
+
+            await dao.listDraftsForUser({ teamIds, skip: 10, take: 5 });
+
+            expect(prisma.findMany).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    skip: 10,
+                    take: 5,
+                })
+            );
+        });
+    });
+
+    describe("requestTrade", () => {
+        it("should transition DRAFT trade to REQUESTED status and return hydrated trade", async () => {
+            prisma.findUniqueOrThrow.mockResolvedValueOnce({ status: TradeStatus.DRAFT } as any);
+            prisma.update.mockResolvedValueOnce(testTrade as any);
+            prisma.findUniqueOrThrow.mockResolvedValueOnce(testTrade as any);
+
+            const result = await dao.requestTrade(tradeId);
+
+            expect(prisma.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { id: tradeId },
+                    data: expect.objectContaining({ status: TradeStatus.REQUESTED }),
+                })
+            );
+
+            // Second findUniqueOrThrow is the hydration call
+            expect(prisma.findUniqueOrThrow).toHaveBeenCalledTimes(2);
+            expect(result).toEqual(testTrade);
+        });
+
+        it("should throw when trade status is not DRAFT", async () => {
+            prisma.findUniqueOrThrow.mockResolvedValueOnce({ status: TradeStatus.REQUESTED } as any);
+
+            await expect(dao.requestTrade(tradeId)).rejects.toThrow();
+
+            expect(prisma.update).not.toHaveBeenCalled();
         });
     });
 });

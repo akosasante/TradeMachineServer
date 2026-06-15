@@ -107,4 +107,42 @@ export default class DraftPickDAO {
             include: draftPickInclude,
         })) as unknown as DraftPickWithTeams;
     }
+
+    public async searchEligiblePicks(opts: {
+        year?: number;
+        type?: PickLeagueLevel;
+        round?: number;
+        originalOwnerId?: string;
+        currentOwnerId?: string;
+        skip?: number;
+        take?: number;
+    }): Promise<{ picks: DraftPickWithTeams[]; total: number }> {
+        const tradeableFrom = process.env.DRAFT_PICKS_TRADEABLE_FROM;
+        if (tradeableFrom) {
+            const tradeableDate = new Date(tradeableFrom);
+            if (new Date() < tradeableDate) {
+                return { picks: [], total: 0 };
+            }
+        }
+
+        const where: Prisma.DraftPickWhereInput = {};
+        if (opts.year !== undefined) where.season = opts.year;
+        if (opts.type !== undefined) where.type = opts.type;
+        if (opts.round !== undefined) where.round = new Prisma.Decimal(opts.round);
+        if (opts.originalOwnerId !== undefined) where.originalOwnerId = opts.originalOwnerId;
+        if (opts.currentOwnerId !== undefined) where.currentOwnerId = opts.currentOwnerId;
+
+        const [picks, total] = await Promise.all([
+            this.pickDb.findMany({
+                where,
+                orderBy: [{ season: "desc" }, { round: "asc" }],
+                skip: opts.skip ?? 0,
+                take: opts.take ?? 50,
+                include: draftPickInclude,
+            }),
+            this.pickDb.count({ where }),
+        ]);
+
+        return { picks: picks as unknown as DraftPickWithTeams[], total };
+    }
 }

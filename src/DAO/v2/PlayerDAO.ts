@@ -30,6 +30,7 @@ export default class PlayerDAO {
     public async searchPlayers(opts?: {
         search?: string;
         league?: PlayerLeagueLevel;
+        ownerTeamIds?: string[];
         skip?: number;
         take?: number;
     }): Promise<{ players: PlayerWithTeam[]; total: number }> {
@@ -37,6 +38,9 @@ export default class PlayerDAO {
         if (opts?.league) where.league = opts.league;
         if (opts?.search) {
             where.name = { contains: opts.search, mode: "insensitive" };
+        }
+        if (opts?.ownerTeamIds && opts.ownerTeamIds.length > 0) {
+            where.leagueTeamId = { in: opts.ownerTeamIds };
         }
 
         const [players, total] = await Promise.all([
