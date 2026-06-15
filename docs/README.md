@@ -10,6 +10,7 @@ Project documentation lives here. This file is the entry point — start here, t
 |---|---|
 | [`adr/`](./adr/README.md) | **Architecture Decision Records** — numbered, dated records of significant technical decisions and the reasoning behind them. Read these before changing or revisiting an area they cover. |
 | [`proposals-and-projects/`](./proposals-and-projects/README.md) | **Proposals, plans, and project write-ups** — design proposals, migration plans, and analyses. More exploratory and longer-lived-draft than ADRs; an ADR is the authoritative record of what was actually decided. |
+| [`testing/`](./testing/README.md) | **Testing guide** — how to write and run tests, focused on the Prisma/v2 DAO patterns: unit vs. integration, shared helpers and factories, constructing the extended Prisma client, minimum coverage per DAO, and run commands. |
 
 ## How these relate
 
