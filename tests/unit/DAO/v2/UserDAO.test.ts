@@ -1,52 +1,21 @@
 import { mockDeep, mockClear } from "jest-mock-extended";
-import UserDAO, { PublicUser } from "../../../../src/DAO/v2/UserDAO";
+import UserDAO from "../../../../src/DAO/v2/UserDAO";
 import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
-import logger from "../../../../src/bootstrap/logger";
-import { v4 as uuid } from "uuid";
-import { UserRole, UserStatus } from "@prisma/client";
+import { UserFactory } from "../../../factories/UserFactory";
+import { daoTestLifecycle, expectDaoRequiresPrismaClient } from "./daoTestHelpers";
 
-const makeUser = (overrides: Record<string, unknown> = {}) => ({
-    id: uuid(),
-    email: "test@example.com",
-    displayName: "Test User",
-    password: "hashed-secret",
-    role: UserRole.OWNER,
-    status: UserStatus.ACTIVE,
-    slackUsername: null,
-    discordUserId: null,
-    teamId: null,
-    espnMember: null,
-    lastLoggedIn: null,
-    dateCreated: new Date(),
-    dateModified: new Date(),
-    passwordResetToken: null,
-    passwordResetExpiresOn: null,
-    csvName: null,
-    userSettings: null,
-    ...overrides,
-});
+const makeUser = (...args: Parameters<typeof UserFactory.getPrismaUser>) => UserFactory.getPrismaUser(...args);
 
 describe("[PRISMA] UserDAO", () => {
     const prisma = mockDeep<ExtendedPrismaClient["user"]>();
     const dao = new UserDAO(prisma as unknown as ExtendedPrismaClient["user"]);
 
-    beforeAll(() => {
-        logger.debug("~~~~~~PRISMA USER DAO TESTS BEGIN~~~~~~");
-    });
-    afterAll(() => {
-        logger.debug("~~~~~~PRISMA USER DAO TESTS COMPLETE~~~~~~");
-    });
+    daoTestLifecycle("USER");
     afterEach(() => {
         mockClear(prisma);
     });
 
-    describe("constructor", () => {
-        it("should throw when initialized without a prisma client", () => {
-            expect(() => new UserDAO(undefined)).toThrow(
-                "UserDAO must be initialized with a PrismaClient model instance!"
-            );
-        });
-    });
+    expectDaoRequiresPrismaClient(UserDAO, "UserDAO");
 
     describe("publicUser / publicUsers", () => {
         it("should strip the password field from a user", () => {

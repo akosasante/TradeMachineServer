@@ -1,33 +1,13 @@
 import { PrismaClient, TradeItemType, TradeStatus } from "@prisma/client";
 import { mockClear, mockDeep } from "jest-mock-extended";
-import TradeDAO, {
-    AcceptedByEntry,
-    PrismaTrade,
-    buildStaffTradeWhere,
-    resolvePickIds,
-} from "../../../../src/DAO/v2/TradeDAO";
+import TradeDAO, { AcceptedByEntry, buildStaffTradeWhere, resolvePickIds } from "../../../../src/DAO/v2/TradeDAO";
 import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
-import logger from "../../../../src/bootstrap/logger";
+import { TradeFactory } from "../../../factories/TradeFactory";
+import { daoTestLifecycle, expectDaoRequiresPrismaClient } from "./daoTestHelpers";
 import { v4 as uuid } from "uuid";
 
-const makeMinimalTrade = (overrides: Partial<PrismaTrade> = {}): PrismaTrade =>
-    ({
-        id: uuid(),
-        dateCreated: new Date(),
-        dateModified: new Date(),
-        status: TradeStatus.REQUESTED,
-        declinedReason: null,
-        declinedById: null,
-        acceptedBy: null,
-        acceptedByDetails: null,
-        acceptedOnDate: null,
-        submittedAt: null,
-        submittedById: null,
-        tradeParticipants: [],
-        tradeItems: [],
-        emails: [],
-        ...overrides,
-    } as unknown as PrismaTrade);
+const makeMinimalTrade = (...args: Parameters<typeof TradeFactory.getPrismaTrade>) =>
+    TradeFactory.getPrismaTrade(...args);
 
 describe("[PRISMA] TradeDAO", () => {
     const prisma = mockDeep<PrismaClient["trade"]>();
@@ -35,23 +15,12 @@ describe("[PRISMA] TradeDAO", () => {
     const tradeId = uuid();
     const testTrade = makeMinimalTrade({ id: tradeId });
 
-    beforeAll(() => {
-        logger.debug("~~~~~~PRISMA TRADE DAO TESTS BEGIN~~~~~~");
-    });
-    afterAll(() => {
-        logger.debug("~~~~~~PRISMA TRADE DAO TESTS COMPLETE~~~~~~");
-    });
+    daoTestLifecycle("TRADE");
     afterEach(() => {
         mockClear(prisma);
     });
 
-    describe("constructor", () => {
-        it("should throw when initialized without a prisma client", () => {
-            expect(() => new TradeDAO(undefined)).toThrow(
-                "TradeDAO must be initialized with a PrismaClient model instance!"
-            );
-        });
-    });
+    expectDaoRequiresPrismaClient(TradeDAO, "TradeDAO");
 
     describe("getTradeById", () => {
         it("should call findUniqueOrThrow with id and relations", async () => {

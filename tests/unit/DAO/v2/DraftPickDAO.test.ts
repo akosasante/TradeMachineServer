@@ -1,60 +1,25 @@
 import { mockDeep, mockClear } from "jest-mock-extended";
-import DraftPickDAO, { DraftPickWithTeams } from "../../../../src/DAO/v2/DraftPickDAO";
+import DraftPickDAO, { draftPickInclude } from "../../../../src/DAO/v2/DraftPickDAO";
 import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
-import logger from "../../../../src/bootstrap/logger";
+import { DraftPickFactory } from "../../../factories/DraftPickFactory";
+import { daoTestLifecycle, expectDaoRequiresPrismaClient } from "./daoTestHelpers";
 import { v4 as uuid } from "uuid";
 import { Prisma, PickLeagueLevel } from "@prisma/client";
 
-const makeTeamStub = (overrides: Record<string, unknown> = {}) => ({
-    id: uuid(),
-    name: "Test Team",
-    espnId: 1,
-    status: "ACTIVE",
-    ...overrides,
-});
-
-const makePick = (overrides: Record<string, unknown> = {}): DraftPickWithTeams =>
-    ({
-        id: uuid(),
-        round: new Prisma.Decimal(1),
-        season: 2026,
-        type: PickLeagueLevel.MAJORS,
-        pickNumber: null,
-        currentOwnerId: null,
-        originalOwnerId: null,
-        currentOwner: null,
-        originalOwner: null,
-        dateCreated: new Date(),
-        dateModified: new Date(),
-        ...overrides,
-    } as unknown as DraftPickWithTeams);
-
-const expectedInclude = {
-    currentOwner: { select: { id: true, name: true, espnId: true, status: true } },
-    originalOwner: { select: { id: true, name: true, espnId: true, status: true } },
-};
+const makePick = (...args: Parameters<typeof DraftPickFactory.getPrismaPickWithTeams>) =>
+    DraftPickFactory.getPrismaPickWithTeams(...args);
+const expectedInclude = draftPickInclude;
 
 describe("[PRISMA] DraftPickDAO", () => {
     const prisma = mockDeep<ExtendedPrismaClient["draftPick"]>();
     const dao = new DraftPickDAO(prisma as unknown as ExtendedPrismaClient["draftPick"]);
 
-    beforeAll(() => {
-        logger.debug("~~~~~~PRISMA DRAFTPICK DAO TESTS BEGIN~~~~~~");
-    });
-    afterAll(() => {
-        logger.debug("~~~~~~PRISMA DRAFTPICK DAO TESTS COMPLETE~~~~~~");
-    });
+    daoTestLifecycle("DRAFTPICK");
     afterEach(() => {
         mockClear(prisma);
     });
 
-    describe("constructor", () => {
-        it("should throw when initialized without a prisma client", () => {
-            expect(() => new DraftPickDAO(undefined)).toThrow(
-                "DraftPickDAO must be initialized with a PrismaClient model instance!"
-            );
-        });
-    });
+    expectDaoRequiresPrismaClient(DraftPickDAO, "DraftPickDAO");
 
     describe("getAllPicks", () => {
         it("should return all picks with team relations when no filters are provided", async () => {

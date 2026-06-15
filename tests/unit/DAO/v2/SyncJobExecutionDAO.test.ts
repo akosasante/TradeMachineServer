@@ -1,7 +1,7 @@
 import { mockDeep, mockClear } from "jest-mock-extended";
 import SyncJobExecutionDAO from "../../../../src/DAO/v2/SyncJobExecutionDAO";
 import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
-import logger from "../../../../src/bootstrap/logger";
+import { daoTestLifecycle, expectDaoRequiresPrismaClient } from "./daoTestHelpers";
 import { SyncJobType } from "@prisma/client";
 
 const makeSyncExecution = (overrides: Record<string, unknown> = {}) => ({
@@ -19,23 +19,12 @@ describe("[PRISMA] SyncJobExecutionDAO", () => {
     const prisma = mockDeep<ExtendedPrismaClient["syncJobExecution"]>();
     const dao = new SyncJobExecutionDAO(prisma as unknown as ExtendedPrismaClient["syncJobExecution"]);
 
-    beforeAll(() => {
-        logger.debug("~~~~~~PRISMA SYNC JOB EXECUTION DAO TESTS BEGIN~~~~~~");
-    });
-    afterAll(() => {
-        logger.debug("~~~~~~PRISMA SYNC JOB EXECUTION DAO TESTS COMPLETE~~~~~~");
-    });
+    daoTestLifecycle("SYNC JOB EXECUTION");
     afterEach(() => {
         mockClear(prisma);
     });
 
-    describe("constructor", () => {
-        it("should throw when initialized without a prisma client", () => {
-            expect(() => new SyncJobExecutionDAO(undefined)).toThrow(
-                "SyncJobExecutionDAO must be initialized with a PrismaClient model instance!"
-            );
-        });
-    });
+    expectDaoRequiresPrismaClient(SyncJobExecutionDAO, "SyncJobExecutionDAO");
 
     describe("getByObanJobId", () => {
         it("should find the most recent execution for a given oban job id", async () => {

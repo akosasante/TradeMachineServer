@@ -1,5 +1,7 @@
 import { faker } from "@faker-js/faker";
+import { TeamStatus } from "@prisma/client";
 import Team from "../../src/models/team";
+import type { TeamWithOwners } from "../../src/DAO/v2/TeamDAO";
 import { v4 as uuid } from "uuid";
 import { espnIdCounter } from "./Counter";
 
@@ -34,5 +36,21 @@ export class TeamFactory {
             }
             return TeamFactory.getTeam(name, i + 1);
         });
+    }
+
+    /** A team hydrated with owners, matching `TeamDAO`'s `TeamWithOwners` return shape. */
+    public static getPrismaTeamWithOwners(overrides: Partial<TeamWithOwners> = {}): TeamWithOwners {
+        return {
+            id: uuid(),
+            name: TeamFactory.NAME,
+            espnId: 1,
+            status: TeamStatus.ACTIVE,
+            espnTeam: null,
+            lastSyncedAt: null,
+            dateCreated: new Date(),
+            dateModified: new Date(),
+            owners: [],
+            ...overrides,
+        } as unknown as TeamWithOwners;
     }
 }

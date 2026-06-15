@@ -1,13 +1,19 @@
 import { Prisma, PickLeagueLevel } from "@prisma/client";
 import { ExtendedPrismaClient } from "../../bootstrap/prisma-db";
 
-const teamOwnerSelect = {
+export const teamOwnerSelect = {
     select: { id: true, name: true, espnId: true, status: true },
+} as const;
+
+/** The `include` clause used by every DraftPickDAO read that hydrates owner teams. */
+export const draftPickInclude = {
+    currentOwner: teamOwnerSelect,
+    originalOwner: teamOwnerSelect,
 } as const;
 
 export type DraftPickWithTeams = Prisma.Result<
     ExtendedPrismaClient["draftPick"],
-    { include: { currentOwner: typeof teamOwnerSelect; originalOwner: typeof teamOwnerSelect } },
+    { include: typeof draftPickInclude },
     "findFirstOrThrow"
 >;
 
@@ -29,14 +35,14 @@ export default class DraftPickDAO {
         return (await this.pickDb.findMany({
             where,
             orderBy: [{ season: "desc" }, { round: "asc" }, { pickNumber: "asc" }],
-            include: { currentOwner: teamOwnerSelect, originalOwner: teamOwnerSelect },
+            include: draftPickInclude,
         })) as unknown as DraftPickWithTeams[];
     }
 
     public async getPickById(id: string): Promise<DraftPickWithTeams> {
         return (await this.pickDb.findUniqueOrThrow({
             where: { id },
-            include: { currentOwner: teamOwnerSelect, originalOwner: teamOwnerSelect },
+            include: draftPickInclude,
         })) as unknown as DraftPickWithTeams;
     }
 
@@ -57,7 +63,7 @@ export default class DraftPickDAO {
                 currentOwnerId: data.currentOwnerId ?? null,
                 originalOwnerId: data.originalOwnerId ?? null,
             },
-            include: { currentOwner: teamOwnerSelect, originalOwner: teamOwnerSelect },
+            include: draftPickInclude,
         })) as unknown as DraftPickWithTeams;
     }
 
@@ -91,14 +97,14 @@ export default class DraftPickDAO {
         return (await this.pickDb.update({
             where: { id },
             data: updateData,
-            include: { currentOwner: teamOwnerSelect, originalOwner: teamOwnerSelect },
+            include: draftPickInclude,
         })) as unknown as DraftPickWithTeams;
     }
 
     public async deletePick(id: string): Promise<DraftPickWithTeams> {
         return (await this.pickDb.delete({
             where: { id },
-            include: { currentOwner: teamOwnerSelect, originalOwner: teamOwnerSelect },
+            include: draftPickInclude,
         })) as unknown as DraftPickWithTeams;
     }
 }

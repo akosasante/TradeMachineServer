@@ -1,46 +1,24 @@
 import { mockDeep, mockClear } from "jest-mock-extended";
-import PlayerDAO, { PlayerWithTeam } from "../../../../src/DAO/v2/PlayerDAO";
+import PlayerDAO, { playerOwnerTeamInclude } from "../../../../src/DAO/v2/PlayerDAO";
 import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
-import logger from "../../../../src/bootstrap/logger";
+import { PlayerFactory } from "../../../factories/PlayerFactory";
+import { daoTestLifecycle, expectDaoRequiresPrismaClient } from "./daoTestHelpers";
 import { v4 as uuid } from "uuid";
 import { PlayerLeagueLevel } from "@prisma/client";
 
-const makePlayer = (overrides: Record<string, unknown> = {}) =>
-    ({
-        id: uuid(),
-        name: "Mike Trout",
-        league: PlayerLeagueLevel.MAJORS,
-        mlbTeam: "LAA",
-        playerDataId: 12345,
-        leagueTeamId: null,
-        meta: null,
-        dateCreated: new Date(),
-        dateModified: new Date(),
-        ownerTeam: null,
-        ...overrides,
-    } as unknown as PlayerWithTeam);
+const makePlayer = (...args: Parameters<typeof PlayerFactory.getPrismaPlayerWithTeam>) =>
+    PlayerFactory.getPrismaPlayerWithTeam(...args);
 
 describe("[PRISMA] PlayerDAO", () => {
     const prisma = mockDeep<ExtendedPrismaClient["player"]>();
     const dao = new PlayerDAO(prisma as unknown as ExtendedPrismaClient["player"]);
 
-    beforeAll(() => {
-        logger.debug("~~~~~~PRISMA PLAYER DAO TESTS BEGIN~~~~~~");
-    });
-    afterAll(() => {
-        logger.debug("~~~~~~PRISMA PLAYER DAO TESTS COMPLETE~~~~~~");
-    });
+    daoTestLifecycle("PLAYER");
     afterEach(() => {
         mockClear(prisma);
     });
 
-    describe("constructor", () => {
-        it("should throw when initialized without a prisma client", () => {
-            expect(() => new PlayerDAO(undefined)).toThrow(
-                "PlayerDAO must be initialized with a PrismaClient model instance!"
-            );
-        });
-    });
+    expectDaoRequiresPrismaClient(PlayerDAO, "PlayerDAO");
 
     describe("getAllPlayers", () => {
         it("should return all players ordered by id", async () => {
@@ -67,7 +45,7 @@ describe("[PRISMA] PlayerDAO", () => {
                     orderBy: { name: "asc" },
                     skip: 0,
                     take: 50,
-                    include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
+                    include: playerOwnerTeamInclude,
                 })
             );
             expect(prisma.count).toHaveBeenCalledWith({ where: {} });
@@ -137,7 +115,7 @@ describe("[PRISMA] PlayerDAO", () => {
 
             expect(prisma.findUniqueOrThrow).toHaveBeenCalledWith({
                 where: { id: player.id },
-                include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
+                include: playerOwnerTeamInclude,
             });
             expect(result.id).toBe(player.id);
         });
@@ -165,7 +143,7 @@ describe("[PRISMA] PlayerDAO", () => {
                     playerDataId: 999,
                     leagueTeamId: teamId,
                 },
-                include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
+                include: playerOwnerTeamInclude,
             });
         });
 
@@ -183,7 +161,7 @@ describe("[PRISMA] PlayerDAO", () => {
                     playerDataId: null,
                     leagueTeamId: null,
                 },
-                include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
+                include: playerOwnerTeamInclude,
             });
         });
     });
@@ -198,7 +176,7 @@ describe("[PRISMA] PlayerDAO", () => {
             expect(prisma.update).toHaveBeenCalledWith({
                 where: { id: player.id },
                 data: { name: "Updated Name" },
-                include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
+                include: playerOwnerTeamInclude,
             });
             expect(result.name).toBe("Updated Name");
         });
