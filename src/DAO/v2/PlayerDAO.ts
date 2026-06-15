@@ -8,6 +8,11 @@ export type PlayerWithTeam = Player & {
     ownerTeam: { id: string; name: string; owners: { csvName: string | null }[] } | null;
 };
 
+/** The `include` clause used by every PlayerDAO read/write that hydrates the owner team. */
+export const playerOwnerTeamInclude = {
+    ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } },
+} as const;
+
 export default class PlayerDAO {
     private readonly playerDb: ExtendedPrismaClient["player"];
 
@@ -40,7 +45,7 @@ export default class PlayerDAO {
                 orderBy: { name: "asc" },
                 skip: opts?.skip ?? 0,
                 take: opts?.take ?? 50,
-                include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
+                include: playerOwnerTeamInclude,
             }),
             this.playerDb.count({ where }),
         ]);
@@ -51,7 +56,7 @@ export default class PlayerDAO {
     public async getPlayerById(id: string): Promise<PlayerWithTeam> {
         return (await this.playerDb.findUniqueOrThrow({
             where: { id },
-            include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
+            include: playerOwnerTeamInclude,
         })) as unknown as PlayerWithTeam;
     }
 
@@ -70,7 +75,7 @@ export default class PlayerDAO {
                 playerDataId: data.playerDataId ?? null,
                 leagueTeamId: data.leagueTeamId ?? null,
             },
-            include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
+            include: playerOwnerTeamInclude,
         })) as unknown as PlayerWithTeam;
     }
 
@@ -87,7 +92,7 @@ export default class PlayerDAO {
         return (await this.playerDb.update({
             where: { id },
             data,
-            include: { ownerTeam: { select: { id: true, name: true, owners: { select: { csvName: true } } } } },
+            include: playerOwnerTeamInclude,
         })) as unknown as PlayerWithTeam;
     }
 

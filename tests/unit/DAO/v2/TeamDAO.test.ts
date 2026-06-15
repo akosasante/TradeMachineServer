@@ -1,43 +1,23 @@
 import { mockDeep, mockClear } from "jest-mock-extended";
-import TeamDAO, { TeamWithOwners } from "../../../../src/DAO/v2/TeamDAO";
+import TeamDAO, { teamInclude } from "../../../../src/DAO/v2/TeamDAO";
 import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
-import logger from "../../../../src/bootstrap/logger";
-import { v4 as uuid } from "uuid";
+import { TeamFactory } from "../../../factories/TeamFactory";
+import { daoTestLifecycle, expectDaoRequiresPrismaClient } from "./daoTestHelpers";
 import { TeamStatus } from "@prisma/client";
 
-const makeTeam = (overrides: Record<string, unknown> = {}): TeamWithOwners =>
-    ({
-        id: uuid(),
-        name: "Test Team",
-        espnId: 1,
-        status: TeamStatus.ACTIVE,
-        dateCreated: new Date(),
-        dateModified: new Date(),
-        owners: [],
-        ...overrides,
-    } as unknown as TeamWithOwners);
+const makeTeam = (...args: Parameters<typeof TeamFactory.getPrismaTeamWithOwners>) =>
+    TeamFactory.getPrismaTeamWithOwners(...args);
 
 describe("[PRISMA] TeamDAO", () => {
     const prisma = mockDeep<ExtendedPrismaClient["team"]>();
     const dao = new TeamDAO(prisma as unknown as ExtendedPrismaClient["team"]);
 
-    beforeAll(() => {
-        logger.debug("~~~~~~PRISMA TEAM DAO TESTS BEGIN~~~~~~");
-    });
-    afterAll(() => {
-        logger.debug("~~~~~~PRISMA TEAM DAO TESTS COMPLETE~~~~~~");
-    });
+    daoTestLifecycle("TEAM");
     afterEach(() => {
         mockClear(prisma);
     });
 
-    describe("constructor", () => {
-        it("should throw when initialized without a prisma client", () => {
-            expect(() => new TeamDAO(undefined)).toThrow(
-                "TeamDAO must be initialized with a PrismaClient model instance!"
-            );
-        });
-    });
+    expectDaoRequiresPrismaClient(TeamDAO, "TeamDAO");
 
     describe("getAllTeams", () => {
         it("should return teams ordered by name with owners included", async () => {
@@ -48,11 +28,7 @@ describe("[PRISMA] TeamDAO", () => {
 
             expect(prisma.findMany).toHaveBeenCalledWith({
                 orderBy: { name: "asc" },
-                include: {
-                    owners: {
-                        select: { id: true, displayName: true, email: true, role: true, status: true, csvName: true },
-                    },
-                },
+                include: teamInclude,
             });
             expect(result).toHaveLength(2);
         });
@@ -67,11 +43,7 @@ describe("[PRISMA] TeamDAO", () => {
 
             expect(prisma.findUniqueOrThrow).toHaveBeenCalledWith({
                 where: { id: team.id },
-                include: {
-                    owners: {
-                        select: { id: true, displayName: true, email: true, role: true, status: true, csvName: true },
-                    },
-                },
+                include: teamInclude,
             });
             expect(result.id).toBe(team.id);
         });
@@ -86,11 +58,7 @@ describe("[PRISMA] TeamDAO", () => {
 
             expect(prisma.create).toHaveBeenCalledWith({
                 data: { name: "New Team", espnId: 5, status: TeamStatus.ACTIVE },
-                include: {
-                    owners: {
-                        select: { id: true, displayName: true, email: true, role: true, status: true, csvName: true },
-                    },
-                },
+                include: teamInclude,
             });
             expect(result.name).toBe("New Team");
         });
@@ -119,11 +87,7 @@ describe("[PRISMA] TeamDAO", () => {
             expect(prisma.update).toHaveBeenCalledWith({
                 where: { id: team.id },
                 data: { name: "Updated" },
-                include: {
-                    owners: {
-                        select: { id: true, displayName: true, email: true, role: true, status: true, csvName: true },
-                    },
-                },
+                include: teamInclude,
             });
             expect(result.name).toBe("Updated");
         });
@@ -151,11 +115,7 @@ describe("[PRISMA] TeamDAO", () => {
 
             expect(prisma.delete).toHaveBeenCalledWith({
                 where: { id: team.id },
-                include: {
-                    owners: {
-                        select: { id: true, displayName: true, email: true, role: true, status: true, csvName: true },
-                    },
-                },
+                include: teamInclude,
             });
             expect(result.id).toBe(team.id);
         });

@@ -1,5 +1,6 @@
 import Player, { PlayerLeagueType } from "../../src/models/player";
 import { Player as PrismaPlayer, PlayerLeagueLevel } from "@prisma/client";
+import type { PlayerWithTeam } from "../../src/DAO/v2/PlayerDAO";
 import { v4 as uuid } from "uuid";
 import { faker } from "@faker-js/faker";
 
@@ -22,22 +23,28 @@ export class PlayerFactory {
         return new Player(PlayerFactory.getPlayerObject(name, league, rest));
     }
 
-    public static getPrismaPlayer(
-        name = faker.name.fullName(),
-        league = PlayerLeagueLevel.MINORS,
-        _rest = {}
-    ): PrismaPlayer {
+    public static getPrismaPlayer(overrides: Partial<PrismaPlayer> = {}): PrismaPlayer {
         return {
             id: uuid(),
             dateCreated: new Date(),
             dateModified: new Date(),
-            name,
-            league,
+            name: faker.name.fullName(),
+            league: PlayerLeagueLevel.MINORS,
             mlbTeam: null,
             meta: {},
             playerDataId: parseInt(faker.random.numeric(5), 10),
             lastSyncedAt: null,
             leagueTeamId: null,
+            ...overrides,
         };
+    }
+
+    /** A player hydrated with its owner team, matching `PlayerDAO`'s `PlayerWithTeam` return shape. */
+    public static getPrismaPlayerWithTeam(overrides: Partial<PlayerWithTeam> = {}): PlayerWithTeam {
+        return {
+            ...PlayerFactory.getPrismaPlayer(),
+            ownerTeam: null,
+            ...overrides,
+        } as PlayerWithTeam;
     }
 }

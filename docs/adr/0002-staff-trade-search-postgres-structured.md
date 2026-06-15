@@ -1,4 +1,4 @@
-# ADR 0001: Staff trade search — structured Postgres filters
+# ADR 0002: Staff trade search — structured Postgres filters
 
 **Date:** 2026-04-13
 **Status:** Accepted

@@ -1,4 +1,6 @@
 import DraftPick, { LeagueLevel } from "../../src/models/draftPick";
+import { Prisma, PickLeagueLevel } from "@prisma/client";
+import type { DraftPickWithTeams } from "../../src/DAO/v2/DraftPickDAO";
 import { v4 as uuid } from "uuid";
 import { TeamFactory } from "./TeamFactory";
 import Team from "../../src/models/team";
@@ -24,5 +26,24 @@ export class DraftPickFactory {
         rest = {}
     ): DraftPick {
         return new DraftPick(DraftPickFactory.getPickObject(round, pickNumber, type, season, originalOwner, rest));
+    }
+
+    /** A pick hydrated with owner teams, matching `DraftPickDAO`'s `DraftPickWithTeams` return shape. */
+    public static getPrismaPickWithTeams(overrides: Partial<DraftPickWithTeams> = {}): DraftPickWithTeams {
+        return {
+            id: uuid(),
+            round: new Prisma.Decimal(1),
+            season: 2026,
+            type: PickLeagueLevel.MAJORS,
+            pickNumber: null,
+            currentOwnerId: null,
+            originalOwnerId: null,
+            currentOwner: null,
+            originalOwner: null,
+            lastSyncedAt: null,
+            dateCreated: new Date(),
+            dateModified: new Date(),
+            ...overrides,
+        } as unknown as DraftPickWithTeams;
     }
 }

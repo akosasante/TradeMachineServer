@@ -2,6 +2,8 @@ import { PlayerLeagueType } from "../../src/models/player";
 import Trade, { TradeStatus } from "../../src/models/trade";
 import TradeItem, { TradeItemType } from "../../src/models/tradeItem";
 import TradeParticipant, { TradeParticipantType } from "../../src/models/tradeParticipant";
+import { TradeStatus as PrismaTradeStatus } from "@prisma/client";
+import type { PrismaTrade } from "../../src/DAO/v2/TradeDAO";
 import { DraftPickFactory } from "./DraftPickFactory";
 import { PlayerFactory } from "./PlayerFactory";
 import { TeamFactory } from "./TeamFactory";
@@ -111,5 +113,29 @@ export class TradeFactory {
 
     public static getTradeRecipient(team?: Team, trade?: Trade): TradeParticipant {
         return new TradeParticipant({ id: uuid(), participantType: TradeParticipantType.RECIPIENT, trade, team });
+    }
+
+    /**
+     * A minimal Prisma-shaped trade matching `TradeDAO`'s `PrismaTrade` return shape.
+     * Relations default to empty; override as needed for a given test.
+     */
+    public static getPrismaTrade(overrides: Partial<PrismaTrade> = {}): PrismaTrade {
+        return {
+            id: uuid(),
+            dateCreated: new Date(),
+            dateModified: new Date(),
+            status: PrismaTradeStatus.REQUESTED,
+            declinedReason: null,
+            declinedById: null,
+            acceptedBy: null,
+            acceptedByDetails: null,
+            acceptedOnDate: null,
+            submittedAt: null,
+            submittedById: null,
+            tradeParticipants: [],
+            tradeItems: [],
+            emails: [],
+            ...overrides,
+        } as unknown as PrismaTrade;
     }
 }

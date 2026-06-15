@@ -1,6 +1,7 @@
 import { mockDeep, mockClear } from "jest-mock-extended";
 import ObanDAO from "../../../../src/DAO/v2/ObanDAO";
 import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
+import { ObanJobFactory } from "../../../factories/ObanJobFactory";
 import { oban_job_state } from "@prisma/client";
 
 describe("ObanDAO Sync Enqueue Helpers", () => {
@@ -13,7 +14,7 @@ describe("ObanDAO Sync Enqueue Helpers", () => {
     });
 
     const traceContext = { traceparent: "00-abc-def-01", tracestate: "test=1" };
-    const mockJob = { id: BigInt(100), state: oban_job_state.available };
+    const mockJob = ObanJobFactory.getMockJob(100);
 
     describe("enqueueEspnTeamSync", () => {
         it("should enqueue with correct queue, worker, and max_attempts", async () => {

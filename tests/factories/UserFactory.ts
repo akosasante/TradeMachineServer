@@ -20,19 +20,13 @@ export class UserFactory {
         return { id: uuid(), email, displayName, password, role, ...rest };
     }
 
-    public static getPrismaUser(
-        email = UserFactory.TEST_EMAIL,
-        displayName = UserFactory.GENERIC_NAME,
-        password = UserFactory.GENERIC_PASSWORD,
-        role = UserRole.ADMIN,
-        rest = {}
-    ): PrismaUser {
+    public static getPrismaUser(overrides: Partial<PrismaUser> = {}): PrismaUser {
         return {
             id: uuid(),
-            email,
-            displayName,
-            password,
-            role,
+            email: UserFactory.TEST_EMAIL,
+            displayName: UserFactory.GENERIC_NAME,
+            password: UserFactory.GENERIC_PASSWORD,
+            role: UserRole.ADMIN,
             dateCreated: new Date(),
             dateModified: new Date(),
             slackUsername: null,
@@ -44,7 +38,8 @@ export class UserFactory {
             csvName: null,
             espnMember: null,
             teamId: null,
-            ...rest,
+            userSettings: null,
+            ...overrides,
         } as PrismaUser;
     }
 

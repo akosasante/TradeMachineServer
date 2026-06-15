@@ -1,7 +1,7 @@
 import { mockDeep, mockClear } from "jest-mock-extended";
 import ObanDAO from "../../../../src/DAO/v2/ObanDAO";
 import { ExtendedPrismaClient } from "../../../../src/bootstrap/prisma-db";
-import { oban_job_state } from "@prisma/client";
+import { ObanJobFactory } from "../../../factories/ObanJobFactory";
 
 describe("ObanDAO Unit Tests", () => {
     const mockPrismaObanJob = mockDeep<ExtendedPrismaClient["obanJob"]>();
@@ -32,7 +32,7 @@ describe("ObanDAO Unit Tests", () => {
             const userId = "user-123";
             const traceContext = { traceparent: "test-trace", tracestate: "test-state" };
 
-            const mockJob = { id: BigInt(1), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(1);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueuePasswordResetEmail(userId, traceContext);
@@ -54,7 +54,7 @@ describe("ObanDAO Unit Tests", () => {
 
             const userId = "user-456";
 
-            const mockJob = { id: BigInt(2), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(2);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueuePasswordResetEmail(userId);
@@ -75,7 +75,7 @@ describe("ObanDAO Unit Tests", () => {
 
             const userId = "user-789";
 
-            const mockJob = { id: BigInt(3), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(3);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueuePasswordResetEmail(userId);
@@ -96,7 +96,7 @@ describe("ObanDAO Unit Tests", () => {
 
             const userId = "user-dev";
 
-            const mockJob = { id: BigInt(4), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(4);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueuePasswordResetEmail(userId);
@@ -120,7 +120,7 @@ describe("ObanDAO Unit Tests", () => {
             const userId = "user-reg-123";
             const traceContext = { traceparent: "test-trace-reg" };
 
-            const mockJob = { id: BigInt(5), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(5);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueRegistrationEmail(userId, traceContext);
@@ -142,7 +142,7 @@ describe("ObanDAO Unit Tests", () => {
 
             const userId = "user-reg-456";
 
-            const mockJob = { id: BigInt(6), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(6);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueRegistrationEmail(userId);
@@ -163,7 +163,7 @@ describe("ObanDAO Unit Tests", () => {
 
             const userId = "user-reg-789";
 
-            const mockJob = { id: BigInt(7), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(7);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueRegistrationEmail(userId);
@@ -184,7 +184,7 @@ describe("ObanDAO Unit Tests", () => {
 
             const userId = "user-reg-dev";
 
-            const mockJob = { id: BigInt(8), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(8);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueRegistrationEmail(userId);
@@ -210,7 +210,7 @@ describe("ObanDAO Unit Tests", () => {
         it("should enqueue a trade_request email job with all required fields", async () => {
             process.env.APP_ENV = "staging";
 
-            const mockJob = { id: BigInt(20), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(20);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeRequestEmail(tradeId, recipientUserId, acceptUrl, declineUrl);
@@ -235,7 +235,7 @@ describe("ObanDAO Unit Tests", () => {
             process.env.APP_ENV = "production";
 
             const traceContext = { traceparent: "00-abc-def-01", tracestate: "grafana=abc" };
-            const mockJob = { id: BigInt(21), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(21);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeRequestEmail(tradeId, recipientUserId, acceptUrl, declineUrl, traceContext);
@@ -254,7 +254,7 @@ describe("ObanDAO Unit Tests", () => {
         it("should default env to staging when APP_ENV is not set", async () => {
             delete process.env.APP_ENV;
 
-            const mockJob = { id: BigInt(22), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(22);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeRequestEmail(tradeId, recipientUserId, acceptUrl, declineUrl);
@@ -280,7 +280,7 @@ describe("ObanDAO Unit Tests", () => {
                 tracestate: "grafana=sessionId:abc123",
             };
 
-            const mockJob = { id: BigInt(9), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(9);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeAnnouncement(tradeId, traceContext);
@@ -304,7 +304,7 @@ describe("ObanDAO Unit Tests", () => {
 
             const tradeId = "trade-uuid-456";
 
-            const mockJob = { id: BigInt(10), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(10);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeAnnouncement(tradeId);
@@ -327,7 +327,7 @@ describe("ObanDAO Unit Tests", () => {
 
             const tradeId = "trade-uuid-789";
 
-            const mockJob = { id: BigInt(11), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(11);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeAnnouncement(tradeId);
@@ -347,7 +347,7 @@ describe("ObanDAO Unit Tests", () => {
     describe("enqueueTradeRequestDm", () => {
         it("should enqueue trade_request_dm on discord queue", async () => {
             process.env.APP_ENV = "staging";
-            const mockJob = { id: BigInt(30), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(30);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeRequestDm(
@@ -376,7 +376,7 @@ describe("ObanDAO Unit Tests", () => {
 
         it("should include notification_settings_url when provided", async () => {
             process.env.APP_ENV = "staging";
-            const mockJob = { id: BigInt(33), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(33);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeRequestDm(
@@ -401,7 +401,7 @@ describe("ObanDAO Unit Tests", () => {
     describe("enqueueTradeSubmitDm", () => {
         it("should enqueue trade_submit_dm on discord queue", async () => {
             process.env.APP_ENV = "production";
-            const mockJob = { id: BigInt(31), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(31);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeSubmitDm("t2", "u2", "https://app/trades/t2?action=submit&token=c");
@@ -423,7 +423,7 @@ describe("ObanDAO Unit Tests", () => {
 
         it("should include notification_settings_url when provided", async () => {
             process.env.APP_ENV = "production";
-            const mockJob = { id: BigInt(34), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(34);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeSubmitDm(
@@ -447,7 +447,7 @@ describe("ObanDAO Unit Tests", () => {
     describe("enqueueTradeDeclinedDm", () => {
         it("should enqueue trade_declined_dm with optional decline_url", async () => {
             process.env.APP_ENV = "development";
-            const mockJob = { id: BigInt(32), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(32);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeDeclinedDm("t3", "u3", true, "https://app/trades/t3?token=v");
@@ -470,7 +470,7 @@ describe("ObanDAO Unit Tests", () => {
 
         it("should include notification_settings_url when provided", async () => {
             process.env.APP_ENV = "development";
-            const mockJob = { id: BigInt(35), state: oban_job_state.available };
+            const mockJob = ObanJobFactory.getMockJob(35);
             mockPrismaObanJob.create.mockResolvedValue(mockJob as any);
 
             await obanDao.enqueueTradeDeclinedDm(
