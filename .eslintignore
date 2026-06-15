@@ -6,4 +6,6 @@ dist
 coverage
 # don't lint AI plans directory
 ai_plans
+# don't lint documentation (may contain reference .ts snippets that aren't part of the build)
+docs
 

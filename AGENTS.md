@@ -2,6 +2,19 @@
 
 This file provides guidance to AI Assistants when working with code in this repository.
 
+## Project Documentation (`docs/`)
+
+Longer-form documentation lives in [`docs/`](./docs/README.md): **Architecture Decision Records** in [`docs/adr/`](./docs/adr/README.md) and **proposals / plans / analyses** in [`docs/proposals-and-projects/`](./docs/proposals-and-projects/README.md). Each directory has a `README.md` index for progressive discovery — read the index first, then drill into the specific file.
+
+**Read `docs/` before** (don't rely on this AGENTS.md alone):
+
+- Designing or implementing a **new feature or subsystem** — check `docs/proposals-and-projects/` for an existing proposal/plan, and `docs/adr/` for decisions that constrain it.
+- Making **architecture, schema, DAO, ORM, deployment, or auth** changes — there is very likely a relevant ADR; read it before changing or contradicting that area.
+- Working on **trades, user settings, search, Docker/deployment, or the routing-controllers→Ts.ED migration** — these all have dedicated docs.
+- Any task where you're about to make a non-trivial decision that someone may have already made — search `docs/` first.
+
+**When you make a new significant decision or proposal, write it down** in the right place and update that directory's `README.md` index. ADRs are authoritative over proposals when the two disagree. See [`docs/README.md`](./docs/README.md) for the conventions.
+
 ## Development Environment Setup
 
 ### Modern Docker Development (Recommended)

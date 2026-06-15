@@ -1,0 +1,155 @@
+name: Deploy Docker Image
+
+on:
+  workflow_run:
+    workflows: ["Build and Publish Docker Image"]
+    branches: [main, staging]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Get branch name
+        uses: dawidd6/action-get-workflow-origin@v1
+        id: workflow-origin
+        with:
+          workflow_run: ${{ github.event.workflow_run.id }}
+
+      - name: Set environment variables
+        id: env-vars
+        run: |
+          if [[ "${{ steps.workflow-origin.outputs.branch }}" == "main" ]]; then
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+            echo "APP_DIR=/opt/Apps/TradeMachine" >> $GITHUB_ENV
+            echo "SERVICE_NAME=trademachine" >> $GITHUB_ENV
+            echo "SCHEMA=public" >> $GITHUB_ENV
+            echo "PORT=3005" >> $GITHUB_ENV
+            echo "DB_URL=${{ secrets.PROD_DATABASE_URL }}" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            echo "APP_DIR=/opt/Apps/StagingTradeMachine" >> $GITHUB_ENV
+            echo "SERVICE_NAME=staging_trademachine" >> $GITHUB_ENV
+            echo "SCHEMA=staging" >> $GITHUB_ENV
+            echo "PORT=3015" >> $GITHUB_ENV
+            echo "DB_URL=${{ secrets.STAGING_DATABASE_URL }}" >> $GITHUB_ENV
+          fi
+
+      - name: Create docker-compose.yml file
+        run: |
+          cat > docker-compose.yml << 'EOF'
+          version: '3.8'
+          
+          services:
+            app:
+              image: ghcr.io/${{ github.repository }}:${{ steps.workflow-origin.outputs.branch }}
+              restart: always
+              environment:
+                - NODE_ENV=production
+                - PORT=${{ env.PORT }}
+                - IP=0.0.0.0
+                - ORM_CONFIG=${{ env.ENVIRONMENT }}
+                - BASE_DIR=/app
+                - DATABASE_URL=${DATABASE_URL}
+                - REDIS_IP=${REDIS_IP}
+                - REDIS_PORT=${REDIS_PORT}
+                - REDISPASS=${REDISPASS}
+                - SESSION_SECRET=${SESSION_SECRET}
+                - ROLLBAR_ACCESS_TOKEN=${ROLLBAR_ACCESS_TOKEN}
+                - ROLLBAR_ENVIRONMENT=${ENVIRONMENT}
+                - APP_ENV=${ENVIRONMENT}
+              ports:
+                - "${{ env.PORT }}:${{ env.PORT }}"
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:${{ env.PORT }}/api/health"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 20s
+              networks:
+                - app-network
+          
+          networks:
+            app-network:
+              driver: bridge
+          EOF
+
+      - name: Transfer docker-compose file to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml"
+          target: ${{ env.APP_DIR }}
+
+      - name: Run database migrations
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ env.APP_DIR }}
+            export DATABASE_URL='${{ env.DB_URL }}'
+            docker pull ghcr.io/${{ github.repository }}:${{ steps.workflow-origin.outputs.branch }}
+            docker run --rm -e DATABASE_URL='${{ env.DB_URL }}' ghcr.io/${{ github.repository }}:${{ steps.workflow-origin.outputs.branch }} npx prisma migrate deploy
+
+      - name: Deploy and start container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ env.APP_DIR }}
+            
+            # Load environment variables
+            source .env
+            
+            # Login to GitHub Container Registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Pull latest image
+            docker pull ghcr.io/${{ github.repository }}:${{ steps.workflow-origin.outputs.branch }}
+            
+            # Stop old container (if running)
+            docker-compose down --remove-orphans
+            
+            # Start new container
+            docker-compose up -d
+            
+            # Check if container is running and healthy
+            timeout=60
+            while [ $timeout -gt 0 ]; do
+              status=$(docker-compose ps -q app | xargs docker inspect -f '{{.State.Health.Status}}')
+              if [ "$status" = "healthy" ]; then
+                echo "Container is healthy"
+                exit 0
+              fi
+              sleep 5
+              timeout=$((timeout-5))
+            done
+            
+            echo "Container did not become healthy within timeout"
+            docker-compose logs app
+            exit 1
+
+      - name: Notify Rollbar of deployment
+        uses: rollbar/github-deploy-action@2.1.2
+        with:
+          environment: ${{ env.ENVIRONMENT }}
+          version: ${{ github.sha }}
+          status: "succeeded"
+          local_username: ${{ github.actor }}
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.ROLLBAR_ACCESS_TOKEN }}
+          ROLLBAR_USERNAME: "aaasante"
