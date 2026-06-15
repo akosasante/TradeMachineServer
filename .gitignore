@@ -52,7 +52,6 @@ workspace.code-workspace
 trade.iml
 
 **/.claude/settings.local.json
-ai_plans
 TradeMachineElixirApp
 TradeMachineElixirApp/
 TradeMachineElixirApp/**
