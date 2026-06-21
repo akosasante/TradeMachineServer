@@ -226,7 +226,7 @@ jobs:
 
       - name: Run database migrations for ${{ matrix.environment }}
         if: ${{ matrix.condition }}
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
@@ -255,7 +255,7 @@ jobs:
 
       - name: Deploy ${{ matrix.environment }}
         if: ${{ matrix.condition }}
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
