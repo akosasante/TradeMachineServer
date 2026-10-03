@@ -70,7 +70,7 @@
         "build:types-package": "cd packages/trpc-types && npm run build:isolated"
     },
     "devDependencies": {
-        "@faker-js/faker": "^7.6.0",
+        "@faker-js/faker": "^10.0.0",
         "@jest/globals": "^29.3.1",
         "@jest/types": "^29.3.1",
         "@swc/core": "^1.2.50",
