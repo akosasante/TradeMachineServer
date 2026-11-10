@@ -8,6 +8,7 @@ Design proposals, migration plans, and analyses for TradeMachineServer. These ar
 | Doc | Summary |
 |---|---|
 | [trade-builder-api-proposal.md](./trade-builder-api-proposal.md) | Backend / v2 DAO proposal for the new Trade Request builder UI — what to add, what existing DAOs cover, and what's deferred. Decided scope is recorded in [ADR 0003](../adr/0003-trade-builder-v2-daos.md). |
+| [v3-trade-builder-plan.md](./v3-trade-builder-plan.md) | Cross-repo phased plan for the V3 Trade Builder (two-column destination layout, asset picker, search approach, screen sketches, frontend/backend split). |
 
 ### Dockerization & deployment
 | Doc | Summary |
@@ -24,6 +25,7 @@ Design proposals, migration plans, and analyses for TradeMachineServer. These ar
 ### Migrations & improvements
 | Doc | Summary |
 |---|---|
+| [dependency-security-remediation.md](./dependency-security-remediation.md) | Compatibility-preserving security updates, retained runtime constraints, deferred CVEs, and verification. |
 | [ts-ed-migration-plan.md](./ts-ed-migration-plan.md) | Migration plan from `routing-controllers` to Ts.ED for the API framework. |
 | [email-system-analysis.md](./email-system-analysis.md) | Email system analysis & recommendations. |
 | [Potential_Improvements.md](./Potential_Improvements.md) | Grab-bag of potential improvements to the codebase/platform. |
