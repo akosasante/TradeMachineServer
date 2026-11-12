@@ -9,6 +9,8 @@ Numbered, dated records of significant technical decisions for TradeMachineServe
 | [0001](./0001-user-settings-jsonb-on-user.md) | Store user settings as JSONB on the `user` table | 2026-04-12 | Accepted |
 | [0002](./0002-staff-trade-search-postgres-structured.md) | Staff trade search — structured Postgres filters | 2026-04-13 | Accepted |
 | [0003](./0003-trade-builder-v2-daos.md) | Trade Request builder — v2 DAO scope (first pass) | 2026-06-15 | Accepted |
+| [0004](./0004-v3-trade-builder-first-pass-contract.md) | V3 trade builder first-pass contract | 2026-11-11 | Accepted |
+| [0005](./0005-trpc-pagination-conventions.md) | Pagination conventions for tRPC list and search endpoints | 2026-11-11 | Accepted |
 
 ## Conventions
 

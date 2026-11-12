@@ -1,7 +1,9 @@
 # Trade Request Builder — Backend / v2 DAO Proposal
 
-Status: **Proposal / planning only — no code changes yet.**
+Status: **Broader draft-capable API proposal; initial first-pass contract is superseded by ADR 0004 and ADR 0005.**
 Audience: TradeMachineServer backend + the frontend team building the new Trade Request builder UI.
+
+> **Scope clarification:** This proposal and [ADR 0003](../adr/0003-trade-builder-v2-daos.md) describe the broader builder capability, including saved-draft CRUD. Saved drafts remain planned for V3, but are excluded from the initial first pass. For that first pass, follow [ADR 0004](../adr/0004-v3-trade-builder-first-pass-contract.md): `trades.builder.*`, no draft persistence, a single `createAndRequest` mutation, no separate `validate` endpoint unless server-only preview checks are later identified, and authoritative validation during send. Follow [ADR 0005](../adr/0005-trpc-pagination-conventions.md) for new endpoint pagination choices. Do not treat the draft-first DAO sequence below as the initial first-pass send contract.
 
 ## Scope & decisions baked into this doc
 

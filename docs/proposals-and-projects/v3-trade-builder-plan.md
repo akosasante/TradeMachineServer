@@ -4,9 +4,9 @@
 **Created:** 2026-11-09
 **Repos:** NewTradeMachineClient, TradeMachineServer, TradeMachineEx (verification only)
 
-Replace the legacy Vue 2 `/make_trade` stepper with a V3 builder in NewTradeMachineClient, backed by tRPC `/v2` procedures and Prisma v2 DAOs. The builder uses two destination-focused columns ("what each team gets"), a shared asset picker, and a Build → Review → Send flow. There are no saved drafts in the first version.
+Replace the legacy Vue 2 `/make_trade` stepper with a V3 builder in NewTradeMachineClient, backed by tRPC `/v2` procedures and Prisma v2 DAOs. The builder uses two destination-focused columns ("what each team gets"), a shared asset picker, and a Build → Review → Send flow. Saved drafts remain planned for V3, but are excluded from the initial first pass.
 
-This is a living plan to follow across sessions. Detailed implementation plans for each phase will be added as we go. Related: [ADR 0003](../adr/0003-trade-builder-v2-daos.md), [trade-builder-api-proposal.md](./trade-builder-api-proposal.md), [ADR 0002](../adr/0002-staff-trade-search-postgres-structured.md).
+This is a living plan to follow across sessions. Detailed implementation plans for each phase will be added as we go. Related: [ADR 0003](../adr/0003-trade-builder-v2-daos.md), [ADR 0004](../adr/0004-v3-trade-builder-first-pass-contract.md), [ADR 0005](../adr/0005-trpc-pagination-conventions.md), [trade-builder-api-proposal.md](./trade-builder-api-proposal.md), [ADR 0002](../adr/0002-staff-trade-search-postgres-structured.md).
 
 ## Decisions so far
 
@@ -20,7 +20,7 @@ This is a living plan to follow across sessions. Detailed implementation plans f
   - Typed search / chosen filters: search all assets; results grouped "Recorded on Team B" then "Other matches".
   - Adding an asset recorded on another team shows a confirmation, and the warning stays visible on the asset and in Review. It does not block sending.
 - **What blocks sending:** the same asset added twice, a team sending to itself, no assets, or fewer than two teams.
-- **No drafts:** the proposal lives only in the client (Pinia) until Send. Send makes one server call that creates and requests the trade together. Leaving with unsent changes shows a warning; losing the proposal on page refresh is acceptable for now.
+- **Initial first pass:** the proposal lives only in the client (Pinia) until Send. Send makes one server call that creates and requests the trade together. Leaving with unsent changes shows a warning; losing the proposal on page refresh is acceptable for now. Saved drafts remain planned for a later V3 increment; see [ADR 0004](../adr/0004-v3-trade-builder-first-pass-contract.md).
 - **Search engine:** existing Postgres case-insensitive search via Prisma. No Elasticsearch, client-side search index, or `pg_trgm` until measurements show a need.
 - **No live ESPN calls** while building a trade.
 - **Still deferred** (per ADR 0003): position filters, roster limits, flagging assets already in pending trades, configurable pick-trade date.
@@ -29,7 +29,7 @@ This is a living plan to follow across sessions. Detailed implementation plans f
 
 This follows our usual migration process, with one change: **define the tRPC contract first** (Phase 0), so store wiring and MSW mocks are built against the real request/response types instead of guessed ones.
 
-1. Contract: zod schemas + stubbed tRPC procedures, publish `@akosasante/trpc-types`.
+1. Contract: settle first-pass behavior and pagination ADRs; add zod schemas + stubbed tRPC procedures, publish `@akosasante/trpc-types`.
 2. Break the screen into reusable components; component tests + Storybook.
 3. Connect to the Pinia store / API (mocked).
 4. MSW mock routes + Playwright e2e tests.
@@ -153,17 +153,19 @@ The keyboard does not open automatically when the sheet opens, so users can brow
 
 ### Phase 0: Specification and contract (blocks everything else)
 
-- [ ] Audit the legacy `/make_trade` flow in TradeMachineClient for behavior to keep: who can start a trade, how recipient teams are chosen, what happens after sending, which notifications go out.
-- [ ] Write ADR 0004 recording: no drafts, single create-and-request call on Send, non-blocking ownership warnings, searches not limited to recorded owners. It supersedes the draft-related parts of ADR 0003. Update the ADR index.
-- [ ] Define zod input/output schemas (location: nested `trades.builder.*` router, pending open question 1):
+- [x] Audit the legacy `/make_trade` flow and admin/script paths for behavior to preserve or intentionally change: who can start a trade, how recipient teams are chosen, what happens after sending, which notifications go out, and any admin-specific behavior.
+- [x] Write ADR 0004 recording the **initial first-pass** contract: saved drafts remain planned for V3 but are not part of this first pass; single create-and-request call on Send; non-blocking ownership warnings; searches not limited to recorded owners; nested router rationale; no separate validation endpoint; async notification and retry semantics. It supersedes draft-related assumptions only for this initial flow, not later-V3 saved drafts or the legacy draft lifecycle. Update the ADR index.
+- [x] Write ADR 0005 defining when new tRPC endpoints should use `page`/`pageSize`, `skip`/`take`, or cursor pagination, including use cases, limits, stable ordering, and metadata. Apply it to builder asset search and update the ADR index.
+- [x] Define zod input/output schemas (location: nested `trades.builder.*` router):
   - `searchTeams` — team picker; reuses `TeamDAO.searchTeams`.
   - `searchPlayers` — `{ q?, level?, preferredOwnerTeamId?, skip, take }` → rows with recorded owner and an `ownedByPreferred` flag.
   - `searchPicks` — `{ season?, type?, round?, preferredOwnerTeamId?, skip, take }` → rows with current and original owner and an `ownedByPreferred` flag.
-  - `validate` — proposed trade → `{ errors[], warnings[], perTeam }`.
-  - `createAndRequest` — proposed trade → `{ tradeId }`.
+  - `createAndRequest` — proposed trade → `{ tradeId }`, with authoritative validation during send.
+  - No separate `validate` procedure in the initial first pass; `createAndRequest` performs authoritative validation (see ADR 0004).
   - Proposed trade shape: `{ participants[], items[{ type, assetId, senderTeamId, recipientTeamId }] }`.
-- [ ] Stub the procedures with correctly typed fixtures.
-- [ ] Build, bump, and publish `@akosasante/trpc-types`; update its changelog (see "Publishing `@akosasante/trpc-types`" in TradeMachineServer `AGENTS.md`).
+- [x] Stub the procedures with explicit output schemas and typed test fixtures; unimplemented handlers fail with `NOT_IMPLEMENTED` rather than returning fake results.
+- [x] Build the declarations, bump `@akosasante/trpc-types` to `1.18.0`, and update its changelog (see "Publishing `@akosasante/trpc-types`" in TradeMachineServer `AGENTS.md`).
+- [ ] Publish `@akosasante/trpc-types` `1.18.0`; blocked because the available registry token lacks publish authorization (`ENEEDAUTH`). Keep consumers on published `1.17.0` until a write-authorized token is available.
 
 ### Phase 1: Components (after Phase 0 contract; parallel with Phase 2)
 
@@ -202,8 +204,8 @@ Each component gets Storybook stories and component tests (see NewTradeMachineCl
 ### Phase 4: Server implementation (after Phase 0; can overlap Phases 1–3)
 
 - [ ] Search: extend `PlayerDAO.searchPlayers` and `DraftPickDAO.searchEligiblePicks` so the preferred owner's assets rank first without filtering others out (ordering expression, or two queries: preferred owner, then everyone else).
-- [ ] Validation: extend `tradeValidator` to validate a proposed (unsaved) trade; structural errors and ownership warnings computed in one place, shared by `validate` and `createAndRequest`.
-- [ ] `createAndRequest`: one DB transaction creating participants + items and setting status `REQUESTED`. Check whether the existing `TradeDAO` builder methods (`createDraft`, `addTradeItem`, `requestTrade`) accept a transaction client; adapt if not.
+- [ ] Validation: extend `tradeValidator` to authoritatively validate the proposed trade during `createAndRequest`; return structural errors and treat ownership mismatches as non-blocking warnings. There is no separate validation endpoint in this first pass.
+- [ ] `createAndRequest`: one DB transaction creating participants + items directly in status `REQUESTED` (do not create an intermediate draft). Implement transaction-safe writes instead of chaining `createDraft` + `requestTrade`; ensure notification enqueue failures after commit are surfaced and recoverable, as specified by ADR 0004.
 - [ ] Authorization: requesting user must own the creator team; all participating teams must be active.
 - [ ] Replace Phase 0 stubs; DAO unit + integration tests per `docs/testing/README.md`. Republish trpc-types only if types change.
 
