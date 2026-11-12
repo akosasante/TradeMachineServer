@@ -12,6 +12,7 @@ import { normalizeV3BaseUrl, shouldUseV3TradeLinkForEmail } from "../../../../ut
 import { getOwnerNotificationPrefs } from "../../../../utils/userNotificationPrefs";
 import { PublicUser } from "../../../../DAO/v2/UserDAO";
 import type { ExtendedPrismaClient } from "../../../../bootstrap/prisma-db";
+import { tradeBuilderRouter } from "./tradeBuilder";
 
 // ─── Validation helpers (adapted from TradeController.ts for Prisma types) ───
 
@@ -266,6 +267,7 @@ async function hydrateTradeItems(prisma: ExtendedPrismaClient, trade: PrismaTrad
 }
 
 export const tradeRouter = router({
+    builder: tradeBuilderRouter,
     /**
      * Fetch a trade with all participant/team/owner and item relations.
      * Hydrates each trade item with its player or draft-pick entity for V3 UI.
