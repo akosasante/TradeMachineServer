@@ -156,6 +156,11 @@ repo reflects the published state.
 
 ## Changelog
 
+### 1.18.0
+
+- Add typed `trades.builder` procedures for team, player, and pick search plus the `createAndRequest` contract.
+- Define bounded offset pagination for player and pick asset searches and explicit proposal/output schemas.
+
 ### 1.17.0
 
 - Extend `trades.list` input with team-scoped filters: `dateFrom`, `dateTo`, `dateField`, `playerIds`, `pick`, and `orderBy` (`CREATED` | `SUBMITTED`)
